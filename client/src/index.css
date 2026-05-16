@@ -75,6 +75,50 @@ label { font-size: 14px; color: #aaa; }
 .err { color: #ff6b6b; font-size: 13px; margin: 8px 0; }
 .ok { color: #51cf66; font-size: 13px; }
 
+.top-nav {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+  padding: 0 8px;
+}
+.top-nav-link {
+  padding: 8px 14px;
+  border-radius: 20px;
+  font-size: 14px;
+  text-decoration: none;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(212,175,55,0.2);
+  color: #ccc;
+}
+.top-nav-link.active {
+  background: rgba(212,175,55,0.25);
+  color: #d4af37;
+  border-color: #d4af37;
+}
+.rules-list {
+  margin: 8px 0 0 18px;
+  font-size: 14px;
+  line-height: 1.7;
+  color: #ccc;
+}
+.rules-list code {
+  background: rgba(0,0,0,0.3);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+.highlight-card {
+  text-align: center;
+  border-color: rgba(212,175,55,0.45);
+}
+.deposit-balance {
+  font-size: 32px;
+  color: #d4af37;
+  font-weight: 600;
+}
+
 .chat-page { display: flex; flex-direction: column; height: 100dvh; padding-bottom: 0; }
 .chat-top { flex-shrink: 0; padding-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); }
 .chat-top h2 { font-size: 18px; margin-top: 8px; }

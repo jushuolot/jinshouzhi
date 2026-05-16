@@ -110,6 +110,7 @@ export function initSchema() {
     INSERT OR IGNORE INTO app_config(key,value) VALUES ('male_daily_assignment_limit','3');
     INSERT OR IGNORE INTO app_config(key,value) VALUES ('deposit_amount_cents','1000000');
     INSERT OR IGNORE INTO app_config(key,value) VALUES ('refund_min_days','30');
+    INSERT OR IGNORE INTO app_config(key,value) VALUES ('refund_sla_workdays','7');
   `);
 }
 

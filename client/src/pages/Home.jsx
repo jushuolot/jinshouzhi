@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { api, clearToken } from '../api';
+import TopNav from '../components/TopNav';
 
 export default function Home() {
   const nav = useNavigate();
@@ -9,6 +10,7 @@ export default function Home() {
   const [err, setErr] = useState('');
   const [convs, setConvs] = useState([]);
   const [quota, setQuota] = useState(null);
+  const [refundElig, setRefundElig] = useState(null);
 
   const [inviteCode, setInviteCode] = useState('INV_M001');
   const [birthDate, setBirthDate] = useState('1980-05-01');
@@ -40,8 +42,12 @@ export default function Home() {
         const { conversations } = await api('/conversation/list');
         setConvs(conversations);
         if (user.role === 'male') {
-          const q = await api('/assignment/quota');
+          const [q, e] = await Promise.all([
+            api('/assignment/quota'),
+            api('/deposit/refund/eligibility').catch(() => null),
+          ]);
           setQuota(q);
+          setRefundElig(e);
         }
       }
     } catch (ex) {
@@ -130,18 +136,6 @@ export default function Home() {
     }
   }
 
-  async function applyRefund() {
-    setErr('');
-    setMsg('');
-    try {
-      const r = await api('/deposit/refund/apply', { method: 'POST', body: JSON.stringify({}) });
-      setMsg(`退款申请已提交：${r.refund_order_id}`);
-      load();
-    } catch (ex) {
-      setErr(ex.code || ex.message);
-    }
-  }
-
   function logout() {
     clearToken();
     nav('/login');
@@ -166,6 +160,7 @@ export default function Home() {
         <h1>金手指</h1>
         <p>{me.role === 'male' ? '成熟男士' : '在读学生'} · {me.phone}</p>
       </header>
+      {me.account_status === 'opened_normal' && <TopNav role={me.role} />}
 
       {msg && <p className="ok card">{msg}</p>}
       {err && <p className="err card">{err}</p>}
@@ -229,13 +224,22 @@ export default function Home() {
             <div className="card">
               <h3>我的邀请码（一人一码）</h3>
               <p style={{ fontSize: 20, color: '#d4af37' }}>{me.invite_code}</p>
-              {me.deposit && <p>保证金余额：¥{(me.deposit.balance / 100).toLocaleString()}</p>}
+              {me.deposit && (
+                <p>
+                  保证金余额：¥{(me.deposit.balance / 100).toLocaleString()}
+                  {' · '}
+                  <Link to="/deposit">查看详情</Link>
+                </p>
+              )}
+              {refundElig && !refundElig.eligible && refundElig.days_remaining > 0 && (
+                <p style={{ fontSize: 12, color: '#888' }}>退保证金：{refundElig.reason}</p>
+              )}
+              {refundElig?.eligible && (
+                <p style={{ fontSize: 12, color: '#51cf66' }}>可申请退还剩余保证金 → <Link to="/deposit">去申请</Link></p>
+              )}
               {quota && <p>今日系统分配：{quota.used} / {quota.limit}</p>}
               <button type="button" className="btn btn-primary" onClick={assign}>
                 系统分配
-              </button>
-              <button type="button" className="btn btn-secondary" onClick={applyRefund}>
-                申请退保证金（须开户满30天）
               </button>
             </div>
           )}

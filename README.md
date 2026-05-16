@@ -87,12 +87,19 @@ jinshouzhi/
 
 ---
 
-## 推送到 GitHub
+## v1.1 新功能
+
+- **规则页**：`/rules`
+- **保证金页**（男士）：`/deposit` — 余额、退保证金资格、申请退款
+
+## 本地编辑 → 同步 GitHub → Codespaces
+
+👉 **[docs/发布与更新.md](docs/发布与更新.md)**（仅 GitHub，不需要 Render）
 
 ```bash
 cd ~/Downloads/cursor/jinshouzhi
 git add .
-git commit -m "更新说明"
+git commit -m "feat: v1.1 规则页、保证金页、退款资格"
 git push
 ```
 

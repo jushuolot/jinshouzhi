@@ -58,6 +58,76 @@ depositRoutes.post('/pay/mock-success', auth('male'), (req, res) => {
   res.json({ ok: true, invite_code: inviteCode, balance: amount });
 });
 
+function computeRefundEligibility(userId) {
+  const user = db.prepare('SELECT * FROM users WHERE id=?').get(userId);
+  const acc = db.prepare('SELECT * FROM deposit_accounts WHERE user_id=?').get(userId);
+  const minDays = parseInt(getConfig('refund_min_days', '30'), 10);
+  const refundSla = parseInt(getConfig('refund_sla_workdays', '7') || '7', 10);
+
+  if (!acc || !user?.open_success_at) {
+    return {
+      eligible: false,
+      days_remaining: minDays,
+      eligible_at: null,
+      reason: '尚未开户或未缴纳保证金',
+      balance_yuan: acc ? acc.balance / 100 : 0,
+      min_days: minDays,
+      refund_sla_workdays: refundSla,
+    };
+  }
+
+  const openAt = new Date(user.open_success_at);
+  const eligibleAt = new Date(openAt);
+  eligibleAt.setDate(eligibleAt.getDate() + minDays);
+  const now = new Date();
+  const msLeft = eligibleAt - now;
+  const daysRemaining = msLeft > 0 ? Math.ceil(msLeft / (24 * 60 * 60 * 1000)) : 0;
+
+  let eligible = true;
+  let reason = '符合申请条件';
+
+  if (now < eligibleAt) {
+    eligible = false;
+    reason = `开户满 ${minDays} 天后可申请（还剩约 ${daysRemaining} 天）`;
+  } else if (user.account_status === 'banned_permanent') {
+    eligible = false;
+    reason = '账号已被永久封禁';
+  } else if (acc.balance <= 0) {
+    eligible = false;
+    reason = '保证金余额为 0';
+  } else if (acc.status === 'refund_pending') {
+    eligible = false;
+    reason = '退款申请处理中';
+  } else {
+    const openTicket = db
+      .prepare(
+        `SELECT id FROM violation_tickets WHERE target_id=? AND status IN ('open','deducting') LIMIT 1`
+      )
+      .get(userId);
+    if (openTicket) {
+      eligible = false;
+      reason = '存在未结投诉/扣罚工单';
+    }
+  }
+
+  return {
+    eligible,
+    days_remaining: daysRemaining,
+    eligible_at: eligibleAt.toISOString(),
+    reason,
+    balance_yuan: acc.balance / 100,
+    total_paid_yuan: acc.total_paid / 100,
+    min_days: minDays,
+    refund_sla_workdays: refundSla,
+    account_status: acc.status,
+    open_success_at: user.open_success_at,
+  };
+}
+
+depositRoutes.get('/refund/eligibility', auth('male'), (req, res) => {
+  res.json(computeRefundEligibility(req.userId));
+});
+
 depositRoutes.get('/account', auth('male'), (req, res) => {
   const acc = db.prepare('SELECT * FROM deposit_accounts WHERE user_id=?').get(req.userId);
   if (!acc) return res.status(404).json({ code: 'NOT_FOUND' });
@@ -71,31 +141,15 @@ depositRoutes.get('/account', auth('male'), (req, res) => {
 });
 
 depositRoutes.post('/refund/apply', auth('male'), (req, res) => {
-  const user = db.prepare('SELECT * FROM users WHERE id=?').get(req.userId);
+  const check = computeRefundEligibility(req.userId);
+  if (!check.eligible) {
+    return res.status(400).json({
+      code: 'REFUND_NOT_ELIGIBLE',
+      message: check.reason || '暂不符合退保证金条件',
+    });
+  }
+
   const acc = db.prepare('SELECT * FROM deposit_accounts WHERE user_id=?').get(req.userId);
-  if (!acc || !user.open_success_at) {
-    return res.status(400).json({ code: 'REFUND_NOT_ELIGIBLE' });
-  }
-
-  const minDays = parseInt(getConfig('refund_min_days', '30'), 10);
-  const openAt = new Date(user.open_success_at);
-  const eligibleAt = new Date(openAt);
-  eligibleAt.setDate(eligibleAt.getDate() + minDays);
-  if (new Date() < eligibleAt) {
-    return res.status(400).json({ code: 'REFUND_NOT_ELIGIBLE', message: `开户满${minDays}天后可申请` });
-  }
-
-  const openTicket = db
-    .prepare(
-      `SELECT id FROM violation_tickets WHERE target_id=? AND status IN ('open','deducting') LIMIT 1`
-    )
-    .get(req.userId);
-  if (openTicket) return res.status(400).json({ code: 'REFUND_NOT_ELIGIBLE', message: '存在未结工单' });
-
-  if (user.account_status === 'banned_permanent') {
-    return res.status(400).json({ code: 'REFUND_NOT_ELIGIBLE' });
-  }
-  if (acc.balance <= 0) return res.status(400).json({ code: 'REFUND_NOT_ELIGIBLE' });
 
   const id = genId('ref_');
   db.prepare(`INSERT INTO refund_orders(id,user_id,amount,status) VALUES (?,?,?,'pending_review')`).run(

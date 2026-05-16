@@ -1,6 +1,8 @@
 # 方案 A：在 GitHub 上运行金手指（Codespaces）
 
-**不用在本机折腾端口**，在 GitHub 云端打开项目，浏览器里就能用。
+**唯一推荐的云端方式。** 不用在本机折腾端口，**不需要 Render 或公网部署**，在 GitHub 云端打开项目，浏览器里就能用。
+
+日常更新见：[发布与更新.md](./发布与更新.md)
 
 仓库：**https://github.com/jushuolot/jinshouzhi**
 

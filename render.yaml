@@ -1,4 +1,5 @@
-# Render 一键部署：在 render.com 连接 GitHub 仓库 jushuolot/jinshouzhi 后可用 Blueprint 导入
+# 【可选附录 · 不需要】金手指推荐仅用 GitHub Codespaces，不必配置 Render。
+# 若仍要公网部署，可在 render.com 连接仓库后导入本 Blueprint（非主流程）。
 services:
   - type: web
     name: jinshouzhi
