@@ -1,0 +1,208 @@
+### 金手指 — 接口验收（REST Client / VS Code REST Client）
+### 使用前：修改 @baseUrl、@maleToken、@femaleToken、@adminToken
+
+@baseUrl = https://api-test.example.com/v1
+@maleToken = REPLACE_MALE_JWT
+@femaleToken = REPLACE_FEMALE_JWT
+@adminToken = REPLACE_ADMIN_JWT
+@conversationId = REPLACE_CONV_ID
+
+### ========== 1. 邀请码 ==========
+
+### JSZ-API-01 校验邀请码-成功
+POST {{baseUrl}}/invite/validate
+Content-Type: application/json
+
+{
+  "invite_code": "INV_M001"
+}
+
+# 预期: 200, valid=true
+
+### JSZ-API-02 校验邀请码-失败
+POST {{baseUrl}}/invite/validate
+Content-Type: application/json
+
+{
+  "invite_code": "INV_XXXX"
+}
+
+# 预期: 200 valid=false 或 4xx INVALID_INVITE_CODE
+
+### ========== 2. 男士实名门禁 ==========
+
+### JSZ-API-03 创建支付单-无邀请码（应失败）
+POST {{baseUrl}}/deposit/pay/create
+Authorization: Bearer {{maleToken}}
+Content-Type: application/json
+
+{}
+
+# 预期: 4xx INVITE_REQUIRED
+
+### JSZ-API-04 创建支付单-未满40（应失败）
+# 使用 test-data male_under40 的 token
+POST {{baseUrl}}/deposit/pay/create
+Authorization: Bearer REPLACE_UNDER40_TOKEN
+Content-Type: application/json
+
+{
+  "invite_code": "INV_M001"
+}
+
+# 预期: 4xx REJECT_AGE
+
+### JSZ-API-05 创建支付单-成功
+POST {{baseUrl}}/deposit/pay/create
+Authorization: Bearer {{maleToken}}
+Content-Type: application/json
+
+{
+  "invite_code": "INV_M001"
+}
+
+# 预期: 200, pay_order_id, amount=1000000(分)
+
+### ========== 3. 保证金账户 ==========
+
+### JSZ-API-06 查询保证金账户
+GET {{baseUrl}}/deposit/account
+Authorization: Bearer {{maleToken}}
+
+# 预期: balance=1000000, status=normal
+
+### ========== 4. 女士学籍 ==========
+
+### JSZ-API-07 女士学籍认证
+POST {{baseUrl}}/student/verify
+Authorization: Bearer {{femaleToken}}
+Content-Type: application/json
+
+{
+  "verify_code": "MOCK_CHSI_CODE_001"
+}
+
+# 预期: 200, status=verified, enroll_status=在读
+
+### JSZ-API-08 女士暂停接收
+PUT {{baseUrl}}/female/settings/receiving
+Authorization: Bearer {{femaleToken}}
+Content-Type: application/json
+
+{
+  "enabled": false
+}
+
+# 预期: 200, receiving_enabled=false
+
+### ========== 5. 分配 ==========
+
+### JSZ-API-09 男士查询今日配额
+GET {{baseUrl}}/assignment/quota
+Authorization: Bearer {{maleToken}}
+
+# 预期: used, limit=3, reset_at
+
+### JSZ-API-10 男士发起分配
+POST {{baseUrl}}/assignment/request
+Authorization: Bearer {{maleToken}}
+Content-Type: application/json
+
+{}
+
+# 预期: 200, match_id, conversation_id
+
+### JSZ-API-11 男士第4次分配（需同日已成功3次）
+POST {{baseUrl}}/assignment/request
+Authorization: Bearer {{maleToken}}
+Content-Type: application/json
+
+{}
+
+# 预期: 4xx DAILY_LIMIT_REACHED
+
+### ========== 6. 隐私 — 会话对方资料 ==========
+
+### JSZ-API-12 男士拉取会话对方资料（脱敏）
+GET {{baseUrl}}/conversation/{{conversationId}}/peer
+Authorization: Bearer {{maleToken}}
+
+# 预期: 200
+# 必须包含: display_name, badges, peer_type=verified_student
+# 必须不包含: school_name, real_name, phone, id_card, student_id
+
+### JSZ-API-13 女士拉取会话对方资料（脱敏）
+GET {{baseUrl}}/conversation/{{conversationId}}/peer
+Authorization: Bearer {{femaleToken}}
+
+# 预期: badges 含已缴保证金类文案，不含 deposit_amount 具体数字
+
+### JSZ-API-14 女士列表（应不存在）
+GET {{baseUrl}}/users/female/list
+Authorization: Bearer {{maleToken}}
+
+# 预期: 404 或 403
+
+### ========== 7. 退保证金 ==========
+
+### JSZ-API-15 申请退保证金-未满30天
+POST {{baseUrl}}/deposit/refund/apply
+Authorization: Bearer {{maleToken}}
+Content-Type: application/json
+
+{}
+
+# 预期: 4xx REFUND_NOT_ELIGIBLE
+
+### JSZ-API-16 申请退保证金-符合条件
+# 需 open_success_at 调整为 31 天前
+POST {{baseUrl}}/deposit/refund/apply
+Authorization: Bearer REPLACE_ELIGIBLE_MALE_TOKEN
+Content-Type: application/json
+
+{}
+
+# 预期: 200, refund_order_id, status=pending_review
+
+### ========== 8. 举报 ==========
+
+### JSZ-API-17 女士举报男士
+POST {{baseUrl}}/violation/report
+Authorization: Bearer {{femaleToken}}
+Content-Type: application/json
+
+{
+  "target_user_id": "REPLACE_MALE_USER_ID",
+  "conversation_id": "{{conversationId}}",
+  "reason": "harassment",
+  "description": "测试举报"
+}
+
+# 预期: 200, ticket_id
+
+### ========== 9. 管理端 ==========
+
+### JSZ-API-18 后台扣罚
+POST {{baseUrl}}/admin/deposit/deduct
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "user_id": "REPLACE_MALE_USER_ID",
+  "amount_cents": 50000,
+  "ticket_id": "REPLACE_TICKET_ID",
+  "reason": "B级骚扰"
+}
+
+# 预期: 200, balance 减少
+
+### JSZ-API-19 后台退款审核通过
+POST {{baseUrl}}/admin/deposit/refund/approve
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "refund_order_id": "REPLACE_REFUND_ORDER_ID"
+}
+
+# 预期: 200, status=approved, 触发原路退

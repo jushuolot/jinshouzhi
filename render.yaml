@@ -1,0 +1,12 @@
+# Render 一键部署：在 render.com 连接 GitHub 仓库 jushuolot/jinshouzhi 后可用 Blueprint 导入
+services:
+  - type: web
+    name: jinshouzhi
+    runtime: node
+    plan: free
+    buildCommand: npm run build:deploy
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
