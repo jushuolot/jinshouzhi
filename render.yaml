@@ -1,5 +1,6 @@
-# 【可选附录 · 不需要】金手指推荐仅用 GitHub Codespaces，不必配置 Render。
-# 若仍要公网部署，可在 render.com 连接仓库后导入本 Blueprint（非主流程）。
+# 金手指公网部署 Blueprint（Render.com）
+# 用法：Render Dashboard → New → Blueprint → 选择本仓库 → 导入此文件
+# Codespaces 仍适合临时演示；Render 适合需要固定 HTTPS 网址的场景
 services:
   - type: web
     name: jinshouzhi

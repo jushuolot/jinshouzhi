@@ -1,110 +1,49 @@
-# 金手指
+# 项目合集（jushuolot/cursor 单仓）
 
-成熟男士（40+）邀请制 + 文明互动保证金；高等教育在读女士认证；**系统分配**、女士信息不对外公开。
+本仓库汇总多个可独立运行的子项目，便于同事 **GitHub 克隆 / Codespaces / 云部署** 测试。
 
-> **MVP 仅供本地学习与内测**，支付与学籍为模拟，上线前须补齐合规与真实接口。
+仓库地址：**https://github.com/jushuolot/jinshouzhi**
 
 ---
 
-## 在 GitHub 上运行（方案 A · 推荐）
+## 子项目一览
 
-**不用本机终端、不用管 3001 端口占用**，在浏览器里打开云端项目即可：
+| 目录 | 说明 | 公网 / 同事测试方式 |
+|------|------|---------------------|
+| **根目录 `client/` + `server/`** | **金手指** — 邀请制社交 MVP（React + Node + SQLite） | **推荐** [GitHub Codespaces](docs/方案A-Codespaces从零开始.md)：`npm run dev` → 打开端口 **5173**；可选 [Render](docs/在GitHub上运行.md#render-公网可选) |
+| [`stock-assistant/`](stock-assistant/README.md) | Streamlit 股票助手（板块、图表、行业对比） | [Streamlit Cloud](https://streamlit.io/cloud) 或 Railway；Secrets 配置 `STOCK_ASSISTANT_PASSWORD` |
+| [`python-stock-mini/`](python-stock-mini/使用说明.txt) | 轻量 Streamlit 行情页 | 同 stock-assistant：`STOCK_APP_PASSWORD` + Streamlit Cloud |
+| [`nuanban_github/`](nuanban_github/README.md) | **暖伴勤工** — uni-app + PocketBase | 云服务器 `docker compose up`（见 [docs/DEPLOY.md](nuanban_github/docs/DEPLOY.md)）；或独立仓 https://github.com/jushuolot/nuanban |
+| [`lo-delivery-platform/`](lo-delivery-platform/README.md) | 物流订单平台 — 产品文档 + Web 演示壳 | GitHub Pages：`Settings → Pages → /docs`；本地 `cd web && python3 -m http.server 8080` |
+| [`match3-game/`](match3-game/README.md) | 三消游戏广告结算占位（WIP） | 暂无完整可玩版本；见目录 README |
+
+> 本地重复的 `nuanban/`、`jinshouzhi/` 子目录已加入 `.gitignore`，请以根目录金手指与 `nuanban_github/` 为准。
+
+---
+
+## 金手指 · 最快上手（Codespaces）
 
 👉 **[docs/方案A-Codespaces从零开始.md](docs/方案A-Codespaces从零开始.md)**
 
-仓库：https://github.com/jushuolot/jinshouzhi → **Code → Codespaces → Create** → 终端 `npm run dev` → 打开端口 **5173**
-
----
-
-## 本机快速开始
-
-**在本机 Mac 运行请看：[docs/从零开始.md](docs/从零开始.md)**
-
 ```bash
-cd /Users/chenli/Downloads/cursor/jinshouzhi
-npm install && cd server && npm install && cd .. && cd client && npm install && cd ..
-npm run seed
-npm run dev
+# 本机
+npm install && cd server && npm install && cd ../client && npm install && cd ..
+npm run seed && npm run dev
+# 浏览器 http://localhost:5173  账号 13800001001 / 123456
 ```
 
-- 电脑浏览器：<http://localhost:5173>  
-- 接口健康检查：<http://localhost:3001/api/health>
-
-### 测试账号（密码均为 `123456`）
-
-| 角色 | 手机号 | 说明 |
-|------|--------|------|
-| 男士 | 13800001001 | 已开户，邀请码 `INV_M001` |
-| 女士 | 13900002001 | 已学籍认证 |
-| 管理 | 13700000000 | 后台扣罚/退款（需调 admin 接口） |
-
-新男士注册：绑定邀请码 `INV_M001` → 实名（满40岁）→ 模拟支付 1 万  
-新女士：实名（满18）→ 学籍验证码 `MOCK_OK`
+生产一体构建：`npm run build && npm start` → http://localhost:3001
 
 ---
 
-## 鸿蒙系统使用
+## 推送与更新
 
-**无需安装包**：鸿蒙手机与电脑连同一 WiFi，浏览器打开：
+见 [docs/发布与更新.md](docs/发布与更新.md)
 
-```text
-http://<你电脑的局域网IP>:5173
-```
-
-详细步骤、添加桌面、常见问题见：**[docs/HARMONYOS.md](./docs/HARMONYOS.md)**
-
-原生鸿蒙 App（ArkWeb 壳 / DevEco）见：**[harmonyos/README.md](./harmonyos/README.md)**
-
-### 鸿蒙相关特性
-
-- 安全区 `safe-area`、动态视口 `100dvh`  
-- 触控优化、禁用点击高亮、字体缩放控制  
-- PWA：`manifest.webmanifest` + `sw.js`（支持时可将 H5 添加到桌面）  
-- 开发/生产服务监听 `0.0.0.0`，便于局域网真机调试  
-
----
-
-## 生产构建（单端口）
-
-```bash
-npm run build
-npm start
-```
-
-访问 <http://localhost:3001>（前后端一体）。
-
----
-
-## 目录结构
-
-```text
-jinshouzhi/
-  client/          React H5（支持鸿蒙浏览器 / PWA）
-  server/          Node API + SQLite
-  docs/            鸿蒙使用说明、测试文档
-  harmonyos/       原生壳说明（无完整 ArkTS 工程）
-```
-
----
-
-## v1.1 新功能
-
-- **规则页**：`/rules`
-- **保证金页**（男士）：`/deposit` — 余额、退保证金资格、申请退款
-
-## 本地编辑 → 同步 GitHub → Codespaces
-
-👉 **[docs/发布与更新.md](docs/发布与更新.md)**（仅 GitHub，不需要 Render）
-
-```bash
-cd ~/Downloads/cursor/jinshouzhi
-git add .
-git commit -m "feat: v1.1 规则页、保证金页、退款资格"
-git push
-```
+**切勿提交**：`.env`、`.streamlit/secrets.toml`、`pb_data/`、SQLite WAL/SHM、真实密码。
 
 ---
 
 ## 免责声明
 
-本项目不构成法律或金融建议。涉及保证金、在校大学生用户、实名与支付等功能上线前，请咨询合规与法务，并办理相应资质。
+各子项目仅供学习/内测，上线前须补齐合规、支付与隐私要求。

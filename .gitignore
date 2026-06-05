@@ -1,6 +1,42 @@
 node_modules/
 dist/
-*.db
-.env
-.DS_Store
 client/dist/
+*.db
+*.db-shm
+*.db-wal
+*.db-journal
+.env
+.env.local
+.env.*
+!.env.example
+.streamlit/secrets.toml
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
+coverage/
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Streamlit / Python local data
+stock-assistant/data/
+python-stock-mini/data/
+
+# PocketBase live data (nuanban)
+packages/pocketbase/pb_data/
+packages/pocketbase/pb_data.bak*/
+pb_data/
+pb_data.bak*/
+
+# uni-app / HBuilderX
+.unpackage/
+.hbuilderx/
+
+# Nested duplicate copies (do not publish)
+jinshouzhi/
+nuanban/nuanban/
+
+# temp
+.write-test
+*.log
