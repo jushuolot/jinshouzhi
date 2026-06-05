@@ -147,6 +147,23 @@ export async function acknowledgeSosAlert(alertId: string) {
   });
 }
 
+export interface ScheduleItem {
+  id: string;
+  orderId: string;
+  elderName: string;
+  serviceName: string;
+  status: string;
+  scheduledStart?: string;
+}
+
+export async function listStudentSchedules() {
+  const res = await request<{ list: ScheduleItem[] }>({
+    url: '/nuanban/student/schedules',
+    method: 'GET',
+  });
+  return res.list ?? [];
+}
+
 export interface ElderRow extends PbRecord {
   name: string;
   latitude?: number;

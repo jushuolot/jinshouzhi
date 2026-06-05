@@ -31,6 +31,7 @@
       </view>
     </view>
     <view v-if="!bindings.length && !loading" class="empty-hint">暂无绑定（演示数据由 seed 提供）</view>
+    <view class="bind-link" @tap="goBind">+ 绑定更多老人</view>
 
     <view class="section-title">待办事项</view>
     <view class="todo-card" @tap="goPay">
@@ -162,6 +163,10 @@ async function goOutdoor() {
   }
 }
 
+function goBind() {
+  uni.navigateTo({ url: '/package-family/bind' });
+}
+
 async function goSos() {
   try {
     const list = await listActiveSosAlerts();
@@ -283,6 +288,12 @@ async function goSos() {
   font-size: 24rpx;
   color: #bbb;
   margin-bottom: 24rpx;
+}
+.bind-link {
+  text-align: center;
+  color: #c45c26;
+  font-size: 28rpx;
+  padding: 16rpx 0 24rpx;
 }
 .todo-card {
   display: flex;

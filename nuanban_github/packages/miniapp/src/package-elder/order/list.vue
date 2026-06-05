@@ -1,7 +1,12 @@
 <template>
-  <view class="page elder-mode">
+  <view class="page elder-mode" :class="fontClass">
+    <text class="tip">我的服务订单</text>
     <view v-for="o in orders" :key="o.id" class="card" @tap="goDetail(o.id)">
-      <text>{{ o.id.slice(0, 8) }} · {{ o.status }}</text>
+      <view class="head">
+        <text class="svc">{{ serviceName(o) }}</text>
+        <text class="status">{{ statusLabel(o.status) }}</text>
+      </view>
+      <text class="meta">{{ formatTime(o.scheduled_at) }} · ¥{{ ((o.amount_cents || 0) / 100).toFixed(0) }}</text>
     </view>
     <view v-if="!orders.length" class="empty">暂无订单</view>
     <RoleTabBar role="elder" current="/package-elder/order/list" />
@@ -9,14 +14,34 @@
 </template>
 
 <script setup lang="ts">
+import { computed, ref } from 'vue';
 import { onShow } from '@dcloudio/uni-app';
-import { ref } from 'vue';
 import RoleTabBar from '../../components/RoleTabBar.vue';
 import { listOrdersForElder, type OrderRow } from '../../api/elder';
 import { useRoleStore } from '../../store/role';
+import { elderFontClass } from '../../utils/elder-accessibility';
+import { orderStatusLabel } from '../../utils/order-status';
 
-const orders = ref<OrderRow[]>([]);
+const orders = ref<
+  (OrderRow & { expand?: { service_item?: { name: string } } })[]
+>([]);
 const roleStore = useRoleStore();
+const fontClass = computed(() => elderFontClass());
+
+function serviceName(o: (typeof orders.value)[0]) {
+  return o.expand?.service_item?.name || '陪护服务';
+}
+
+function statusLabel(s: string) {
+  return orderStatusLabel(s);
+}
+
+function formatTime(iso?: string) {
+  if (!iso) return '待定';
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getMonth() + 1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
 
 onShow(async () => {
   const elderId = roleStore.currentElderId;
@@ -33,11 +58,50 @@ function goDetail(id: string) {
 .page {
   padding: 24rpx;
   padding-bottom: 120rpx;
+  min-height: 100vh;
+  background: #f5f5f5;
+}
+.tip {
+  color: #666;
+  font-size: 26rpx;
 }
 .card {
   background: #fff;
-  padding: 24rpx;
-  margin-bottom: 16rpx;
+  padding: 28rpx 24rpx;
+  margin-top: 16rpx;
+  border-radius: 12rpx;
+}
+.head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.svc {
+  font-size: 32rpx;
+  font-weight: 600;
+}
+.status {
+  font-size: 22rpx;
+  color: #c45c26;
+  background: #fff5ef;
+  padding: 4rpx 12rpx;
   border-radius: 8rpx;
+}
+.meta {
+  display: block;
+  margin-top: 10rpx;
+  color: #888;
+  font-size: 24rpx;
+}
+.empty {
+  text-align: center;
+  color: #999;
+  margin-top: 80rpx;
+}
+.page.elder-large .svc {
+  font-size: 40rpx;
+}
+.page.elder-large .meta {
+  font-size: 32rpx;
 }
 </style>

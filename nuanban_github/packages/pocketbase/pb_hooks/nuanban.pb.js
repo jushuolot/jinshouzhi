@@ -1,4 +1,52 @@
 /// V1 custom routes: wx-login stub, order accept/reject, family pay, outdoor approve
+
+function elderNameById(id) {
+  try {
+    return $app.findRecordById("elders", id).getString("name");
+  } catch (_) {
+    return "老人";
+  }
+}
+
+function serviceInfoById(id) {
+  try {
+    const s = $app.findRecordById("service_items", id);
+    return {
+      name: s.getString("name"),
+      durationMinutes: s.getInt("duration_minutes") || 0,
+      requiresOutdoor: s.getBool("requires_outdoor_approval"),
+    };
+  } catch (_) {
+    return { name: "陪护服务", durationMinutes: 0, requiresOutdoor: false };
+  }
+}
+
+function orderToStudentDto(o) {
+  const svc = serviceInfoById(o.getString("service_item"));
+  return {
+    id: o.id,
+    elderId: o.getString("elder"),
+    elderName: elderNameById(o.getString("elder")),
+    serviceName: svc.name,
+    durationMinutes: svc.durationMinutes,
+    amountCents: o.getInt("amount_cents"),
+    scheduledAt: o.getString("scheduled_at"),
+    status: o.getString("status"),
+    requiresOutdoorApproval: svc.requiresOutdoor,
+  };
+}
+
+function sosToDto(rec) {
+  return {
+    id: rec.id,
+    elderId: rec.getString("elder"),
+    elderName: elderNameById(rec.getString("elder")),
+    message: rec.getString("message") || "老人发起一键求助",
+    createdAt: rec.getString("created"),
+    status: rec.getString("status"),
+  };
+}
+
 routerAdd("GET", "/api/nuanban/ping", (e) => {
   return e.json(200, { ok: true, hooks: true, hasToString: typeof toString });
 });
@@ -499,14 +547,7 @@ routerAdd("GET", "/api/nuanban/student/orders/pending", (e) => {
     );
     const list = [];
     for (let i = 0; i < records.length; i++) {
-      const o = records[i];
-      list.push({
-        id: o.id,
-        elderId: o.getString("elder"),
-        amountCents: o.getInt("amount_cents"),
-        scheduledAt: o.getString("scheduled_at"),
-        status: o.getString("status"),
-      });
+      list.push(orderToStudentDto(records[i]));
     }
     return e.json(200, { list: list });
   } catch (err) {
@@ -582,9 +623,22 @@ routerAdd("GET", "/api/nuanban/student/stats", (e) => {
       incomeCents += o.getInt("amount_cents") || 0;
     }
   }
+  let pendingCount = 0;
+  try {
+    const pending = $app.findRecordsByFilter(
+      "orders",
+      'status = "pending_accept"',
+      "",
+      50,
+      0
+    );
+    pendingCount = pending.length;
+  } catch (_) {}
+
   return e.json(200, {
     acceptedCount: acceptedCount,
     monthCount: monthCount,
+    pendingCount: pendingCount,
     incomeCents: incomeCents,
     incomeYuan: (incomeCents / 100).toFixed(2),
   });
@@ -621,9 +675,34 @@ routerAdd("GET", "/api/nuanban/family/stats", (e) => {
   for (let i = 0; i < paid.length; i++) {
     paidCents += paid[i].getInt("amount_cents") || 0;
   }
+  let outdoorPending = 0;
+  try {
+    const outdoor = $app.findRecordsByFilter(
+      "outdoor_approvals",
+      'family_user = {:uid} && status = "pending_family"',
+      "",
+      50,
+      0,
+      { uid: auth.id }
+    );
+    outdoorPending = outdoor.length;
+  } catch (_) {}
+  let sosPending = 0;
+  try {
+    const sos = $app.findRecordsByFilter(
+      "sos_alerts",
+      'status = "active"',
+      "",
+      50,
+      0
+    );
+    sosPending = sos.length;
+  } catch (_) {}
   return e.json(200, {
     boundElderCount: bindings.length,
     pendingPaymentCount: pending.length,
+    outdoorPendingCount: outdoorPending,
+    sosPendingCount: sosPending,
     paidTotalCents: paidCents,
     paidTotalYuan: (paidCents / 100).toFixed(2),
   });
@@ -677,5 +756,264 @@ routerAdd("GET", "/api/nuanban/elder/stats", (e) => {
     elderName: elderName,
     orderCount: orderCount,
     activeCount: activeCount,
+    caregiverNearbyCount: 4,
   });
+});
+
+routerAdd("GET", "/api/nuanban/student/orders/active", (e) => {
+  const auth = e.auth;
+  if (!auth) return e.json(401, { message: "需要登录" });
+  const records = $app.findRecordsByFilter(
+    "orders",
+    'student_user = {:uid} && (status = "pending_service" || status = "in_service")',
+    "",
+    50,
+    0,
+    { uid: auth.id }
+  );
+  const list = [];
+  for (let i = 0; i < records.length; i++) {
+    list.push(orderToStudentDto(records[i]));
+  }
+  return e.json(200, { list: list });
+});
+
+routerAdd("GET", "/api/nuanban/student/orders/{id}", (e) => {
+  const auth = e.auth;
+  if (!auth) return e.json(401, { message: "需要登录" });
+  const orderId = e.request.pathValue("id");
+  let order;
+  try {
+    order = $app.findRecordById("orders", orderId);
+  } catch (_) {
+    return e.json(404, { message: "订单不存在" });
+  }
+  return e.json(200, orderToStudentDto(order));
+});
+
+routerAdd("POST", "/api/nuanban/student/orders/{id}/start", (e) => {
+  const auth = e.auth;
+  if (!auth) return e.json(401, { message: "需要登录" });
+  const orderId = e.request.pathValue("id");
+  let order;
+  try {
+    order = $app.findRecordById("orders", orderId);
+  } catch (_) {
+    return e.json(404, { message: "订单不存在" });
+  }
+  if (order.getString("status") !== "pending_service") {
+    return e.json(400, { message: "当前状态不可开始服务" });
+  }
+  order.set("status", "in_service");
+  $app.save(order);
+  const schs = $app.findRecordsByFilter(
+    "schedules",
+    "order = {:oid}",
+    "",
+    1,
+    0,
+    { oid: orderId }
+  );
+  if (schs.length > 0) {
+    schs[0].set("status", "in_service");
+    $app.save(schs[0]);
+  }
+  return e.json(200, { ok: true, status: "in_service" });
+});
+
+routerAdd("POST", "/api/nuanban/student/orders/{id}/complete", (e) => {
+  const auth = e.auth;
+  if (!auth) return e.json(401, { message: "需要登录" });
+  const orderId = e.request.pathValue("id");
+  let order;
+  try {
+    order = $app.findRecordById("orders", orderId);
+  } catch (_) {
+    return e.json(404, { message: "订单不存在" });
+  }
+  if (order.getString("status") !== "in_service") {
+    return e.json(400, { message: "当前状态不可完成" });
+  }
+  order.set("status", "completed");
+  $app.save(order);
+  const schs = $app.findRecordsByFilter(
+    "schedules",
+    "order = {:oid}",
+    "",
+    1,
+    0,
+    { oid: orderId }
+  );
+  if (schs.length > 0) {
+    schs[0].set("status", "completed");
+    $app.save(schs[0]);
+  }
+  return e.json(200, { ok: true, status: "completed" });
+});
+
+routerAdd("GET", "/api/nuanban/student/income", (e) => {
+  const auth = e.auth;
+  if (!auth) return e.json(401, { message: "需要登录" });
+  const now = new Date();
+  const month = now.getMonth() + 1;
+  const year = now.getFullYear();
+  const monthPrefix = year + "-" + (month < 10 ? "0" + month : "" + month);
+  const records = $app.findRecordsByFilter(
+    "orders",
+    'student_user = {:uid} && status = "completed"',
+    "-scheduled_at",
+    100,
+    0,
+    { uid: auth.id }
+  );
+  let monthIncome = 0;
+  let totalIncome = 0;
+  const list = [];
+  for (let i = 0; i < records.length; i++) {
+    const o = records[i];
+    const cents = o.getInt("amount_cents") || 0;
+    totalIncome += cents;
+    const scheduled = o.getString("scheduled_at") || "";
+    if (scheduled.indexOf(monthPrefix) === 0) monthIncome += cents;
+    const svc = serviceInfoById(o.getString("service_item"));
+    list.push({
+      id: o.id,
+      elderName: elderNameById(o.getString("elder")),
+      serviceName: svc.name,
+      amountCents: cents,
+      completedAt: scheduled,
+    });
+  }
+  return e.json(200, {
+    monthIncomeCents: monthIncome,
+    monthIncomeYuan: (monthIncome / 100).toFixed(2),
+    totalIncomeCents: totalIncome,
+    totalIncomeYuan: (totalIncome / 100).toFixed(2),
+    records: list,
+  });
+});
+
+routerAdd("GET", "/api/nuanban/student/schedules", (e) => {
+  const auth = e.auth;
+  if (!auth) return e.json(401, { message: "需要登录" });
+  const records = $app.findRecordsByFilter(
+    "schedules",
+    "student_user = {:uid}",
+    "-scheduled_start",
+    50,
+    0,
+    { uid: auth.id }
+  );
+  const list = [];
+  for (let i = 0; i < records.length; i++) {
+    const sch = records[i];
+    let orderId = "";
+    let serviceName = "陪护服务";
+    let elderName = elderNameById(sch.getString("elder"));
+    try {
+      const order = $app.findRecordById("orders", sch.getString("order"));
+      orderId = order.id;
+      serviceName = serviceInfoById(order.getString("service_item")).name;
+    } catch (_) {}
+    list.push({
+      id: sch.id,
+      orderId: orderId,
+      elderName: elderName,
+      serviceName: serviceName,
+      status: sch.getString("status"),
+      scheduledStart: sch.getString("scheduled_start"),
+    });
+  }
+  return e.json(200, { list: list });
+});
+
+routerAdd("POST", "/api/nuanban/elder/sos", (e) => {
+  const auth = e.auth;
+  if (!auth) return e.json(401, { message: "需要登录" });
+  const raw = toString(e.request.body);
+  const body = raw ? JSON.parse(raw) : {};
+  const elderId = body.elderId || "";
+  if (!elderId) return e.json(400, { message: "缺少 elderId" });
+  let col;
+  try {
+    col = $app.findCollectionByNameOrId("sos_alerts");
+  } catch (_) {
+    return e.json(503, { message: "SOS 集合未就绪，请重启 PocketBase 加载 schema" });
+  }
+  const rec = new Record(col);
+  rec.set("elder", elderId);
+  rec.set("message", body.message || "老人发起一键求助");
+  rec.set("status", "active");
+  $app.save(rec);
+  return e.json(200, { id: rec.id, ok: true });
+});
+
+routerAdd("GET", "/api/nuanban/family/sos/active", (e) => {
+  if (!e.auth) return e.json(401, { message: "需要登录" });
+  let records = [];
+  try {
+    records = $app.findRecordsByFilter(
+      "sos_alerts",
+      'status = "active"',
+      "-created",
+      20,
+      0
+    );
+  } catch (_) {
+    return e.json(200, { list: [] });
+  }
+  const list = [];
+  for (let i = 0; i < records.length; i++) {
+    list.push(sosToDto(records[i]));
+  }
+  return e.json(200, { list: list });
+});
+
+routerAdd("POST", "/api/nuanban/family/sos/{id}/ack", (e) => {
+  if (!e.auth) return e.json(401, { message: "需要登录" });
+  const id = e.request.pathValue("id");
+  let rec;
+  try {
+    rec = $app.findRecordById("sos_alerts", id);
+  } catch (_) {
+    return e.json(404, { message: "记录不存在" });
+  }
+  rec.set("status", "acknowledged");
+  $app.save(rec);
+  return e.json(200, { ok: true });
+});
+
+routerAdd("GET", "/api/nuanban/student/sos/active", (e) => {
+  if (!e.auth) return e.json(401, { message: "需要登录" });
+  let records = [];
+  try {
+    records = $app.findRecordsByFilter(
+      "sos_alerts",
+      'status = "active"',
+      "-created",
+      20,
+      0
+    );
+  } catch (_) {
+    return e.json(200, { list: [] });
+  }
+  const list = [];
+  for (let i = 0; i < records.length; i++) {
+    list.push(sosToDto(records[i]));
+  }
+  return e.json(200, { list: list });
+});
+
+routerAdd("POST", "/api/nuanban/student/sos/{id}/ack", (e) => {
+  if (!e.auth) return e.json(401, { message: "需要登录" });
+  const id = e.request.pathValue("id");
+  let rec;
+  try {
+    rec = $app.findRecordById("sos_alerts", id);
+  } catch (_) {
+    return e.json(404, { message: "记录不存在" });
+  }
+  rec.set("status", "acknowledged");
+  $app.save(rec);
+  return e.json(200, { ok: true });
 });

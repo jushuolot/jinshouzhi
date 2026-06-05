@@ -88,8 +88,13 @@ export interface OrderRow extends PbRecord {
 }
 
 export async function listOrdersForElder(elderId: string) {
-  const res = await pbList<OrderRow>('orders', {
+  const res = await pbList<
+    OrderRow & {
+      expand?: { service_item?: { name: string; requires_outdoor_approval?: boolean } };
+    }
+  >('orders', {
     filter: `elder = "${elderId}"`,
+    expand: 'service_item',
     perPage: 30,
   });
   return res.items;

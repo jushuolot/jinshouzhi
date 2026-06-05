@@ -1,5 +1,5 @@
 <template>
-  <view class="page elder-mode">
+  <view class="page elder-mode" :class="fontClass">
     <view class="hero">
       <text class="h1">您好，{{ stats?.elderName || '长辈' }}</text>
       <text class="sub">{{ orgName }}</text>
@@ -44,14 +44,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import RoleTabBar from '../components/RoleTabBar.vue';
 import { onShow } from '@dcloudio/uni-app';
 import { fetchElderStats, triggerSos, type ElderStats } from '../api/elder';
+import { elderFontClass } from '../utils/elder-accessibility';
 import { guardPackageRoute } from '../utils/nav-guard';
 import { pbErrorMessage } from '../utils/request';
 
 const stats = ref<ElderStats | null>(null);
+const fontClass = computed(() => elderFontClass());
 const orgName = ref('暖伴示范养老院');
 
 onShow(async () => {
@@ -179,5 +181,11 @@ async function sos() {
   margin-left: auto;
   font-size: 24rpx;
   opacity: 0.85;
+}
+.page.elder-large .hero .h1 {
+  font-size: 56rpx;
+}
+.page.elder-large .quick-text {
+  font-size: 40rpx;
 }
 </style>

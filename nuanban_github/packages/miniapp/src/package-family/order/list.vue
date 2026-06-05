@@ -1,33 +1,63 @@
 <template>
   <view class="page">
-    <text class="tip">待支付订单</text>
-    <view v-for="o in list" :key="o.id" class="card" @tap="openPay(o.id)">
-      <text class="svc">{{ o.expand?.service_item?.name || '陪护服务' }}</text>
-      <text class="elder">{{ o.expand?.elder?.name || '老人' }}</text>
-      <text class="meta">¥{{ ((o.amount_cents || 0) / 100).toFixed(0) }} · 待支付</text>
+    <view class="segmented">
+      <view class="seg-item" :class="{ active: tab === 'pay' }" @tap="tab = 'pay'">待支付</view>
+      <view class="seg-item" :class="{ active: tab === 'all' }" @tap="tab = 'all'">全部</view>
     </view>
-    <view v-if="!loading && !list.length" class="empty">暂无待支付订单</view>
+
+    <view v-for="o in shown" :key="o.id" class="card" @tap="onTap(o)">
+      <view class="head">
+        <text class="svc">{{ o.expand?.service_item?.name || '陪护服务' }}</text>
+        <text class="status">{{ statusLabel(o.status) }}</text>
+      </view>
+      <text class="elder">{{ o.expand?.elder?.name || '老人' }}</text>
+      <text class="meta">
+        ¥{{ ((o.amount_cents || 0) / 100).toFixed(0) }}
+        <text v-if="o.scheduled_at"> · {{ formatTime(o.scheduled_at) }}</text>
+      </text>
+    </view>
+    <view v-if="!loading && !shown.length" class="empty">暂无订单</view>
     <RoleTabBar role="family" current="/package-family/order/list" />
   </view>
 </template>
 
 <script setup lang="ts">
+import { computed, ref } from 'vue';
 import { onShow } from '@dcloudio/uni-app';
-import { ref } from 'vue';
 import RoleTabBar from '../../components/RoleTabBar.vue';
 import { listBoundElders, listPendingPaymentOrders } from '../../api/family';
+import { pbList, type PbRecord } from '../../api/pb';
 import { useRoleStore } from '../../store/role';
+import { orderStatusLabel } from '../../utils/order-status';
 import { pbErrorMessage } from '../../utils/request';
-import type { PbRecord } from '../../api/pb';
 
-const list = ref<
-  (PbRecord & {
-    amount_cents?: number;
-    expand?: { elder?: { name: string }; service_item?: { name: string } };
-  })[]
->([]);
+type OrderItem = PbRecord & {
+  status: string;
+  amount_cents?: number;
+  scheduled_at?: string;
+  expand?: {
+    elder?: { name: string };
+    service_item?: { name: string };
+  };
+};
+
+const tab = ref<'pay' | 'all'>('pay');
+const payList = ref<OrderItem[]>([]);
+const allList = ref<OrderItem[]>([]);
 const loading = ref(false);
 const roleStore = useRoleStore();
+
+const shown = computed(() => (tab.value === 'pay' ? payList.value : allList.value));
+
+function statusLabel(s: string) {
+  return orderStatusLabel(s);
+}
+
+function formatTime(iso: string) {
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getMonth() + 1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
 
 async function reload() {
   if (!roleStore.user?.id) return;
@@ -35,9 +65,22 @@ async function reload() {
   try {
     const bindings = await listBoundElders(roleStore.user.id);
     const elderIds = bindings.map((b) => b.elder).filter(Boolean);
-    list.value = await listPendingPaymentOrders(elderIds);
+    payList.value = await listPendingPaymentOrders(elderIds);
+    if (!elderIds.length) {
+      allList.value = [];
+      return;
+    }
+    const filter = elderIds.map((id) => `elder = "${id}"`).join(' || ');
+    const res = await pbList<OrderItem>('orders', {
+      filter: `(${filter})`,
+      expand: 'elder,service_item',
+      sort: '-created',
+      perPage: 30,
+    });
+    allList.value = res.items;
   } catch (e) {
-    list.value = [];
+    payList.value = [];
+    allList.value = [];
     uni.showToast({ title: pbErrorMessage(e), icon: 'none' });
   } finally {
     loading.value = false;
@@ -46,17 +89,75 @@ async function reload() {
 
 onShow(reload);
 
-function openPay(id: string) {
-  uni.navigateTo({ url: `/package-family/order/pay?id=${id}` });
+function onTap(o: OrderItem) {
+  if (o.status === 'pending_payment') {
+    uni.navigateTo({ url: `/package-family/order/pay?id=${o.id}` });
+    return;
+  }
+  uni.showToast({ title: `订单状态：${statusLabel(o.status)}`, icon: 'none' });
 }
 </script>
 
 <style scoped>
-.page { padding: 24rpx; padding-bottom: 120rpx; }
-.tip { color: #666; font-size: 26rpx; }
-.card { background: #fff; padding: 24rpx; margin-top: 16rpx; border-radius: 12rpx; }
-.svc { display: block; font-size: 30rpx; font-weight: 600; }
-.elder { display: block; margin-top: 8rpx; color: #666; font-size: 26rpx; }
-.meta { display: block; margin-top: 8rpx; color: #c45c26; font-size: 26rpx; }
-.empty { text-align: center; color: #999; margin-top: 80rpx; }
+.page {
+  padding: 24rpx;
+  padding-bottom: 120rpx;
+  min-height: 100vh;
+  background: #f5f5f5;
+}
+.segmented {
+  display: flex;
+  background: #fff;
+  border-radius: 12rpx;
+  margin-bottom: 20rpx;
+  overflow: hidden;
+}
+.seg-item {
+  flex: 1;
+  text-align: center;
+  padding: 22rpx 0;
+  font-size: 28rpx;
+  color: #666;
+}
+.seg-item.active {
+  color: #c45c26;
+  font-weight: 600;
+  background: #fffaf5;
+}
+.card {
+  background: #fff;
+  padding: 28rpx 24rpx;
+  margin-bottom: 12rpx;
+  border-radius: 12rpx;
+}
+.head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.svc {
+  font-size: 30rpx;
+  font-weight: 600;
+}
+.status {
+  font-size: 22rpx;
+  color: #c45c26;
+}
+.elder {
+  display: block;
+  margin-top: 8rpx;
+  color: #666;
+  font-size: 26rpx;
+}
+.meta {
+  display: block;
+  margin-top: 8rpx;
+  color: #999;
+  font-size: 24rpx;
+}
+.empty {
+  text-align: center;
+  color: #999;
+  margin-top: 80rpx;
+}
 </style>

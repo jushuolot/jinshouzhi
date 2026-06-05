@@ -41,6 +41,10 @@
         <text>收入明细</text>
         <text class="arrow">›</text>
       </view>
+      <view class="menu-item" @tap="goSchedule">
+        <text>我的排班</text>
+        <text class="arrow">›</text>
+      </view>
       <view class="menu-item" @tap="goDiscover">
         <text>附近老人</text>
         <text class="arrow">›</text>
@@ -114,6 +118,10 @@ function goActive() {
 
 function goIncome() {
   uni.navigateTo({ url: '/package-student/income' });
+}
+
+function goSchedule() {
+  uni.navigateTo({ url: '/package-student/schedule/list' });
 }
 
 function goDiscover() {

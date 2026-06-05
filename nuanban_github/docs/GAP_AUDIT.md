@@ -22,7 +22,10 @@
 | elder/orders 下单 | ✅ | |
 | student/orders/pending + accept/reject | ✅ | mock 富化订单字段 |
 | family/orders pay | ✅ | |
-| family/outdoor approve | 🟡 | 页面有；mock 补 outdoor 订单 |
+| family/outdoor approve | ✅ | |
+| student orders active/start/complete/income | ✅ | Phase 3 hooks |
+| elder/sos + family/student sos | ✅ | sos_alerts 集合 |
+| student/schedules | ✅ | 排班列表 API |
 | seed-demo | ✅ | 本地 PocketBase |
 
 ---
@@ -91,9 +94,9 @@
 | 签到 → in_service → completed | 演示链路 | request 页 + mock start/complete | 🟡→✅ demo |
 | 服务日志 / 排班列表 | 二期 | 规划页未注册 | ❌ |
 | 学生收入 / 结算展示 | 二期 | income 页 + mock | 🟡→✅ demo |
-| 家属绑定老人 UI | 二期 | seed/Admin | ❌ |
+| 家属绑定老人 UI | 二期 | family/bind 演示页 | 🟡→✅ demo |
 | 学校合作过滤 | 二期 | — | ❌ |
-| 老人 SOS 落库 | 产品目标 | elder/sos mock + 家属/学生待办 | 🟡→✅ demo |
+| 老人 SOS 落库 | 产品目标 | PB + mock + 待办 | ✅ |
 | 微信支付实装 | 上线后 | stub | ❌ |
 | X-Active-Role 服务端校验 | 二期 | 客户端 only | ❌ |
 
@@ -131,10 +134,9 @@
 ### 仍延期（不阻塞 V1 演示）
 
 - 真实微信登录 / 支付
-- 本地 PocketBase 侧 start/complete/SOS hooks（公网 mock 已覆盖）
-- 家属扫码绑定 UI
-- 老人大字号无障碍 settings 页
-- 课表 / 打卡独立页（schedule/*）
+- 家属扫码绑定（当前为列表选择演示）
+- `student/schedule/checkin` 独立签到页
+- Admin 机构派单 / 运营后台
 
 ---
 

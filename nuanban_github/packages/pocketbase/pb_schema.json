@@ -1033,5 +1033,50 @@
     ],
     "indexes": [],
     "options": {}
+  },
+  {
+    "id": "pbc_nuanban_sos",
+    "name": "sos_alerts",
+    "type": "base",
+    "system": false,
+    "listRule": "@request.auth.id != ''",
+    "viewRule": "@request.auth.id != ''",
+    "createRule": "@request.auth.id != ''",
+    "updateRule": "@request.auth.id != ''",
+    "deleteRule": null,
+    "fields": [
+      {
+        "id": "fld_sos_elder",
+        "name": "elder",
+        "type": "relation",
+        "required": true,
+        "system": false,
+        "hidden": false,
+        "collectionId": "pbc_nuanban_elders",
+        "cascadeDelete": false,
+        "minSelect": 1,
+        "maxSelect": 1
+      },
+      {
+        "id": "fld_sos_msg",
+        "name": "message",
+        "type": "text",
+        "required": false,
+        "system": false,
+        "hidden": false
+      },
+      {
+        "id": "fld_sos_status",
+        "name": "status",
+        "type": "select",
+        "required": true,
+        "system": false,
+        "hidden": false,
+        "maxSelect": 1,
+        "values": ["active", "acknowledged"]
+      }
+    ],
+    "indexes": [],
+    "options": {}
   }
 ]

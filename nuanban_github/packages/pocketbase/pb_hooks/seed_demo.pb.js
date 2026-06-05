@@ -347,6 +347,13 @@ routerAdd("POST", "/api/nuanban/seed-demo", (e) => {
     familyUserId: uFamily.id,
     scheduledAt: new Date(Date.now() + 86400000).toISOString(),
   });
+  findOrCreateOrder(elderZhang.id, svcLife.id, "in_service", {
+    amountCents: 7000,
+    paymentStatus: "paid",
+    familyUserId: uFamily.id,
+    studentUserId: uStudent.id,
+    scheduledAt: new Date(Date.now() - 3600000).toISOString(),
+  });
   findOrCreateOrder(elderLi.id, svcWalk.id, "pending_payment", {
     amountCents: 6500,
     paymentStatus: "unpaid",

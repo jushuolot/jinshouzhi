@@ -479,6 +479,26 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
     }
     return delay({ ok: true, status: order?.status || 'completed' } as T);
   }
+  if (method === 'GET' && path === '/nuanban/student/schedules') {
+    const active = state.orders.filter(
+      (o) =>
+        o.student_user === USERS.student.id &&
+        ['pending_service', 'in_service', 'completed'].includes(o.status),
+    );
+    const list = active.map((o) => {
+      const elder = elderById(o.elder);
+      const svc = serviceById(o.service_item);
+      return {
+        id: `sch-${o.id}`,
+        orderId: o.id,
+        elderName: elder?.name || '老人',
+        serviceName: svc.name,
+        status: o.status === 'completed' ? 'completed' : o.status,
+        scheduledStart: o.scheduled_at,
+      };
+    });
+    return delay({ list } as T);
+  }
   if (method === 'GET' && path === '/nuanban/student/income') {
     const completed = state.orders.filter(
       (o) => o.status === 'completed' && o.student_user === USERS.student.id,
