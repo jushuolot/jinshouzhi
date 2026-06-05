@@ -20,7 +20,7 @@
 | 本地开发 | `git pull` + `./scripts/dev-test.sh` + `npm run dev:h5` |
 | 同步到公网 | `./scripts/sync-github.sh`（push 后 GitHub Pages 自动更新，**无需本机开终端**） |
 
-首次配置（Pages + Render 免费 API）：[docs/GITHUB_DEMO.md](docs/GITHUB_DEMO.md)。日后有服务器见 [docs/PUBLIC_DEMO.md](docs/PUBLIC_DEMO.md)。
+仅需开启 GitHub Pages（无需信用卡）：[docs/SETUP_STEP_BY_STEP.md](docs/SETUP_STEP_BY_STEP.md)。日后真实 API 见 [docs/PUBLIC_DEMO.md](docs/PUBLIC_DEMO.md)。
 
 ## 本地测试 / GitHub 克隆测试
 

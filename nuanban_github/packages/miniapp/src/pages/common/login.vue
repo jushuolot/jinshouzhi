@@ -12,7 +12,7 @@
     >
       开发登录（{{ dev.label }}）
     </button>
-    <view class="hint">需先执行 seed-demo；三角色一键登录，无需改 .env</view>
+    <view class="hint">{{ loginHint }}</view>
     <view class="links">
       <text @tap="goRegister('elder')">老人注册</text>
       <text @tap="goRegister('family')">家属注册</text>
@@ -26,9 +26,12 @@ import { ref } from 'vue';
 import { loginDev, loginWithWxCode } from '../../api/auth';
 import { ROLE_HOME, type RoleKey } from '../../config/tabs';
 import { useRoleStore } from '../../store/role';
-import { pbErrorMessage } from '../../utils/request';
+import { DEMO_MOCK_MODE, pbErrorMessage } from '../../utils/request';
 
 const loading = ref(false);
+const loginHint = DEMO_MOCK_MODE
+  ? '公网演示模式：三角色一键体验，无需后端'
+  : '需先执行 seed-demo；三角色一键登录，无需改 .env';
 const roleStore = useRoleStore();
 
 const DEV_ACCOUNTS = [
