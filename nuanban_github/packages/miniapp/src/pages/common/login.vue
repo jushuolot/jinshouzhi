@@ -22,16 +22,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { loginDev, loginWithWxCode } from '../../api/auth';
 import { ROLE_HOME, type RoleKey } from '../../config/tabs';
 import { useRoleStore } from '../../store/role';
-import { DEMO_MOCK_MODE, pbErrorMessage } from '../../utils/request';
+import { pbErrorMessage } from '../../utils/request';
+import { isDemoMockEnabled } from '../../utils/demo-mock';
 
 const loading = ref(false);
-const loginHint = DEMO_MOCK_MODE
-  ? '公网演示模式：三角色一键体验，无需后端'
-  : '需先执行 seed-demo；三角色一键登录，无需改 .env';
+const loginHint = computed(() =>
+  isDemoMockEnabled()
+    ? '公网演示模式：三角色一键体验，无需后端'
+    : '需先执行 seed-demo；三角色一键登录，无需改 .env'
+);
 const roleStore = useRoleStore();
 
 const DEV_ACCOUNTS = [

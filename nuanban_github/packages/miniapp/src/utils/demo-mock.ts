@@ -142,8 +142,20 @@ function parsePath(url: string): { path: string; query: URLSearchParams } {
   return { path: u.pathname.replace(/^\/api/, ''), query: u.searchParams };
 }
 
+/** 构建时 VITE_DEMO_MOCK，或运行在 GitHub Pages 时自动启用 */
 export function isDemoMockEnabled(): boolean {
-  return import.meta.env.VITE_DEMO_MOCK === 'true';
+  if (import.meta.env.VITE_DEMO_MOCK === 'true') return true;
+  try {
+    if (typeof window !== 'undefined' && window.location) {
+      const { hostname, pathname } = window.location;
+      if (hostname.endsWith('.github.io') && pathname.includes('/nuanban')) {
+        return true;
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+  return false;
 }
 
 export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promise<T> {

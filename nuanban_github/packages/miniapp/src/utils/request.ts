@@ -4,7 +4,9 @@ import { demoMockRequest, isDemoMockEnabled } from './demo-mock';
 /** PocketBase REST root, e.g. http://localhost:8090/api */
 export const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8090/api';
 
-export const DEMO_MOCK_MODE = isDemoMockEnabled();
+export function isDemoMockMode(): boolean {
+  return isDemoMockEnabled();
+}
 
 export interface PbErrorBody {
   message?: string;
@@ -46,7 +48,7 @@ export function pbErrorMessage(err: unknown): string {
 }
 
 export function request<T>(options: UniApp.RequestOptions): Promise<T> {
-  if (DEMO_MOCK_MODE) {
+  if (isDemoMockEnabled()) {
     return demoMockRequest<T>(options);
   }
   const role = useRoleStore();
