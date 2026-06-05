@@ -9,6 +9,34 @@ export interface PendingOrder {
   status: string;
 }
 
+export interface StudentProfile {
+  nickname: string;
+  email: string;
+  schoolName: string;
+  displayName: string;
+}
+
+export interface StudentStats {
+  acceptedCount: number;
+  monthCount: number;
+  incomeCents: number;
+  incomeYuan: string;
+}
+
+export async function fetchStudentProfile() {
+  return request<StudentProfile>({
+    url: '/nuanban/student/profile',
+    method: 'GET',
+  });
+}
+
+export async function fetchStudentStats() {
+  return request<StudentStats>({
+    url: '/nuanban/student/stats',
+    method: 'GET',
+  });
+}
+
 export async function listPendingOrders() {
   const res = await request<{ list: PendingOrder[] }>({
     url: '/nuanban/student/orders/pending',
@@ -36,12 +64,24 @@ export interface ElderRow extends PbRecord {
   name: string;
   latitude?: number;
   longitude?: number;
+  org?: string;
+  expand?: { org?: { id: string; name: string } };
+}
+
+export async function getElderDetail(id: string) {
+  const res = await pbList<ElderRow>('elders', {
+    filter: `id = "${id}"`,
+    expand: 'org',
+    perPage: 1,
+  });
+  return res.items[0] ?? null;
 }
 
 /** Nearby elders stub: active elders with coordinates */
 export async function listNearbyElders(lat: number, lng: number, radiusKm = 5) {
   const res = await pbList<ElderRow>('elders', {
     filter: 'enabled = true',
+    expand: 'org',
     perPage: 50,
   });
   const R = 6371;

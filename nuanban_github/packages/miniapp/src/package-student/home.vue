@@ -15,6 +15,8 @@
 import { ref } from 'vue';
 import { onShow } from '@dcloudio/uni-app';
 import RoleTabBar from '../components/RoleTabBar.vue';
+import { listPendingOrders } from '../api/student';
+import { guardPackageRoute } from '../utils/nav-guard';
 import { request } from '../utils/request';
 import { pbErrorMessage } from '../utils/request';
 
@@ -35,10 +37,26 @@ async function reload() {
   }
 }
 
-onShow(reload);
+onShow(() => {
+  guardPackageRoute('/package-student/home');
+  reload();
+});
 
-function goRequests() {
-  uni.navigateTo({ url: '/package-student/order/request' });
+async function goRequests() {
+  try {
+    const list = await listPendingOrders();
+    if (!list.length) {
+      uni.showToast({ title: '暂无待接单', icon: 'none' });
+      return;
+    }
+    if (list.length === 1) {
+      uni.navigateTo({ url: `/package-student/order/request?id=${list[0].id}` });
+      return;
+    }
+    uni.navigateTo({ url: '/package-student/order/pending' });
+  } catch (e) {
+    uni.showToast({ title: pbErrorMessage(e), icon: 'none' });
+  }
 }
 function goDiscover() {
   uni.navigateTo({ url: '/package-student/discover/list' });

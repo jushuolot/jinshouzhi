@@ -4,12 +4,14 @@
       <text>{{ o.id.slice(0, 8) }} · {{ o.status }}</text>
     </view>
     <view v-if="!orders.length" class="empty">暂无订单</view>
+    <RoleTabBar role="elder" current="/package-elder/order/list" />
   </view>
 </template>
 
 <script setup lang="ts">
 import { onShow } from '@dcloudio/uni-app';
 import { ref } from 'vue';
+import RoleTabBar from '../../components/RoleTabBar.vue';
 import { listOrdersForElder, type OrderRow } from '../../api/elder';
 import { useRoleStore } from '../../store/role';
 
@@ -30,6 +32,7 @@ function goDetail(id: string) {
 <style scoped>
 .page {
   padding: 24rpx;
+  padding-bottom: 120rpx;
 }
 .card {
   background: #fff;

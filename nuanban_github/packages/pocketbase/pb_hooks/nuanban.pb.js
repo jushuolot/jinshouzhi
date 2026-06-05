@@ -56,18 +56,48 @@ routerAdd("POST", "/api/nuanban/dev-login", (e) => {
   const user = users[0];
 
   const em = (email + "").toLowerCase();
-  let role = "student";
+  let activeRole = "student";
   if (em.indexOf("elder") >= 0) {
-    role = "elder";
+    activeRole = "elder";
   } else if (em.indexOf("family") >= 0) {
-    role = "family";
+    activeRole = "family";
+  }
+
+  const roleRecords = $app.findRecordsByFilter(
+    "user_roles",
+    "user = {:uid}",
+    "",
+    50,
+    0,
+    { uid: user.id }
+  );
+  const roles = [];
+  for (let i = 0; i < roleRecords.length; i++) {
+    const r = roleRecords[i];
+    let elderProfileId = null;
+    try {
+      const ep = r.getString("elder_profile");
+      if (ep) elderProfileId = ep;
+    } catch (_) {}
+    roles.push({
+      role: r.getString("role") || "student",
+      status: r.getString("status") || "active",
+      elderProfileId: elderProfileId,
+    });
+  }
+  if (roles.length === 0) {
+    roles.push({ role: activeRole, status: "active", elderProfileId: null });
   }
 
   return e.json(200, {
     token: user.newAuthToken(),
-    user: { id: user.id, nickname: user.getString("name") || user.getString("email") },
-    roles: [{ role: role, status: "active", elderProfileId: null }],
-    activeRole: role,
+    user: {
+      id: user.id,
+      nickname: user.getString("name") || user.getString("email"),
+      email: user.getString("email"),
+    },
+    roles: roles,
+    activeRole: activeRole,
   });
 });
 
@@ -85,10 +115,15 @@ routerAdd("GET", "/api/nuanban/auth/me", (e) => {
   const roles = [];
   for (let i = 0; i < roleRecords.length; i++) {
     const r = roleRecords[i];
+    let elderProfileId = null;
+    try {
+      const ep = r.getString("elder_profile");
+      if (ep) elderProfileId = ep;
+    } catch (_) {}
     roles.push({
       role: r.getString("role") || "student",
       status: r.getString("status") || "active",
-      elderProfileId: null,
+      elderProfileId: elderProfileId,
     });
   }
   return e.json(200, {
@@ -123,10 +158,15 @@ routerAdd("POST", "/api/nuanban/auth/register", (e) => {
     const roles = [];
     for (let i = 0; i < roleRecords.length; i++) {
       const r = roleRecords[i];
+      let elderProfileId = null;
+      try {
+        const ep = r.getString("elder_profile");
+        if (ep) elderProfileId = ep;
+      } catch (_) {}
       roles.push({
         role: r.getString("role") || "student",
         status: r.getString("status") || "active",
-        elderProfileId: null,
+        elderProfileId: elderProfileId,
       });
     }
     return e.json(200, { ok: true, roles: roles });
@@ -149,10 +189,15 @@ routerAdd("POST", "/api/nuanban/auth/register", (e) => {
   const roles2 = [];
   for (let i = 0; i < roleRecords2.length; i++) {
     const r = roleRecords2[i];
+    let elderProfileId = null;
+    try {
+      const ep = r.getString("elder_profile");
+      if (ep) elderProfileId = ep;
+    } catch (_) {}
     roles2.push({
       role: r.getString("role") || "student",
       status: r.getString("status") || "active",
-      elderProfileId: null,
+      elderProfileId: elderProfileId,
     });
   }
   return e.json(200, { ok: true, roles: roles2 });
@@ -467,4 +512,170 @@ routerAdd("GET", "/api/nuanban/student/orders/pending", (e) => {
   } catch (err) {
     return e.json(200, { ok: false, error: "" + err });
   }
+});
+
+routerAdd("GET", "/api/nuanban/student/profile", (e) => {
+  const auth = e.auth;
+  if (!auth) return e.json(401, { message: "需要登录" });
+  let schoolName = "";
+  let displayName = "";
+  const roles = $app.findRecordsByFilter(
+    "user_roles",
+    'user = {:uid} && role = "student"',
+    "",
+    1,
+    0,
+    { uid: auth.id }
+  );
+  if (roles.length > 0) {
+    const r = roles[0];
+    displayName = r.getString("display_name") || "";
+    const schoolId = r.getString("school");
+    if (schoolId) {
+      try {
+        const s = $app.findRecordById("school_dict", schoolId);
+        schoolName = s.getString("name");
+      } catch (_) {}
+    }
+  }
+  return e.json(200, {
+    nickname: auth.getString("name") || displayName || "学生",
+    email: auth.getString("email"),
+    schoolName: schoolName,
+    displayName: displayName,
+  });
+});
+
+routerAdd("GET", "/api/nuanban/student/stats", (e) => {
+  const auth = e.auth;
+  if (!auth) return e.json(401, { message: "需要登录" });
+  const now = new Date();
+  const month = now.getMonth() + 1;
+  const year = now.getFullYear();
+  const monthPrefix = year + "-" + (month < 10 ? "0" + month : "" + month);
+  const records = $app.findRecordsByFilter(
+    "orders",
+    "student_user = {:uid}",
+    "",
+    200,
+    0,
+    { uid: auth.id }
+  );
+  let acceptedCount = 0;
+  let monthCount = 0;
+  let incomeCents = 0;
+  const acceptedStatuses = {
+    pending_service: true,
+    in_service: true,
+    pending_confirm: true,
+    completed: true,
+  };
+  for (let i = 0; i < records.length; i++) {
+    const o = records[i];
+    const st = o.getString("status");
+    if (acceptedStatuses[st]) {
+      acceptedCount += 1;
+      const scheduled = o.getString("scheduled_at") || "";
+      if (scheduled.indexOf(monthPrefix) === 0) monthCount += 1;
+    }
+    if (st === "completed" && o.getString("payment_status") === "paid") {
+      incomeCents += o.getInt("amount_cents") || 0;
+    }
+  }
+  return e.json(200, {
+    acceptedCount: acceptedCount,
+    monthCount: monthCount,
+    incomeCents: incomeCents,
+    incomeYuan: (incomeCents / 100).toFixed(2),
+  });
+});
+
+routerAdd("GET", "/api/nuanban/family/stats", (e) => {
+  const auth = e.auth;
+  if (!auth) return e.json(401, { message: "需要登录" });
+  const bindings = $app.findRecordsByFilter(
+    "family_elder_bindings",
+    "family_user = {:uid}",
+    "",
+    50,
+    0,
+    { uid: auth.id }
+  );
+  const pending = $app.findRecordsByFilter(
+    "orders",
+    'family_user = {:uid} && status = "pending_payment"',
+    "",
+    50,
+    0,
+    { uid: auth.id }
+  );
+  let paidCents = 0;
+  const paid = $app.findRecordsByFilter(
+    "orders",
+    'family_user = {:uid} && payment_status = "paid"',
+    "",
+    100,
+    0,
+    { uid: auth.id }
+  );
+  for (let i = 0; i < paid.length; i++) {
+    paidCents += paid[i].getInt("amount_cents") || 0;
+  }
+  return e.json(200, {
+    boundElderCount: bindings.length,
+    pendingPaymentCount: pending.length,
+    paidTotalCents: paidCents,
+    paidTotalYuan: (paidCents / 100).toFixed(2),
+  });
+});
+
+routerAdd("GET", "/api/nuanban/elder/stats", (e) => {
+  const auth = e.auth;
+  if (!auth) return e.json(401, { message: "需要登录" });
+  let elderProfileId = null;
+  let elderName = "";
+  const roles = $app.findRecordsByFilter(
+    "user_roles",
+    'user = {:uid} && role = "elder"',
+    "",
+    1,
+    0,
+    { uid: auth.id }
+  );
+  if (roles.length > 0) {
+    try {
+      elderProfileId = roles[0].getString("elder_profile");
+    } catch (_) {}
+    if (elderProfileId) {
+      try {
+        const elder = $app.findRecordById("elders", elderProfileId);
+        elderName = elder.getString("name");
+      } catch (_) {}
+    }
+  }
+  let orderCount = 0;
+  let activeCount = 0;
+  if (elderProfileId) {
+    const orders = $app.findRecordsByFilter(
+      "orders",
+      "elder = {:eid}",
+      "",
+      100,
+      0,
+      { eid: elderProfileId }
+    );
+    orderCount = orders.length;
+    for (let i = 0; i < orders.length; i++) {
+      const st = orders[i].getString("status");
+      if (st === "pending_service" || st === "in_service" || st === "pending_confirm") {
+        activeCount += 1;
+      }
+    }
+  }
+  return e.json(200, {
+    elderProfileId: elderProfileId,
+    elderName: elderName,
+    orderCount: orderCount,
+    activeCount: activeCount,
+  });
 });

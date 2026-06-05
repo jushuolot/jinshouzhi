@@ -1,6 +1,20 @@
 import { request } from '../utils/request';
 import { pbCreate, pbList, type PbRecord } from './pb';
 
+export interface FamilyStats {
+  boundElderCount: number;
+  pendingPaymentCount: number;
+  paidTotalCents: number;
+  paidTotalYuan: string;
+}
+
+export async function fetchFamilyStats() {
+  return request<FamilyStats>({
+    url: '/nuanban/family/stats',
+    method: 'GET',
+  });
+}
+
 export async function payOrder(orderId: string) {
   return request<{ ok: boolean; status: string }>({
     url: `/nuanban/family/orders/${orderId}/pay`,
@@ -44,7 +58,6 @@ export async function listPendingPaymentOrders(elderIds: string[]) {
   const filter = elderIds.map((id) => `elder = "${id}"`).join(' || ');
   const res = await pbList<OrderRow>('orders', {
     filter: `(${filter}) && status = "pending_payment"`,
-    sort: '-created',
     perPage: 20,
   });
   return res.items;

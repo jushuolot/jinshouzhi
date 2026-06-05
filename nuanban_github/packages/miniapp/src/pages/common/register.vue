@@ -3,6 +3,7 @@
     <text class="title">注册 · {{ roleLabel[role] }}</text>
     <input v-model="displayName" class="input" placeholder="显示名称（可选）" />
     <button class="btn-primary" :loading="loading" @tap="submit">提交注册</button>
+    <text class="back" @tap="goLogin">返回登录</text>
   </view>
 </template>
 
@@ -41,6 +42,10 @@ onLoad(async (q) => {
   }
 });
 
+function goLogin() {
+  uni.navigateTo({ url: '/pages/common/login' });
+}
+
 async function submit() {
   loading.value = true;
   try {
@@ -75,5 +80,12 @@ async function submit() {
   margin-top: 48rpx;
   background: #c45c26;
   color: #fff;
+}
+.back {
+  display: block;
+  margin-top: 32rpx;
+  text-align: center;
+  color: #c45c26;
+  font-size: 28rpx;
 }
 </style>

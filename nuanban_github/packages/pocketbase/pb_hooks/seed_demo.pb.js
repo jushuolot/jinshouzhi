@@ -72,7 +72,7 @@ var findOrCreateUserRole = function(userId, role, extra) {
 }
 
 routerAdd("POST", "/api/nuanban/seed-demo", (e) => {
-  const stats = { users: 0, roles: 0, schools: 0, orgs: 0, elders: 0, orders: 0, serviceItems: 0 };
+  const stats = { users: 0, roles: 0, schools: 0, orgs: 0, elders: 0, orders: 0, serviceItems: 0, bindings: 0 };
 
   // school_dict
   const existingSchool = $app.findRecordsByFilter(
@@ -265,15 +265,41 @@ routerAdd("POST", "/api/nuanban/seed-demo", (e) => {
     rec.set("amount_cents", extra.amountCents || 5000);
     rec.set("payment_status", extra.paymentStatus || "unpaid");
     if (extra.familyUserId) rec.set("family_user", extra.familyUserId);
+    if (extra.studentUserId) rec.set("student_user", extra.studentUserId);
     if (extra.scheduledAt) rec.set("scheduled_at", extra.scheduledAt);
     $app.save(rec);
     stats.orders += 1;
     return rec;
   }
 
+  function findOrCreateFamilyBinding(familyUserId, elderId) {
+    const rows = $app.findRecordsByFilter(
+      "family_elder_bindings",
+      "family_user = {:f} && elder = {:e}",
+      "",
+      1,
+      0,
+      { f: familyUserId, e: elderId }
+    );
+    if (rows.length > 0) return rows[0];
+    const col = $app.findCollectionByNameOrId("family_elder_bindings");
+    const rec = new Record(col);
+    rec.set("family_user", familyUserId);
+    rec.set("elder", elderId);
+    rec.set("relation_label", "家属");
+    rec.set("is_primary_payer", true);
+    $app.save(rec);
+    stats.bindings += 1;
+    return rec;
+  }
+
   const uStudent = findOrCreateUserByEmail("student1@test.nuanban.dev", "学生1");
   const uFamily = findOrCreateUserByEmail("family1@test.nuanban.dev", "家属1");
   const uElder = findOrCreateUserByEmail("elder1@test.nuanban.dev", "老人1");
+
+  const org = findOrCreateOrg("暖伴示范养老院");
+  const elderZhang = findOrCreateElder(org.id, "张奶奶", 31.2304, 121.4737);
+  const elderLi = findOrCreateElder(org.id, "李爷爷", 31.235, 121.48);
 
   findOrCreateRole(uStudent.id, "student", {
     school: school.id,
@@ -282,11 +308,13 @@ routerAdd("POST", "/api/nuanban/seed-demo", (e) => {
     longitude: 121.475,
   });
   findOrCreateRole(uFamily.id, "family", { display_name: "家属1" });
-  findOrCreateRole(uElder.id, "elder", { display_name: "老人1" });
+  findOrCreateRole(uElder.id, "elder", {
+    display_name: "老人1",
+    elder_profile: elderZhang.id,
+  });
 
-  const org = findOrCreateOrg("暖伴示范养老院");
-  const elderZhang = findOrCreateElder(org.id, "张奶奶", 31.2304, 121.4737);
-  const elderLi = findOrCreateElder(org.id, "李爷爷", 31.235, 121.48);
+  findOrCreateFamilyBinding(uFamily.id, elderZhang.id);
+  findOrCreateFamilyBinding(uFamily.id, elderLi.id);
 
   const category = findOrCreateServiceCategory("陪伴服务");
   const serviceItem = findOrCreateServiceItem(category.id, "聊天陪伴", 5000);
@@ -302,6 +330,20 @@ routerAdd("POST", "/api/nuanban/seed-demo", (e) => {
     paymentStatus: "unpaid",
     familyUserId: uFamily.id,
     scheduledAt: new Date(Date.now() + 172800000).toISOString(),
+  });
+  findOrCreateOrder(elderZhang.id, serviceItem.id, "completed", {
+    amountCents: 5000,
+    paymentStatus: "paid",
+    familyUserId: uFamily.id,
+    studentUserId: uStudent.id,
+    scheduledAt: new Date(Date.now() - 86400000 * 3).toISOString(),
+  });
+  findOrCreateOrder(elderLi.id, serviceItem.id, "completed", {
+    amountCents: 5000,
+    paymentStatus: "paid",
+    familyUserId: uFamily.id,
+    studentUserId: uStudent.id,
+    scheduledAt: new Date(Date.now() - 86400000).toISOString(),
   });
 
   return e.json(200, {

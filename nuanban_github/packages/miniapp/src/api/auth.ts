@@ -10,7 +10,7 @@ export interface AuthRole {
 
 export interface LoginResult {
   token: string;
-  user: { id: string; nickname?: string };
+  user: { id: string; nickname?: string; email?: string };
   roles: AuthRole[];
   activeRole?: RoleKey;
 }

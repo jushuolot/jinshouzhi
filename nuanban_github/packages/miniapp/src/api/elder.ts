@@ -10,6 +10,20 @@ export interface CaregiverItem {
   distanceKm?: number;
 }
 
+export interface ElderStats {
+  elderProfileId: string | null;
+  elderName: string;
+  orderCount: number;
+  activeCount: number;
+}
+
+export async function fetchElderStats() {
+  return request<ElderStats>({
+    url: '/nuanban/elder/stats',
+    method: 'GET',
+  });
+}
+
 export async function getNearbyCaregivers(lat: number, lng: number, radiusKm = 5) {
   const res = await request<{ list: CaregiverItem[] }>({
     url: `/nuanban/elder/caregivers/nearby?lat=${lat}&lng=${lng}&radiusKm=${radiusKm}`,
@@ -68,7 +82,6 @@ export interface OrderRow extends PbRecord {
 export async function listOrdersForElder(elderId: string) {
   const res = await pbList<OrderRow>('orders', {
     filter: `elder = "${elderId}"`,
-    sort: '-created',
     perPage: 30,
   });
   return res.items;

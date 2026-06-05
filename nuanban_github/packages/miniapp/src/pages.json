@@ -14,15 +14,18 @@
         { "path": "caregivers/detail", "style": { "navigationBarTitleText": "陪护资料" } },
         { "path": "order/create", "style": { "navigationBarTitleText": "预约服务" } },
         { "path": "order/detail", "style": { "navigationBarTitleText": "订单详情" } },
-        { "path": "order/list", "style": { "navigationBarTitleText": "我的服务" } }
+        { "path": "order/list", "style": { "navigationBarTitleText": "我的服务" } },
+        { "path": "profile", "style": { "navigationBarTitleText": "我的" } }
       ]
     },
     {
       "root": "package-family",
       "pages": [
         { "path": "home", "style": { "navigationBarTitleText": "家属端" } },
+        { "path": "order/list", "style": { "navigationBarTitleText": "订单" } },
         { "path": "order/pay", "style": { "navigationBarTitleText": "待支付" } },
-        { "path": "outdoor/approve", "style": { "navigationBarTitleText": "外出审批" } }
+        { "path": "outdoor/approve", "style": { "navigationBarTitleText": "外出审批" } },
+        { "path": "profile", "style": { "navigationBarTitleText": "我的" } }
       ]
     },
     {
@@ -30,7 +33,10 @@
       "pages": [
         { "path": "home", "style": { "navigationBarTitleText": "学生端" } },
         { "path": "discover/list", "style": { "navigationBarTitleText": "附近老人" } },
-        { "path": "order/request", "style": { "navigationBarTitleText": "订单详情" } }
+        { "path": "discover/elder", "style": { "navigationBarTitleText": "老人详情" } },
+        { "path": "order/pending", "style": { "navigationBarTitleText": "待接单" } },
+        { "path": "order/request", "style": { "navigationBarTitleText": "订单详情" } },
+        { "path": "profile", "style": { "navigationBarTitleText": "我的" } }
       ]
     }
   ],

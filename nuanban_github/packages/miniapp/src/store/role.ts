@@ -19,6 +19,7 @@ export const useRoleStore = defineStore('role', {
     user: (uni.getStorageSync(USER_KEY) as {
       id: string;
       nickname?: string;
+      email?: string;
       avatarUrl?: string;
     }) || null,
   }),
@@ -37,7 +38,7 @@ export const useRoleStore = defineStore('role', {
       token: string;
       roles: UserRole[];
       activeRole?: RoleKey;
-      user?: { id: string; nickname?: string; avatarUrl?: string };
+      user?: { id: string; nickname?: string; email?: string; avatarUrl?: string };
     }) {
       this.token = payload.token;
       this.roles = payload.roles;

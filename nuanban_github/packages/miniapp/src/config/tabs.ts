@@ -10,17 +10,17 @@ export const ROLE_TABS: Record<RoleKey, TabItem[]> = {
   elder: [
     { text: '首页', pagePath: '/package-elder/home' },
     { text: '服务', pagePath: '/package-elder/order/list' },
-    { text: '我的', pagePath: '/package-elder/home' },
+    { text: '我的', pagePath: '/package-elder/profile' },
   ],
   family: [
     { text: '首页', pagePath: '/package-family/home' },
-    { text: '订单', pagePath: '/package-family/home' },
-    { text: '我的', pagePath: '/package-family/home' },
+    { text: '订单', pagePath: '/package-family/order/list' },
+    { text: '我的', pagePath: '/package-family/profile' },
   ],
   student: [
     { text: '首页', pagePath: '/package-student/home' },
     { text: '发现', pagePath: '/package-student/discover/list' },
-    { text: '我的', pagePath: '/package-student/home' },
+    { text: '我的', pagePath: '/package-student/profile' },
   ],
 };
 
