@@ -47,6 +47,33 @@ function sosToDto(rec) {
   };
 }
 
+function haversineM(lat1, lng1, lat2, lng2) {
+  const R = 6371000;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLng / 2) *
+      Math.sin(dLng / 2);
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function orderToFamilyDto(order) {
+  const svc = serviceInfoById(order.getString("service_item"));
+  return {
+    id: order.id,
+    status: order.getString("status"),
+    amount_cents: order.getInt("amount_cents"),
+    scheduled_at: order.getString("scheduled_at"),
+    payment_status: order.getString("payment_status"),
+    elderName: elderNameById(order.getString("elder")),
+    serviceName: svc.name,
+    requiresOutdoorApproval: svc.requiresOutdoor,
+  };
+}
+
 routerAdd("GET", "/api/nuanban/ping", (e) => {
   return e.json(200, { ok: true, hooks: true, hasToString: typeof toString });
 });
@@ -1016,4 +1043,61 @@ routerAdd("POST", "/api/nuanban/student/sos/{id}/ack", (e) => {
   rec.set("status", "acknowledged");
   $app.save(rec);
   return e.json(200, { ok: true });
+});
+
+routerAdd("POST", "/api/nuanban/student/orders/{id}/checkin", (e) => {
+  const auth = e.auth;
+  if (!auth) return e.json(401, { message: "需要登录" });
+  const orderId = e.request.pathValue("id");
+  const raw = toString(e.request.body);
+  const body = raw ? JSON.parse(raw) : {};
+  let order;
+  try {
+    order = $app.findRecordById("orders", orderId);
+  } catch (_) {
+    return e.json(404, { message: "订单不存在" });
+  }
+  if (order.getString("status") !== "pending_service") {
+    return e.json(400, { message: "当前状态不可签到" });
+  }
+  const lat = parseFloat(body.lat);
+  const lng = parseFloat(body.lng);
+  if (!isNaN(lat) && !isNaN(lng)) {
+    try {
+      const elder = $app.findRecordById("elders", order.getString("elder"));
+      const elat = elder.getFloat("latitude");
+      const elng = elder.getFloat("longitude");
+      if (elat && elng && haversineM(lat, lng, elat, elng) > 500) {
+        return e.json(400, { message: "未进入服务点 500m 围栏" });
+      }
+    } catch (_) {}
+  }
+  order.set("status", "in_service");
+  $app.save(order);
+  const schs = $app.findRecordsByFilter(
+    "schedules",
+    "order = {:oid}",
+    "",
+    1,
+    0,
+    { oid: orderId }
+  );
+  if (schs.length > 0) {
+    schs[0].set("status", "in_service");
+    $app.save(schs[0]);
+  }
+  return e.json(200, { ok: true, status: "in_service" });
+});
+
+routerAdd("GET", "/api/nuanban/family/orders/{id}", (e) => {
+  const auth = e.auth;
+  if (!auth) return e.json(401, { message: "需要登录" });
+  const orderId = e.request.pathValue("id");
+  let order;
+  try {
+    order = $app.findRecordById("orders", orderId);
+  } catch (_) {
+    return e.json(404, { message: "订单不存在" });
+  }
+  return e.json(200, orderToFamilyDto(order));
 });

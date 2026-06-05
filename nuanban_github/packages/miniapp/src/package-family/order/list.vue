@@ -90,11 +90,7 @@ async function reload() {
 onShow(reload);
 
 function onTap(o: OrderItem) {
-  if (o.status === 'pending_payment') {
-    uni.navigateTo({ url: `/package-family/order/pay?id=${o.id}` });
-    return;
-  }
-  uni.showToast({ title: `订单状态：${statusLabel(o.status)}`, icon: 'none' });
+  uni.navigateTo({ url: `/package-family/order/detail?id=${o.id}` });
 }
 </script>
 

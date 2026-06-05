@@ -99,6 +99,7 @@ const menuItems = computed(() => {
     return [
       { label: '找陪护', action: () => uni.navigateTo({ url: '/package-elder/caregivers/list' }) },
       { label: '我的服务', action: () => uni.redirectTo({ url: '/package-elder/order/list' }) },
+      { label: '家属绑定码', action: () => uni.navigateTo({ url: '/package-elder/bind-code' }) },
       { label: '无障碍设置', action: () => uni.navigateTo({ url: '/package-elder/settings' }) },
       { label: '老人首页', action: () => uni.redirectTo({ url: '/package-elder/home' }) },
     ];

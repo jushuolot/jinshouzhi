@@ -125,3 +125,21 @@ export async function acknowledgeSosAlert(alertId: string) {
     method: 'POST',
   });
 }
+
+export interface FamilyOrderDetail {
+  id: string;
+  status: string;
+  amount_cents?: number;
+  scheduled_at?: string;
+  payment_status?: string;
+  elderName?: string;
+  serviceName?: string;
+  requiresOutdoorApproval?: boolean;
+}
+
+export async function getFamilyOrder(orderId: string) {
+  return request<FamilyOrderDetail>({
+    url: `/nuanban/family/orders/${orderId}`,
+    method: 'GET',
+  });
+}

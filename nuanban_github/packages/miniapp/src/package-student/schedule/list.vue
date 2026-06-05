@@ -1,7 +1,7 @@
 <template>
   <view class="page">
     <text class="tip">我的排班（接单后自动生成）</text>
-    <view v-for="s in list" :key="s.id" class="card" @tap="openOrder(s.orderId)">
+    <view v-for="s in list" :key="s.id" class="card" @tap="onTap(s)">
       <view class="head">
         <text class="svc">{{ s.serviceName }}</text>
         <text class="tag" :class="s.status">{{ statusLabel(s.status) }}</text>
@@ -50,9 +50,13 @@ async function reload() {
 
 onShow(reload);
 
-function openOrder(orderId: string) {
-  if (!orderId) return;
-  uni.navigateTo({ url: `/package-student/order/request?id=${orderId}` });
+function onTap(s: ScheduleItem) {
+  if (!s.orderId) return;
+  if (s.status === 'pending_service') {
+    uni.navigateTo({ url: `/package-student/schedule/checkin?orderId=${s.orderId}` });
+    return;
+  }
+  uni.navigateTo({ url: `/package-student/order/request?id=${s.orderId}` });
 }
 </script>
 

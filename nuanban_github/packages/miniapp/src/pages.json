@@ -15,6 +15,7 @@
         { "path": "order/create", "style": { "navigationBarTitleText": "预约服务" } },
         { "path": "order/detail", "style": { "navigationBarTitleText": "订单详情" } },
         { "path": "order/list", "style": { "navigationBarTitleText": "我的服务" } },
+        { "path": "bind-code", "style": { "navigationBarTitleText": "家属绑定码" } },
         { "path": "settings", "style": { "navigationBarTitleText": "无障碍设置" } },
         { "path": "profile", "style": { "navigationBarTitleText": "我的" } }
       ]
@@ -26,6 +27,7 @@
         { "path": "bind", "style": { "navigationBarTitleText": "绑定老人" } },
         { "path": "order/list", "style": { "navigationBarTitleText": "订单" } },
         { "path": "order/pay", "style": { "navigationBarTitleText": "待支付" } },
+        { "path": "order/detail", "style": { "navigationBarTitleText": "订单详情" } },
         { "path": "outdoor/approve", "style": { "navigationBarTitleText": "外出审批" } },
         { "path": "profile", "style": { "navigationBarTitleText": "我的" } }
       ]
@@ -41,6 +43,7 @@
         { "path": "order/request", "style": { "navigationBarTitleText": "订单详情" } },
         { "path": "income", "style": { "navigationBarTitleText": "收入明细" } },
         { "path": "schedule/list", "style": { "navigationBarTitleText": "我的排班" } },
+        { "path": "schedule/checkin", "style": { "navigationBarTitleText": "到场签到" } },
         { "path": "profile", "style": { "navigationBarTitleText": "我的" } }
       ]
     }

@@ -470,6 +470,15 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
     if (order && order.status === 'pending_service') order.status = 'in_service';
     return delay({ ok: true, status: order?.status || 'in_service' } as T);
   }
+  const studentOrderCheckin = path.match(/^\/nuanban\/student\/orders\/([^/]+)\/checkin$/);
+  if (method === 'POST' && studentOrderCheckin) {
+    const order = state.orders.find((o) => o.id === studentOrderCheckin[1]);
+    if (!order || order.status !== 'pending_service') {
+      return Promise.reject({ message: '当前状态不可签到' });
+    }
+    order.status = 'in_service';
+    return delay({ ok: true, status: 'in_service' } as T);
+  }
   const studentOrderComplete = path.match(/^\/nuanban\/student\/orders\/([^/]+)\/complete$/);
   if (method === 'POST' && studentOrderComplete) {
     const order = state.orders.find((o) => o.id === studentOrderComplete[1]);
@@ -573,6 +582,22 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
     const alert = state.sosAlerts.find((a) => a.id === familySosAck[1]);
     if (alert) alert.status = 'acknowledged';
     return delay({ ok: true } as T);
+  }
+  const familyOrderGet = path.match(/^\/nuanban\/family\/orders\/([^/]+)$/);
+  if (method === 'GET' && familyOrderGet) {
+    const order = state.orders.find((o) => o.id === familyOrderGet[1]);
+    if (!order) return Promise.reject({ message: '订单不存在' });
+    const dto = pendingOrderDto(order);
+    return delay({
+      id: order.id,
+      status: order.status,
+      amount_cents: order.amount_cents,
+      scheduled_at: order.scheduled_at,
+      payment_status: order.payment_status,
+      elderName: dto.elderName,
+      serviceName: dto.serviceName,
+      requiresOutdoorApproval: dto.requiresOutdoorApproval,
+    } as T);
   }
   if (method === 'POST' && path.match(/\/nuanban\/family\/orders\/[^/]+\/pay/)) {
     const id = path.split('/')[4];

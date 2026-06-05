@@ -49,4 +49,12 @@ export const DEEP_LINK_MAP: Record<string, { role: RoleKey; path: (id?: string) 
     role: 'family',
     path: (id) => `/package-family/outdoor/approve?id=${id ?? ''}`,
   },
+  'family-order': {
+    role: 'family',
+    path: (id) => `/package-family/order/detail?id=${id ?? ''}`,
+  },
+  'family-bind': {
+    role: 'family',
+    path: (id) => `/package-family/bind?code=${encodeURIComponent(id ?? '')}`,
+  },
 };

@@ -94,7 +94,9 @@
 | 签到 → in_service → completed | 演示链路 | request 页 + mock start/complete | 🟡→✅ demo |
 | 服务日志 / 排班列表 | 二期 | 规划页未注册 | ❌ |
 | 学生收入 / 结算展示 | 二期 | income 页 + mock | 🟡→✅ demo |
-| 家属绑定老人 UI | 二期 | family/bind 演示页 | 🟡→✅ demo |
+| 家属绑定老人 UI | 二期 | 绑定码/链接 + 列表 | ✅ demo |
+| 到场签到 / 围栏 | 二期 | schedule/checkin | ✅ demo |
+| 家属订单详情 | — | family/order/detail | ✅ |
 | 学校合作过滤 | 二期 | — | ❌ |
 | 老人 SOS 落库 | 产品目标 | PB + mock + 待办 | ✅ |
 | 微信支付实装 | 上线后 | stub | ❌ |
@@ -134,8 +136,8 @@
 ### 仍延期（不阻塞 V1 演示）
 
 - 真实微信登录 / 支付
-- 家属扫码绑定（当前为列表选择演示）
-- `student/schedule/checkin` 独立签到页
+- 微信原生扫码（当前为绑定码/免费 QR 图 + 链接）
+- 服务日志页 schedule/log
 - Admin 机构派单 / 运营后台
 
 ---

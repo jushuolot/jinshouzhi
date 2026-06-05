@@ -40,8 +40,8 @@
       <button v-if="order.status === 'pending_accept'" class="btn-no" :disabled="loading" @tap="reject">
         拒绝
       </button>
-      <button v-if="order.status === 'pending_service'" class="btn-ok" :loading="loading" @tap="start">
-        开始服务（签到）
+      <button v-if="order.status === 'pending_service'" class="btn-ok" @tap="goCheckin">
+        到场签到
       </button>
       <button v-if="order.status === 'in_service'" class="btn-ok" :loading="loading" @tap="complete">
         完成服务
@@ -60,7 +60,6 @@ import {
   acceptOrder,
   rejectOrder,
   getStudentOrder,
-  startOrder,
   completeOrder,
   type StudentOrderDetail,
 } from '../../api/student';
@@ -126,18 +125,9 @@ async function reject() {
   }
 }
 
-async function start() {
+function goCheckin() {
   if (!id.value) return;
-  loading.value = true;
-  try {
-    await startOrder(id.value);
-    uni.showToast({ title: '已开始服务', icon: 'success' });
-    await loadOrder();
-  } catch (e) {
-    uni.showToast({ title: pbErrorMessage(e), icon: 'none' });
-  } finally {
-    loading.value = false;
-  }
+  uni.navigateTo({ url: `/package-student/schedule/checkin?orderId=${id.value}` });
 }
 
 async function complete() {

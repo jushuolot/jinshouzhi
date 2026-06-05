@@ -118,6 +118,15 @@ export async function startOrder(orderId: string) {
   });
 }
 
+/** 到场签到（地理围栏校验后等同开始服务） */
+export async function checkinOrder(orderId: string, lat: number, lng: number) {
+  return request<{ ok: boolean; status: string }>({
+    url: `/nuanban/student/orders/${orderId}/checkin`,
+    method: 'POST',
+    data: { lat, lng },
+  });
+}
+
 export async function completeOrder(orderId: string) {
   return request<{ ok: boolean; status: string }>({
     url: `/nuanban/student/orders/${orderId}/complete`,

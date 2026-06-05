@@ -24,7 +24,7 @@ https://jushuolot.github.io/jinshouzhi/nuanban/#/pages/common/login
 |------|------|
 | 1 | 登录 → **首页** 看统计、待接单角标 |
 | 2 | 底部 **接单** → 富订单卡片 → 进入详情 → **接受订单** |
-| 3 | **服务中** 列表 → 订单详情时间轴 → **开始服务** → **完成服务** |
+| 3 | **服务中** / **排班** → **到场签到**（500m 围栏，演示定位自动通过）→ **完成服务** |
 | 4 | **发现** → 附近老人 PersonCard → 老人详情 |
 | 5 | 首页点 **本月收入** 或 **我的 → 收入明细** |
 | 6 | 若老人触发 SOS，首页出现 **紧急求助** 待办 |
@@ -33,10 +33,10 @@ https://jushuolot.github.io/jinshouzhi/nuanban/#/pages/common/login
 
 | 步骤 | 操作 |
 |------|------|
-| 1 | 登录 → **首页** 绑定老人、待办统计 |
-| 2 | **待支付订单** → 模拟支付 |
+| 1 | 登录 → **首页** 待办统计；**绑定老人**（绑定码 / 列表） |
+| 2 | **订单** → 详情看时间轴 → 待支付去 **模拟支付** |
 | 3 | **外出审批** → 同意 / 拒绝 |
-| 4 | 老人 **一键求助** 后，首页 **SOS 求助** 待办 → 确认已知晓 |
+| 4 | 老人 **一键求助** 后，首页 **SOS** 待办 → 确认已知晓 |
 
 ### 老人端 `elder1@test.nuanban.dev`
 
@@ -44,8 +44,8 @@ https://jushuolot.github.io/jinshouzhi/nuanban/#/pages/common/login
 |------|------|
 | 1 | 登录 → **首页** 统计与快捷入口 |
 | 2 | **找陪护** → 学生 PersonCard → 详情 → 预约服务 |
-| 3 | **我的服务** → 订单详情（时间轴） |
-| 4 | **一键求助** → 通知家属与学生（演示落库） |
+| 3 | **我的 → 家属绑定码** 复制给家属扫码/输码 |
+| 4 | **我的服务** → 订单详情（时间轴）；**一键求助** → SOS 待办 |
 
 ---
 
@@ -56,7 +56,8 @@ https://jushuolot.github.io/jinshouzhi/nuanban/#/pages/common/login
 | 本地开发 | `git pull` → `./scripts/dev-test.sh` → `npm run dev:h5` |
 | 同步到公网 | `git push`（Actions 自动更新 `docs/nuanban/`）或 `./scripts/sync-github.sh` |
 | 首次搭建 | [GITHUB_DEMO.md](./GITHUB_DEMO.md) · [SETUP_STEP_BY_STEP.md](./SETUP_STEP_BY_STEP.md) |
-| 功能缺口 | [GAP_AUDIT.md](./GAP_AUDIT.md) |
+| 功能缺口 | [GAP_AUDIT.md](./GAP_AUDIT.md) · [ROADMAP.md](./ROADMAP.md) |
+| 零成本说明 | [ZERO_COST.md](./ZERO_COST.md) |
 
 ---
 
