@@ -44,13 +44,24 @@ def fetch_history(ticker: str, *, start: date, end: date, interval: str = "1d") 
     return df
 
 
+def _ticker_info(t: yf.Ticker) -> dict[str, Any]:
+    try:
+        if hasattr(t, "get_info"):
+            raw = t.get_info()
+            if isinstance(raw, dict):
+                return raw
+    except Exception:
+        pass
+    try:
+        raw = t.info
+        return raw if isinstance(raw, dict) else {}
+    except Exception:
+        return {}
+
+
 def fetch_profile(ticker: str) -> YahooProfile:
     t = yf.Ticker(ticker)
-    info: dict[str, Any] = {}
-    try:
-        info = t.get_info() or {}
-    except Exception:
-        info = {}
+    info = _ticker_info(t)
     name = str(info.get("shortName") or info.get("longName") or ticker).strip()
     return YahooProfile(
         ticker=ticker.upper(),
