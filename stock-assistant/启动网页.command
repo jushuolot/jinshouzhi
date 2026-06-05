@@ -13,6 +13,24 @@ fi
 
 # shellcheck source=/dev/null
 source .venv/bin/activate
+
+# 依赖自检：pandas 2.0.x 与 numpy 2.x 会二进制不兼容，表现为导入 pandas 直接崩溃。
+_NUMPY_MAJOR="$(python3 - <<'PY'
+try:
+    import numpy as np
+    print(str(np.__version__).split('.')[0])
+except Exception:
+    print("")
+PY
+)"
+if [ "$_NUMPY_MAJOR" = "2" ]; then
+  echo "[stock-assistant] 检测到 numpy>=2，自动降级到 numpy<2（避免 pandas 崩溃）..."
+  pip install -q "numpy<2" || {
+    osascript -e 'display dialog "检测到 numpy>=2 但自动修复失败。请检查网络后重试。" buttons {"好"} default button 1'
+    exit 1
+  }
+fi
+
 pip install -q -r requirements.txt || { osascript -e 'display dialog "依赖安装失败，请检查网络后重试。" buttons {"好"} default button 1'; exit 1; }
 
 exec streamlit run app.py
