@@ -4,7 +4,7 @@ import type { RoleKey } from '../config/tabs';
 const MOCK_TOKEN = 'demo-mock-token';
 
 const USERS = {
-  student: { id: 'user-student', email: 'student1@test.nuanban.dev', nickname: '学生1' },
+  student: { id: 'user-student', email: 'student1@test.nuanban.dev', nickname: '林同学' },
   family: { id: 'user-family', email: 'family1@test.nuanban.dev', nickname: '家属1' },
   elder: { id: 'user-elder', email: 'elder1@test.nuanban.dev', nickname: '老人1' },
 } as const;
@@ -12,8 +12,83 @@ const USERS = {
 const ORG = { id: 'org-demo', name: '暖伴示范养老院' };
 
 const ELDERS = [
-  { id: 'elder-zhang', name: '张奶奶', latitude: 31.2304, longitude: 121.4737, org: ORG.id },
-  { id: 'elder-li', name: '李爷爷', latitude: 31.235, longitude: 121.48, org: ORG.id },
+  {
+    id: 'elder-zhang',
+    name: '张奶奶',
+    age: 78,
+    tags: ['行动便利', '喜欢聊天'],
+    latitude: 31.2304,
+    longitude: 121.4737,
+    org: ORG.id,
+    intro: '退休教师，性格温和，喜欢读报和下棋，希望有同学来陪聊。',
+  },
+  {
+    id: 'elder-li',
+    name: '李爷爷',
+    age: 82,
+    tags: ['需康复协助', '耳背'],
+    latitude: 31.235,
+    longitude: 121.48,
+    org: ORG.id,
+    intro: '需辅助康复操与外出陪同，家属希望每次服务有记录。',
+  },
+  {
+    id: 'elder-wang',
+    name: '王阿姨',
+    age: 75,
+    tags: ['独居', '用药提醒'],
+    latitude: 31.228,
+    longitude: 121.469,
+    org: ORG.id,
+    intro: '独居，需要定期用药提醒与生活陪护。',
+  },
+];
+
+const CAREGIVERS = [
+  {
+    id: 'cg-1',
+    userId: USERS.student.id,
+    name: '林同学',
+    school: '示范大学',
+    distanceKm: 0.8,
+    tags: ['陪伴聊天', '康复协助'],
+    rating: 4.9,
+    orderCount: 28,
+    intro: '社会工作专业大三，有养老院志愿服务经验，耐心细致。',
+  },
+  {
+    id: 'cg-2',
+    userId: 'user-student-2',
+    name: '陈同学',
+    school: '示范大学',
+    distanceKm: 1.2,
+    tags: ['生活陪护', '读报陪聊'],
+    rating: 4.8,
+    orderCount: 19,
+    intro: '护理学院在读，擅长生活照料与读报陪伴。',
+  },
+  {
+    id: 'cg-3',
+    userId: 'user-student-3',
+    name: '赵同学',
+    school: '城东师范学院',
+    distanceKm: 2.1,
+    tags: ['棋牌陪伴', '手指操'],
+    rating: 4.7,
+    orderCount: 12,
+    intro: '喜欢与长辈下棋聊天，康复协助培训合格。',
+  },
+  {
+    id: 'cg-4',
+    userId: 'user-student-4',
+    name: '孙同学',
+    school: '示范大学',
+    distanceKm: 3.4,
+    tags: ['外出陪同', '超市代购'],
+    rating: 4.9,
+    orderCount: 35,
+    intro: '勤工之星，外出陪同与就医陪护经验丰富。',
+  },
 ];
 
 const SERVICE_CATEGORIES = [
@@ -36,8 +111,41 @@ const SERVICE_ITEMS = [
   { id: 'svc-shop', category: 'cat-outdoor', name: '超市代购陪同', price_cents: 8000, duration_minutes: 90, requires_outdoor_approval: true },
 ] as const;
 
+type OrderStatus =
+  | 'pending_accept'
+  | 'pending_payment'
+  | 'outdoor_pending'
+  | 'pending_service'
+  | 'accepted'
+  | 'completed'
+  | 'paid'
+  | 'cancelled';
+
+interface MockOrder {
+  id: string;
+  elder: string;
+  service_item: string;
+  status: OrderStatus;
+  amount_cents: number;
+  payment_status: string;
+  family_user: string;
+  student_user?: string;
+  scheduled_at: string;
+}
+
+interface MockOutdoorApproval {
+  id: string;
+  order: string;
+  status: string;
+  family_user: string;
+}
+
 function serviceById(id: string) {
   return SERVICE_ITEMS.find((s) => s.id === id) || SERVICE_ITEMS[0];
+}
+
+function elderById(id: string) {
+  return ELDERS.find((e) => e.id === id);
 }
 
 function serviceRecord(s: (typeof SERVICE_ITEMS)[number]) {
@@ -57,18 +165,24 @@ function serviceRecord(s: (typeof SERVICE_ITEMS)[number]) {
   };
 }
 
-type OrderStatus = 'pending_accept' | 'pending_payment' | 'accepted' | 'completed' | 'paid';
+function formatKm(km: number) {
+  if (km < 1) return `${Math.round(km * 1000)}m`;
+  return `${km.toFixed(1)}km`;
+}
 
-interface MockOrder {
-  id: string;
-  elder: string;
-  service_item: string;
-  status: OrderStatus;
-  amount_cents: number;
-  payment_status: string;
-  family_user: string;
-  student_user?: string;
-  scheduled_at: string;
+function caregiverToListItem(c: (typeof CAREGIVERS)[0]) {
+  return {
+    id: c.id,
+    userId: c.userId,
+    name: c.name,
+    school: c.school,
+    distance: formatKm(c.distanceKm),
+    distanceKm: c.distanceKm,
+    tags: c.tags,
+    rating: c.rating,
+    orderCount: c.orderCount,
+    intro: c.intro,
+  };
 }
 
 const state = {
@@ -84,14 +198,34 @@ const state = {
       scheduled_at: new Date(Date.now() + 86400000).toISOString(),
     },
     {
+      id: 'order-pending-accept-2',
+      elder: 'elder-wang',
+      service_item: 'svc-med',
+      status: 'pending_accept' as OrderStatus,
+      amount_cents: 3500,
+      payment_status: 'paid',
+      family_user: USERS.family.id,
+      scheduled_at: new Date(Date.now() + 43200000).toISOString(),
+    },
+    {
       id: 'order-pending-payment',
       elder: 'elder-li',
-      service_item: 'svc-walk',
+      service_item: 'svc-rehab',
       status: 'pending_payment' as OrderStatus,
-      amount_cents: 6500,
+      amount_cents: 8000,
       payment_status: 'unpaid',
       family_user: USERS.family.id,
       scheduled_at: new Date(Date.now() + 172800000).toISOString(),
+    },
+    {
+      id: 'order-outdoor-pending',
+      elder: 'elder-li',
+      service_item: 'svc-walk',
+      status: 'outdoor_pending' as OrderStatus,
+      amount_cents: 6500,
+      payment_status: 'paid',
+      family_user: USERS.family.id,
+      scheduled_at: new Date(Date.now() + 259200000).toISOString(),
     },
     {
       id: 'order-completed-1',
@@ -105,6 +239,14 @@ const state = {
       scheduled_at: new Date(Date.now() - 86400000 * 3).toISOString(),
     },
   ] as MockOrder[],
+  outdoorApprovals: [
+    {
+      id: 'outdoor-approval-1',
+      order: 'order-outdoor-pending',
+      status: 'pending_family',
+      family_user: USERS.family.id,
+    },
+  ] as MockOutdoorApproval[],
 };
 
 function delay<T>(data: T): Promise<T> {
@@ -147,6 +289,9 @@ function elderRecord(e: (typeof ELDERS)[0]) {
     created: '',
     updated: '',
     name: e.name,
+    age: e.age,
+    tags: e.tags,
+    intro: e.intro,
     latitude: e.latitude,
     longitude: e.longitude,
     enabled: true,
@@ -156,7 +301,7 @@ function elderRecord(e: (typeof ELDERS)[0]) {
 }
 
 function orderRecord(o: MockOrder) {
-  const elder = ELDERS.find((e) => e.id === o.elder);
+  const elder = elderById(o.elder);
   const svc = serviceById(o.service_item);
   return {
     id: o.id,
@@ -171,8 +316,28 @@ function orderRecord(o: MockOrder) {
     scheduled_at: o.scheduled_at,
     expand: {
       elder: elder ? { id: elder.id, name: elder.name } : undefined,
-      service_item: { id: svc.id, name: svc.name, price_cents: svc.price_cents },
+      service_item: {
+        id: svc.id,
+        name: svc.name,
+        price_cents: svc.price_cents,
+        duration_minutes: svc.duration_minutes,
+      },
     },
+  };
+}
+
+function pendingOrderDto(o: MockOrder) {
+  const elder = elderById(o.elder);
+  const svc = serviceById(o.service_item);
+  return {
+    id: o.id,
+    elderId: o.elder,
+    elderName: elder?.name || '老人',
+    serviceName: svc.name,
+    durationMinutes: svc.duration_minutes,
+    amountCents: o.amount_cents,
+    scheduledAt: o.scheduled_at,
+    status: o.status,
   };
 }
 
@@ -215,7 +380,6 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
   const { path, query } = parsePath(rawUrl.startsWith('http') ? rawUrl : `/api${rawUrl}`);
   const data = parseBody(options.data);
 
-  // POST /nuanban/dev-login
   if (method === 'POST' && path === '/nuanban/dev-login') {
     const email = String(data.email || 'student1@test.nuanban.dev');
     return delay(loginByEmail(email) as T);
@@ -225,35 +389,28 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
     return delay(loginByEmail('student1@test.nuanban.dev') as T);
   }
 
-  // GET /nuanban/student/*
   if (method === 'GET' && path === '/nuanban/student/profile') {
     return delay({
       nickname: USERS.student.nickname,
       email: USERS.student.email,
       schoolName: '示范大学',
-      displayName: '学生1',
+      displayName: '林同学',
     } as T);
   }
   if (method === 'GET' && path === '/nuanban/student/stats') {
     const completed = state.orders.filter((o) => o.status === 'completed' && o.student_user === USERS.student.id);
+    const pending = state.orders.filter((o) => o.status === 'pending_accept').length;
     const income = completed.reduce((s, o) => s + o.amount_cents, 0);
     return delay({
       acceptedCount: completed.length + 1,
       monthCount: completed.length,
+      pendingCount: pending,
       incomeCents: income,
       incomeYuan: (income / 100).toFixed(2),
     } as T);
   }
   if (method === 'GET' && path === '/nuanban/student/orders/pending') {
-    const list = state.orders
-      .filter((o) => o.status === 'pending_accept')
-      .map((o) => ({
-        id: o.id,
-        elderId: o.elder,
-        amountCents: o.amount_cents,
-        scheduledAt: o.scheduled_at,
-        status: o.status,
-      }));
+    const list = state.orders.filter((o) => o.status === 'pending_accept').map(pendingOrderDto);
     return delay({ list } as T);
   }
 
@@ -262,18 +419,19 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
     const id = orderAction[1];
     const action = orderAction[2];
     const order = state.orders.find((o) => o.id === id);
-    if (order && action === 'accept') order.status = 'accepted';
-    return delay({ ok: true, status: order?.status || 'accepted' } as T);
+    if (order && action === 'accept') order.status = 'pending_service';
+    return delay({ ok: true, status: order?.status || 'pending_service' } as T);
   }
 
-  // Family
   if (method === 'GET' && path === '/nuanban/family/stats') {
-    const pending = state.orders.filter((o) => o.status === 'pending_payment').length;
+    const pendingPay = state.orders.filter((o) => o.status === 'pending_payment').length;
+    const outdoorPending = state.outdoorApprovals.filter((a) => a.status === 'pending_family').length;
     return delay({
-      boundElderCount: 2,
-      pendingPaymentCount: pending,
-      paidTotalCents: 10000,
-      paidTotalYuan: '100.00',
+      boundElderCount: ELDERS.length,
+      pendingPaymentCount: pendingPay,
+      outdoorPendingCount: outdoorPending,
+      paidTotalCents: 14500,
+      paidTotalYuan: '145.00',
     } as T);
   }
   if (method === 'POST' && path.match(/\/nuanban\/family\/orders\/[^/]+\/pay/)) {
@@ -285,40 +443,56 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
     }
     return delay({ ok: true, status: order?.status || 'pending_accept' } as T);
   }
+  if (method === 'POST' && path.match(/\/nuanban\/family\/outdoor\/[^/]+\/approve/)) {
+    const id = path.split('/')[4];
+    const approved = data.approved !== false;
+    const approval = state.outdoorApprovals.find((a) => a.order === id || a.id === id);
+    const order = state.orders.find((o) => o.id === (approval?.order || id));
+    if (approval) approval.status = approved ? 'approved' : 'rejected';
+    if (order) {
+      order.status = approved ? 'pending_service' : 'cancelled';
+    }
+    return delay({ ok: true, approved } as T);
+  }
 
-  // Elder
   if (method === 'GET' && path === '/nuanban/elder/stats') {
+    const elderOrders = state.orders.filter((o) => o.elder === 'elder-zhang');
     return delay({
       elderProfileId: 'elder-zhang',
       elderName: '张奶奶',
-      orderCount: state.orders.filter((o) => o.elder === 'elder-zhang').length,
-      activeCount: 1,
+      orderCount: elderOrders.length,
+      activeCount: elderOrders.filter((o) => ['pending_accept', 'pending_service', 'outdoor_pending'].includes(o.status)).length,
+      caregiverNearbyCount: CAREGIVERS.length,
     } as T);
   }
   if (method === 'GET' && path === '/nuanban/elder/caregivers/nearby') {
-    return delay({
-      list: [
-        { id: 'cg-1', userId: USERS.student.id, name: '学生1', school: '示范大学', distance: '0.8km', distanceKm: 0.8 },
-      ],
-    } as T);
+    return delay({ list: CAREGIVERS.map(caregiverToListItem) } as T);
   }
   if (method === 'POST' && path === '/nuanban/elder/orders') {
     const id = `order-${Date.now()}`;
     const svc = serviceById(String(data.serviceItemId || 'svc-chat'));
+    const needsOutdoor = svc.requires_outdoor_approval;
     state.orders.push({
       id,
       elder: String(data.elderId || 'elder-zhang'),
       service_item: svc.id,
-      status: 'pending_payment',
+      status: needsOutdoor ? 'outdoor_pending' : 'pending_payment',
       amount_cents: svc.price_cents,
       payment_status: 'unpaid',
       family_user: USERS.family.id,
       scheduled_at: new Date().toISOString(),
     });
-    return delay({ id, status: 'pending_payment' } as T);
+    if (needsOutdoor) {
+      state.outdoorApprovals.push({
+        id: `outdoor-${Date.now()}`,
+        order: id,
+        status: 'pending_family',
+        family_user: USERS.family.id,
+      });
+    }
+    return delay({ id, status: needsOutdoor ? 'outdoor_pending' : 'pending_payment' } as T);
   }
 
-  // PocketBase collections
   if (method === 'GET' && path.startsWith('/collections/elders/records')) {
     const filter = query.get('filter') || '';
     let items = ELDERS.map(elderRecord);
@@ -336,8 +510,41 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
       updated: '',
       elder: e.id,
       family_user: USERS.family.id,
+      relation_label: e.id === 'elder-zhang' ? '女儿' : '儿子',
       expand: { elder: { id: e.id, name: e.name } },
     }));
+    return delay(pbList(items) as T);
+  }
+  if (method === 'GET' && path.startsWith('/collections/outdoor_approvals/records')) {
+    const items = state.outdoorApprovals
+      .filter((a) => a.status === 'pending_family')
+      .map((a) => {
+        const order = state.orders.find((o) => o.id === a.order);
+        const elder = order ? elderById(order.elder) : null;
+        const svc = order ? serviceById(order.service_item) : null;
+        return {
+          id: a.id,
+          collectionId: 'outdoor_approvals',
+          created: '',
+          updated: '',
+          order: a.order,
+          status: a.status,
+          family_user: a.family_user,
+          expand: {
+            order: order
+              ? {
+                  id: order.id,
+                  scheduled_at: order.scheduled_at,
+                  amount_cents: order.amount_cents,
+                  expand: {
+                    elder: elder ? { id: elder.id, name: elder.name } : undefined,
+                    service_item: svc ? { id: svc.id, name: svc.name } : undefined,
+                  },
+                }
+              : undefined,
+          },
+        };
+      });
     return delay(pbList(items) as T);
   }
   if (method === 'GET' && path.startsWith('/collections/orders/records')) {

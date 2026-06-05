@@ -1,13 +1,25 @@
 <template>
   <view class="page">
-    <view v-if="!id" class="hint">请从首页「待接单」进入</view>
-    <view v-else class="card">
-      <text>订单 {{ id.slice(0, 8) }}</text>
-      <text v-if="order" class="meta">老人 {{ order.elderId?.slice(0, 6) }}</text>
-      <text v-if="order" class="meta">金额 ¥{{ ((order.amountCents || 0) / 100).toFixed(0) }}</text>
-    </view>
-    <button class="btn-ok" :loading="loading" :disabled="!id" @tap="accept">接受订单</button>
-    <button class="btn-no" :disabled="!id" @tap="reject">拒绝</button>
+    <view v-if="!id" class="hint">请从「接单」Tab 进入</view>
+    <template v-else>
+      <view class="card">
+        <text class="svc">{{ order?.serviceName || '陪护服务' }}</text>
+        <view class="row">
+          <text class="label">服务老人</text>
+          <text class="value">{{ order?.elderName || '—' }}</text>
+        </view>
+        <view class="row">
+          <text class="label">预约时间</text>
+          <text class="value">{{ formatTime(order?.scheduledAt) }}</text>
+        </view>
+        <view class="row">
+          <text class="label">服务费用</text>
+          <text class="value price">¥{{ ((order?.amountCents || 0) / 100).toFixed(0) }}</text>
+        </view>
+      </view>
+      <button class="btn-ok" :loading="loading" @tap="accept">接受订单</button>
+      <button class="btn-no" :disabled="loading" @tap="reject">拒绝</button>
+    </template>
   </view>
 </template>
 
@@ -20,6 +32,13 @@ import { pbErrorMessage } from '../../utils/request';
 const id = ref('');
 const order = ref<PendingOrder | null>(null);
 const loading = ref(false);
+
+function formatTime(iso?: string) {
+  if (!iso) return '待定';
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getMonth() + 1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
 
 onLoad(async (q) => {
   if (q?.id) id.value = q.id as string;
@@ -58,29 +77,51 @@ async function reject() {
 </script>
 
 <style scoped>
+.page {
+  min-height: 100vh;
+  background: #f5f5f5;
+  padding: 24rpx;
+}
 .hint {
   margin: 48rpx;
   color: #999;
   text-align: center;
 }
 .card {
-  margin: 32rpx;
-  padding: 24rpx;
+  padding: 32rpx 28rpx;
   background: #fff;
-  border-radius: 12rpx;
+  border-radius: 16rpx;
+  margin-bottom: 32rpx;
 }
-.meta {
+.svc {
   display: block;
-  margin-top: 8rpx;
-  color: #666;
+  font-size: 36rpx;
+  font-weight: 600;
+  margin-bottom: 24rpx;
+}
+.row {
+  display: flex;
+  justify-content: space-between;
+  padding: 10rpx 0;
+  font-size: 28rpx;
+}
+.label {
+  color: #999;
+}
+.value.price {
+  color: #c45c26;
+  font-weight: 600;
 }
 .btn-ok {
-  margin: 48rpx;
   background: #2e7d32;
   color: #fff;
+  border-radius: 12rpx;
+  margin-bottom: 20rpx;
 }
 .btn-no {
-  margin: 0 48rpx;
-  background: #eee;
+  background: #fff;
+  color: #666;
+  border: 2rpx solid #ddd;
+  border-radius: 12rpx;
 }
 </style>

@@ -23,17 +23,16 @@
 
     <!-- 列表模式 -->
     <view v-else-if="mode === 'list'">
-      <view v-for="e in list" :key="e.id" class="card" @tap="openElder(e)">
-        <view class="card-main">
-          <text class="name">{{ e.name }}</text>
-          <text class="org">{{ e.orgName }}</text>
-          <text class="badge">{{ formatDistance(e.distanceKm) }}</text>
-        </view>
-        <view class="card-action">
-          <text class="action-text">查看详情</text>
-          <text class="chevron">›</text>
-        </view>
-      </view>
+      <PersonCard
+        v-for="e in list"
+        :key="e.id"
+        :name="e.name"
+        :subtitle="e.orgName"
+        :tags="e.tags"
+        :distance="formatDistance(e.distanceKm)"
+        cta-text="详情"
+        @tap="openElder(e)"
+      />
 
       <view v-if="errorMsg" class="error" @tap="reload">
         <text>加载失败（点此重试）</text>
@@ -78,11 +77,12 @@
 import { onShow } from '@dcloudio/uni-app';
 import { computed, ref } from 'vue';
 import RoleTabBar from '../../components/RoleTabBar.vue';
+import PersonCard from '../../components/PersonCard.vue';
 import { listNearbyElders, type ElderRow } from '../../api/student';
 import { getLocationWithFallback } from '../../utils/location';
 import { pbErrorMessage } from '../../utils/request';
 
-type ElderListItem = ElderRow & { distanceKm: number; orgName: string };
+type ElderListItem = ElderRow & { distanceKm: number; orgName: string; tags?: string[] };
 
 const DEMO = { lat: 31.2304, lng: 121.4737, label: '演示定位（上海）' };
 
@@ -159,6 +159,7 @@ async function reload() {
     list.value = rows.map((e) => ({
       ...e,
       orgName: e.expand?.org?.name || '暖伴示范养老院',
+      tags: (e as { tags?: string[] }).tags,
     }));
   } catch (e) {
     list.value = [];

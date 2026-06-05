@@ -1,17 +1,29 @@
 <template>
   <view class="page elder-mode">
-    <text class="tip">按距离为您推荐附近同学</text>
-    <view v-if="loading" class="state">加载中…</view>
-    <view v-for="item in list" :key="item.id" class="card" @tap="goDetail(item)">
-      <text class="name">{{ item.name }}</text>
-      <text class="meta">{{ item.distance }} · {{ item.school }}</text>
+    <view class="header">
+      <text class="title">找陪护</text>
+      <text class="subtitle">按距离为您推荐附近同学</text>
     </view>
+    <view v-if="loading" class="state">加载中…</view>
+    <PersonCard
+      v-for="item in list"
+      :key="item.id"
+      :name="item.name"
+      :subtitle="item.school"
+      :tags="item.tags"
+      :rating="item.rating"
+      :distance="item.distance"
+      :extra="item.orderCount ? `服务 ${item.orderCount} 次` : undefined"
+      cta-text="预约"
+      @tap="goDetail(item)"
+    />
     <view v-if="!loading && !list.length" class="empty">暂无附近陪护，请稍后再试</view>
   </view>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
+import PersonCard from '../../components/PersonCard.vue';
 import { getNearbyCaregivers, type CaregiverItem } from '../../api/elder';
 import { getLocationWithFallback } from '../../utils/location';
 
@@ -33,12 +45,15 @@ onMounted(async () => {
 });
 
 function goDetail(item: CaregiverItem) {
-  const studentUserId = item.userId || '';
   const q = [
-    `studentUserId=${studentUserId}`,
+    `studentUserId=${item.userId || ''}`,
     `name=${encodeURIComponent(item.name || '')}`,
     `school=${encodeURIComponent(item.school || '')}`,
     `distance=${encodeURIComponent(item.distance || '')}`,
+    `rating=${item.rating ?? ''}`,
+    `orderCount=${item.orderCount ?? ''}`,
+    `intro=${encodeURIComponent(item.intro || '')}`,
+    `tags=${encodeURIComponent((item.tags || []).join(','))}`,
   ].join('&');
   uni.navigateTo({ url: `/package-elder/caregivers/detail?${q}` });
 }
@@ -47,25 +62,27 @@ function goDetail(item: CaregiverItem) {
 <style scoped>
 .page {
   padding: 24rpx;
+  min-height: 100vh;
+  background: #f5f5f5;
+}
+.header {
+  margin-bottom: 24rpx;
+}
+.title {
+  display: block;
+  font-size: 36rpx;
+  font-weight: 600;
+}
+.subtitle {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 24rpx;
+  color: #888;
 }
 .state {
   text-align: center;
   color: #999;
   padding: 32rpx;
-}
-.card {
-  background: #fff;
-  padding: 28rpx;
-  margin-bottom: 20rpx;
-  border-radius: 12rpx;
-}
-.name {
-  font-size: 36rpx;
-  font-weight: 600;
-}
-.meta {
-  color: #666;
-  font-size: 28rpx;
 }
 .empty {
   text-align: center;

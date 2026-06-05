@@ -1,22 +1,118 @@
 <template>
   <view class="page">
-    <text class="title">家属端</text>
-    <view class="card" @tap="goPay">待支付订单</view>
+    <view class="hero">
+      <text class="title">家属中心</text>
+      <text class="sub">代付 · 外出审批 · 绑定老人</text>
+    </view>
+
+    <view class="stats-card">
+      <view class="stat-item">
+        <text class="stat-num">{{ stats?.boundElderCount ?? 0 }}</text>
+        <text class="stat-label">绑定老人</text>
+      </view>
+      <view class="stat-divider" />
+      <view class="stat-item">
+        <text class="stat-num accent">{{ stats?.pendingPaymentCount ?? 0 }}</text>
+        <text class="stat-label">待支付</text>
+      </view>
+      <view class="stat-divider" />
+      <view class="stat-item">
+        <text class="stat-num accent">{{ stats?.outdoorPendingCount ?? 0 }}</text>
+        <text class="stat-label">外出待批</text>
+      </view>
+    </view>
+
+    <view class="section-title">绑定老人</view>
+    <view v-for="b in bindings" :key="b.id" class="elder-card">
+      <view class="elder-avatar">{{ elderName(b).slice(0, 1) }}</view>
+      <view class="elder-info">
+        <text class="elder-name">{{ elderName(b) }}</text>
+        <text class="elder-rel">{{ relationLabel(b) }}</text>
+      </view>
+    </view>
+    <view v-if="!bindings.length && !loading" class="empty-hint">暂无绑定（演示数据由 seed 提供）</view>
+
+    <view class="section-title">待办事项</view>
+    <view class="todo-card" @tap="goPay">
+      <view class="todo-left">
+        <text class="todo-icon">💳</text>
+        <view>
+          <text class="todo-title">待支付订单</text>
+          <text class="todo-desc">{{ stats?.pendingPaymentCount ?? 0 }} 笔待处理</text>
+        </view>
+      </view>
+      <text class="chevron">›</text>
+    </view>
+    <view class="todo-card highlight" @tap="goOutdoor">
+      <view class="todo-left">
+        <text class="todo-icon">🚶</text>
+        <view>
+          <text class="todo-title">外出审批</text>
+          <text class="todo-desc">{{ stats?.outdoorPendingCount ?? 0 }} 笔待您确认</text>
+        </view>
+      </view>
+      <text class="chevron">›</text>
+    </view>
+
     <RoleTabBar role="family" current="/package-family/home" />
   </view>
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue';
 import { onShow } from '@dcloudio/uni-app';
 import RoleTabBar from '../components/RoleTabBar.vue';
-import { listBoundElders, listPendingPaymentOrders } from '../api/family';
+import {
+  fetchFamilyStats,
+  listBoundElders,
+  listPendingOutdoorApprovals,
+  listPendingPaymentOrders,
+  type FamilyStats,
+} from '../api/family';
 import { useRoleStore } from '../store/role';
 import { guardPackageRoute } from '../utils/nav-guard';
 import { pbErrorMessage } from '../utils/request';
+import type { PbRecord } from '../api/pb';
 
 const roleStore = useRoleStore();
+const stats = ref<FamilyStats | null>(null);
+const bindings = ref<
+  (PbRecord & { elder: string; relation_label?: string; expand?: { elder?: { name: string } } })[]
+>([]);
+const loading = ref(false);
+const outdoorList = ref<{ order: string }[]>([]);
 
-onShow(() => guardPackageRoute('/package-family/home'));
+function elderName(b: (typeof bindings.value)[0]) {
+  return b.expand?.elder?.name || '老人';
+}
+function relationLabel(b: (typeof bindings.value)[0]) {
+  return b.relation_label || '家属';
+}
+
+async function reload() {
+  if (!roleStore.user?.id) return;
+  loading.value = true;
+  try {
+    const uid = roleStore.user.id;
+    const [st, binds, outdoor] = await Promise.all([
+      fetchFamilyStats(),
+      listBoundElders(uid),
+      listPendingOutdoorApprovals(uid).catch(() => []),
+    ]);
+    stats.value = st;
+    bindings.value = binds;
+    outdoorList.value = outdoor;
+  } catch (e) {
+    uni.showToast({ title: pbErrorMessage(e), icon: 'none' });
+  } finally {
+    loading.value = false;
+  }
+}
+
+onShow(() => {
+  guardPackageRoute('/package-family/home');
+  reload();
+});
 
 async function goPay() {
   if (!roleStore.user?.id) {
@@ -24,8 +120,8 @@ async function goPay() {
     return;
   }
   try {
-    const bindings = await listBoundElders(roleStore.user.id);
-    const elderIds = bindings.map((b) => b.elder).filter(Boolean);
+    const bindingsRes = await listBoundElders(roleStore.user.id);
+    const elderIds = bindingsRes.map((b) => b.elder).filter(Boolean);
     const orders = await listPendingPaymentOrders(elderIds);
     if (!orders.length) {
       uni.showToast({ title: '暂无待支付订单', icon: 'none' });
@@ -36,17 +132,155 @@ async function goPay() {
     uni.showToast({ title: pbErrorMessage(e), icon: 'none' });
   }
 }
+
+async function goOutdoor() {
+  if (!roleStore.user?.id) return;
+  try {
+    const list = outdoorList.value.length
+      ? outdoorList.value
+      : await listPendingOutdoorApprovals(roleStore.user.id);
+    if (!list.length) {
+      uni.showToast({ title: '暂无外出待审批', icon: 'none' });
+      return;
+    }
+    const orderId = list[0].order;
+    uni.navigateTo({ url: `/package-family/outdoor/approve?id=${orderId}` });
+  } catch (e) {
+    uni.showToast({ title: pbErrorMessage(e), icon: 'none' });
+  }
+}
 </script>
 
 <style scoped>
 .page {
-  padding: 32rpx;
+  min-height: 100vh;
+  background: #f5f5f5;
+  padding: 24rpx;
   padding-bottom: 120rpx;
 }
-.card {
+.hero {
+  background: linear-gradient(135deg, #fff8f0, #fff);
+  padding: 36rpx 28rpx;
+  border-radius: 16rpx;
+  margin-bottom: 24rpx;
+}
+.title {
+  display: block;
+  font-size: 40rpx;
+  font-weight: 600;
+}
+.sub {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 24rpx;
+  color: #888;
+}
+.stats-card {
+  display: flex;
   background: #fff;
-  padding: 32rpx;
-  border-radius: 12rpx;
-  margin-top: 24rpx;
+  border-radius: 16rpx;
+  padding: 32rpx 0;
+  margin-bottom: 32rpx;
+}
+.stat-item {
+  flex: 1;
+  text-align: center;
+}
+.stat-divider {
+  width: 1rpx;
+  height: 60rpx;
+  background: #eee;
+  align-self: center;
+}
+.stat-num {
+  display: block;
+  font-size: 32rpx;
+  font-weight: 600;
+}
+.stat-num.accent {
+  color: #c45c26;
+}
+.stat-label {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 22rpx;
+  color: #999;
+}
+.section-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  margin-bottom: 16rpx;
+  color: #333;
+}
+.elder-card {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  padding: 24rpx;
+  border-radius: 16rpx;
+  margin-bottom: 12rpx;
+}
+.elder-avatar {
+  width: 72rpx;
+  height: 72rpx;
+  line-height: 72rpx;
+  text-align: center;
+  background: #c45c26;
+  color: #fff;
+  border-radius: 50%;
+  font-size: 32rpx;
+  margin-right: 20rpx;
+}
+.elder-name {
+  display: block;
+  font-size: 30rpx;
+  font-weight: 600;
+}
+.elder-rel {
+  display: block;
+  margin-top: 4rpx;
+  font-size: 24rpx;
+  color: #888;
+}
+.empty-hint {
+  font-size: 24rpx;
+  color: #bbb;
+  margin-bottom: 24rpx;
+}
+.todo-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #fff;
+  padding: 28rpx 24rpx;
+  border-radius: 16rpx;
+  margin-bottom: 16rpx;
+}
+.todo-card.highlight {
+  border: 2rpx solid #f0dcc8;
+  background: #fffaf5;
+}
+.todo-left {
+  display: flex;
+  align-items: center;
+}
+.todo-icon {
+  font-size: 40rpx;
+  margin-right: 20rpx;
+}
+.todo-title {
+  display: block;
+  font-size: 30rpx;
+  font-weight: 600;
+}
+.todo-desc {
+  display: block;
+  margin-top: 4rpx;
+  font-size: 24rpx;
+  color: #888;
+}
+.chevron {
+  font-size: 36rpx;
+  color: #ccc;
 }
 </style>

@@ -4,6 +4,9 @@ import { pbList, type PbRecord } from './pb';
 export interface PendingOrder {
   id: string;
   elderId: string;
+  elderName?: string;
+  serviceName?: string;
+  durationMinutes?: number;
   amountCents?: number;
   scheduledAt?: string;
   status: string;
@@ -19,6 +22,7 @@ export interface StudentProfile {
 export interface StudentStats {
   acceptedCount: number;
   monthCount: number;
+  pendingCount?: number;
   incomeCents: number;
   incomeYuan: string;
 }

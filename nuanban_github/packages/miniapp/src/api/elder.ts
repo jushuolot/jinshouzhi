@@ -8,6 +8,10 @@ export interface CaregiverItem {
   school: string;
   distance: string;
   distanceKm?: number;
+  tags?: string[];
+  rating?: number;
+  orderCount?: number;
+  intro?: string;
 }
 
 export interface ElderStats {
@@ -15,6 +19,7 @@ export interface ElderStats {
   elderName: string;
   orderCount: number;
   activeCount: number;
+  caregiverNearbyCount?: number;
 }
 
 export async function fetchElderStats() {

@@ -4,6 +4,7 @@ import { pbCreate, pbList, type PbRecord } from './pb';
 export interface FamilyStats {
   boundElderCount: number;
   pendingPaymentCount: number;
+  outdoorPendingCount?: number;
   paidTotalCents: number;
   paidTotalYuan: string;
 }
@@ -51,6 +52,31 @@ export async function listBoundElders(familyUserId: string) {
 interface BindingRow extends PbRecord {
   elder: string;
   expand?: { elder?: { id: string; name: string } };
+}
+
+export async function listPendingOutdoorApprovals(familyUserId: string) {
+  const res = await pbList<OutdoorApprovalRow>('outdoor_approvals', {
+    filter: `family_user = "${familyUserId}" && status = "pending_family"`,
+    expand: 'order,order.elder,order.service_item',
+    perPage: 20,
+  });
+  return res.items;
+}
+
+interface OutdoorApprovalRow extends PbRecord {
+  order: string;
+  status: string;
+  expand?: {
+    order?: {
+      id: string;
+      scheduled_at?: string;
+      amount_cents?: number;
+      expand?: {
+        elder?: { id: string; name: string };
+        service_item?: { id: string; name: string };
+      };
+    };
+  };
 }
 
 export async function listPendingPaymentOrders(elderIds: string[]) {

@@ -19,6 +19,7 @@ export const ROLE_TABS: Record<RoleKey, TabItem[]> = {
   ],
   student: [
     { text: '首页', pagePath: '/package-student/home' },
+    { text: '接单', pagePath: '/package-student/order/pending' },
     { text: '发现', pagePath: '/package-student/discover/list' },
     { text: '我的', pagePath: '/package-student/profile' },
   ],
