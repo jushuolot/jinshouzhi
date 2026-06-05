@@ -1,8 +1,13 @@
 <script setup lang="ts">
 import { onLaunch } from '@dcloudio/uni-app';
+// #ifdef H5
+import { initDevicePreview } from './utils/device-preview';
+// #endif
 
 onLaunch(() => {
-  console.log('暖伴勤工启动');
+  // #ifdef H5
+  setTimeout(() => initDevicePreview(), 0);
+  // #endif
 });
 </script>
 

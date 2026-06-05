@@ -156,6 +156,8 @@ function elderRecord(e: (typeof ELDERS)[0]) {
 }
 
 function orderRecord(o: MockOrder) {
+  const elder = ELDERS.find((e) => e.id === o.elder);
+  const svc = serviceById(o.service_item);
   return {
     id: o.id,
     collectionId: 'orders',
@@ -167,6 +169,10 @@ function orderRecord(o: MockOrder) {
     amount_cents: o.amount_cents,
     payment_status: o.payment_status,
     scheduled_at: o.scheduled_at,
+    expand: {
+      elder: elder ? { id: elder.id, name: elder.name } : undefined,
+      service_item: { id: svc.id, name: svc.name, price_cents: svc.price_cents },
+    },
   };
 }
 
@@ -335,6 +341,12 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
     return delay(pbList(items) as T);
   }
   if (method === 'GET' && path.startsWith('/collections/orders/records')) {
+    const one = path.match(/^\/collections\/orders\/records\/([^/?]+)$/);
+    if (one) {
+      const order = state.orders.find((o) => o.id === one[1]);
+      if (!order) return Promise.reject({ message: '订单不存在' });
+      return delay(orderRecord(order) as T);
+    }
     let items = state.orders.map(orderRecord);
     const filter = query.get('filter') || '';
     if (filter.includes('pending_payment')) {

@@ -2,8 +2,9 @@
   <view class="page">
     <text class="tip">待支付订单</text>
     <view v-for="o in list" :key="o.id" class="card" @tap="openPay(o.id)">
-      <text>订单 {{ o.id.slice(0, 8) }}</text>
-      <text class="meta">¥{{ ((o.amount_cents || 0) / 100).toFixed(0) }}</text>
+      <text class="svc">{{ o.expand?.service_item?.name || '陪护服务' }}</text>
+      <text class="elder">{{ o.expand?.elder?.name || '老人' }}</text>
+      <text class="meta">¥{{ ((o.amount_cents || 0) / 100).toFixed(0) }} · 待支付</text>
     </view>
     <view v-if="!loading && !list.length" class="empty">暂无待支付订单</view>
     <RoleTabBar role="family" current="/package-family/order/list" />
@@ -19,7 +20,12 @@ import { useRoleStore } from '../../store/role';
 import { pbErrorMessage } from '../../utils/request';
 import type { PbRecord } from '../../api/pb';
 
-const list = ref<(PbRecord & { amount_cents?: number })[]>([]);
+const list = ref<
+  (PbRecord & {
+    amount_cents?: number;
+    expand?: { elder?: { name: string }; service_item?: { name: string } };
+  })[]
+>([]);
 const loading = ref(false);
 const roleStore = useRoleStore();
 
@@ -46,28 +52,11 @@ function openPay(id: string) {
 </script>
 
 <style scoped>
-.page {
-  padding: 24rpx;
-  padding-bottom: 120rpx;
-}
-.tip {
-  color: #666;
-  font-size: 26rpx;
-}
-.card {
-  background: #fff;
-  padding: 24rpx;
-  margin-top: 16rpx;
-  border-radius: 8rpx;
-}
-.meta {
-  display: block;
-  color: #666;
-  margin-top: 8rpx;
-}
-.empty {
-  text-align: center;
-  color: #999;
-  margin-top: 80rpx;
-}
+.page { padding: 24rpx; padding-bottom: 120rpx; }
+.tip { color: #666; font-size: 26rpx; }
+.card { background: #fff; padding: 24rpx; margin-top: 16rpx; border-radius: 12rpx; }
+.svc { display: block; font-size: 30rpx; font-weight: 600; }
+.elder { display: block; margin-top: 8rpx; color: #666; font-size: 26rpx; }
+.meta { display: block; margin-top: 8rpx; color: #c45c26; font-size: 26rpx; }
+.empty { text-align: center; color: #999; margin-top: 80rpx; }
 </style>

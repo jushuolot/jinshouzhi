@@ -58,6 +58,7 @@ export async function listPendingPaymentOrders(elderIds: string[]) {
   const filter = elderIds.map((id) => `elder = "${id}"`).join(' || ');
   const res = await pbList<OrderRow>('orders', {
     filter: `(${filter}) && status = "pending_payment"`,
+    expand: 'elder,service_item',
     perPage: 20,
   });
   return res.items;
@@ -67,4 +68,9 @@ interface OrderRow extends PbRecord {
   status: string;
   elder: string;
   amount_cents?: number;
+  scheduled_at?: string;
+  expand?: {
+    elder?: { id: string; name: string };
+    service_item?: { id: string; name: string };
+  };
 }
