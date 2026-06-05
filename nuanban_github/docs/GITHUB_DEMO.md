@@ -11,10 +11,14 @@
 
 ## 一次性配置（维护者）
 
-### 1. 开启 GitHub Pages
+### 1. 开启 GitHub Pages（必做，否则 404）
 
 1. 打开 https://github.com/jushuolot/jinshouzhi/settings/pages  
-2. **Source** 选 **GitHub Actions**（由 workflow 自动发布）
+2. **Build and deployment → Source** 选 **Deploy from a branch**  
+3. **Branch** 选 `main`，**Folder** 选 **`/docs`**，点 Save  
+4. 等 1～2 分钟，再打开客人链接
+
+> 不要用「GitHub Actions」作 Source；本项目把构建产物放在 `docs/nuanban/`，由 workflow 自动更新。
 
 ### 2. 部署 Render API（免费，无需买服务器/域名）
 
