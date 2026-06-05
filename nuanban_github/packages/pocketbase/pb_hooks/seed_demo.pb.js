@@ -72,7 +72,7 @@ var findOrCreateUserRole = function(userId, role, extra) {
 }
 
 routerAdd("POST", "/api/nuanban/seed-demo", (e) => {
-  const stats = { users: 0, roles: 0, schools: 0, orgs: 0, elders: 0 };
+  const stats = { users: 0, roles: 0, schools: 0, orgs: 0, elders: 0, orders: 0, serviceItems: 0 };
 
   // school_dict
   const existingSchool = $app.findRecordsByFilter(
@@ -126,7 +126,17 @@ routerAdd("POST", "/api/nuanban/seed-demo", (e) => {
       0,
       { uid: userId, r: role }
     );
-    if (rows.length > 0) return rows[0];
+    if (rows.length > 0) {
+      const existing = rows[0];
+      if (extra) {
+        const keys = Object.keys(extra);
+        for (let i = 0; i < keys.length; i++) {
+          existing.set(keys[i], extra[keys[i]]);
+        }
+        $app.save(existing);
+      }
+      return existing;
+    }
     const rolesCol = $app.findCollectionByNameOrId("user_roles");
     const rec = new Record(rolesCol);
     rec.set("user", userId);
@@ -195,17 +205,104 @@ routerAdd("POST", "/api/nuanban/seed-demo", (e) => {
     return rec;
   }
 
+  function findOrCreateServiceCategory(name) {
+    const rows = $app.findRecordsByFilter(
+      "service_categories",
+      "name = {:n}",
+      "",
+      1,
+      0,
+      { n: name }
+    );
+    if (rows.length > 0) return rows[0];
+    const col = $app.findCollectionByNameOrId("service_categories");
+    const rec = new Record(col);
+    rec.set("name", name);
+    rec.set("sort_order", 1);
+    $app.save(rec);
+    return rec;
+  }
+
+  function findOrCreateServiceItem(categoryId, name, priceCents) {
+    const rows = $app.findRecordsByFilter(
+      "service_items",
+      "name = {:n}",
+      "",
+      1,
+      0,
+      { n: name }
+    );
+    if (rows.length > 0) return rows[0];
+    const col = $app.findCollectionByNameOrId("service_items");
+    const rec = new Record(col);
+    rec.set("category", categoryId);
+    rec.set("name", name);
+    rec.set("price_cents", priceCents);
+    rec.set("duration_minutes", 60);
+    rec.set("requires_outdoor_approval", false);
+    rec.set("enabled", true);
+    $app.save(rec);
+    stats.serviceItems += 1;
+    return rec;
+  }
+
+  function findOrCreateOrder(elderId, serviceItemId, status, extra) {
+    const rows = $app.findRecordsByFilter(
+      "orders",
+      "elder = {:eid} && status = {:st}",
+      "",
+      1,
+      0,
+      { eid: elderId, st: status }
+    );
+    if (rows.length > 0) return rows[0];
+    const col = $app.findCollectionByNameOrId("orders");
+    const rec = new Record(col);
+    rec.set("elder", elderId);
+    rec.set("service_item", serviceItemId);
+    rec.set("source", "family");
+    rec.set("status", status);
+    rec.set("amount_cents", extra.amountCents || 5000);
+    rec.set("payment_status", extra.paymentStatus || "unpaid");
+    if (extra.familyUserId) rec.set("family_user", extra.familyUserId);
+    if (extra.scheduledAt) rec.set("scheduled_at", extra.scheduledAt);
+    $app.save(rec);
+    stats.orders += 1;
+    return rec;
+  }
+
   const uStudent = findOrCreateUserByEmail("student1@test.nuanban.dev", "学生1");
   const uFamily = findOrCreateUserByEmail("family1@test.nuanban.dev", "家属1");
   const uElder = findOrCreateUserByEmail("elder1@test.nuanban.dev", "老人1");
 
-  findOrCreateRole(uStudent.id, "student", { school: school.id, display_name: "学生1" });
+  findOrCreateRole(uStudent.id, "student", {
+    school: school.id,
+    display_name: "学生1",
+    latitude: 31.232,
+    longitude: 121.475,
+  });
   findOrCreateRole(uFamily.id, "family", { display_name: "家属1" });
   findOrCreateRole(uElder.id, "elder", { display_name: "老人1" });
 
   const org = findOrCreateOrg("暖伴示范养老院");
-  findOrCreateElder(org.id, "张奶奶", 31.2304, 121.4737);
-  findOrCreateElder(org.id, "李爷爷", 31.235, 121.48);
+  const elderZhang = findOrCreateElder(org.id, "张奶奶", 31.2304, 121.4737);
+  const elderLi = findOrCreateElder(org.id, "李爷爷", 31.235, 121.48);
+
+  const category = findOrCreateServiceCategory("陪伴服务");
+  const serviceItem = findOrCreateServiceItem(category.id, "聊天陪伴", 5000);
+
+  findOrCreateOrder(elderZhang.id, serviceItem.id, "pending_accept", {
+    amountCents: 5000,
+    paymentStatus: "paid",
+    familyUserId: uFamily.id,
+    scheduledAt: new Date(Date.now() + 86400000).toISOString(),
+  });
+  findOrCreateOrder(elderLi.id, serviceItem.id, "pending_payment", {
+    amountCents: 5000,
+    paymentStatus: "unpaid",
+    familyUserId: uFamily.id,
+    scheduledAt: new Date(Date.now() + 172800000).toISOString(),
+  });
 
   return e.json(200, {
     ok: true,
