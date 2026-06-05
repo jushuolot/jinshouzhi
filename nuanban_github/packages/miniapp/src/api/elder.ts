@@ -38,12 +38,15 @@ export interface ServiceItemRow extends PbRecord {
   duration_minutes?: number;
   requires_outdoor_approval?: boolean;
   enabled?: boolean;
+  category?: string;
+  expand?: { category?: { id: string; name: string } };
 }
 
 export async function listServiceItems() {
   const res = await pbList<ServiceItemRow>('service_items', {
     filter: 'enabled = true',
     sort: 'name',
+    expand: 'category',
     perPage: 50,
   });
   return res.items;

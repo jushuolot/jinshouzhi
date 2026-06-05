@@ -16,13 +16,46 @@ const ELDERS = [
   { id: 'elder-li', name: '李爷爷', latitude: 31.235, longitude: 121.48, org: ORG.id },
 ];
 
-const SERVICE_ITEM = {
-  id: 'svc-chat',
-  name: '聊天陪伴',
-  price_cents: 5000,
-  duration_minutes: 60,
-  enabled: true,
-};
+const SERVICE_CATEGORIES = [
+  { id: 'cat-companion', name: '陪伴聊天', sort_order: 1 },
+  { id: 'cat-care', name: '生活陪护', sort_order: 2 },
+  { id: 'cat-rehab', name: '康复协助', sort_order: 3 },
+  { id: 'cat-outdoor', name: '外出陪同', sort_order: 4 },
+] as const;
+
+const SERVICE_ITEMS = [
+  { id: 'svc-chat', category: 'cat-companion', name: '聊天陪伴', price_cents: 5000, duration_minutes: 60, requires_outdoor_approval: false },
+  { id: 'svc-read', category: 'cat-companion', name: '读报陪聊', price_cents: 4000, duration_minutes: 45, requires_outdoor_approval: false },
+  { id: 'svc-chess', category: 'cat-companion', name: '棋牌陪伴', price_cents: 6000, duration_minutes: 90, requires_outdoor_approval: false },
+  { id: 'svc-life', category: 'cat-care', name: '生活陪护', price_cents: 7000, duration_minutes: 60, requires_outdoor_approval: false },
+  { id: 'svc-med', category: 'cat-care', name: '用药提醒', price_cents: 3500, duration_minutes: 30, requires_outdoor_approval: false },
+  { id: 'svc-rehab', category: 'cat-rehab', name: '辅助康复操', price_cents: 8000, duration_minutes: 60, requires_outdoor_approval: false },
+  { id: 'svc-finger', category: 'cat-rehab', name: '手指操陪练', price_cents: 4500, duration_minutes: 30, requires_outdoor_approval: false },
+  { id: 'svc-walk', category: 'cat-outdoor', name: '陪同散步', price_cents: 6500, duration_minutes: 60, requires_outdoor_approval: true },
+  { id: 'svc-hospital', category: 'cat-outdoor', name: '陪同就医', price_cents: 12000, duration_minutes: 120, requires_outdoor_approval: true },
+  { id: 'svc-shop', category: 'cat-outdoor', name: '超市代购陪同', price_cents: 8000, duration_minutes: 90, requires_outdoor_approval: true },
+] as const;
+
+function serviceById(id: string) {
+  return SERVICE_ITEMS.find((s) => s.id === id) || SERVICE_ITEMS[0];
+}
+
+function serviceRecord(s: (typeof SERVICE_ITEMS)[number]) {
+  const cat = SERVICE_CATEGORIES.find((c) => c.id === s.category);
+  return {
+    id: s.id,
+    collectionId: 'service_items',
+    created: '',
+    updated: '',
+    name: s.name,
+    price_cents: s.price_cents,
+    duration_minutes: s.duration_minutes,
+    requires_outdoor_approval: s.requires_outdoor_approval,
+    enabled: true,
+    category: s.category,
+    expand: { category: { id: s.category, name: cat?.name || '其他服务' } },
+  };
+}
 
 type OrderStatus = 'pending_accept' | 'pending_payment' | 'accepted' | 'completed' | 'paid';
 
@@ -43,7 +76,7 @@ const state = {
     {
       id: 'order-pending-accept',
       elder: 'elder-zhang',
-      service_item: SERVICE_ITEM.id,
+      service_item: 'svc-chat',
       status: 'pending_accept' as OrderStatus,
       amount_cents: 5000,
       payment_status: 'paid',
@@ -53,9 +86,9 @@ const state = {
     {
       id: 'order-pending-payment',
       elder: 'elder-li',
-      service_item: SERVICE_ITEM.id,
+      service_item: 'svc-walk',
       status: 'pending_payment' as OrderStatus,
-      amount_cents: 5000,
+      amount_cents: 6500,
       payment_status: 'unpaid',
       family_user: USERS.family.id,
       scheduled_at: new Date(Date.now() + 172800000).toISOString(),
@@ -63,9 +96,9 @@ const state = {
     {
       id: 'order-completed-1',
       elder: 'elder-zhang',
-      service_item: SERVICE_ITEM.id,
+      service_item: 'svc-rehab',
       status: 'completed' as OrderStatus,
-      amount_cents: 5000,
+      amount_cents: 8000,
       payment_status: 'paid',
       family_user: USERS.family.id,
       student_user: USERS.student.id,
@@ -142,6 +175,18 @@ function parsePath(url: string): { path: string; query: URLSearchParams } {
   return { path: u.pathname.replace(/^\/api/, ''), query: u.searchParams };
 }
 
+function parseBody(data: unknown): Record<string, unknown> {
+  if (!data) return {};
+  if (typeof data === 'string') {
+    try {
+      return JSON.parse(data) as Record<string, unknown>;
+    } catch {
+      return {};
+    }
+  }
+  return data as Record<string, unknown>;
+}
+
 /** 构建时 VITE_DEMO_MOCK，或运行在 GitHub Pages 时自动启用 */
 export function isDemoMockEnabled(): boolean {
   if (import.meta.env.VITE_DEMO_MOCK === 'true') return true;
@@ -162,12 +207,16 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
   const method = (options.method || 'GET').toUpperCase();
   const rawUrl = options.url || '';
   const { path, query } = parsePath(rawUrl.startsWith('http') ? rawUrl : `/api${rawUrl}`);
-  const data = options.data as Record<string, unknown> | undefined;
+  const data = parseBody(options.data);
 
   // POST /nuanban/dev-login
   if (method === 'POST' && path === '/nuanban/dev-login') {
-    const email = String(data?.email || 'student1@test.nuanban.dev');
+    const email = String(data.email || 'student1@test.nuanban.dev');
     return delay(loginByEmail(email) as T);
+  }
+
+  if (method === 'POST' && path === '/nuanban/wx-login') {
+    return delay(loginByEmail('student1@test.nuanban.dev') as T);
   }
 
   // GET /nuanban/student/*
@@ -249,12 +298,13 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
   }
   if (method === 'POST' && path === '/nuanban/elder/orders') {
     const id = `order-${Date.now()}`;
+    const svc = serviceById(String(data.serviceItemId || 'svc-chat'));
     state.orders.push({
       id,
-      elder: String(data?.elderId || 'elder-zhang'),
-      service_item: String(data?.serviceItemId || SERVICE_ITEM.id),
+      elder: String(data.elderId || 'elder-zhang'),
+      service_item: svc.id,
       status: 'pending_payment',
-      amount_cents: 5000,
+      amount_cents: svc.price_cents,
       payment_status: 'unpaid',
       family_user: USERS.family.id,
       scheduled_at: new Date().toISOString(),
@@ -299,17 +349,7 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
     return delay(pbList(items) as T);
   }
   if (method === 'GET' && path.startsWith('/collections/service_items/records')) {
-    return delay(
-      pbList([
-        {
-          id: SERVICE_ITEM.id,
-          collectionId: 'service_items',
-          created: '',
-          updated: '',
-          ...SERVICE_ITEM,
-        },
-      ]) as T
-    );
+    return delay(pbList(SERVICE_ITEMS.map(serviceRecord)) as T);
   }
 
   if (method === 'GET' && path === '/nuanban/auth/me') {

@@ -65,6 +65,10 @@ function afterLogin(res: Awaited<ReturnType<typeof loginWithWxCode>>) {
 }
 
 async function onWxLogin() {
+  if (isDemoMockEnabled()) {
+    uni.showToast({ title: '公网演示请用下方开发登录', icon: 'none' });
+    return;
+  }
   loading.value = true;
   try {
     const { code } = await new Promise<UniApp.LoginRes>((resolve, reject) => {

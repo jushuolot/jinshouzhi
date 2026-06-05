@@ -205,7 +205,7 @@ routerAdd("POST", "/api/nuanban/seed-demo", (e) => {
     return rec;
   }
 
-  function findOrCreateServiceCategory(name) {
+  function findOrCreateServiceCategory(name, sortOrder) {
     const rows = $app.findRecordsByFilter(
       "service_categories",
       "name = {:n}",
@@ -218,12 +218,12 @@ routerAdd("POST", "/api/nuanban/seed-demo", (e) => {
     const col = $app.findCollectionByNameOrId("service_categories");
     const rec = new Record(col);
     rec.set("name", name);
-    rec.set("sort_order", 1);
+    rec.set("sort_order", sortOrder || 1);
     $app.save(rec);
     return rec;
   }
 
-  function findOrCreateServiceItem(categoryId, name, priceCents) {
+  function findOrCreateServiceItem(categoryId, name, priceCents, extra) {
     const rows = $app.findRecordsByFilter(
       "service_items",
       "name = {:n}",
@@ -232,14 +232,23 @@ routerAdd("POST", "/api/nuanban/seed-demo", (e) => {
       0,
       { n: name }
     );
-    if (rows.length > 0) return rows[0];
+    if (rows.length > 0) {
+      const existing = rows[0];
+      if (extra) {
+        if (extra.durationMinutes != null) existing.set("duration_minutes", extra.durationMinutes);
+        if (extra.requiresOutdoor != null) existing.set("requires_outdoor_approval", extra.requiresOutdoor);
+        existing.set("enabled", true);
+        $app.save(existing);
+      }
+      return existing;
+    }
     const col = $app.findCollectionByNameOrId("service_items");
     const rec = new Record(col);
     rec.set("category", categoryId);
     rec.set("name", name);
     rec.set("price_cents", priceCents);
-    rec.set("duration_minutes", 60);
-    rec.set("requires_outdoor_approval", false);
+    rec.set("duration_minutes", (extra && extra.durationMinutes) || 60);
+    rec.set("requires_outdoor_approval", !!(extra && extra.requiresOutdoor));
     rec.set("enabled", true);
     $app.save(rec);
     stats.serviceItems += 1;
@@ -316,30 +325,43 @@ routerAdd("POST", "/api/nuanban/seed-demo", (e) => {
   findOrCreateFamilyBinding(uFamily.id, elderZhang.id);
   findOrCreateFamilyBinding(uFamily.id, elderLi.id);
 
-  const category = findOrCreateServiceCategory("陪伴服务");
-  const serviceItem = findOrCreateServiceItem(category.id, "聊天陪伴", 5000);
+  const catCompanion = findOrCreateServiceCategory("陪伴聊天", 1);
+  const catCare = findOrCreateServiceCategory("生活陪护", 2);
+  const catRehab = findOrCreateServiceCategory("康复协助", 3);
+  const catOutdoor = findOrCreateServiceCategory("外出陪同", 4);
 
-  findOrCreateOrder(elderZhang.id, serviceItem.id, "pending_accept", {
+  const svcChat = findOrCreateServiceItem(catCompanion.id, "聊天陪伴", 5000, { durationMinutes: 60 });
+  const svcRead = findOrCreateServiceItem(catCompanion.id, "读报陪聊", 4000, { durationMinutes: 45 });
+  const svcChess = findOrCreateServiceItem(catCompanion.id, "棋牌陪伴", 6000, { durationMinutes: 90 });
+  const svcLife = findOrCreateServiceItem(catCare.id, "生活陪护", 7000, { durationMinutes: 60 });
+  const svcMed = findOrCreateServiceItem(catCare.id, "用药提醒", 3500, { durationMinutes: 30 });
+  const svcRehab = findOrCreateServiceItem(catRehab.id, "辅助康复操", 8000, { durationMinutes: 60 });
+  const svcFinger = findOrCreateServiceItem(catRehab.id, "手指操陪练", 4500, { durationMinutes: 30 });
+  const svcWalk = findOrCreateServiceItem(catOutdoor.id, "陪同散步", 6500, { durationMinutes: 60, requiresOutdoor: true });
+  const svcHospital = findOrCreateServiceItem(catOutdoor.id, "陪同就医", 12000, { durationMinutes: 120, requiresOutdoor: true });
+  const svcShop = findOrCreateServiceItem(catOutdoor.id, "超市代购陪同", 8000, { durationMinutes: 90, requiresOutdoor: true });
+
+  findOrCreateOrder(elderZhang.id, svcChat.id, "pending_accept", {
     amountCents: 5000,
     paymentStatus: "paid",
     familyUserId: uFamily.id,
     scheduledAt: new Date(Date.now() + 86400000).toISOString(),
   });
-  findOrCreateOrder(elderLi.id, serviceItem.id, "pending_payment", {
-    amountCents: 5000,
+  findOrCreateOrder(elderLi.id, svcWalk.id, "pending_payment", {
+    amountCents: 6500,
     paymentStatus: "unpaid",
     familyUserId: uFamily.id,
     scheduledAt: new Date(Date.now() + 172800000).toISOString(),
   });
-  findOrCreateOrder(elderZhang.id, serviceItem.id, "completed", {
-    amountCents: 5000,
+  findOrCreateOrder(elderZhang.id, svcRehab.id, "completed", {
+    amountCents: 8000,
     paymentStatus: "paid",
     familyUserId: uFamily.id,
     studentUserId: uStudent.id,
     scheduledAt: new Date(Date.now() - 86400000 * 3).toISOString(),
   });
-  findOrCreateOrder(elderLi.id, serviceItem.id, "completed", {
-    amountCents: 5000,
+  findOrCreateOrder(elderLi.id, svcLife.id, "completed", {
+    amountCents: 7000,
     paymentStatus: "paid",
     familyUserId: uFamily.id,
     studentUserId: uStudent.id,
