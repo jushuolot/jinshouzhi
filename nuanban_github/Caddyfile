@@ -2,12 +2,12 @@
 # 生产将 :80 改为你的域名，并在 Caddy 中配置 TLS
 
 :80 {
-	handle_path /api/* {
+	# 保留 /api 前缀转发给 PocketBase（勿用 handle_path，会剥掉 /api）
+	handle /api/* {
 		reverse_proxy pocketbase:8090
 	}
 
-	# PocketBase Admin Dashboard 路径（/_/）
-	handle_path /_/* {
+	handle /_/* {
 		reverse_proxy pocketbase:8090
 	}
 

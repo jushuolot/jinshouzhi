@@ -12,6 +12,16 @@
 
 > 仓库中的 `packages/api`、`packages/admin-web`、`database/` 为历史参考，新环境请按极简栈部署。
 
+## 客人公网演示（手机 / 浏览器直接打开）
+
+```bash
+cd nuanban_github
+chmod +x scripts/*.sh
+./scripts/public-demo.sh
+```
+
+终端会输出 **HTTPS 链接**（如 `https://xxx.trycloudflare.com/#/pages/common/login`），发给客人即可；详见 [docs/DEMO_LINK.md](docs/DEMO_LINK.md)。
+
 ## 本地测试 / GitHub 克隆测试
 
 - **单仓（推荐）**：https://github.com/jushuolot/jinshouzhi → 进入 `nuanban_github/`  

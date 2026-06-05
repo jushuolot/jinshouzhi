@@ -59,18 +59,40 @@ http://localhost:<端口>/#/pages/common/login
 
 ---
 
-## 公网在线演示（可选）
+## 公网演示（客人手机/浏览器直接访问）
 
-当前版本 **未内置** 公网托管。客人需 **克隆仓库 + 本地运行**。
-
-若需临时公网链接，维护者可自行：
+**一条命令**（需 Docker + Node；推荐先 `brew install cloudflared`）：
 
 ```bash
-# 示例：Cloudflare Tunnel（需安装 cloudflared）
-cloudflared tunnel --url http://localhost:5175
+cd nuanban_github
+chmod +x scripts/*.sh
+./scripts/public-demo.sh
 ```
 
-将生成的 `*.trycloudflare.com` 地址发给客人，后缀加 `/#/pages/common/login`。
+脚本会：构建 H5 → 启动 Caddy（8080 端口，H5+API 合一）→ 创建 **HTTPS 公网隧道**。
+
+终端会打印类似：
+
+```
+https://xxxx.trycloudflare.com/#/pages/common/login
+```
+
+**把整行链接发给客人**，微信/Safari 打开即可，点「开发登录（学生/家属/老人）」演示。
+
+注意：
+
+- 关闭运行脚本的终端后公网链接失效（临时隧道）。
+- 若使用 **localtunnel**（`*.loca.lt`），客人首次打开可能看到「Click to Continue」提示页，点一下即可进入；推荐本机安装 `brew install cloudflared` 使用 Cloudflare 隧道，无此步骤。
+
+### 同一 WiFi 内演示（无公网）
+
+脚本失败时会提示局域网地址，例如：
+
+```
+http://192.168.x.x:8080/#/pages/common/login
+```
+
+手机连同一 WiFi 即可访问。
 
 ---
 
