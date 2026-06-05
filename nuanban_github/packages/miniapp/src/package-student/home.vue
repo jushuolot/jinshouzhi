@@ -12,7 +12,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onShow } from 'vue';
+import { ref } from 'vue';
+import { onShow } from '@dcloudio/uni-app';
 import RoleTabBar from '../components/RoleTabBar.vue';
 import { request } from '../utils/request';
 import { pbErrorMessage } from '../utils/request';

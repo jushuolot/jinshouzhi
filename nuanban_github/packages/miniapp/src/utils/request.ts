@@ -8,10 +8,33 @@ export interface PbErrorBody {
   data?: Record<string, { message?: string }>;
 }
 
+const BACKEND_DOWN_HINT =
+  '后端未启动。请先打开 Docker Desktop，再在项目根目录执行：docker compose up -d pocketbase';
+
+function isBackendUnreachable(err: unknown): boolean {
+  if (!err || typeof err !== 'object') return false;
+  const e = err as { errMsg?: string; message?: string; statusCode?: number };
+  const text = `${e.errMsg ?? ''} ${e.message ?? ''}`.toLowerCase();
+  if (e.statusCode === 500 || e.statusCode === 502 || e.statusCode === 503) return true;
+  return (
+    text.includes('request:fail') ||
+    text.includes('timeout') ||
+    text.includes('econnrefused') ||
+    text.includes('network') ||
+    text.includes('http 500') ||
+    text.includes('http 502') ||
+    text.includes('http 503')
+  );
+}
+
 export function pbErrorMessage(err: unknown): string {
+  if (isBackendUnreachable(err)) return BACKEND_DOWN_HINT;
   if (!err || typeof err !== 'object') return '请求失败';
   const body = err as PbErrorBody;
-  if (body.message) return body.message;
+  if (body.message) {
+    if (isBackendUnreachable({ message: body.message })) return BACKEND_DOWN_HINT;
+    return body.message;
+  }
   if (body.data) {
     const first = Object.values(body.data)[0];
     if (first?.message) return first.message;
@@ -45,9 +68,13 @@ export function request<T>(options: UniApp.RequestOptions): Promise<T> {
           reject(new Error('未登录'));
           return;
         }
-        reject(res.data ?? { message: `HTTP ${res.statusCode}` });
+        const payload =
+          res.data && typeof res.data === 'object'
+            ? res.data
+            : { message: `HTTP ${res.statusCode}`, statusCode: res.statusCode };
+        reject(payload);
       },
-      fail: (e) => reject(e),
+      fail: (e) => reject({ ...(typeof e === 'object' && e ? e : {}), errMsg: (e as { errMsg?: string })?.errMsg ?? 'request:fail' }),
     });
   });
 }

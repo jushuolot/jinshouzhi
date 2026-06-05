@@ -1,105 +1,170 @@
-# 本地测试 & 从 GitHub 克隆测试
+# 本地测试指南
 
-仓库地址（单仓）：**https://github.com/jushuolot/jinshouzhi**（子目录 `nuanban_github/`）  
-独立仓（同步）：**https://github.com/jushuolot/nuanban**
-
----
-
-## 一、从单仓克隆（推荐 · 含全部子项目）
-
-```bash
-git clone https://github.com/jushuolot/jinshouzhi.git
-cd jinshouzhi/nuanban_github
-```
+仓库：**https://github.com/jushuolot/nuanban**
 
 ---
 
-## 二、仅克隆暖伴独立仓
+## 一、克隆项目
 
 ```bash
 git clone https://github.com/jushuolot/nuanban.git
 cd nuanban
 ```
 
-后续步骤与下面「三、一键启动」相同。
-
 ---
 
-## 三、一键启动（后端 + 演示数据）
+## 二、启动后端（Docker + PocketBase）
 
-**前置**：已安装 [Docker Desktop](https://www.docker.com/products/docker-desktop/) 且已启动。
+**前置**：安装并打开 [Docker Desktop](https://www.docker.com/products/docker-desktop/)（菜单栏出现鲸鱼图标）。
 
 ```bash
-cd nuanban_github   # 单仓内路径，或独立 clone 的 nuanban 目录
 chmod +x scripts/*.sh
+
+# 方式 A：一键（推荐）
 ./scripts/dev-test.sh
+
+# 方式 B：分步
+docker compose up -d pocketbase
+curl http://localhost:8090/api/health    # 应返回 API is healthy
+./scripts/seed-demo.sh
 ```
 
-脚本会：
+`seed-demo` 会写入：
 
-1. `docker compose up -d pocketbase`
-2. 等待 API 健康检查通过
-3. 执行 `./scripts/seed-demo.sh` 写入演示账号与订单
+- 三角色演示账号（student / family / elder）
+- 学校字典、养老院、2 位上海附近老人（张奶奶、李爷爷）
 
 ---
 
-## 四、启动 H5 前端
+## 三、启动 H5 前端
 
 **新开一个终端**：
 
 ```bash
-cd packages/miniapp   # 在 nuanban_github 根目录下
-cp .env.example .env
-npm install
+cd packages/miniapp
+cp .env.example .env    # 首次需要；已有 .env 可跳过
+npm install             # 首次需要
 npm run dev:h5
 ```
 
-浏览器打开终端里提示的地址（一般为 **http://localhost:5174**）。
+浏览器打开：**http://localhost:5174/#/pages/common/login**
 
-### 登录方式
+`.env` 默认：
 
-1. 点击 **「开发账号登录（学生）」**（须先执行过 seed）  
-2. 或微信登录（演示 stub，会创建 `wx_*@nuanban.dev` 用户）
+```
+VITE_API_BASE_URL=/api
+VITE_DEV_AUTH_EMAIL=student1@test.nuanban.dev
+```
 
-| 用途 | 账号 | 密码 |
-|------|------|------|
-| 后台 Admin | admin@nuanban.dev | Nuanban2025!（若登不上执行 `./scripts/pb-reset-admin.sh`） |
-| 学生 | student1@test.nuanban.dev | nuanban_dev_2025 |
-| 家属 | family1@test.nuanban.dev | nuanban_dev_2025 |
-| 老人 | elder1@test.nuanban.dev | nuanban_dev_2025 |
+Vite 会把 `/api` 代理到 `http://localhost:8090`，**无需改 .env 即可用登录页三角色按钮**。
+
+---
+
+## 四、登录与三角色体验
+
+登录页提供：
+
+| 按钮 | 账号 | 登录后首页 |
+|------|------|------------|
+| **开发登录（学生）** | student1@test.nuanban.dev | 学生端首页，显示「待接单 N」 |
+| **开发登录（家属）** | family1@test.nuanban.dev | 家属端首页，「待支付订单」入口 |
+| **开发登录（老人）** | elder1@test.nuanban.dev | 老人端首页，「找陪护」「一键求助」 |
+| 微信登录 | 自动创建 wx_* 用户 | 视角色跳转 |
+
+### 学生端预期
+
+1. 首页：**待接单 0**（无待接订单时）、底部 Tab（首页 / 发现 / 我的）
+2. 点击 **发现**：附近老人列表，应看到 **张奶奶**（约 0km）、**李爷爷**（约 0.8km）
+3. 点击老人卡片可进入订单详情页
+
+### 家属端预期
+
+1. 首页标题 **家属端**
+2. 卡片 **待支付订单** → 模拟支付页（无订单时页面仍可打开）
+3. 底部 Tab：首页 / 订单 / 我的
+
+### 老人端预期
+
+1. 大字号 **您好**，副标题「今日有人陪伴您」
+2. 按钮 **找陪护** → 附近同学列表（可能为空，正常）
+3. **一键求助** → Toast「已发送求助」
+
+### 注册入口（可选）
+
+登录页底部：**老人注册 / 家属注册 / 学生注册**
 
 ---
 
 ## 五、管理后台
 
-- 地址：http://localhost:8090/_/
-- 首次或忘记密码：`./scripts/pb-reset-admin.sh`
-- 导入数据模型：**Settings → Import collections** → 选 `packages/pocketbase/pb_schema.json`，**勾选 Merge**
+| 项 | 值 |
+|----|-----|
+| 地址 | http://localhost:8090/_/ |
+| 管理员 | admin@nuanban.dev / Nuanban2025! |
+| 忘记密码 | `./scripts/pb-reset-admin.sh` |
+| 导入模型 | Settings → Import collections → `packages/pocketbase/pb_schema.json`（勾选 Merge） |
 
 ---
 
-## 六、推送到 GitHub（本地改完代码后）
+## 六、命令行快速验证
 
 ```bash
-cd nuanban_github   # 或在单仓根目录 git add nuanban_github/
-git add -A
-git status   # 确认没有 .env、pb_data、pb_data.bak
-git commit -m "你的说明"
-git push origin main
-```
+# 健康检查
+curl http://localhost:8090/api/health
 
-他人 `git pull` 后即可按本文档第二节重新测试。
+# 三角色 dev-login
+for email in student1@test.nuanban.dev family1@test.nuanban.dev elder1@test.nuanban.dev; do
+  echo "=== $email ==="
+  curl -sS -X POST http://localhost:8090/api/nuanban/dev-login \
+    -H 'Content-Type: application/json' \
+    -d "{\"email\":\"$email\"}"
+  echo ""
+done
+
+# 学生 token 拉取附近老人
+TOKEN=$(curl -sS -X POST http://localhost:8090/api/nuanban/dev-login \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"student1@test.nuanban.dev"}' | python3 -c "import sys,json; print(json.load(sys.stdin)['token'])")
+curl -H "Authorization: Bearer $TOKEN" \
+  "http://localhost:8090/api/collections/elders/records?filter=enabled%3Dtrue"
+```
 
 ---
 
 ## 七、常见问题
 
-| 现象 | 处理 |
-|------|------|
-| `docker: command not found` | 安装并打开 Docker Desktop |
-| 8090 无法访问 | `docker compose logs pocketbase` |
-| 开发登录提示用户不存在 | `./scripts/seed-demo.sh` |
-| H5 接口 404 | 确认 `.env` 里 `VITE_API_BASE_URL=/api`，且 PocketBase 在 8090 |
-| 微信开发者工具 | `npm run dev:mp-weixin`，工具里勾选「不校验合法域名」 |
+| 现象 | 原因 | 处理 |
+|------|------|------|
+| **请求失败** / 登录无响应 | Docker 未开，8090 连不上 | 打开 Docker Desktop → `docker compose up -d pocketbase` |
+| Toast：**后端未启动…** | 同上 | 按提示执行 `docker compose up -d pocketbase` |
+| **连接服务器超时，点击屏幕重试** | 分包 JS 加载失败（曾见错误 import） | **Cmd+Shift+R** 强刷；确认只有一个 `npm run dev:h5` |
+| 开发登录提示用户不存在 | 未 seed | `./scripts/seed-demo.sh` |
+| 发现页「暂无附近老人」 | 未 seed 老人档案 | `./scripts/seed-demo.sh`（应写入张奶奶、李爷爷） |
+| 页面是旧版 / 按钮不对 | 浏览器缓存 | Cmd+Shift+R；或重启 dev server |
+| H5 接口 404 | 代理未生效 | 确认 `.env` 中 `VITE_API_BASE_URL=/api`，PocketBase 在 8090 |
+| `docker: command not found` | 未装 Docker | 安装 Docker Desktop |
+| 微信开发者工具 | 需配置域名白名单 | `npm run dev:mp-weixin`，工具里勾选「不校验合法域名」 |
 
 更多见 [TROUBLESHOOTING.md](./TROUBLESHOOTING.md)。
+
+---
+
+## 八、推荐测试顺序（给新同学）
+
+1. `./scripts/dev-test.sh` → 确认 health + seed 成功
+2. `cd packages/miniapp && npm run dev:h5`
+3. 打开登录页 → **开发登录（学生）** → 首页 → **发现** → 看到 2 位老人
+4. 退出或清缓存后 → **开发登录（家属）** → 点「待支付订单」
+5. 再试 **开发登录（老人）** → 点「找陪护」
+6. 可选：底部注册链接走一遍注册页
+
+---
+
+## 九、推送代码（维护者）
+
+```bash
+git add -A
+git status   # 勿提交 .env、pb_data、pb_data.bak
+git commit -m "说明"
+git push origin main
+```

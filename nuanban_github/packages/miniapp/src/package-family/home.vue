@@ -7,7 +7,11 @@
 </template>
 
 <script setup lang="ts">
+import { onShow } from '@dcloudio/uni-app';
 import RoleTabBar from '../components/RoleTabBar.vue';
+import { guardPackageRoute } from '../utils/nav-guard';
+
+onShow(() => guardPackageRoute('/package-family/home'));
 
 function goPay() {
   uni.navigateTo({ url: '/package-family/order/pay' });

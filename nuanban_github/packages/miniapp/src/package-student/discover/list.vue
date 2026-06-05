@@ -1,26 +1,44 @@
 <template>
   <view class="page">
-    <text class="tip">待接单列表</text>
-    <view v-for="o in list" :key="o.id" class="card" @tap="openRequest(o.id)">
-      <text>订单 {{ o.id.slice(0, 8) }}</text>
-      <text class="meta">老人 {{ o.elderId?.slice(0, 6) }} · ¥{{ ((o.amountCents || 0) / 100).toFixed(0) }}</text>
+    <text class="tip">附近老人（演示坐标：上海）</text>
+    <view v-for="e in list" :key="e.id" class="card" @tap="openElder(e.id)">
+      <text>{{ e.name }}</text>
+      <text class="meta">{{ e.distanceKm?.toFixed(1) ?? '?' }}km</text>
     </view>
-    <view v-if="!list.length" class="empty">暂无待接单</view>
+    <view v-if="errorMsg" class="error" @tap="reload">
+      <text>加载失败（点此重试）</text>
+      <text class="mono">{{ errorMsg }}</text>
+    </view>
+    <view v-else-if="!loading && !list.length" class="empty">暂无附近老人</view>
   </view>
 </template>
 
 <script setup lang="ts">
 import { onShow } from '@dcloudio/uni-app';
 import { ref } from 'vue';
-import { listPendingOrders, type PendingOrder } from '../../api/student';
+import { listNearbyElders, type ElderRow } from '../../api/student';
+import { pbErrorMessage } from '../../utils/request';
 
-const list = ref<PendingOrder[]>([]);
+const list = ref<(ElderRow & { distanceKm: number })[]>([]);
+const loading = ref(false);
+const errorMsg = ref('');
 
-onShow(async () => {
-  list.value = await listPendingOrders();
-});
+async function reload() {
+  loading.value = true;
+  errorMsg.value = '';
+  try {
+    list.value = await listNearbyElders(31.2304, 121.4737);
+  } catch (e) {
+    list.value = [];
+    errorMsg.value = pbErrorMessage(e);
+  } finally {
+    loading.value = false;
+  }
+}
 
-function openRequest(id: string) {
+onShow(reload);
+
+function openElder(id: string) {
   uni.navigateTo({ url: `/package-student/order/request?id=${id}` });
 }
 </script>
@@ -39,5 +57,23 @@ function openRequest(id: string) {
   display: block;
   color: #666;
   font-size: 26rpx;
+}
+.empty {
+  text-align: center;
+  color: #999;
+  margin-top: 80rpx;
+}
+.error {
+  margin-top: 24rpx;
+  padding: 24rpx;
+  border-radius: 12rpx;
+  background: #fff3f3;
+  color: #b71c1c;
+}
+.mono {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 22rpx;
+  word-break: break-all;
 }
 </style>

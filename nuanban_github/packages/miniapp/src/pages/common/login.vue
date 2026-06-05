@@ -3,8 +3,16 @@
     <text class="title">暖伴勤工</text>
     <text class="sub">一个小程序，服务老人、家属与同学</text>
     <button class="btn-primary" :loading="loading" @tap="onWxLogin">微信登录</button>
-    <button class="btn-secondary" :loading="loading" @tap="onDevLogin">开发账号登录（学生）</button>
-    <view class="hint">需先执行 seed-demo；账号见下方说明</view>
+    <button
+      v-for="dev in DEV_ACCOUNTS"
+      :key="dev.email"
+      class="btn-secondary"
+      :loading="loading"
+      @tap="onDevLogin(dev.email)"
+    >
+      开发登录（{{ dev.label }}）
+    </button>
+    <view class="hint">需先执行 seed-demo；三角色一键登录，无需改 .env</view>
     <view class="links">
       <text @tap="goRegister('elder')">老人注册</text>
       <text @tap="goRegister('family')">家属注册</text>
@@ -22,6 +30,12 @@ import { pbErrorMessage } from '../../utils/request';
 
 const loading = ref(false);
 const roleStore = useRoleStore();
+
+const DEV_ACCOUNTS = [
+  { label: '学生', email: 'student1@test.nuanban.dev' },
+  { label: '家属', email: 'family1@test.nuanban.dev' },
+  { label: '老人', email: 'elder1@test.nuanban.dev' },
+] as const;
 
 function afterLogin(res: Awaited<ReturnType<typeof loginWithWxCode>>) {
   roleStore.setAuth({
@@ -59,10 +73,10 @@ async function onWxLogin() {
   }
 }
 
-async function onDevLogin() {
+async function onDevLogin(email: string) {
   loading.value = true;
   try {
-    const res = await loginDev();
+    const res = await loginDev(email);
     afterLogin(res);
   } catch (e) {
     uni.showToast({ title: pbErrorMessage(e), icon: 'none' });
@@ -101,6 +115,7 @@ function goRegister(role: RoleKey) {
   color: #c45c26;
   border: 1px solid #c45c26;
   border-radius: 12rpx;
+  margin-bottom: 16rpx;
 }
 .hint {
   display: block;

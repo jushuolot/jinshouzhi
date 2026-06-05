@@ -72,7 +72,7 @@ var findOrCreateUserRole = function(userId, role, extra) {
 }
 
 routerAdd("POST", "/api/nuanban/seed-demo", (e) => {
-  const stats = { users: 0, roles: 0, schools: 0 };
+  const stats = { users: 0, roles: 0, schools: 0, orgs: 0, elders: 0 };
 
   // school_dict
   const existingSchool = $app.findRecordsByFilter(
@@ -144,13 +144,68 @@ routerAdd("POST", "/api/nuanban/seed-demo", (e) => {
     return rec;
   }
 
+  function findOrCreateOrg(name) {
+    const rows = $app.findRecordsByFilter(
+      "organizations",
+      "name = {:n}",
+      "",
+      1,
+      0,
+      { n: name }
+    );
+    if (rows.length > 0) return rows[0];
+    const col = $app.findCollectionByNameOrId("organizations");
+    const rec = new Record(col);
+    rec.set("name", name);
+    rec.set("latitude", 31.23);
+    rec.set("longitude", 121.47);
+    rec.set("enabled", true);
+    $app.save(rec);
+    stats.orgs += 1;
+    return rec;
+  }
+
+  function findOrCreateElder(orgId, name, lat, lng) {
+    const rows = $app.findRecordsByFilter(
+      "elders",
+      "name = {:n}",
+      "",
+      1,
+      0,
+      { n: name }
+    );
+    if (rows.length > 0) {
+      const existing = rows[0];
+      existing.set("org", orgId);
+      existing.set("latitude", lat);
+      existing.set("longitude", lng);
+      existing.set("enabled", true);
+      $app.save(existing);
+      return existing;
+    }
+    const col = $app.findCollectionByNameOrId("elders");
+    const rec = new Record(col);
+    rec.set("org", orgId);
+    rec.set("name", name);
+    rec.set("latitude", lat);
+    rec.set("longitude", lng);
+    rec.set("enabled", true);
+    $app.save(rec);
+    stats.elders += 1;
+    return rec;
+  }
+
   const uStudent = findOrCreateUserByEmail("student1@test.nuanban.dev", "学生1");
   const uFamily = findOrCreateUserByEmail("family1@test.nuanban.dev", "家属1");
   const uElder = findOrCreateUserByEmail("elder1@test.nuanban.dev", "老人1");
 
-  // 注意：部分 PocketBase JS hooks 环境下对 collection rules / 查询行为更严格，
-  // 为保证「从 GitHub 克隆后开箱即测」，最小 seed 仅创建 users 与 school_dict。
-  // 角色信息由 dev-login 返回固定桩（见 nuanban.pb.js）。
+  findOrCreateRole(uStudent.id, "student", { school: school.id, display_name: "学生1" });
+  findOrCreateRole(uFamily.id, "family", { display_name: "家属1" });
+  findOrCreateRole(uElder.id, "elder", { display_name: "老人1" });
+
+  const org = findOrCreateOrg("暖伴示范养老院");
+  findOrCreateElder(org.id, "张奶奶", 31.2304, 121.4737);
+  findOrCreateElder(org.id, "李爷爷", 31.235, 121.48);
 
   return e.json(200, {
     ok: true,
