@@ -1,7 +1,7 @@
 import { createSSRApp } from 'vue';
 import { createPinia } from 'pinia';
 import App from './App.vue';
-import { initDeviceFrame } from './utils/device-frame';
+import { initDevicePreview } from './utils/device-preview';
 
 export function createApp() {
   const app = createSSRApp(App);
@@ -11,7 +11,7 @@ export function createApp() {
 
 // #ifdef H5
 if (typeof window !== 'undefined') {
-  const boot = () => initDeviceFrame();
+  const boot = () => initDevicePreview();
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', boot);
   } else {
