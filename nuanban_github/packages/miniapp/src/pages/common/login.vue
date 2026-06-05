@@ -32,8 +32,8 @@ import { isDemoMockEnabled } from '../../utils/demo-mock';
 const loading = ref(false);
 const loginHint = computed(() =>
   isDemoMockEnabled()
-    ? '公网演示模式：三角色一键体验，无需后端'
-    : '需先执行 seed-demo；三角色一键登录，无需改 .env'
+    ? '公网演示 · 富数据集（8老人/6同学/20+订单）· 零成本 Mock'
+    : '本地联调：先 seed-demo；富数据支持列表与压力场景测试'
 );
 const roleStore = useRoleStore();
 

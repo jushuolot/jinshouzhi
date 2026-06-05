@@ -44,6 +44,7 @@
         { "path": "income", "style": { "navigationBarTitleText": "收入明细" } },
         { "path": "schedule/list", "style": { "navigationBarTitleText": "我的排班" } },
         { "path": "schedule/checkin", "style": { "navigationBarTitleText": "到场签到" } },
+        { "path": "schedule/log", "style": { "navigationBarTitleText": "服务日志" } },
         { "path": "profile", "style": { "navigationBarTitleText": "我的" } }
       ]
     }

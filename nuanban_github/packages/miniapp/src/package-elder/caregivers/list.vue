@@ -5,6 +5,7 @@
       <text class="subtitle">按距离为您推荐附近同学</text>
     </view>
     <view v-if="loading" class="state">加载中…</view>
+    <ListCountBar v-if="!loading && list.length" :count="list.length" hint="6 位同学 · 列表演示" />
     <PersonCard
       v-for="item in list"
       :key="item.id"
@@ -24,6 +25,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import PersonCard from '../../components/PersonCard.vue';
+import ListCountBar from '../../components/ListCountBar.vue';
 import { getNearbyCaregivers, type CaregiverItem } from '../../api/elder';
 import { getLocationWithFallback } from '../../utils/location';
 

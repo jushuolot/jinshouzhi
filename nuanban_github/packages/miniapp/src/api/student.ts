@@ -173,6 +173,24 @@ export async function listStudentSchedules() {
   return res.list ?? [];
 }
 
+export interface ServiceLogItem {
+  id: string;
+  orderId: string;
+  elderId: string;
+  elderName: string;
+  serviceName: string;
+  summary: string;
+  createdAt: string;
+}
+
+export async function listServiceLogs() {
+  const res = await request<{ list: ServiceLogItem[] }>({
+    url: '/nuanban/student/service-logs',
+    method: 'GET',
+  });
+  return res.list ?? [];
+}
+
 export interface ElderRow extends PbRecord {
   name: string;
   latitude?: number;

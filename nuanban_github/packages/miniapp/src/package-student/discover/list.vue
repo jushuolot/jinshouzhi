@@ -23,6 +23,7 @@
 
     <!-- 列表模式 -->
     <view v-else-if="mode === 'list'">
+      <ListCountBar :count="list.length" hint="8 位老人 · 双机构" />
       <PersonCard
         v-for="e in list"
         :key="e.id"
@@ -78,6 +79,7 @@ import { onShow } from '@dcloudio/uni-app';
 import { computed, ref } from 'vue';
 import RoleTabBar from '../../components/RoleTabBar.vue';
 import PersonCard from '../../components/PersonCard.vue';
+import ListCountBar from '../../components/ListCountBar.vue';
 import { listNearbyElders, type ElderRow } from '../../api/student';
 import { getLocationWithFallback } from '../../utils/location';
 import { pbErrorMessage } from '../../utils/request';

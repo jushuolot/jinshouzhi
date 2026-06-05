@@ -16,6 +16,7 @@
       <text class="empty-hint">有新订单时会出现在这里</text>
     </view>
     <view v-else>
+      <ListCountBar :count="list.length" hint="富数据演示 · 可滚动压测" />
       <view v-for="o in list" :key="o.id" class="order-card" @tap="open(o.id)">
         <view class="order-head">
           <text class="svc-name">{{ o.serviceName || '陪护服务' }}</text>
@@ -48,6 +49,7 @@
 import { onShow } from '@dcloudio/uni-app';
 import { ref } from 'vue';
 import RoleTabBar from '../../components/RoleTabBar.vue';
+import ListCountBar from '../../components/ListCountBar.vue';
 import { listPendingOrders, type PendingOrder } from '../../api/student';
 import { pbErrorMessage } from '../../utils/request';
 

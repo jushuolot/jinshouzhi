@@ -1089,6 +1089,41 @@ routerAdd("POST", "/api/nuanban/student/orders/{id}/checkin", (e) => {
   return e.json(200, { ok: true, status: "in_service" });
 });
 
+routerAdd("GET", "/api/nuanban/student/service-logs", (e) => {
+  const auth = e.auth;
+  if (!auth) return e.json(401, { message: "需要登录" });
+  const records = $app.findRecordsByFilter(
+    "orders",
+    'student_user = {:uid} && status = "completed"',
+    "-scheduled_at",
+    50,
+    0,
+    { uid: auth.id }
+  );
+  const summaries = [
+    "陪老人读报，情绪稳定",
+    "完成康复操，血压正常",
+    "陪同散步约 1km",
+    "用药提醒已执行",
+    "棋牌陪伴，兴致良好",
+  ];
+  const list = [];
+  for (let i = 0; i < records.length; i++) {
+    const o = records[i];
+    const svc = serviceInfoById(o.getString("service_item"));
+    list.push({
+      id: "log-" + o.id,
+      orderId: o.id,
+      elderId: o.getString("elder"),
+      elderName: elderNameById(o.getString("elder")),
+      serviceName: svc.name,
+      summary: summaries[i % summaries.length],
+      createdAt: o.getString("scheduled_at"),
+    });
+  }
+  return e.json(200, { list: list });
+});
+
 routerAdd("GET", "/api/nuanban/family/orders/{id}", (e) => {
   const auth = e.auth;
   if (!auth) return e.json(401, { message: "需要登录" });

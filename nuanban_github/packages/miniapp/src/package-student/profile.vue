@@ -45,6 +45,10 @@
         <text>我的排班</text>
         <text class="arrow">›</text>
       </view>
+      <view class="menu-item" @tap="goLogs">
+        <text>服务日志</text>
+        <text class="arrow">›</text>
+      </view>
       <view class="menu-item" @tap="goDiscover">
         <text>附近老人</text>
         <text class="arrow">›</text>
@@ -122,6 +126,10 @@ function goIncome() {
 
 function goSchedule() {
   uni.navigateTo({ url: '/package-student/schedule/list' });
+}
+
+function goLogs() {
+  uni.navigateTo({ url: '/package-student/schedule/log' });
 }
 
 function goDiscover() {

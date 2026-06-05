@@ -1,25 +1,24 @@
 # 暖伴勤工 · 迭代路线图
 
-> 与 [GAP_AUDIT.md](./GAP_AUDIT.md) 对照更新。零成本栈见 [ZERO_COST.md](./ZERO_COST.md)。
+> [GAP_AUDIT.md](./GAP_AUDIT.md) · [TEST_MATURITY.md](./TEST_MATURITY.md) · [ZERO_COST.md](./ZERO_COST.md)
 
 ## 已完成
 
 | 阶段 | 内容 |
 |------|------|
-| Phase 1 | 公网 demo-mock、三角色登录、服务 SKU、GitHub Pages |
-| Phase 2 | 同城有约式卡片、三端首页、接单 Tab、外出审批 |
-| Phase 2.5 | 订单时间轴、服务中链路、SOS、收入明细 |
-| Phase 3 | PB hooks parity、排班/绑定/无障碍、列表优化 |
-| Phase 4 | 到场签到（围栏）、家属订单详情、绑定码/链接扫码流 |
+| Phase 1–2 | 公网 demo、卡片化 UI、接单/外出审批 |
+| Phase 2.5–4 | 时间轴、SOS、收入、签到、绑定码、家属订单详情 |
+| Phase 3 | PB hooks parity、排班/绑定/无障碍 |
+| **Phase 5** | **富数据集（8/6/20+）**、服务日志、ListCountBar、成熟度测试文档 |
 
-## Phase 5（下一步）
+## Phase 6（下一步）
 
-- `student/schedule/log` 服务日志简页  
-- 机构 Admin 派单（若恢复 admin 包）  
-- 学校合作过滤、`X-Active-Role` 服务端校验  
+- 学校合作过滤（学生端 discover）
+- Admin 机构派单（若恢复 admin 包）
+- 列表虚拟滚动（订单 >50 时）
 
-## 上线项（需资质/可能产生费用，暂不默认）
+## 不上线项（避免费用）
 
-- 真实微信支付 / 微信登录  
-- 短信 / 模板消息 / 商业地图 Key  
-- 自建服务器公网 API（见 PUBLIC_DEMO.md）
+- 微信支付 / 微信登录商户
+- 云服务器 / Render 常驻 API
+- 商业地图 Key、短信
