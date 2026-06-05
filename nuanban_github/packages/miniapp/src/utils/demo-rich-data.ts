@@ -5,6 +5,14 @@
 export const DEMO_ORG_MAIN = { id: 'org-demo', name: '暖伴示范养老院' };
 export const DEMO_ORG_EAST = { id: 'org-east', name: '城东颐养中心' };
 
+/** 机构合作学校 — 学生「学校合作」筛选依据 */
+export const ORG_SCHOOL_PARTNERS: Record<string, string[]> = {
+  [DEMO_ORG_MAIN.id]: ['示范大学', '医科大学'],
+  [DEMO_ORG_EAST.id]: ['城东师范学院', '示范大学'],
+};
+
+export const DEMO_SCHOOLS = ['示范大学', '城东师范学院', '医科大学'] as const;
+
 export const DEMO_USERS = {
   student: { id: 'user-student', email: 'student1@test.nuanban.dev', nickname: '林同学' },
   family: { id: 'user-family', email: 'family1@test.nuanban.dev', nickname: '家属1' },
@@ -161,8 +169,8 @@ export function buildRichOrders(elders: RichElder[]): RichOrder[] {
     });
   };
 
-  // 待接单池（压力：6 单）
-  for (let i = 0; i < 6; i++) push(i, i, 'pending_accept', 86400000 * (1 + i * 0.3));
+  // 待接单池（压力：10 单）
+  for (let i = 0; i < 10; i++) push(i, i, 'pending_accept', 86400000 * (1 + i * 0.25));
 
   // 待支付（3 单）
   for (let i = 0; i < 3; i++) push(i + 1, i + 2, 'pending_payment', 172800000 + i * 3600000);

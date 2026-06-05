@@ -44,6 +44,16 @@
       </view>
       <text class="chevron">›</text>
     </view>
+    <view class="todo-card" @tap="goPackageBuy">
+      <view class="todo-left">
+        <text class="todo-icon">📦</text>
+        <view>
+          <text class="todo-title">服务包购买</text>
+          <text class="todo-desc">演示占位 · 机构套餐</text>
+        </view>
+      </view>
+      <text class="chevron">›</text>
+    </view>
     <view class="todo-card highlight" @tap="goOutdoor">
       <view class="todo-left">
         <text class="todo-icon">🚶</text>
@@ -165,6 +175,10 @@ async function goOutdoor() {
 
 function goBind() {
   uni.navigateTo({ url: '/package-family/bind' });
+}
+
+function goPackageBuy() {
+  uni.navigateTo({ url: '/package-family/package/buy' });
 }
 
 async function goSos() {

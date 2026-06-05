@@ -15,7 +15,7 @@
       <text>暂无待接单</text>
       <text class="empty-hint">有新订单时会出现在这里</text>
     </view>
-    <view v-else>
+    <scroll-view v-else scroll-y class="order-scroll">
       <ListCountBar :count="list.length" hint="富数据演示 · 可滚动压测" />
       <view v-for="o in list" :key="o.id" class="order-card" @tap="open(o.id)">
         <view class="order-head">
@@ -39,7 +39,7 @@
           <text class="cta">立即接单 ›</text>
         </view>
       </view>
-    </view>
+    </scroll-view>
 
     <RoleTabBar role="student" current="/package-student/order/pending" />
   </view>
@@ -103,6 +103,9 @@ function open(id: string) {
   margin-top: 8rpx;
   font-size: 24rpx;
   color: #999;
+}
+.order-scroll {
+  max-height: calc(100vh - 280rpx);
 }
 .order-card {
   background: #fff;

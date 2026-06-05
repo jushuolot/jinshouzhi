@@ -614,6 +614,128 @@ routerAdd("GET", "/api/nuanban/student/profile", (e) => {
   });
 });
 
+routerAdd("PATCH", "/api/nuanban/student/profile", (e) => {
+  const auth = e.auth;
+  if (!auth) return e.json(401, { message: "需要登录" });
+  const raw = toString(e.request.body);
+  const body = raw ? JSON.parse(raw) : {};
+  const roles = $app.findRecordsByFilter(
+    "user_roles",
+    'user = {:uid} && role = "student"',
+    "",
+    1,
+    0,
+    { uid: auth.id }
+  );
+  if (roles.length === 0) {
+    return e.json(404, { message: "学生角色不存在" });
+  }
+  const roleRec = roles[0];
+  let displayName = roleRec.getString("display_name") || "";
+  let schoolName = "";
+  if (body.displayName) {
+    displayName = String(body.displayName);
+    roleRec.set("display_name", displayName);
+  }
+  if (body.schoolName) {
+    schoolName = String(body.schoolName);
+    const schools = $app.findRecordsByFilter(
+      "school_dict",
+      "name = {:n}",
+      "",
+      1,
+      0,
+      { n: schoolName }
+    );
+    if (schools.length > 0) {
+      roleRec.set("school", schools[0].id);
+    }
+  } else {
+    const schoolId = roleRec.getString("school");
+    if (schoolId) {
+      try {
+        const s = $app.findRecordById("school_dict", schoolId);
+        schoolName = s.getString("name");
+      } catch (_) {}
+    }
+  }
+  $app.save(roleRec);
+  if (body.displayName) {
+    auth.set("name", displayName);
+    $app.save(auth);
+  }
+  return e.json(200, { ok: true, displayName: displayName, schoolName: schoolName });
+});
+
+routerAdd("GET", "/api/nuanban/org/orders/dispatchable", (e) => {
+  if (!e.auth) return e.json(401, { message: "需要登录" });
+  const records = $app.findRecordsByFilter(
+    "orders",
+    'status = "pending_accept" && student_user = ""',
+    "-scheduled_at",
+    50,
+    0
+  );
+  const list = [];
+  for (let i = 0; i < records.length; i++) {
+    list.push(orderToStudentDto(records[i]));
+  }
+  return e.json(200, { list: list });
+});
+
+routerAdd("POST", "/api/nuanban/org/orders/{id}/dispatch", (e) => {
+  if (!e.auth) return e.json(401, { message: "需要登录" });
+  const orderId = e.request.pathValue("id");
+  const raw = toString(e.request.body);
+  const body = raw ? JSON.parse(raw) : {};
+  let order;
+  try {
+    order = $app.findRecordById("orders", orderId);
+  } catch (_) {
+    return e.json(404, { message: "订单不存在" });
+  }
+  if (order.getString("status") !== "pending_accept") {
+    return e.json(400, { message: "订单不可派单" });
+  }
+  let studentUserId = body.studentUserId || "";
+  if (!studentUserId) {
+    const students = $app.findRecordsByFilter(
+      "users",
+      "email = {:e}",
+      "",
+      1,
+      0,
+      { e: "student1@test.nuanban.dev" }
+    );
+    if (students.length > 0) studentUserId = students[0].id;
+  }
+  if (!studentUserId) {
+    return e.json(400, { message: "缺少 studentUserId" });
+  }
+  order.set("student_user", studentUserId);
+  order.set("status", "pending_service");
+  $app.save(order);
+  const schCol = $app.findCollectionByNameOrId("schedules");
+  const existing = $app.findRecordsByFilter(
+    "schedules",
+    "order = {:oid}",
+    "",
+    1,
+    0,
+    { oid: orderId }
+  );
+  if (existing.length === 0) {
+    const sch = new Record(schCol);
+    sch.set("order", orderId);
+    sch.set("elder", order.getString("elder"));
+    sch.set("student_user", studentUserId);
+    sch.set("status", "pending_service");
+    sch.set("scheduled_start", order.getString("scheduled_at"));
+    $app.save(sch);
+  }
+  return e.json(200, { ok: true, status: order.getString("status") });
+});
+
 routerAdd("GET", "/api/nuanban/student/stats", (e) => {
   const auth = e.auth;
   if (!auth) return e.json(401, { message: "需要登录" });

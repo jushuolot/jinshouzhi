@@ -3,7 +3,9 @@
     { "path": "pages/common/launch", "style": { "navigationBarTitleText": "暖伴勤工" } },
     { "path": "pages/common/login", "style": { "navigationBarTitleText": "登录" } },
     { "path": "pages/common/role-select", "style": { "navigationBarTitleText": "选择身份" } },
-    { "path": "pages/common/register", "style": { "navigationBarTitleText": "注册" } }
+    { "path": "pages/common/register", "style": { "navigationBarTitleText": "注册" } },
+    { "path": "pages/common/agreement", "style": { "navigationBarTitleText": "用户协议" } },
+    { "path": "pages/common/org-dispatch", "style": { "navigationBarTitleText": "机构派单" } }
   ],
   "subPackages": [
     {
@@ -29,6 +31,7 @@
         { "path": "order/pay", "style": { "navigationBarTitleText": "待支付" } },
         { "path": "order/detail", "style": { "navigationBarTitleText": "订单详情" } },
         { "path": "outdoor/approve", "style": { "navigationBarTitleText": "外出审批" } },
+        { "path": "package/buy", "style": { "navigationBarTitleText": "服务包购买" } },
         { "path": "profile", "style": { "navigationBarTitleText": "我的" } }
       ]
     },
@@ -45,7 +48,8 @@
         { "path": "schedule/list", "style": { "navigationBarTitleText": "我的排班" } },
         { "path": "schedule/checkin", "style": { "navigationBarTitleText": "到场签到" } },
         { "path": "schedule/log", "style": { "navigationBarTitleText": "服务日志" } },
-        { "path": "profile", "style": { "navigationBarTitleText": "我的" } }
+        { "path": "profile", "style": { "navigationBarTitleText": "我的" } },
+        { "path": "profile/edit", "style": { "navigationBarTitleText": "编辑资料" } }
       ]
     }
   ],

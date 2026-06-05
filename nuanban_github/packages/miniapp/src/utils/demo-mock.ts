@@ -114,6 +114,11 @@ function caregiverToListItem(c: (typeof CAREGIVERS)[0]) {
   };
 }
 
+const studentProfileState = {
+  displayName: '林同学',
+  schoolName: '示范大学',
+};
+
 const state = {
   orders: buildRichOrders(ELDERS) as MockOrder[],
   serviceLogs: [] as RichServiceLog[],
@@ -160,7 +165,17 @@ function roleFromEmail(email: string): RoleKey {
 
 function loginByEmail(email: string) {
   const role = roleFromEmail(email);
-  const user = USERS[role];
+  const user =
+    email.toLowerCase().includes('student2')
+      ? { id: USERS.student.id, email, nickname: '周同学' }
+      : USERS[role];
+  if (email.toLowerCase().includes('student2')) {
+    studentProfileState.displayName = '周同学';
+    studentProfileState.schoolName = '城东师范学院';
+  } else if (role === 'student') {
+    studentProfileState.displayName = '林同学';
+    studentProfileState.schoolName = '示范大学';
+  }
   const roles: { role: RoleKey; status: string; elderProfileId?: string | null }[] = [
     {
       role,
@@ -308,9 +323,29 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
     return delay({
       nickname: USERS.student.nickname,
       email: USERS.student.email,
-      schoolName: '示范大学',
-      displayName: '林同学',
+      schoolName: studentProfileState.schoolName,
+      displayName: studentProfileState.displayName,
     } as T);
+  }
+  if (method === 'PATCH' && path === '/nuanban/student/profile') {
+    if (data.displayName) studentProfileState.displayName = String(data.displayName);
+    if (data.schoolName) studentProfileState.schoolName = String(data.schoolName);
+    return delay({ ok: true, ...studentProfileState } as T);
+  }
+  if (method === 'GET' && path === '/nuanban/org/orders/dispatchable') {
+    const list = state.orders
+      .filter((o) => o.status === 'pending_accept' && !o.student_user)
+      .map(pendingOrderDto);
+    return delay({ list } as T);
+  }
+  const orgDispatch = path.match(/^\/nuanban\/org\/orders\/([^/]+)\/dispatch$/);
+  if (method === 'POST' && orgDispatch) {
+    const order = state.orders.find((o) => o.id === orgDispatch[1]);
+    if (order && order.status === 'pending_accept') {
+      order.student_user = String(data.studentUserId || USERS.student.id);
+      order.status = 'pending_service';
+    }
+    return delay({ ok: true, status: order?.status || 'pending_service' } as T);
   }
   if (method === 'GET' && path === '/nuanban/student/stats') {
     const sid = USERS.student.id;

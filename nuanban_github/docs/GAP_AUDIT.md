@@ -26,6 +26,8 @@
 | student orders active/start/complete/income | ✅ | Phase 3 hooks |
 | elder/sos + family/student sos | ✅ | sos_alerts 集合 |
 | student/schedules | ✅ | 排班列表 API |
+| student/profile PATCH | ✅ | Phase 6 hooks + mock |
+| org/orders/dispatchable + dispatch | ✅ | 登录页 org-dispatch 演示 |
 | seed-demo | ✅ | 本地 PocketBase |
 
 ---
@@ -36,7 +38,8 @@
 
 | 页面 | 状态 | 备注 |
 |------|------|------|
-| launch / login / role-select / register | ✅ | |
+| launch / login / role-select / register | ✅ | login 含 student2、协议/派单链接 |
+| agreement / org-dispatch | ✅ | Phase 6 注册 |
 
 ### 2.2 老人分包 package-elder
 
@@ -52,7 +55,8 @@
 
 | 页面 | 状态 | 备注 |
 |------|------|------|
-| home | 🟡→✅ | 绑定老人、待支付、外出审批入口 |
+| home | 🟡→✅ | 绑定老人、待支付、外出审批、**服务包购买** |
+| package/buy | ✅ | 演示占位 |
 | order/list / pay | ✅ | |
 | outdoor/approve | 🟡→✅ | 本次 UI 完善 |
 | profile | ✅ | |
@@ -62,13 +66,14 @@
 | 页面 | 状态 | 备注 |
 |------|------|------|
 | home | 🟡→✅ | 仪表盘：统计、待接单 badge |
-| discover/list | ✅ | 列表/地图；PersonCard 列表项 |
+| discover/list | ✅ | 列表/地图 + **学校合作筛选** |
 | discover/elder | 🟡→✅ | 去除 V1 演示 stub 感 |
-| order/pending | 🟡→✅ | 富订单卡片 |
+| order/pending | 🟡→✅ | 富订单卡片 + **scroll-view** |
 | order/request | ✅ | 时间轴 + 接单/签到/完成 |
 | order/active | ✅ | 服务中列表 |
 | income | ✅ | 收入明细页 |
-| profile | ✅ | |
+| profile | ✅ | 含 **编辑资料** 入口 |
+| profile/edit | ✅ | 学校 / 显示名 PATCH |
 
 ### 2.5 TabBar（RoleTabBar）
 
@@ -90,14 +95,14 @@
 | 学生附近老人 | listNearbyElders | discover 分包 | ✅ |
 | 家属代付 | pay stub | pay 页 | ✅ |
 | 外出审批 | outdoor approve | approve 页 + mock 订单 | ✅ |
-| 机构派单 | Admin 写库 | 无客户端 | ❌ 预期 |
+| 机构派单 | Admin 写库 | **login → org-dispatch 演示页** | ✅ demo |
 | 签到 → in_service → completed | 演示链路 | request 页 + mock start/complete | 🟡→✅ demo |
-| 服务日志 / 排班列表 | 二期 | 规划页未注册 | ❌ |
+| 服务日志 / 排班列表 | 二期 | schedule/* 已注册 | ✅ demo |
 | 学生收入 / 结算展示 | 二期 | income 页 + mock | 🟡→✅ demo |
 | 家属绑定老人 UI | 二期 | 绑定码/链接 + 列表 | ✅ demo |
 | 到场签到 / 围栏 | 二期 | schedule/checkin | ✅ demo |
 | 家属订单详情 | — | family/order/detail | ✅ |
-| 学校合作过滤 | 二期 | — | ❌ |
+| 学校合作过滤 | 二期 | discover + ORG_SCHOOL_PARTNERS | ✅ |
 | 老人 SOS 落库 | 产品目标 | PB + mock + 待办 | ✅ |
 | 微信支付实装 | 上线后 | stub | ❌ |
 | X-Active-Role 服务端校验 | 二期 | 客户端 only | ❌ |
@@ -108,45 +113,33 @@
 
 | 项 | 状态 | 备注 |
 |------|------|------|
-| 三角色登录 | ✅ | |
+| 三角色登录 | ✅ | 含 **student2** |
 | 多陪护学生 | 🟡→✅ | 4 名 mock |
 | 富待接单（老人名/服务名） | 🟡→✅ | |
 | 外出待审批订单 | 🟡→✅ | family 首页入口 |
 | outdoor_approvals 集合 | 🟡→✅ | pbList mock |
 | student/elder/family stats | ✅ | |
+| PATCH profile / org dispatch | ✅ | Phase 6 |
 
 ---
 
-## 5. 规划页（未注册，勿验收）
-
-见 [MINIAPP_ROUTING.md](./MINIAPP_ROUTING.md) §6：agreement、elder/settings、family/bind、student/schedule/*、income 等 — **全部 ❌ 预期未做**。
-
----
-
-## 6. 本次 polish 范围与仍延期项
-
-### 已完成（本轮）
-
-- `PersonCard.vue` 复用组件
-- 三端首页仪表盘化（统计 + 快捷操作）
-- 学生 discover/elder 富资料
-- 待接单富卡片 + 「接单」Tab
-- demo-mock 数据扩展
-
-### 仍延期（不阻塞 V1 演示）
+## 5. 仍延期（不阻塞零成本演示）
 
 - 真实微信登录 / 支付
 - 微信原生扫码（当前为绑定码/免费 QR 图 + 链接）
-- ~~服务日志页 schedule/log~~ ✅ Phase 5
-- 富数据压测（8老人/6同学/20+订单） | demo-rich-data.ts | ✅
-- Admin 机构派单 / 运营后台
+- Admin 运营后台（派单由 org-dispatch 页替代）
+- X-Active-Role 服务端校验
 
 ---
 
-## 7. 建议验收路径（公网 demo）
+## 6. 建议验收路径（公网 demo）
 
 1. 打开 GitHub Pages → 开发登录 `student1@test.nuanban.dev`  
-2. 接单 Tab → 接受 → 服务中 → 开始服务 → 完成服务（时间轴）  
-3. 首页 → 收入明细；老人 SOS 后见紧急求助横幅  
-4. `family1@test.nuanban.dev` → 外出审批 / SOS 确认 / 模拟支付  
-5. `elder1@test.nuanban.dev` → 找陪护 → 预约 → 一键求助  
+2. 接单 Tab → **10 单滚动** → 接受 → 服务中 → 完成（时间轴）  
+3. 发现 → 打开「学校合作」→ 切换 profile/edit 学校后列表变化  
+4. 登录页 → **机构派单** → 派给林同学  
+5. `student2@test.nuanban.dev` → 城东师范学院合作老人  
+6. `family1@test.nuanban.dev` → 外出审批 / SOS / 服务包购买  
+7. `elder1@test.nuanban.dev` → 找陪护 → 预约 → 一键求助  
+
+完整清单见 [PERFECT.md](./PERFECT.md)。

@@ -66,6 +66,14 @@ export async function fetchStudentProfile() {
   });
 }
 
+export async function updateStudentProfile(data: { displayName?: string; schoolName?: string }) {
+  return request<{ ok: boolean; displayName?: string; schoolName?: string }>({
+    url: '/nuanban/student/profile',
+    method: 'PATCH',
+    data,
+  });
+}
+
 export async function fetchStudentStats() {
   return request<StudentStats>({
     url: '/nuanban/student/stats',

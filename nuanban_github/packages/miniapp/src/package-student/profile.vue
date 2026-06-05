@@ -49,6 +49,10 @@
         <text>服务日志</text>
         <text class="arrow">›</text>
       </view>
+      <view class="menu-item" @tap="goEditProfile">
+        <text>编辑资料</text>
+        <text class="arrow">›</text>
+      </view>
       <view class="menu-item" @tap="goDiscover">
         <text>附近老人</text>
         <text class="arrow">›</text>
@@ -130,6 +134,10 @@ function goSchedule() {
 
 function goLogs() {
   uni.navigateTo({ url: '/package-student/schedule/log' });
+}
+
+function goEditProfile() {
+  uni.navigateTo({ url: '/package-student/profile/edit' });
 }
 
 function goDiscover() {

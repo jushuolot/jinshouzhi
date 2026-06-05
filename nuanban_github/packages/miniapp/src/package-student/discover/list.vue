@@ -19,11 +19,19 @@
       </view>
     </view>
 
+    <view class="coop-bar">
+      <text class="coop-label">学校合作 · {{ schoolName }}</text>
+      <switch :checked="schoolCoopOnly" color="#c45c26" @change="onCoopToggle" />
+    </view>
+
     <view v-if="loading" class="state">加载中…</view>
 
     <!-- 列表模式 -->
     <view v-else-if="mode === 'list'">
-      <ListCountBar :count="list.length" hint="8 位老人 · 双机构" />
+      <ListCountBar
+        :count="list.length"
+        :hint="schoolCoopOnly ? '仅合作机构老人' : '全部附近老人'"
+      />
       <PersonCard
         v-for="e in list"
         :key="e.id"
@@ -80,8 +88,9 @@ import { computed, ref } from 'vue';
 import RoleTabBar from '../../components/RoleTabBar.vue';
 import PersonCard from '../../components/PersonCard.vue';
 import ListCountBar from '../../components/ListCountBar.vue';
-import { listNearbyElders, type ElderRow } from '../../api/student';
+import { fetchStudentProfile, listNearbyElders, type ElderRow } from '../../api/student';
 import { getLocationWithFallback } from '../../utils/location';
+import { filterEldersBySchoolCoop } from '../../utils/school-coop';
 import { pbErrorMessage } from '../../utils/request';
 
 type ElderListItem = ElderRow & { distanceKm: number; orgName: string; tags?: string[] };
@@ -96,6 +105,8 @@ const userLat = ref(DEMO.lat);
 const userLng = ref(DEMO.lng);
 const locationLabel = ref(DEMO.label);
 const isDemoLocation = ref(true);
+const schoolCoopOnly = ref(true);
+const schoolName = ref('示范大学');
 
 const markers = computed(() => {
   const items: UniApp.MapMarker[] = [
@@ -157,7 +168,12 @@ async function reload() {
   errorMsg.value = '';
   try {
     await resolveLocation();
-    const rows = await listNearbyElders(userLat.value, userLng.value);
+    const profile = await fetchStudentProfile().catch(() => null);
+    if (profile?.schoolName) schoolName.value = profile.schoolName;
+    let rows = await listNearbyElders(userLat.value, userLng.value);
+    if (schoolCoopOnly.value) {
+      rows = filterEldersBySchoolCoop(rows, schoolName.value);
+    }
     list.value = rows.map((e) => ({
       ...e,
       orgName: e.expand?.org?.name || '暖伴示范养老院',
@@ -172,6 +188,11 @@ async function reload() {
 }
 
 onShow(reload);
+
+function onCoopToggle(e: { detail: { value: boolean } }) {
+  schoolCoopOnly.value = e.detail.value;
+  reload();
+}
 
 function goHome() {
   uni.redirectTo({ url: '/package-student/home' });
@@ -231,11 +252,25 @@ function onCalloutTap(e: { detail: { markerId: number } }) {
   color: #c45c26;
   padding: 8rpx 0;
 }
+.coop-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #fffaf5;
+  padding: 16rpx 20rpx;
+  border-radius: 12rpx;
+  margin-bottom: 16rpx;
+  border: 1rpx solid #f0dcc8;
+}
+.coop-label {
+  font-size: 24rpx;
+  color: #666;
+}
 .segmented {
   display: flex;
   background: #fff;
   border-radius: 12rpx;
-  margin-bottom: 20rpx;
+  margin-bottom: 12rpx;
   overflow: hidden;
   box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
 }

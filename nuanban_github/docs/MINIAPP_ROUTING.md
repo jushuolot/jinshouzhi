@@ -1,15 +1,17 @@
 # 暖伴勤工 · 小程序路由与分包
 
-> 以 `packages/miniapp/src/pages.json` 为 **唯一真相**；下文「规划」页面尚未注册。
+> 以 `packages/miniapp/src/pages.json` 为 **唯一真相**。
 
 ## 1. V1 已上线页面结构
 
 ```
 主包 pages/common/
   launch           启动（深链 role/target/id）
-  login            微信登录 + 开发账号登录
+  login            微信登录 + 开发账号登录（含 student2）
   role-select      多角色选择
   register         注册角色（写 user_roles）
+  agreement        用户协议与隐私说明
+  org-dispatch     机构派单演示（零成本 Mock）
 
 分包 package-elder/
   home
@@ -18,16 +20,33 @@
   order/create       预约（POST /nuanban/elder/orders）
   order/list
   order/detail
+  bind-code          家属绑定码
+  settings           无障碍设置
+  profile
 
 分包 package-family/
   home
+  bind               绑定老人
+  order/list
   order/pay          模拟支付
+  order/detail
   outdoor/approve    外出审批
+  package/buy        服务包购买（演示占位）
+  profile
 
 分包 package-student/
   home
-  discover/list      待接单列表（GET /nuanban/student/orders/pending）
-  order/request      接单 / 拒单
+  discover/list      附近老人 + 学校合作筛选
+  discover/elder     老人详情
+  order/pending      待接单列表（scroll-view）
+  order/active       服务中
+  order/request      接单 / 拒单 / 签到 / 完成
+  income             收入明细
+  schedule/list      排班
+  schedule/checkin   到场签到
+  schedule/log       服务日志
+  profile
+  profile/edit       编辑资料（学校 / 显示名）
 ```
 
 ## 2. 深链
@@ -60,13 +79,12 @@
 2. `activeRole` 与分包前缀一致  
 3. 学生角色需 `user_roles.status === active`
 
-## 6. 规划页面（未在 pages.json 注册）
+## 6. 演示专用入口
 
-| 分包 | 规划路径 | 说明 |
-|------|----------|------|
-| common | agreement | 用户协议 |
-| elder | settings | 大字号等无障碍 |
-| family | elder/bind, order/list, package/buy | 绑定、账单、服务包 |
-| student | schedule/list, schedule/checkin, schedule/log, income/list, profile/edit | 排班、签到、收入、资料 |
+| 路径 | 说明 |
+|------|------|
+| login → 用户协议 | 合规说明 |
+| login → 机构派单 | 替代 Admin 后台，派 pending_accept 给林同学 |
+| family/home → 服务包购买 | 套餐占位，无真实支付 |
 
 产品说明见 [PRODUCT.md](./PRODUCT.md) §10、§12。

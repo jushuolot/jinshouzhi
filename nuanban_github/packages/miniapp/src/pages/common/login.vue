@@ -18,6 +18,10 @@
       <text @tap="goRegister('family')">家属注册</text>
       <text @tap="goRegister('student')">学生注册</text>
     </view>
+    <view class="links secondary">
+      <text @tap="goAgreement">用户协议</text>
+      <text @tap="goOrgDispatch">机构派单（演示）</text>
+    </view>
   </view>
 </template>
 
@@ -39,6 +43,7 @@ const roleStore = useRoleStore();
 
 const DEV_ACCOUNTS = [
   { label: '学生', email: 'student1@test.nuanban.dev' },
+  { label: '学生2', email: 'student2@test.nuanban.dev' },
   { label: '家属', email: 'family1@test.nuanban.dev' },
   { label: '老人', email: 'elder1@test.nuanban.dev' },
 ] as const;
@@ -98,6 +103,14 @@ async function onDevLogin(email: string) {
 function goRegister(role: RoleKey) {
   uni.navigateTo({ url: `/pages/common/register?role=${role}` });
 }
+
+function goAgreement() {
+  uni.navigateTo({ url: '/pages/common/agreement' });
+}
+
+function goOrgDispatch() {
+  uni.navigateTo({ url: '/pages/common/org-dispatch' });
+}
 </script>
 
 <style scoped>
@@ -140,5 +153,10 @@ function goRegister(role: RoleKey) {
   justify-content: space-between;
   color: #c45c26;
   font-size: 28rpx;
+}
+.links.secondary {
+  margin-top: 24rpx;
+  justify-content: center;
+  gap: 48rpx;
 }
 </style>
