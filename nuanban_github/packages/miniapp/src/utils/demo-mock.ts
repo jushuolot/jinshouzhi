@@ -116,10 +116,19 @@ type OrderStatus =
   | 'pending_payment'
   | 'outdoor_pending'
   | 'pending_service'
+  | 'in_service'
   | 'accepted'
   | 'completed'
   | 'paid'
   | 'cancelled';
+
+interface MockSosAlert {
+  id: string;
+  elder: string;
+  message: string;
+  status: 'active' | 'acknowledged';
+  created_at: string;
+}
 
 interface MockOrder {
   id: string;
@@ -228,6 +237,17 @@ const state = {
       scheduled_at: new Date(Date.now() + 259200000).toISOString(),
     },
     {
+      id: 'order-in-service-1',
+      elder: 'elder-zhang',
+      service_item: 'svc-life',
+      status: 'in_service' as OrderStatus,
+      amount_cents: 7000,
+      payment_status: 'paid',
+      family_user: USERS.family.id,
+      student_user: USERS.student.id,
+      scheduled_at: new Date(Date.now() - 3600000).toISOString(),
+    },
+    {
       id: 'order-completed-1',
       elder: 'elder-zhang',
       service_item: 'svc-rehab',
@@ -239,6 +259,7 @@ const state = {
       scheduled_at: new Date(Date.now() - 86400000 * 3).toISOString(),
     },
   ] as MockOrder[],
+  sosAlerts: [] as MockSosAlert[],
   outdoorApprovals: [
     {
       id: 'outdoor-approval-1',
@@ -321,6 +342,7 @@ function orderRecord(o: MockOrder) {
         name: svc.name,
         price_cents: svc.price_cents,
         duration_minutes: svc.duration_minutes,
+        requires_outdoor_approval: svc.requires_outdoor_approval,
       },
     },
   };
@@ -338,6 +360,22 @@ function pendingOrderDto(o: MockOrder) {
     amountCents: o.amount_cents,
     scheduledAt: o.scheduled_at,
     status: o.status,
+    requiresOutdoorApproval: svc.requires_outdoor_approval,
+    distanceKm: elder ? 1.2 : undefined,
+    orgName: ORG.name,
+    elderIntro: elder?.intro,
+  };
+}
+
+function sosDto(a: MockSosAlert) {
+  const elder = elderById(a.elder);
+  return {
+    id: a.id,
+    elderId: a.elder,
+    elderName: elder?.name || '老人',
+    message: a.message,
+    createdAt: a.created_at,
+    status: a.status,
   };
 }
 
@@ -413,26 +451,108 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
     const list = state.orders.filter((o) => o.status === 'pending_accept').map(pendingOrderDto);
     return delay({ list } as T);
   }
+  if (method === 'GET' && path === '/nuanban/student/orders/active') {
+    const list = state.orders
+      .filter((o) => o.status === 'pending_service' || o.status === 'in_service')
+      .filter((o) => o.student_user === USERS.student.id || !o.student_user)
+      .map(pendingOrderDto);
+    return delay({ list } as T);
+  }
+  const studentOrderGet = path.match(/^\/nuanban\/student\/orders\/([^/]+)$/);
+  if (method === 'GET' && studentOrderGet && !studentOrderGet[1].includes('active')) {
+    const order = state.orders.find((o) => o.id === studentOrderGet[1]);
+    if (!order) return Promise.reject({ message: '订单不存在' });
+    return delay(pendingOrderDto(order) as T);
+  }
+  const studentOrderStart = path.match(/^\/nuanban\/student\/orders\/([^/]+)\/start$/);
+  if (method === 'POST' && studentOrderStart) {
+    const order = state.orders.find((o) => o.id === studentOrderStart[1]);
+    if (order && order.status === 'pending_service') order.status = 'in_service';
+    return delay({ ok: true, status: order?.status || 'in_service' } as T);
+  }
+  const studentOrderComplete = path.match(/^\/nuanban\/student\/orders\/([^/]+)\/complete$/);
+  if (method === 'POST' && studentOrderComplete) {
+    const order = state.orders.find((o) => o.id === studentOrderComplete[1]);
+    if (order && order.status === 'in_service') {
+      order.status = 'completed';
+      order.student_user = USERS.student.id;
+    }
+    return delay({ ok: true, status: order?.status || 'completed' } as T);
+  }
+  if (method === 'GET' && path === '/nuanban/student/income') {
+    const completed = state.orders.filter(
+      (o) => o.status === 'completed' && o.student_user === USERS.student.id,
+    );
+    const now = new Date();
+    const monthPrefix = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    let monthIncome = 0;
+    let totalIncome = 0;
+    const records = completed.map((o) => {
+      const elder = elderById(o.elder);
+      const svc = serviceById(o.service_item);
+      totalIncome += o.amount_cents;
+      if (o.scheduled_at.startsWith(monthPrefix)) monthIncome += o.amount_cents;
+      return {
+        id: o.id,
+        elderName: elder?.name || '老人',
+        serviceName: svc.name,
+        amountCents: o.amount_cents,
+        completedAt: o.scheduled_at,
+      };
+    });
+    return delay({
+      monthIncomeCents: monthIncome,
+      monthIncomeYuan: (monthIncome / 100).toFixed(2),
+      totalIncomeCents: totalIncome,
+      totalIncomeYuan: (totalIncome / 100).toFixed(2),
+      records: records.reverse(),
+    } as T);
+  }
+  if (method === 'GET' && path === '/nuanban/student/sos/active') {
+    const list = state.sosAlerts.filter((a) => a.status === 'active').map(sosDto);
+    return delay({ list } as T);
+  }
+  const studentSosAck = path.match(/^\/nuanban\/student\/sos\/([^/]+)\/ack$/);
+  if (method === 'POST' && studentSosAck) {
+    const alert = state.sosAlerts.find((a) => a.id === studentSosAck[1]);
+    if (alert) alert.status = 'acknowledged';
+    return delay({ ok: true } as T);
+  }
 
   const orderAction = path.match(/\/nuanban\/student\/order-requests\/([^/]+)\/(accept|reject)/);
   if (method === 'POST' && orderAction) {
     const id = orderAction[1];
     const action = orderAction[2];
     const order = state.orders.find((o) => o.id === id);
-    if (order && action === 'accept') order.status = 'pending_service';
+    if (order && action === 'accept') {
+      order.status = 'pending_service';
+      order.student_user = USERS.student.id;
+    }
     return delay({ ok: true, status: order?.status || 'pending_service' } as T);
   }
 
   if (method === 'GET' && path === '/nuanban/family/stats') {
     const pendingPay = state.orders.filter((o) => o.status === 'pending_payment').length;
     const outdoorPending = state.outdoorApprovals.filter((a) => a.status === 'pending_family').length;
+    const sosPending = state.sosAlerts.filter((a) => a.status === 'active').length;
     return delay({
       boundElderCount: ELDERS.length,
       pendingPaymentCount: pendingPay,
       outdoorPendingCount: outdoorPending,
+      sosPendingCount: sosPending,
       paidTotalCents: 14500,
       paidTotalYuan: '145.00',
     } as T);
+  }
+  if (method === 'GET' && path === '/nuanban/family/sos/active') {
+    const list = state.sosAlerts.filter((a) => a.status === 'active').map(sosDto);
+    return delay({ list } as T);
+  }
+  const familySosAck = path.match(/^\/nuanban\/family\/sos\/([^/]+)\/ack$/);
+  if (method === 'POST' && familySosAck) {
+    const alert = state.sosAlerts.find((a) => a.id === familySosAck[1]);
+    if (alert) alert.status = 'acknowledged';
+    return delay({ ok: true } as T);
   }
   if (method === 'POST' && path.match(/\/nuanban\/family\/orders\/[^/]+\/pay/)) {
     const id = path.split('/')[4];
@@ -461,12 +581,26 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
       elderProfileId: 'elder-zhang',
       elderName: '张奶奶',
       orderCount: elderOrders.length,
-      activeCount: elderOrders.filter((o) => ['pending_accept', 'pending_service', 'outdoor_pending'].includes(o.status)).length,
+      activeCount: elderOrders.filter((o) =>
+        ['pending_accept', 'pending_service', 'in_service', 'outdoor_pending'].includes(o.status),
+      ).length,
       caregiverNearbyCount: CAREGIVERS.length,
     } as T);
   }
   if (method === 'GET' && path === '/nuanban/elder/caregivers/nearby') {
     return delay({ list: CAREGIVERS.map(caregiverToListItem) } as T);
+  }
+  if (method === 'POST' && path === '/nuanban/elder/sos') {
+    const elderId = String(data.elderId || 'elder-zhang');
+    const id = `sos-${Date.now()}`;
+    state.sosAlerts.unshift({
+      id,
+      elder: elderId,
+      message: String(data.message || '老人发起一键求助'),
+      status: 'active',
+      created_at: new Date().toISOString(),
+    });
+    return delay({ id, ok: true } as T);
   }
   if (method === 'POST' && path === '/nuanban/elder/orders') {
     const id = `order-${Date.now()}`;

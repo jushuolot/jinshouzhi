@@ -10,6 +10,38 @@ export interface PendingOrder {
   amountCents?: number;
   scheduledAt?: string;
   status: string;
+  requiresOutdoorApproval?: boolean;
+  distanceKm?: number;
+}
+
+export interface StudentOrderDetail extends PendingOrder {
+  elderIntro?: string;
+  orgName?: string;
+}
+
+export interface IncomeRecord {
+  id: string;
+  elderName: string;
+  serviceName: string;
+  amountCents: number;
+  completedAt: string;
+}
+
+export interface StudentIncome {
+  monthIncomeCents: number;
+  monthIncomeYuan: string;
+  totalIncomeCents: number;
+  totalIncomeYuan: string;
+  records: IncomeRecord[];
+}
+
+export interface SosAlert {
+  id: string;
+  elderId: string;
+  elderName: string;
+  message: string;
+  createdAt: string;
+  status: string;
 }
 
 export interface StudentProfile {
@@ -61,6 +93,57 @@ export async function rejectOrder(orderId: string, reason?: string) {
     url: `/nuanban/student/order-requests/${orderId}/reject`,
     method: 'POST',
     data: { reason: reason || '时间冲突' },
+  });
+}
+
+export async function getStudentOrder(orderId: string) {
+  return request<StudentOrderDetail>({
+    url: `/nuanban/student/orders/${orderId}`,
+    method: 'GET',
+  });
+}
+
+export async function listActiveOrders() {
+  const res = await request<{ list: PendingOrder[] }>({
+    url: '/nuanban/student/orders/active',
+    method: 'GET',
+  });
+  return res.list ?? [];
+}
+
+export async function startOrder(orderId: string) {
+  return request<{ ok: boolean; status: string }>({
+    url: `/nuanban/student/orders/${orderId}/start`,
+    method: 'POST',
+  });
+}
+
+export async function completeOrder(orderId: string) {
+  return request<{ ok: boolean; status: string }>({
+    url: `/nuanban/student/orders/${orderId}/complete`,
+    method: 'POST',
+  });
+}
+
+export async function fetchStudentIncome() {
+  return request<StudentIncome>({
+    url: '/nuanban/student/income',
+    method: 'GET',
+  });
+}
+
+export async function listActiveSosAlerts() {
+  const res = await request<{ list: SosAlert[] }>({
+    url: '/nuanban/student/sos/active',
+    method: 'GET',
+  });
+  return res.list ?? [];
+}
+
+export async function acknowledgeSosAlert(alertId: string) {
+  return request<{ ok: boolean }>({
+    url: `/nuanban/student/sos/${alertId}/ack`,
+    method: 'POST',
   });
 }
 

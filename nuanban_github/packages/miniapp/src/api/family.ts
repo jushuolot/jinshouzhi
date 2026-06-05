@@ -5,8 +5,18 @@ export interface FamilyStats {
   boundElderCount: number;
   pendingPaymentCount: number;
   outdoorPendingCount?: number;
+  sosPendingCount?: number;
   paidTotalCents: number;
   paidTotalYuan: string;
+}
+
+export interface SosAlert {
+  id: string;
+  elderId: string;
+  elderName: string;
+  message: string;
+  createdAt: string;
+  status: string;
 }
 
 export async function fetchFamilyStats() {
@@ -99,4 +109,19 @@ interface OrderRow extends PbRecord {
     elder?: { id: string; name: string };
     service_item?: { id: string; name: string };
   };
+}
+
+export async function listActiveSosAlerts() {
+  const res = await request<{ list: SosAlert[] }>({
+    url: '/nuanban/family/sos/active',
+    method: 'GET',
+  });
+  return res.list ?? [];
+}
+
+export async function acknowledgeSosAlert(alertId: string) {
+  return request<{ ok: boolean }>({
+    url: `/nuanban/family/sos/${alertId}/ack`,
+    method: 'POST',
+  });
 }

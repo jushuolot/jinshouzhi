@@ -62,7 +62,9 @@
 | discover/list | ✅ | 列表/地图；PersonCard 列表项 |
 | discover/elder | 🟡→✅ | 去除 V1 演示 stub 感 |
 | order/pending | 🟡→✅ | 富订单卡片 |
-| order/request | 🟡 | 可接单/拒单；详情仍可再富化 |
+| order/request | ✅ | 时间轴 + 接单/签到/完成 |
+| order/active | ✅ | 服务中列表 |
+| income | ✅ | 收入明细页 |
 | profile | ✅ | |
 
 ### 2.5 TabBar（RoleTabBar）
@@ -84,14 +86,14 @@
 | 学生待接单池 | pending_accept 全局 | pending + request | ✅ |
 | 学生附近老人 | listNearbyElders | discover 分包 | ✅ |
 | 家属代付 | pay stub | pay 页 | ✅ |
-| 外出审批 | outdoor approve | approve 页 + mock 订单 | 🟡 |
+| 外出审批 | outdoor approve | approve 页 + mock 订单 | ✅ |
 | 机构派单 | Admin 写库 | 无客户端 | ❌ 预期 |
-| 签到 → in_service | 二期 | — | ❌ |
+| 签到 → in_service → completed | 演示链路 | request 页 + mock start/complete | 🟡→✅ demo |
 | 服务日志 / 排班列表 | 二期 | 规划页未注册 | ❌ |
-| 学生收入 / 结算展示 | 二期 | stats mock 仅演示 | 🟡 |
+| 学生收入 / 结算展示 | 二期 | income 页 + mock | 🟡→✅ demo |
 | 家属绑定老人 UI | 二期 | seed/Admin | ❌ |
 | 学校合作过滤 | 二期 | — | ❌ |
-| 老人 SOS 落库 | 产品目标 | Toast 占位 | 🟡 |
+| 老人 SOS 落库 | 产品目标 | elder/sos mock + 家属/学生待办 | 🟡→✅ demo |
 | 微信支付实装 | 上线后 | stub | ❌ |
 | X-Active-Role 服务端校验 | 二期 | 客户端 only | ❌ |
 
@@ -128,17 +130,18 @@
 
 ### 仍延期（不阻塞 V1 演示）
 
-- 订单 request 详情页深度富化（地图、时间轴）
 - 真实微信登录 / 支付
-- 签到、服务中、完成态全链路
+- 本地 PocketBase 侧 start/complete/SOS hooks（公网 mock 已覆盖）
 - 家属扫码绑定 UI
 - 老人大字号无障碍 settings 页
+- 课表 / 打卡独立页（schedule/*）
 
 ---
 
 ## 7. 建议验收路径（公网 demo）
 
 1. 打开 GitHub Pages → 开发登录 `student1@test.nuanban.dev`  
-2. 学生首页 → 待接单 badge → 接单 Tab → 接受订单  
-3. 切换 `family1@test.nuanban.dev` → 首页外出审批 → 同意/拒绝  
-4. 切换 `elder1@test.nuanban.dev` → 找陪护 → PersonCard → 预约  
+2. 接单 Tab → 接受 → 服务中 → 开始服务 → 完成服务（时间轴）  
+3. 首页 → 收入明细；老人 SOS 后见紧急求助横幅  
+4. `family1@test.nuanban.dev` → 外出审批 / SOS 确认 / 模拟支付  
+5. `elder1@test.nuanban.dev` → 找陪护 → 预约 → 一键求助  

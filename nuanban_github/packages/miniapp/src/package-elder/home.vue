@@ -47,7 +47,7 @@
 import { ref } from 'vue';
 import RoleTabBar from '../components/RoleTabBar.vue';
 import { onShow } from '@dcloudio/uni-app';
-import { fetchElderStats, type ElderStats } from '../api/elder';
+import { fetchElderStats, triggerSos, type ElderStats } from '../api/elder';
 import { guardPackageRoute } from '../utils/nav-guard';
 import { pbErrorMessage } from '../utils/request';
 
@@ -69,8 +69,18 @@ function goFind() {
 function goOrders() {
   uni.redirectTo({ url: '/package-elder/order/list' });
 }
-function sos() {
-  uni.showToast({ title: '已发送求助（演示）', icon: 'none' });
+async function sos() {
+  const elderId = stats.value?.elderProfileId || 'elder-zhang';
+  try {
+    await triggerSos(elderId);
+    uni.showModal({
+      title: '求助已发送',
+      content: '已通知绑定家属与附近学生，请保持电话畅通。',
+      showCancel: false,
+    });
+  } catch (e) {
+    uni.showToast({ title: pbErrorMessage(e), icon: 'none' });
+  }
 }
 </script>
 

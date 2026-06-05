@@ -53,6 +53,16 @@
       </view>
       <text class="chevron">›</text>
     </view>
+    <view v-if="(stats?.sosPendingCount ?? 0) > 0" class="todo-card sos" @tap="goSos">
+      <view class="todo-left">
+        <text class="todo-icon">🆘</text>
+        <view>
+          <text class="todo-title">SOS 求助</text>
+          <text class="todo-desc">{{ stats?.sosPendingCount ?? 0 }} 条待确认</text>
+        </view>
+      </view>
+      <text class="chevron">›</text>
+    </view>
 
     <RoleTabBar role="family" current="/package-family/home" />
   </view>
@@ -63,7 +73,9 @@ import { ref } from 'vue';
 import { onShow } from '@dcloudio/uni-app';
 import RoleTabBar from '../components/RoleTabBar.vue';
 import {
+  acknowledgeSosAlert,
   fetchFamilyStats,
+  listActiveSosAlerts,
   listBoundElders,
   listPendingOutdoorApprovals,
   listPendingPaymentOrders,
@@ -145,6 +157,31 @@ async function goOutdoor() {
     }
     const orderId = list[0].order;
     uni.navigateTo({ url: `/package-family/outdoor/approve?id=${orderId}` });
+  } catch (e) {
+    uni.showToast({ title: pbErrorMessage(e), icon: 'none' });
+  }
+}
+
+async function goSos() {
+  try {
+    const list = await listActiveSosAlerts();
+    if (!list.length) {
+      uni.showToast({ title: '暂无 SOS 求助', icon: 'none' });
+      return;
+    }
+    const alert = list[0];
+    uni.showModal({
+      title: 'SOS 求助',
+      content: `${alert.elderName}：${alert.message}`,
+      confirmText: '已知晓',
+      success: async (res) => {
+        if (res.confirm) {
+          await acknowledgeSosAlert(alert.id);
+          await reload();
+          uni.showToast({ title: '已确认', icon: 'success' });
+        }
+      },
+    });
   } catch (e) {
     uni.showToast({ title: pbErrorMessage(e), icon: 'none' });
   }
@@ -259,6 +296,10 @@ async function goOutdoor() {
 .todo-card.highlight {
   border: 2rpx solid #f0dcc8;
   background: #fffaf5;
+}
+.todo-card.sos {
+  border: 2rpx solid #ef9a9a;
+  background: #fff8f8;
 }
 .todo-left {
   display: flex;

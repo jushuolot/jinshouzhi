@@ -33,6 +33,14 @@
         <text>待接单</text>
         <text class="arrow">›</text>
       </view>
+      <view class="menu-item" @tap="goActive">
+        <text>服务中订单</text>
+        <text class="arrow">›</text>
+      </view>
+      <view class="menu-item" @tap="goIncome">
+        <text>收入明细</text>
+        <text class="arrow">›</text>
+      </view>
       <view class="menu-item" @tap="goDiscover">
         <text>附近老人</text>
         <text class="arrow">›</text>
@@ -98,6 +106,14 @@ async function goPending() {
   } catch (e) {
     uni.showToast({ title: pbErrorMessage(e), icon: 'none' });
   }
+}
+
+function goActive() {
+  uni.navigateTo({ url: '/package-student/order/active' });
+}
+
+function goIncome() {
+  uni.navigateTo({ url: '/package-student/income' });
 }
 
 function goDiscover() {

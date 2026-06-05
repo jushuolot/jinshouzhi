@@ -102,3 +102,11 @@ export async function getOrder(id: string) {
   });
   return res.items[0] ?? null;
 }
+
+export async function triggerSos(elderId: string, message?: string) {
+  return request<{ id: string; ok: boolean }>({
+    url: '/nuanban/elder/sos',
+    method: 'POST',
+    data: { elderId, message: message || '老人发起一键求助' },
+  });
+}

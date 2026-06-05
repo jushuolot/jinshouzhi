@@ -35,7 +35,9 @@
         { "path": "discover/list", "style": { "navigationBarTitleText": "附近老人" } },
         { "path": "discover/elder", "style": { "navigationBarTitleText": "老人详情" } },
         { "path": "order/pending", "style": { "navigationBarTitleText": "待接单" } },
+        { "path": "order/active", "style": { "navigationBarTitleText": "服务中" } },
         { "path": "order/request", "style": { "navigationBarTitleText": "订单详情" } },
+        { "path": "income", "style": { "navigationBarTitleText": "收入明细" } },
         { "path": "profile", "style": { "navigationBarTitleText": "我的" } }
       ]
     }

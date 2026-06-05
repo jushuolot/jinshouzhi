@@ -12,18 +12,26 @@
       </view>
     </view>
 
+    <view v-if="sosAlerts.length" class="sos-banner" @tap="handleSos">
+      <text class="sos-icon">🆘</text>
+      <view class="sos-text">
+        <text class="sos-title">紧急求助 {{ sosAlerts.length }} 条</text>
+        <text class="sos-desc">{{ sosAlerts[0].elderName }} · 点击查看</text>
+      </view>
+    </view>
+
     <view class="stats-card">
-      <view class="stat-item">
+      <view class="stat-item" @tap="goPending">
         <text class="stat-num accent">{{ pendingCount }}</text>
         <text class="stat-label">待接单</text>
       </view>
       <view class="stat-divider" />
-      <view class="stat-item">
-        <text class="stat-num">{{ stats?.acceptedCount ?? 0 }}</text>
-        <text class="stat-label">已接单</text>
+      <view class="stat-item" @tap="goActive">
+        <text class="stat-num">{{ activeCount }}</text>
+        <text class="stat-label">服务中</text>
       </view>
       <view class="stat-divider" />
-      <view class="stat-item">
+      <view class="stat-item" @tap="goIncome">
         <text class="stat-num">¥{{ stats?.incomeYuan ?? '0.00' }}</text>
         <text class="stat-label">本月收入</text>
       </view>
@@ -35,6 +43,15 @@
         <text class="quick-icon">📋</text>
         <text class="quick-text">待接单</text>
         <text v-if="pendingCount" class="quick-badge">{{ pendingCount }}</text>
+      </view>
+      <view class="quick-item" @tap="goActive">
+        <text class="quick-icon">🧑‍⚕️</text>
+        <text class="quick-text">服务中</text>
+        <text v-if="activeCount" class="quick-badge">{{ activeCount }}</text>
+      </view>
+      <view class="quick-item" @tap="goIncome">
+        <text class="quick-icon">💰</text>
+        <text class="quick-text">收入明细</text>
       </view>
       <view class="quick-item" @tap="goDiscover">
         <text class="quick-icon">📍</text>
@@ -73,9 +90,13 @@ import { onShow } from '@dcloudio/uni-app';
 import RoleTabBar from '../components/RoleTabBar.vue';
 import PersonCard from '../components/PersonCard.vue';
 import {
+  acknowledgeSosAlert,
   fetchStudentProfile,
   fetchStudentStats,
+  listActiveOrders,
+  listActiveSosAlerts,
   listNearbyElders,
+  type SosAlert,
   type StudentStats,
 } from '../api/student';
 import { guardPackageRoute } from '../utils/nav-guard';
@@ -91,6 +112,8 @@ interface ElderPreview {
 }
 
 const pendingCount = ref(0);
+const activeCount = ref(0);
+const sosAlerts = ref<SosAlert[]>([]);
 const stats = ref<StudentStats | null>(null);
 const profileName = ref('同学');
 const schoolName = ref('示范大学');
@@ -105,10 +128,12 @@ function formatDistance(km: number) {
 async function reload() {
   errorMsg.value = '';
   try {
-    const [profile, st, pendingRes] = await Promise.all([
+    const [profile, st, pendingRes, activeRes, sosRes] = await Promise.all([
       fetchStudentProfile().catch(() => null),
       fetchStudentStats().catch(() => null),
       request<{ list: unknown[] }>({ url: '/nuanban/student/orders/pending', method: 'GET' }),
+      listActiveOrders().catch(() => []),
+      listActiveSosAlerts().catch(() => []),
     ]);
     if (profile) {
       profileName.value = profile.displayName || profile.nickname;
@@ -116,6 +141,8 @@ async function reload() {
     }
     stats.value = st;
     pendingCount.value = pendingRes.list?.length ?? st?.pendingCount ?? 0;
+    activeCount.value = activeRes.length;
+    sosAlerts.value = sosRes;
 
     const loc = await getLocationWithFallback(2000);
     const rows = await listNearbyElders(loc.lat, loc.lng);
@@ -138,6 +165,32 @@ onShow(() => {
 
 function goPending() {
   uni.redirectTo({ url: '/package-student/order/pending' });
+}
+function goActive() {
+  uni.navigateTo({ url: '/package-student/order/active' });
+}
+function goIncome() {
+  uni.navigateTo({ url: '/package-student/income' });
+}
+function handleSos() {
+  const alert = sosAlerts.value[0];
+  if (!alert) return;
+  uni.showModal({
+    title: '紧急求助',
+    content: `${alert.elderName}：${alert.message}`,
+    confirmText: '已知晓',
+    success: async (res) => {
+      if (res.confirm) {
+        try {
+          await acknowledgeSosAlert(alert.id);
+          sosAlerts.value = sosAlerts.value.filter((a) => a.id !== alert.id);
+          uni.showToast({ title: '已确认', icon: 'success' });
+        } catch (e) {
+          uni.showToast({ title: pbErrorMessage(e), icon: 'none' });
+        }
+      }
+    },
+  });
 }
 function goDiscover() {
   uni.redirectTo({ url: '/package-student/discover/list' });
@@ -231,13 +284,39 @@ function openElder(e: ElderPreview) {
   color: #333;
   margin-bottom: 16rpx;
 }
+.sos-banner {
+  display: flex;
+  align-items: center;
+  background: #ffebee;
+  border: 2rpx solid #ef9a9a;
+  padding: 24rpx;
+  border-radius: 12rpx;
+  margin-bottom: 20rpx;
+}
+.sos-icon {
+  font-size: 40rpx;
+  margin-right: 16rpx;
+}
+.sos-title {
+  display: block;
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #c62828;
+}
+.sos-desc {
+  display: block;
+  margin-top: 4rpx;
+  font-size: 24rpx;
+  color: #888;
+}
 .quick-grid {
   display: flex;
+  flex-wrap: wrap;
   gap: 16rpx;
   margin-bottom: 32rpx;
 }
 .quick-item {
-  flex: 1;
+  flex: 1 1 40%;
   background: #fff;
   border-radius: 16rpx;
   padding: 28rpx 16rpx;
