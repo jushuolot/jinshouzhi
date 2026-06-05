@@ -86,7 +86,15 @@ VITE_API_BASE_URL=http://localhost:8090/api
 
 ---
 
-## 二、PocketBase + Caddy（H5 静态 + API 反代）
+## 二、公网演示（无服务器/域名 · 暂用 GitHub）
+
+客人固定链接 + 本地 push 即更新，见 **[GITHUB_DEMO.md](./GITHUB_DEMO.md)**（GitHub Pages + Render 免费 API）。
+
+自有云服务器时见 **[PUBLIC_DEMO.md](./PUBLIC_DEMO.md)**。
+
+---
+
+## 三、PocketBase + Caddy（H5 静态 + API 反代）
 
 适用于：同一域名提供 H5 页面，并将 `/api/*` 转发到 PocketBase。
 
@@ -138,7 +146,7 @@ docker compose --profile full up -d
 
 ---
 
-## 三、生产检查清单
+## 四、生产检查清单
 
 - [ ] 已更换 `PB_ENCRYPTION_KEY` 并保存在密钥管理（非仓库）
 - [ ] Admin 使用强密码；禁用或删除测试账号
@@ -150,7 +158,7 @@ docker compose --profile full up -d
 
 ---
 
-## 四、常用运维命令
+## 五、常用运维命令
 
 ```bash
 # 查看日志
@@ -169,7 +177,7 @@ docker compose up -d pocketbase
 
 ---
 
-## 五、故障排查
+## 六、故障排查
 
 | 现象 | 处理 |
 |------|------|
@@ -183,6 +191,6 @@ docker compose up -d pocketbase
 
 ---
 
-## 六、与旧栈的关系
+## 七、与旧栈的关系
 
 仓库中 `packages/api`（NestJS）、`packages/admin-web`、`database/*.sql` 为 **历史参考**，V1 部署不再依赖 PostgreSQL。新业务以 PocketBase 集合为准，见 [TECH_STACK_SIMPLE.md](./TECH_STACK_SIMPLE.md)。

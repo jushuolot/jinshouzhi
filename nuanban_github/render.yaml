@@ -1,0 +1,11 @@
+# 暖伴勤工 · Render 免费 API（无需自购服务器/域名）
+# 用法：Render → New → Blueprint → 连接 jushuolot/jinshouzhi → 勾选本服务
+# 部署后 URL 形如 https://nuanban-demo.onrender.com ，填入 GitHub 仓库 Variables：NUANBAN_API_URL
+services:
+  - type: web
+    name: nuanban-demo
+    runtime: docker
+    plan: free
+    dockerfilePath: ./nuanban_github/packages/pocketbase/Dockerfile
+    dockerContext: ./nuanban_github/packages/pocketbase
+    healthCheckPath: /api/health

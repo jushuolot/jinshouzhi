@@ -12,3 +12,12 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+
+  # 暖伴勤工 PocketBase API（见 nuanban_github/docs/GITHUB_DEMO.md）
+  - type: web
+    name: nuanban-demo
+    runtime: docker
+    plan: free
+    dockerfilePath: ./nuanban_github/packages/pocketbase/Dockerfile
+    dockerContext: ./nuanban_github/packages/pocketbase
+    healthCheckPath: /api/health

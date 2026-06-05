@@ -12,15 +12,15 @@
 
 > 仓库中的 `packages/api`、`packages/admin-web`、`database/` 为历史参考，新环境请按极简栈部署。
 
-## 客人公网演示（手机 / 浏览器直接打开）
+## 客人公网演示（暂用 GitHub · 无服务器/域名）
 
-```bash
-cd nuanban_github
-chmod +x scripts/*.sh
-./scripts/public-demo.sh
-```
+| 角色 | 做什么 |
+|------|--------|
+| 客人 | 打开 [固定链接](docs/DEMO_LINK.md)：`https://jushuolot.github.io/jinshouzhi/nuanban/#/pages/common/login` |
+| 本地开发 | `git pull` + `./scripts/dev-test.sh` + `npm run dev:h5` |
+| 同步到公网 | `./scripts/sync-github.sh`（push 后 GitHub Pages 自动更新，**无需本机开终端**） |
 
-终端会输出 **HTTPS 链接**（如 `https://xxx.trycloudflare.com/#/pages/common/login`），发给客人即可；详见 [docs/DEMO_LINK.md](docs/DEMO_LINK.md)。
+首次配置（Pages + Render 免费 API）：[docs/GITHUB_DEMO.md](docs/GITHUB_DEMO.md)。日后有服务器见 [docs/PUBLIC_DEMO.md](docs/PUBLIC_DEMO.md)。
 
 ## 本地测试 / GitHub 克隆测试
 
@@ -100,6 +100,9 @@ docker compose --profile full up -d
 | [docs/PRODUCT.md](docs/PRODUCT.md) | **产品资料**（规则 + V1 实现状态） |
 | [docs/TECH_STACK_SIMPLE.md](docs/TECH_STACK_SIMPLE.md) | 极简栈与成本 |
 | [docs/DEPLOY.md](docs/DEPLOY.md) | Docker Compose 部署 |
+| [docs/DEMO_LINK.md](docs/DEMO_LINK.md) | 客人公网演示链接 |
+| [docs/GITHUB_DEMO.md](docs/GITHUB_DEMO.md) | GitHub Pages + Render 部署 |
+| [docs/PUBLIC_DEMO.md](docs/PUBLIC_DEMO.md) | 自有服务器演示（可选） |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | 系统架构 |
 | [docs/API.md](docs/API.md) | PocketBase API |
 | [docs/LOGIN_STATE.md](docs/LOGIN_STATE.md) | 登录与多角色 |

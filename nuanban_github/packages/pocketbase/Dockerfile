@@ -11,4 +11,4 @@ RUN apk add --no-cache ca-certificates unzip wget \
 
 EXPOSE 8090
 
-CMD ["/pb/pocketbase", "serve", "--http=0.0.0.0:8090", "--dir=/pb_data", "--publicDir=/pb_public", "--hooksDir=/pb_hooks", "--origins=http://localhost:5173,http://localhost:5174,http://127.0.0.1:5173,http://127.0.0.1:5174"]
+CMD ["/pb/pocketbase", "serve", "--http=0.0.0.0:8090", "--dir=/pb_data", "--publicDir=/pb_public", "--hooksDir=/pb_hooks", "--origins=*"]

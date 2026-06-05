@@ -22,6 +22,12 @@ nuanban/
 
 # temporary files
 .write-test
+.bin/
+
+# 公网演示配置
+config/demo.env
+config/github.env
+Caddyfile.prod
 
 # PocketBase backup (do not commit)
 packages/pocketbase/pb_data.bak*/

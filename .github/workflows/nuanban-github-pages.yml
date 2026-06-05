@@ -1,0 +1,63 @@
+name: Nuanban GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'nuanban_github/**'
+      - '.github/workflows/nuanban-github-pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: nuanban-pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install & build H5
+        working-directory: nuanban_github/packages/miniapp
+        env:
+          VITE_BASE: /${{ vars.GITHUB_REPO || 'jinshouzhi' }}/nuanban/
+          VITE_API_BASE_URL: ${{ vars.NUANBAN_API_URL || 'https://nuanban-demo.onrender.com' }}/api
+        run: |
+          npm install
+          npm run build:h5
+
+      - name: Prepare Pages artifact
+        run: |
+          # 项目站 jushuolot.github.io/jinshouzhi/ → 产物根目录即 /jinshouzhi/
+          mkdir -p _site/nuanban
+          cp -r nuanban_github/packages/miniapp/dist/build/h5/* _site/nuanban/
+          printf '%s\n' '<!DOCTYPE html><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=nuanban/#/pages/common/login"><title>暖伴勤工</title>' > _site/index.html
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: Refresh demo data on Render API
+        continue-on-error: true
+        env:
+          API: ${{ vars.NUANBAN_API_URL || 'https://nuanban-demo.onrender.com' }}
+        run: |
+          curl -sf -X POST "${API}/api/nuanban/seed-demo?key=nuanban_dev_seed" || true

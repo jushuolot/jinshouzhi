@@ -1,0 +1,25 @@
+# 公网演示站覆盖配置（与 docker-compose.yml 叠加使用）
+# 用法: docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile full up -d
+
+services:
+  pocketbase:
+    ports:
+      - "127.0.0.1:8090:8090"  # 仅服务器本机维护/seed，不对公网开放
+    command:
+      - /pb/pocketbase
+      - serve
+      - --http=0.0.0.0:8090
+      - --dir=/pb_data
+      - --publicDir=/pb_public
+      - --hooksDir=/pb_hooks
+      - --origins=*
+
+  caddy:
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile.prod:/etc/caddy/Caddyfile:ro
+      - ./packages/miniapp/dist/build/h5:/srv/h5:ro
+      - caddy_data:/data
+      - caddy_config:/config
