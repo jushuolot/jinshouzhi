@@ -154,6 +154,9 @@ streamlit run app.py
 
 ```toml
 STOCK_ASSISTANT_PASSWORD = "给同事用的强密码"
+
+# 可选：部署成功后填公网链接，应用内可生成分享文案
+STOCK_APP_PUBLIC_URL = "https://xxxx.streamlit.app"
 ```
 
 37. 保存 Secrets 配置。
@@ -162,7 +165,7 @@ STOCK_ASSISTANT_PASSWORD = "给同事用的强密码"
 
 38. 点击 **Deploy**，等待约 2～5 分钟，状态变为 **Running**。  
 39. 复制页面上的 **`https://xxxx.streamlit.app`** 链接。  
-40. 把 **链接 + 密码** 发给同事；同事打开链接后，按本文 **第 2 节** 同样方式登录即可使用。
+40. 把 **链接 + 密码** 发给同事；也可在应用登录后，左侧 **「📤 分享给同事」** 复制自动生成的说明（需先在 Secrets 配置 `STOCK_APP_PUBLIC_URL`）。
 
 ### 5.5 更新代码后
 
@@ -172,7 +175,8 @@ STOCK_ASSISTANT_PASSWORD = "给同事用的强密码"
 
 | 现象 | 处理 |
 |------|------|
-| Error installing requirements | Manage app → Reboot；确认主文件为 `stock-assistant/app.py`；Python 选 3.10/3.11 |
+| Error installing requirements | Manage app → Reboot；确认主文件为 `stock-assistant/app.py`；Python 选 3.10/3.11；本地跑 `python3 scripts/cloud_preflight.py` |
+| 尚未配置访问密码 | Secrets 添加 `STOCK_ASSISTANT_PASSWORD` 后 Save → Reboot |
 | 港美股数据异常 | 云端使用 `yfinance`，与本地一致；稍后重试 |
 | 同事打不开 | 确认链接、密码正确；检查 Cloud 应用是否为 Running |
 

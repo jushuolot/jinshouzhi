@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import streamlit as st
 
+from src.ui.share_panel import render_share_panel
+
 
 def render_workflow_sidebar() -> None:
     with st.sidebar:
@@ -26,7 +28,9 @@ def render_workflow_sidebar() -> None:
         phase = st.selectbox(
             "当前进化阶段",
             ["P1 结构+可读资料", "P2 页面模块化", "P3 一键分析", "P4 公网协作"],
-            index=2,
+            index=3,
             disabled=True,
         )
         st.caption(phase)
+
+        render_share_panel()

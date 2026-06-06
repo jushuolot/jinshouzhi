@@ -42,6 +42,9 @@ streamlit run app.py
 |--------|-----|
 | Main file path | `stock-assistant/app.py` |
 | Secrets | `STOCK_ASSISTANT_PASSWORD = "强密码"` |
+| 可选 | `STOCK_APP_PUBLIC_URL = "https://xxx.streamlit.app"`（侧边栏生成分享文案） |
+
+部署前自检：`python3 scripts/cloud_preflight.py`（详见 [DEPLOY_STREAMLIT.md](DEPLOY_STREAMLIT.md)）
 
 其他方式（Railway / Render、临时隧道）见 [docs/PRODUCT.md §6](docs/PRODUCT.md#6-公网访问)。
 

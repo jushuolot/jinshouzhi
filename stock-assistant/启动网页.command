@@ -33,5 +33,10 @@ fi
 
 pip install -q -r requirements.txt || { osascript -e 'display dialog "依赖安装失败，请检查网络后重试。" buttons {"好"} default button 1'; exit 1; }
 
+python3 scripts/cloud_preflight.py || {
+  osascript -e 'display dialog "云端自检未通过，请终端运行: python3 scripts/cloud_preflight.py 查看详情。" buttons {"好"} default button 1'
+  exit 1
+}
+
 exec streamlit run app.py
 
