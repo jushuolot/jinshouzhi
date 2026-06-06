@@ -1,7 +1,7 @@
 # Stock Assistant（Streamlit 股票助手）
 
 在浏览器里完成：**发现标的 → 分析工作台 → 导出可读简报**。  
-支持 A 股 / 港股 / 美股；**v1.8.0 · 120 步进化** — 一键分析、自动推送、CSV 导出、百步清单见 [docs/EVOLUTION_100.md](docs/EVOLUTION_100.md)。
+支持 A 股 / 港股 / 美股；**v2.3.0 · 270 步进化** — 一键分析、板块分布、批量操作、百步清单见 [docs/EVOLUTION_100.md](docs/EVOLUTION_100.md)。
 
 ---
 
@@ -33,6 +33,12 @@ streamlit run app.py
 浏览器打开 http://localhost:8501 ，使用 `secrets.toml` 中的密码登录。
 
 或双击 `启动网页.command`（macOS）。
+
+**定时推送（cron）**：仅在有涨跌幅/评分提醒触发时推送摘要，可加 `--alerts-only`：
+
+```bash
+python3 scripts/push_digest_cron.py --alerts-only
+```
 
 ---
 

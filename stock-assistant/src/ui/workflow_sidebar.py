@@ -8,6 +8,7 @@ from src.ui.changelog_panel import render_changelog_panel
 from src.ui.health_panel import render_health_panel
 from src.ui.push_panel import render_push_panel
 from src.ui.readonly_export_panel import render_readonly_export_panel
+from src.ui.share_panel import render_share_panel
 from src.ui.theme_style import render_theme_toggle
 
 
@@ -37,8 +38,9 @@ def render_workflow_sidebar() -> None:
                 "P11 文档版本", "P12 百步进化", "P13 智能提醒", "P14 运维脚本", "P15 体验抛光",
                 "P16 双股对比", "P17 提醒推送", "P18 体验与v2", "P19 自选分组", "P20 历史趋势",
                 "P21 备份导入", "P22 快捷筛选", "P23 定时摘要", "P24 体验抛光",
+                "P25 板块热力图", "P26 批量操作", "P27 文档与v2.3",
             ],
-            index=23,
+            index=26,
             disabled=True,
         )
         st.caption(phase)

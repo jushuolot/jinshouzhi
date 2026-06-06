@@ -24,6 +24,7 @@ from src.providers.news_feed import fetch_aggregated_news
 from src.storage.history_store import mark_dirty
 from src.storage.serialize import route_report_from_session
 from src.analysis.compare_stocks import compare_table_rows, compare_to_markdown, compare_two_stocks
+from src.analysis.sector_heatmap import aggregate_sector_distribution, sector_bar_values, sector_distribution_rows
 from src.ui.alert_panel import render_alert_panel
 from src.ui.auto_refresh import auto_refresh_fragment, render_auto_refresh_controls
 from src.ui.currency_tool import render_floating_currency_tool
@@ -55,6 +56,12 @@ from src.util.watch_groups import (
     group_names,
     groups_for_ticker,
     normalize_watch_groups,
+)
+from src.util.batch_watch_ops import (
+    batch_add_to_group,
+    batch_remove_from_groups,
+    batch_remove_from_watchlist,
+    codes_in_watchlist,
 )
 from src.util.watchlist_backup import (
     apply_backup_merge,
@@ -312,6 +319,32 @@ def render() -> None:
 
         render_alert_panel(watchlist=display_wl, snapshots=snaps)
 
+        if display_wl and snaps:
+            with st.expander("🗺 板块分布", expanded=False):
+                buckets = aggregate_sector_distribution(
+                    display_wl,
+                    snaps,
+                    brief_for_code=lambda c: st.session_state.get(f"brief_md_{c}"),
+                )
+                if buckets:
+                    rows = sector_distribution_rows(buckets)
+                    st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+                    labels, counts = sector_bar_values(buckets)
+                    fig_sector = go.Figure(
+                        data=[go.Bar(x=labels, y=counts, marker_color="#4e79a7")]
+                    )
+                    fig_sector.update_layout(
+                        title="自选数量按板块",
+                        xaxis_title="板块",
+                        yaxis_title="数量",
+                        height=320,
+                        margin=dict(l=40, r=20, t=40, b=80),
+                    )
+                    st.plotly_chart(fig_sector, use_container_width=True, config=PLOTLY_CHART_CONFIG)
+                    st.caption("板块来自摘要 fin_summary 或简报财务段；无数据记为「未知」。")
+                else:
+                    st.caption("暂无板块分布数据。")
+
         if len(display_wl) >= 2:
             with st.expander("📊 双股对比", expanded=False):
                 codes = [str(x.get("代码") or "") for x in display_wl if x.get("代码")]
@@ -407,13 +440,58 @@ def render() -> None:
                 "一句话": st.column_config.TextColumn("一句话", width="large"),
             },
         )
-        codes = [str(x.get("代码") or "") for x in st.session_state.watchlist]
-        to_remove = st.multiselect("删除哪些（按代码）", options=codes)
-        if st.button("删除所选", use_container_width=True, disabled=not to_remove):
-            st.session_state.watchlist = [x for x in st.session_state.watchlist if x.get("代码") not in set(to_remove)]
-            mark_dirty()
-            C._save_history(log_kind="watchlist", log_label="删除自选股")
-            st.rerun()
+        with st.expander("📦 批量操作", expanded=False):
+            pick_codes = [
+                str(x.get("代码") or "")
+                for x in display_wl
+                if x.get("代码")
+            ] or [str(x.get("代码") or "") for x in st.session_state.watchlist if x.get("代码")]
+            batch_sel = st.multiselect(
+                "选择标的（当前筛选列表）",
+                options=pick_codes,
+                key="watch_batch_sel",
+            )
+            b_rm, b_grp = st.columns(2)
+            with b_rm:
+                if st.button(
+                    "批量移出自选",
+                    key="watch_batch_remove",
+                    use_container_width=True,
+                    disabled=not batch_sel,
+                ):
+                    valid = codes_in_watchlist(st.session_state.watchlist, batch_sel)
+                    new_wl, removed = batch_remove_from_watchlist(st.session_state.watchlist, valid)
+                    st.session_state.watchlist = new_wl
+                    st.session_state.watch_groups = batch_remove_from_groups(groups, removed)
+                    for code in removed:
+                        st.session_state.get("watch_snapshots", {}).pop(code, None)
+                        st.session_state.pop(f"brief_md_{code}", None)
+                    mark_dirty()
+                    C._save_history(log_kind="watchlist", log_label=f"批量删除 {len(removed)} 只")
+                    st.success(f"已移除 {len(removed)} 只自选股。")
+                    st.rerun()
+            with b_grp:
+                if group_names(groups):
+                    batch_group = st.selectbox(
+                        "加入分组",
+                        group_names(groups),
+                        key="watch_batch_group",
+                    )
+                    if st.button(
+                        "批量加入分组",
+                        key="watch_batch_assign",
+                        use_container_width=True,
+                        disabled=not batch_sel or not batch_group,
+                    ):
+                        valid = codes_in_watchlist(st.session_state.watchlist, batch_sel)
+                        st.session_state.watch_groups = batch_add_to_group(
+                            groups, valid, batch_group
+                        )
+                        mark_dirty()
+                        st.success(f"已将 {len(valid)} 只加入「{batch_group}」。")
+                        st.rerun()
+                else:
+                    st.caption("请先在「分组管理」中创建分组。")
 
         render_sector_linkage_panel(watchlist=display_wl)
 
