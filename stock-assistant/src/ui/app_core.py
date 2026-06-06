@@ -101,6 +101,8 @@ def _init_state() -> None:
         st.session_state.alert_score_high = 65.0
     if "watch_groups" not in st.session_state:
         st.session_state.watch_groups = {}
+    if "dark_mode" not in st.session_state:
+        st.session_state.dark_mode = True
 
 
 def _save_history(

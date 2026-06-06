@@ -10,6 +10,7 @@ from src.ui.pages import history, insight, movers, panorama, plates, search, wat
 from src.ui.tab_router import apply_tab_from_query, render_main_tabs
 from src.ui.workflow_sidebar import render_workflow_sidebar
 from src.ui.mobile_style import inject_mobile_styles
+from src.ui.theme_style import inject_theme_styles
 from src.ui.onboarding import render_onboarding_banner
 from src.ui.footer import render_app_footer
 from src.util.query_time import format_query_datetime
@@ -20,6 +21,7 @@ C._init_state()
 load_into_session()
 C._apply_pending_session_keys()
 inject_mobile_styles()
+inject_theme_styles()
 render_workflow_sidebar()
 
 st.title("Stock Assistant · 快速分析")

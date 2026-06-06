@@ -5,6 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any
 
+from src.analysis.watch_alerts import WatchAlert
 from src.util.query_time import format_query_datetime
 
 
@@ -17,12 +18,25 @@ def _pct_str(v: Any) -> str:
         return "—"
 
 
+def format_alerts_digest_section(alerts: list[WatchAlert]) -> str:
+    """将提醒列表格式化为速览 Markdown 段落（P23）。"""
+    if not alerts:
+        return ""
+    lines = ["## 提醒摘要", "", f"共 {len(alerts)} 条触发项：", ""]
+    for a in alerts:
+        icon = {"hot": "🔥", "warn": "⚠️", "info": "ℹ️"}.get(a.level, "•")
+        lines.append(f"- {icon} **{a.name}（{a.code}）** — {a.message}")
+    lines.append("")
+    return "\n".join(lines)
+
+
 def build_watchlist_digest(
     watchlist: list[dict[str, Any]],
     snapshots: dict[str, Any],
     *,
     title: str = "自选股今日速览",
     query_label: str = "",
+    alerts: list[WatchAlert] | None = None,
 ) -> str:
     now = query_label or format_query_datetime(datetime.now())
     lines: list[str] = [
@@ -45,6 +59,9 @@ def build_watchlist_digest(
         lines.append(f"| {name} | {code} | {pct} | {score_s} | {one} |")
         if fin:
             lines.append(f"| ↳ 财务 | {code} | — | — | {fin.replace('|', '｜')[:100]} |")
+
+    if alerts:
+        lines.append(format_alerts_digest_section(alerts))
 
     lines.extend(
         [

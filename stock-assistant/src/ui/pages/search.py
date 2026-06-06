@@ -8,12 +8,14 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from src.ui import app_core as C
+from src.ui.quick_actions import render_search_quick_actions
 from src.providers import eastmoney, symbol_search, yahoo
 
 
 def render() -> None:
     st.subheader("全球证券搜索")
     st.caption("并行查询：A 股/北交所（东财）+ 港股/美股/英文名（Yahoo）。支持 XSHE:300755、SNX、synnex、茅台、0700.HK 等。")
+    render_search_quick_actions()
     C._show_query_banner("search")
     kw = st.text_input("关键词", value="茅台", placeholder="中文名、代码、拼音、美股代码 SNX、公司英文名 synnex…")
     if "recent_searches" not in st.session_state:
