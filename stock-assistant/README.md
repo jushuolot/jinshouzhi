@@ -12,6 +12,7 @@
 | [docs/PRODUCT.md](docs/PRODUCT.md) | 产品定位、功能地图、使用场景、数据来源、局限、公网访问 | 想先了解「这是什么」 |
 | [docs/USER_GUIDE.md](docs/USER_GUIDE.md) | 编号步骤：本地启动、登录、自选股、生成简报、Streamlit Cloud | 第一次上手操作 |
 | [EVOLUTION.md](EVOLUTION.md) | P1～P8 进化路线与验证清单 | 关心后续规划 |
+| [docs/PUSH.md](docs/PUSH.md) | Webhook / 邮件 / 多用户 / cron | 自动推送同事 |
 | [docs/API_READONLY.md](docs/API_READONLY.md) | 只读 JSON 快照 schema | 脚本对接 / 自动化 |
 | [DEPLOY_STREAMLIT.md](DEPLOY_STREAMLIT.md) | Streamlit Cloud 公网部署专篇 | 要给同事发链接 |
 

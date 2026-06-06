@@ -19,26 +19,24 @@ from src.analysis.global_anomaly import analyze_movers_batch
 from src.analysis.signals import score_stock
 from src.providers import eastmoney, market_data, symbol_search, yahoo
 from src.providers.ticker_util import a_market_label, is_bj_code, yahoo_ticker_a
+from src.auth.users import auth_mode_label, list_auth_users, verify_password
 from src.storage.history_store import mark_dirty, persist_session
 from src.storage.serialize import capital_mix_to_dict, route_report_from_session
 from src.util.currency import enrich_watchlist_item, infer_currency_for_hit, normalize_watchlist
 from src.util.query_time import format_data_range, format_query_date, format_query_datetime
 
 def _get_password() -> str | None:
-    # secrets 优先
-    try:
-        v = st.secrets.get("STOCK_ASSISTANT_PASSWORD")
-        if v is not None and str(v).strip():
-            return str(v).strip()
-    except Exception:
-        pass
-    env = os.environ.get("STOCK_ASSISTANT_PASSWORD", "").strip()
-    return env or None
+    users = list_auth_users()
+    if not users:
+        return None
+    if len(users) == 1:
+        return next(iter(users.values()))
+    return None
 
 
 def _login_gate() -> None:
-    expected = _get_password()
-    if not expected:
+    users = list_auth_users()
+    if not users:
         st.title("访问验证")
         st.error(
             "尚未配置访问密码。请先设置后再启动：\n\n"
@@ -54,14 +52,18 @@ def _login_gate() -> None:
         return
 
     st.title("访问验证")
+    if len(users) > 1:
+        st.caption(auth_mode_label() + " — 不同密码对应不同自选股数据。")
     c1, c2, c3 = st.columns([1, 2, 1])
     with c2:
         with st.form("login_form"):
             pw = st.text_input("访问密码", type="password")
             ok = st.form_submit_button("登录", type="primary", use_container_width=True)
         if ok:
-            if pw == expected:
+            uid = verify_password(pw)
+            if uid:
                 st.session_state["_auth_ok"] = True
+                st.session_state["_auth_user"] = uid
                 st.rerun()
             else:
                 st.error("密码错误。")
@@ -83,6 +85,10 @@ def _init_state() -> None:
         st.session_state.auto_refresh_enabled = False
     if "auto_refresh_minutes" not in st.session_state:
         st.session_state.auto_refresh_minutes = 5
+    if "push_webhook_on_refresh" not in st.session_state:
+        st.session_state.push_webhook_on_refresh = False
+    if "push_email_on_refresh" not in st.session_state:
+        st.session_state.push_email_on_refresh = False
 
 
 def _save_history(

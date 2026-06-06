@@ -58,6 +58,9 @@ def _tick_auto_refresh(fetch_fn: Callable[..., Any]) -> None:
         st.session_state._auto_refresh_ts = now
         st.session_state._auto_refresh_at = label
         mark_dirty()
+        from src.notify.digest_push import maybe_push_after_refresh
+
+        maybe_push_after_refresh()
     except Exception as exc:
         st.session_state._auto_refresh_last_error = str(exc)[:120]
 

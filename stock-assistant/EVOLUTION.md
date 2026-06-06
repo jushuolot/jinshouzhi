@@ -13,7 +13,8 @@
 | **P5** | 智能持久化 | ✅ 已完成 | 摘要/简报落盘、今日速览、健康检测、新手引导 |
 | **P6** | 体验极限 | ✅ 已完成 | 移动端、定时刷新、多简报合并 HTML/PDF |
 | **P7** | 智能增强 | ✅ 已完成 | 板块联动、语音朗读、只读 JSON 快照 |
-| **P8** | 生态扩展 | 规划中 | Webhook 推送、定时邮件速览、多用户隔离 |
+| **P8** | 生态扩展 | ✅ 已完成 | Webhook/邮件推送、多用户隔离、cron 脚本 |
+| **P9** | 运维与观测 | 规划中 | 推送日志、失败重试、健康告警 |
 
 ## P1：信息架构（本次）
 
@@ -65,9 +66,15 @@
 - **🔊 朗读摘要**：浏览器 TTS 朗读「一句话」摘要（无需安装插件）
 - **只读 snapshot.json**：侧边栏导出，schema `stock-assistant-readonly-v1`（见 [docs/API_READONLY.md](docs/API_READONLY.md)）
 
-## P8：生态扩展（规划中）
+## P8：生态扩展（已完成）
 
-- Webhook / 邮件推送自选股速览、多租户密码隔离
+- **Webhook / 邮件** 推送自选股速览（侧边栏 📣，可勾选自动刷新后推送）
+- **多用户密码隔离**：`[passwords]` → `data/users/<id>/`
+- **定时脚本** `scripts/push_digest_cron.py`（见 [docs/PUSH.md](docs/PUSH.md)）
+
+## P9：运维与观测（规划中）
+
+- 推送失败日志、重试队列、健康告警 Webhook
 
 ## 进化原则
 
@@ -98,3 +105,4 @@ streamlit run app.py
 - [x] 下载「分析合集」HTML / Markdown（可打印 PDF）
 - [x] 板块联动扫描（A 股多自选）
 - [x] 朗读一句话摘要 · 导出 snapshot.json
+- [x] Webhook / 邮件推送速览 · 多用户密码隔离

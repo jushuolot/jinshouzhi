@@ -23,7 +23,7 @@ from src.storage.serialize import (
     route_report_to_dict,
 )
 
-_HISTORY_VERSION = 4
+_HISTORY_VERSION = 5
 _MAX_LOG = 50
 _MAX_SNAPSHOTS = 20
 
@@ -36,11 +36,21 @@ KIND_LABELS: dict[str, str] = {
 }
 
 
+from src.storage.paths import history_file_path
+
+try:
+    from src.auth.users import current_user_id
+except Exception:
+    def current_user_id() -> str:  # type: ignore[misc]
+        return "default"
+
+
 def history_path() -> Path:
-    root = Path(__file__).resolve().parents[2]
-    data_dir = root / "data"
-    data_dir.mkdir(parents=True, exist_ok=True)
-    return data_dir / "user_history.json"
+    try:
+        uid = current_user_id()
+    except Exception:
+        uid = "default"
+    return history_file_path(user_id=uid)
 
 
 def _empty_store() -> dict[str, Any]:
@@ -322,6 +332,8 @@ def collect_latest_state() -> dict[str, Any]:
         "user_prefs": {
             "auto_refresh_enabled": bool(st.session_state.get("auto_refresh_enabled")),
             "auto_refresh_minutes": int(st.session_state.get("auto_refresh_minutes") or 5),
+            "push_webhook_on_refresh": bool(st.session_state.get("push_webhook_on_refresh")),
+            "push_email_on_refresh": bool(st.session_state.get("push_email_on_refresh")),
         },
     }
 
@@ -373,6 +385,10 @@ def apply_latest_to_session(latest: dict[str, Any]) -> None:
         st.session_state.auto_refresh_enabled = bool(prefs["auto_refresh_enabled"])
     if prefs.get("auto_refresh_minutes") is not None:
         st.session_state.auto_refresh_minutes = int(prefs["auto_refresh_minutes"])
+    if "push_webhook_on_refresh" in prefs:
+        st.session_state.push_webhook_on_refresh = bool(prefs["push_webhook_on_refresh"])
+    if "push_email_on_refresh" in prefs:
+        st.session_state.push_email_on_refresh = bool(prefs["push_email_on_refresh"])
 
     st.session_state["history_conclusions"] = latest.get("conclusions") or {}
 
