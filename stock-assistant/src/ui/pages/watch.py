@@ -99,6 +99,7 @@ from src.util.pinned_tickers import (
     pin_ticker,
     unpin_ticker,
 )
+from src.util.fetch_failures_summary import render_fetch_failures_summary
 from src.util.retry_fetch_ui import (
     failed_tickers,
     refresh_one_snapshot,
@@ -169,6 +170,8 @@ def render() -> None:
             st.caption("摘要含涨跌幅、评分、一句话；完整分析请对单标的点「一键分析」。")
 
         snaps = st.session_state.get("watch_snapshots") or {}
+        if snaps and not readonly:
+            render_fetch_failures_summary(st.session_state.watchlist, snaps)
         groups = normalize_watch_groups(st.session_state.get("watch_groups") or {})
         st.session_state.watch_groups = groups
         f1, f2, f3, f4 = st.columns([2, 1, 1, 1])

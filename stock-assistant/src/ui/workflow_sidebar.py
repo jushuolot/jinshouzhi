@@ -11,6 +11,7 @@ from src.ui.readonly_export_panel import render_readonly_export_panel
 from src.ui.share_panel import render_share_panel
 from src.ui.theme_style import render_theme_toggle
 from src.util.i18n_strings import render_locale_toggle
+from src.ui.milestone_banner import EVOLUTION_100_PATH
 from src.util.readonly_mode import is_readonly_mode
 
 
@@ -18,7 +19,7 @@ def render_workflow_sidebar() -> None:
     with st.sidebar:
         st.markdown("### 快速上手")
         st.markdown(
-            """
+            f"""
 **① 发现**  
 「② 搜索添加」或「④ 全球股市」找标的 → 加入工作台
 
@@ -29,7 +30,8 @@ def render_workflow_sidebar() -> None:
 一键分析后下载 `.md` 简报，或点「生成可读简报」
 
 ---
-*进化路线见仓库 `EVOLUTION.md`*
+*进化路线见仓库 `EVOLUTION.md`*  
+*百步功能清单：[docs/EVOLUTION_100.md]({EVOLUTION_100_PATH})*
             """
         )
         phase = st.selectbox(
@@ -52,8 +54,9 @@ def render_workflow_sidebar() -> None:
                 "P52 相似股推荐", "P53 会话欢迎", "P54 文档与v3.2",
                 "P55 分析置顶", "P56 失败重试", "P57 文档与v3.3",
                 "P58 快捷加自选", "P59 邮件主题", "P60 文档与v3.4",
+                "P61 600步庆祝", "P62 失败汇总", "P63 文档与v3.5",
             ],
-            index=59,
+            index=62,
             disabled=True,
         )
         st.caption(phase)

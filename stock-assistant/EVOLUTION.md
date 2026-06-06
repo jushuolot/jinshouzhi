@@ -66,6 +66,9 @@
 | **P58** | 快捷加自选 | ✅ 已完成 | watchlist_add、搜索页逐行加入自选 |
 | **P59** | 邮件主题 | ✅ 已完成 | digest_push 日期+提醒数主题行 |
 | **P60** | 文档与 v3.4 | ✅ 已完成 | EVOLUTION 571–600、v3.4.0 step 600 |
+| **P61** | 600步庆祝 | ✅ 已完成 | milestone_banner、confetti 横幅 |
+| **P62** | 失败汇总 | ✅ 已完成 | fetch_failures_summary、刷新后折叠列表 |
+| **P63** | 文档与 v3.5 | ✅ 已完成 | EVOLUTION 601–630、v3.5.0 step 630 |
 
 ## P1：信息架构（本次）
 
@@ -221,6 +224,12 @@
 - **P59 汇总邮件主题行**：`digest_push.format_digest_email_subject`；日期 + 提醒条数；`test_p59_email_subject`
 - **P60 文档与 v3.4**：EVOLUTION_100 步 571–600；v3.4.0 step 600；`evolve_verify.sh` 覆盖 P58–P60 测试
 
+## P61–P63：600步庆祝、失败汇总、v3.5（已完成）
+
+- **P61 600步庆祝横幅**：`src/ui/milestone_banner.py`；step≥600 时会话内一次性 confetti 风格 info 条；侧边栏链接 `docs/EVOLUTION_100.md`；`test_p61_milestone`
+- **P62 批量刷新失败汇总**：`src/util/fetch_failures_summary.py`；刷新后可折叠「失败 N 只」+ 代码复制；`test_p62_failures_summary`
+- **P63 文档与 v3.5**：EVOLUTION_100 步 601–630；v3.5.0 step 630；`evolve_verify.sh` 覆盖 P61–P63 测试
+
 ## 进化原则
 
 1. **先可读，再炫功能** — 每轮至少产出一种「能发给同事看的资料」
@@ -301,3 +310,6 @@ streamlit run app.py
 - [x] 搜索页逐行加入自选 watchlist_add · P58
 - [x] 汇总邮件主题 日期+提醒数 · P59
 - [x] v3.4.0 · 进化 step 600 · P60
+- [x] 600步庆祝横幅 milestone_banner · P61
+- [x] 刷新失败汇总 fetch_failures_summary · P62
+- [x] v3.5.0 · 进化 step 630 · P63

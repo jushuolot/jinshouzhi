@@ -602,3 +602,33 @@
 - [x] **598** 进化加固 #255
 - [x] **599** 进化加固 #256
 - [x] **600** 进化加固 #257 · v3.4.0 milestone
+- [x] **601** P61 milestone_banner 模块
+- [x] **602** P61 should_show_milestone 会话标记
+- [x] **603** P61 confetti info 庆祝条
+- [x] **604** P61 sidebar EVOLUTION_100 链接
+- [x] **605** P61 test_p61_milestone
+- [x] **606** P61 workflow 阶段标记
+- [x] **607** 进化加固 #258
+- [x] **608** 进化加固 #259
+- [x] **609** 进化加固 #260
+- [x] **610** 进化加固 #261
+- [x] **611** P62 fetch_failures_summary 模块
+- [x] **612** P62 failures_expander_label 标题
+- [x] **613** P62 format_failures_for_copy 复制文本
+- [x] **614** P62 工作台刷新后折叠汇总
+- [x] **615** P62 test_p62_failures_summary
+- [x] **616** P62 workflow 阶段标记
+- [x] **617** 进化加固 #262
+- [x] **618** 进化加固 #263
+- [x] **619** 进化加固 #264
+- [x] **620** 进化加固 #265
+- [x] **621** P63 v3.5.0 app_meta
+- [x] **622** P63 EVOLUTION 文档
+- [x] **623** P63 EVOLUTION_100 601-630
+- [x] **624** P63 workflow P61-P63
+- [x] **625** P63 evolve_verify 通过
+- [x] **626** P63 README 版本徽章
+- [x] **627** 进化加固 #266
+- [x] **628** 进化加固 #267
+- [x] **629** 进化加固 #268
+- [x] **630** 进化加固 #269 · v3.5.0 milestone
