@@ -21,6 +21,7 @@ from src.storage.history_store import (
     unique_dates_from_log,
     unique_stocks_from_log,
 )
+from src.analysis.trend_summary import collect_trend_points, format_trend_markdown, trend_delta
 
 
 def render() -> None:
@@ -73,6 +74,49 @@ def render() -> None:
             stock_kw=stock_kw,
         )
         st.caption(f"共 {len(log)} 条记录，筛选后 {len(filtered)} 条")
+
+        with st.expander("📈 趋势", expanded=False):
+            stock_opts_trend = unique_stocks_from_log(log)
+            if stock_opts_trend:
+                trend_ticker = st.selectbox(
+                    "选择标的查看趋势",
+                    stock_opts_trend[:40],
+                    key="hist_trend_ticker",
+                )
+                snaps_hist = st.session_state.get("history_snapshots") or load_history().get("snapshots", [])
+                points = collect_trend_points(log, snaps_hist, trend_ticker, limit=10)
+                if points:
+                    score_d, pct_d = trend_delta(points)
+                    hints: list[str] = []
+                    if pct_d is not None:
+                        hints.append(f"涨跌幅 {pct_d:+.2f}%")
+                    if score_d is not None:
+                        hints.append(f"评分 {score_d:+.1f}")
+                    if hints:
+                        st.caption("区间变化：" + " · ".join(hints))
+                    trend_df = pd.DataFrame(
+                        [
+                            {
+                                "时间": p.at,
+                                "涨跌幅%": f"{p.pct:+.2f}" if p.pct is not None else "—",
+                                "评分": f"{p.score:.1f}" if p.score is not None else "—",
+                                "说明": p.label[:50],
+                            }
+                            for p in points
+                        ]
+                    )
+                    st.dataframe(trend_df, use_container_width=True, hide_index=True)
+                    st.download_button(
+                        "下载趋势 (.md)",
+                        data=format_trend_markdown(points, ticker=trend_ticker).encode("utf-8"),
+                        file_name=f"趋势_{trend_ticker}.md",
+                        mime="text/markdown",
+                        key="hist_trend_md",
+                    )
+                else:
+                    st.info("该标的暂无带评分的快照记录。")
+            else:
+                st.caption("历史记录中尚未识别到股票代码。")
 
         if filtered:
             import csv

@@ -24,6 +24,9 @@
 | **P16** | 双股对比 | ✅ 已完成 | 并排涨跌幅/评分/摘要、对比 Markdown |
 | **P17** | 提醒推送 | ✅ 已完成 | 提醒 Webhook、自动推送、alert_push |
 | **P18** | 体验与 v2 | ✅ 已完成 | ?tab= 自动切换、v2.0.0 step 180 |
+| **P19** | 自选分组 | ✅ 已完成 | watch_groups 偏好、分组筛选与管理 |
+| **P20** | 历史趋势 | ✅ 已完成 | trend_summary、工作台/历史页 📈 趋势 |
+| **P21** | 备份导入 | ✅ 已完成 | JSON 备份下载/合并导入、v2.1.0 step 210 |
 
 ## P1：信息架构（本次）
 
@@ -95,6 +98,12 @@
 - **P17 提醒推送**：`push_webhook_on_alerts` 偏好；有触发项时「推送到 Webhook」；自动刷新后可选自动推送（去重）
 - **P18 体验**：`?tab=watch|search|…|1-7` 自动选中主导航；`src/ui/tab_router.py`
 
+## P19–P21：分组、趋势、备份（已完成）
+
+- **P19 自选分组**：`user_prefs.watch_groups`；工作台按分组筛选、分组管理 expander
+- **P20 历史趋势**：`src/analysis/trend_summary.py`；最近 N 次分析的评分/涨跌幅走势
+- **P21 备份导入**：工作台 JSON 备份下载与合并导入（不覆盖历史 query_log）
+
 ## 进化原则
 
 1. **先可读，再炫功能** — 每轮至少产出一种「能发给同事看的资料」
@@ -134,3 +143,6 @@ streamlit run app.py
 - [x] 双股对比 expander · 下载对比 Markdown
 - [x] 提醒 Webhook 推送 · push_webhook_on_alerts
 - [x] ?tab= 深链接自动打开对应页 · v2.0.0 step 180
+- [x] 自选股分组筛选与管理 · watch_groups
+- [x] 分析历史趋势 expander · trend_summary
+- [x] JSON 备份下载/合并导入 · v2.1.0 step 210

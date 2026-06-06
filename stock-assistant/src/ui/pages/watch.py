@@ -49,6 +49,20 @@ from src.util.watchlist_export import (
     sort_watchlist,
     watchlist_to_csv_bytes,
 )
+from src.util.watch_groups import (
+    assign_ticker_to_group,
+    filter_watchlist_by_group,
+    group_names,
+    groups_for_ticker,
+    normalize_watch_groups,
+)
+from src.util.watchlist_backup import (
+    apply_backup_merge,
+    backup_to_json_bytes,
+    build_watch_backup,
+    parse_backup_bytes,
+)
+from src.analysis.trend_summary import collect_trend_points, format_trend_markdown, trend_delta
 
 
 def _watchlist_display_rows(watchlist: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -98,15 +112,21 @@ def render() -> None:
             st.caption("摘要含涨跌幅、评分、一句话；完整分析请对单标的点「一键分析」。")
 
         snaps = st.session_state.get("watch_snapshots") or {}
-        f1, f2, f3 = st.columns([2, 1, 1])
+        groups = normalize_watch_groups(st.session_state.get("watch_groups") or {})
+        st.session_state.watch_groups = groups
+        f1, f2, f3, f4 = st.columns([2, 1, 1, 1])
         with f1:
             filter_kw = st.text_input("筛选", key="watch_filter", placeholder="名称 / 代码 / 市场")
         with f2:
-            sort_by = st.selectbox("排序", ["代码", "涨跌幅", "评分"], key="watch_sort_by")
+            group_opts = ["全部"] + group_names(groups)
+            filter_group = st.selectbox("分组", group_opts, key="watch_filter_group")
         with f3:
+            sort_by = st.selectbox("排序", ["代码", "涨跌幅", "评分"], key="watch_sort_by")
+        with f4:
             sort_desc = st.checkbox("降序", key="watch_sort_desc")
+        grouped_wl = filter_watchlist_by_group(st.session_state.watchlist, groups, filter_group)
         display_wl = sort_watchlist(
-            filter_watchlist(st.session_state.watchlist, filter_kw),
+            filter_watchlist(grouped_wl, filter_kw),
             snaps,
             by=sort_by,
             descending=sort_desc,
@@ -121,6 +141,122 @@ def render() -> None:
                 key="watch_csv_dl",
                 use_container_width=True,
             )
+
+        backup_payload = build_watch_backup(
+            watchlist=st.session_state.watchlist,
+            watch_snapshots=snaps,
+            watch_groups=groups,
+        )
+        b1, b2 = st.columns(2)
+        with b1:
+            st.download_button(
+                "💾 下载 JSON 备份",
+                data=backup_to_json_bytes(backup_payload),
+                file_name="自选股备份.json",
+                mime="application/json",
+                key="watch_json_backup_dl",
+                use_container_width=True,
+            )
+        with b2:
+            uploaded = st.file_uploader(
+                "导入 JSON 备份（合并）",
+                type=["json"],
+                key="watch_json_backup_ul",
+            )
+            if uploaded is not None:
+                if st.button("确认合并导入", key="watch_json_backup_apply", use_container_width=True):
+                    try:
+                        raw = uploaded.getvalue()
+                        backup = parse_backup_bytes(raw)
+                        wl, merged_snaps, merged_groups, stats = apply_backup_merge(
+                            watchlist=st.session_state.watchlist,
+                            watch_snapshots=snaps,
+                            watch_groups=groups,
+                            backup=backup,
+                        )
+                        st.session_state.watchlist = wl
+                        st.session_state.watch_snapshots = merged_snaps
+                        st.session_state.watch_groups = merged_groups
+                        mark_dirty()
+                        C._save_history(log_kind="watchlist", log_label="导入 JSON 备份")
+                        st.success(
+                            f"已合并：新增 {stats['watchlist_added']} 只自选，"
+                            f"快照 {stats['snapshots_merged']} 条，分组 {stats['groups_merged']} 组。"
+                        )
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"导入失败：{e}")
+
+        with st.expander("🏷 分组管理", expanded=False):
+            new_group = st.text_input("新建分组名", key="watch_new_group", placeholder="如 核心持仓")
+            if st.button("创建分组", key="watch_create_group", disabled=not new_group.strip()):
+                gname = new_group.strip()
+                if gname not in groups:
+                    groups[gname] = []
+                    st.session_state.watch_groups = groups
+                    mark_dirty()
+                    st.rerun()
+            codes_all = [str(x.get("代码") or "") for x in st.session_state.watchlist if x.get("代码")]
+            if codes_all and group_names(groups):
+                pick_code = st.selectbox("选择标的", codes_all, key="watch_group_pick_code")
+                pick_group = st.selectbox(
+                    "加入分组",
+                    group_names(groups),
+                    key="watch_group_pick_group",
+                )
+                if st.button("加入分组", key="watch_group_assign", use_container_width=True):
+                    st.session_state.watch_groups = assign_ticker_to_group(
+                        groups, ticker=pick_code, group_name=pick_group
+                    )
+                    mark_dirty()
+                    st.success(f"{pick_code} 已加入「{pick_group}」")
+                    st.rerun()
+                assigned = groups_for_ticker(groups, pick_code)
+                if assigned:
+                    st.caption(f"当前分组：{'、'.join(assigned)}")
+            elif not group_names(groups):
+                st.caption("先创建分组，再把标的加入。")
+
+        with st.expander("📈 趋势", expanded=False):
+            trend_codes = [str(x.get("代码") or "") for x in display_wl if x.get("代码")] or codes_all
+            if trend_codes:
+                trend_code = st.selectbox("查看标的", trend_codes, key="watch_trend_code")
+                log = st.session_state.get("query_log") or []
+                snaps_hist = st.session_state.get("history_snapshots") or []
+                points = collect_trend_points(log, snaps_hist, trend_code, limit=8)
+                if points:
+                    score_d, pct_d = trend_delta(points)
+                    hints: list[str] = []
+                    if pct_d is not None:
+                        hints.append(f"涨跌幅 {pct_d:+.2f}%")
+                    if score_d is not None:
+                        hints.append(f"评分 {score_d:+.1f}")
+                    if hints:
+                        st.caption("最近区间变化（新→旧）：" + " · ".join(hints))
+                    trend_df = pd.DataFrame(
+                        [
+                            {
+                                "时间": p.at,
+                                "涨跌幅%": f"{p.pct:+.2f}" if p.pct is not None else "—",
+                                "评分": f"{p.score:.1f}" if p.score is not None else "—",
+                                "说明": p.label[:50],
+                            }
+                            for p in points
+                        ]
+                    )
+                    st.dataframe(trend_df, use_container_width=True, hide_index=True)
+                    st.download_button(
+                        "下载趋势 (.md)",
+                        data=format_trend_markdown(points, ticker=trend_code).encode("utf-8"),
+                        file_name=f"趋势_{trend_code}.md",
+                        mime="text/markdown",
+                        key="watch_trend_md",
+                        use_container_width=True,
+                    )
+                else:
+                    st.info("暂无该标的的历史评分/涨跌幅快照，请先「一键分析」或「刷新全部摘要」。")
+            else:
+                st.caption("添加自选股后可查看分析趋势。")
 
         if snaps:
             digest = build_watchlist_digest(

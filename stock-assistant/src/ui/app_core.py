@@ -99,6 +99,8 @@ def _init_state() -> None:
         st.session_state.alert_score_low = 40.0
     if "alert_score_high" not in st.session_state:
         st.session_state.alert_score_high = 65.0
+    if "watch_groups" not in st.session_state:
+        st.session_state.watch_groups = {}
 
 
 def _save_history(
