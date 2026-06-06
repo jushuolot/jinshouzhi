@@ -9,6 +9,11 @@ import streamlit as st
 
 from src.ui import app_core as C
 
+from src.analysis.brief_merge import (
+    build_merged_briefs_html,
+    build_merged_briefs_markdown,
+    collect_briefs_for_watchlist,
+)
 from src.analysis.daily_digest import build_watchlist_digest
 from src.analysis.mover_insight import build_action_route_report
 from src.analysis.quick_analyze import batch_run_quick_analysis, refresh_watch_snapshots, run_quick_analysis
@@ -18,6 +23,7 @@ from src.providers.eastmoney import KLINE_PERIOD_UI, is_intraday_kline
 from src.providers.news_feed import fetch_aggregated_news
 from src.storage.history_store import mark_dirty
 from src.storage.serialize import route_report_from_session
+from src.ui.auto_refresh import auto_refresh_fragment, render_auto_refresh_controls
 from src.ui.currency_tool import render_floating_currency_tool
 from src.ui.industry_compare import show_industry_compare_block
 from src.ui.pro_chart import (
@@ -96,6 +102,43 @@ def render() -> None:
                 key="watch_digest_dl",
                 use_container_width=True,
             )
+
+        def _brief_for_code(c: str) -> str | None:
+            v = st.session_state.get(f"brief_md_{c}")
+            return str(v) if v else None
+
+        briefs = collect_briefs_for_watchlist(st.session_state.watchlist, _brief_for_code)
+        if briefs:
+            q_merge = C._query_label("watch") or format_query_datetime()
+            merged_md = build_merged_briefs_markdown(
+                st.session_state.watchlist, briefs, query_label=q_merge
+            )
+            merged_html = build_merged_briefs_html(
+                st.session_state.watchlist, briefs, query_label=q_merge
+            )
+            m1, m2 = st.columns(2)
+            with m1:
+                st.download_button(
+                    "📚 下载分析合集 (.md)",
+                    data=merged_md.encode("utf-8"),
+                    file_name="自选股分析合集.md",
+                    mime="text/markdown",
+                    key="watch_merge_md",
+                    use_container_width=True,
+                )
+            with m2:
+                st.download_button(
+                    "🖨 下载合集 HTML（可打印 PDF）",
+                    data=merged_html.encode("utf-8"),
+                    file_name="自选股分析合集.html",
+                    mime="text/html",
+                    key="watch_merge_html",
+                    use_container_width=True,
+                )
+            st.caption(f"已合并 {len(briefs)} 份一键分析简报；HTML 用浏览器「打印 → 另存为 PDF」。")
+
+        render_auto_refresh_controls()
+        auto_refresh_fragment(C._fetch_one)
 
         c_batch, c_batch_hint = st.columns([1, 2])
         with c_batch:

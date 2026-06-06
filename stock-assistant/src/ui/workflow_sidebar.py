@@ -28,8 +28,8 @@ def render_workflow_sidebar() -> None:
         )
         phase = st.selectbox(
             "当前进化阶段",
-            ["P1 结构+可读资料", "P2 页面模块化", "P3 一键分析", "P4 公网协作", "P5 智能持久化"],
-            index=4,
+            ["P1 结构+可读资料", "P2 页面模块化", "P3 一键分析", "P4 公网协作", "P5 智能持久化", "P6 体验极限"],
+            index=5,
             disabled=True,
         )
         st.caption(phase)

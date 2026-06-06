@@ -23,7 +23,7 @@ from src.storage.serialize import (
     route_report_to_dict,
 )
 
-_HISTORY_VERSION = 3
+_HISTORY_VERSION = 4
 _MAX_LOG = 50
 _MAX_SNAPSHOTS = 20
 
@@ -319,6 +319,10 @@ def collect_latest_state() -> dict[str, Any]:
         "conclusions": conclusions,
         "watch_snapshots": dict(st.session_state.get("watch_snapshots") or {}),
         "brief_archive": _collect_brief_archive(),
+        "user_prefs": {
+            "auto_refresh_enabled": bool(st.session_state.get("auto_refresh_enabled")),
+            "auto_refresh_minutes": int(st.session_state.get("auto_refresh_minutes") or 5),
+        },
     }
 
 
@@ -363,6 +367,12 @@ def apply_latest_to_session(latest: dict[str, Any]) -> None:
     if latest.get("watch_snapshots"):
         st.session_state.watch_snapshots = dict(latest["watch_snapshots"])
     _apply_brief_archive(latest.get("brief_archive"))
+
+    prefs = latest.get("user_prefs") or {}
+    if "auto_refresh_enabled" in prefs:
+        st.session_state.auto_refresh_enabled = bool(prefs["auto_refresh_enabled"])
+    if prefs.get("auto_refresh_minutes") is not None:
+        st.session_state.auto_refresh_minutes = int(prefs["auto_refresh_minutes"])
 
     st.session_state["history_conclusions"] = latest.get("conclusions") or {}
 

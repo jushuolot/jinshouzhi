@@ -8,14 +8,16 @@ from src.storage.history_store import load_into_session, persist_session
 from src.ui import app_core as C
 from src.ui.pages import history, insight, movers, panorama, plates, search, watch
 from src.ui.workflow_sidebar import render_workflow_sidebar
+from src.ui.mobile_style import inject_mobile_styles
 from src.ui.onboarding import render_onboarding_banner
 from src.util.query_time import format_query_datetime
 
-st.set_page_config(page_title="Stock Assistant", layout="wide")
+st.set_page_config(page_title="Stock Assistant", layout="wide", initial_sidebar_state="auto")
 C._login_gate()
 C._init_state()
 load_into_session()
 C._apply_pending_session_keys()
+inject_mobile_styles()
 render_workflow_sidebar()
 
 st.title("Stock Assistant · 快速分析")

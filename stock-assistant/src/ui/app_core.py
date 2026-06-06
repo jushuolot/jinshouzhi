@@ -79,6 +79,10 @@ def _init_state() -> None:
         st.session_state.history_snapshots = []
     if "watch_snapshots" not in st.session_state:
         st.session_state.watch_snapshots = {}  # code -> snapshot dict
+    if "auto_refresh_enabled" not in st.session_state:
+        st.session_state.auto_refresh_enabled = False
+    if "auto_refresh_minutes" not in st.session_state:
+        st.session_state.auto_refresh_minutes = 5
 
 
 def _save_history(
