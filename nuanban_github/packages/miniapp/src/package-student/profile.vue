@@ -29,6 +29,10 @@
     <text v-if="stats && stats.incomeCents === 0" class="stats-hint">完成订单并确认后计入收入</text>
 
     <view class="menu-card">
+      <view v-if="roleStore.activeRoles.length > 1" class="menu-item" @tap="goRoleSelect">
+        <text>切换身份</text>
+        <text class="arrow">›</text>
+      </view>
       <view class="menu-item" @tap="goPending">
         <text>待接单</text>
         <text class="arrow">›</text>
@@ -82,6 +86,7 @@ import {
   type StudentStats,
 } from '../api/student';
 import { useRoleStore } from '../store/role';
+import { guardPackageRoute } from '../utils/nav-guard';
 import { pbErrorMessage } from '../utils/request';
 
 const roleStore = useRoleStore();
@@ -94,6 +99,7 @@ const avatarChar = computed(() => {
 });
 
 onShow(async () => {
+  if (!guardPackageRoute('/package-student/profile')) return;
   try {
     const [p, s] = await Promise.all([fetchStudentProfile(), fetchStudentStats()]);
     profile.value = p;
@@ -146,6 +152,10 @@ function goDiscover() {
 
 function goHome() {
   uni.redirectTo({ url: '/package-student/home' });
+}
+
+function goRoleSelect() {
+  uni.navigateTo({ url: '/pages/common/role-select' });
 }
 
 function goLogin() {

@@ -58,8 +58,14 @@
 
 - `git push` → GitHub Actions 构建 H5 并更新 Pages（见 `.github/workflows/nuanban-github-pages.yml`）
 - 本地：`cd packages/miniapp && npm run build:h5` 应 exit 0
+- 发货：`./scripts/agent-ship.sh`（含 `./scripts/smoke-demo.sh` 公网 HTTP 200 检查，失败仅 WARN）
 
-## 明日可继续（Phase 5+）
+## Phase 11 验收项
 
-- 学校合作过滤、Admin 派单
-- 微信实装（需商户资质，非零成本）
+| # | 场景 | 通过标准 |
+|---|------|----------|
+| M1 | nav-guard | 错身份 / 未审学生访问分包页被拦截 |
+| M2 | 家属订单列表 | scroll-view + ListCountBar，20+ 单可滚动 |
+| M3 | multi1 账号 | 登录 → role-select → 三端切换 |
+| M4 | 学生注册 | toast + 跳转 student-pending |
+| M5 | 公网冒烟 | `smoke-demo.sh` PASS（或 ship 时 WARN） |

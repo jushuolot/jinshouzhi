@@ -5,18 +5,25 @@
       <view class="seg-item" :class="{ active: tab === 'all' }" @tap="tab = 'all'">全部</view>
     </view>
 
-    <view v-for="o in shown" :key="o.id" class="card" @tap="onTap(o)">
-      <view class="head">
-        <text class="svc">{{ o.expand?.service_item?.name || '陪护服务' }}</text>
-        <text class="status">{{ statusLabel(o.status) }}</text>
+    <view v-if="loading" class="state">加载中…</view>
+    <view v-else-if="!shown.length" class="empty">暂无订单</view>
+    <scroll-view v-else scroll-y class="order-scroll">
+      <ListCountBar
+        :count="shown.length"
+        :hint="tab === 'pay' ? '待支付 · 可滚动' : '全部订单 · 可滚动压测'"
+      />
+      <view v-for="o in shown" :key="o.id" class="card" @tap="onTap(o)">
+        <view class="head">
+          <text class="svc">{{ o.expand?.service_item?.name || '陪护服务' }}</text>
+          <text class="status">{{ statusLabel(o.status) }}</text>
+        </view>
+        <text class="elder">{{ o.expand?.elder?.name || '老人' }}</text>
+        <text class="meta">
+          ¥{{ ((o.amount_cents || 0) / 100).toFixed(0) }}
+          <text v-if="o.scheduled_at"> · {{ formatTime(o.scheduled_at) }}</text>
+        </text>
       </view>
-      <text class="elder">{{ o.expand?.elder?.name || '老人' }}</text>
-      <text class="meta">
-        ¥{{ ((o.amount_cents || 0) / 100).toFixed(0) }}
-        <text v-if="o.scheduled_at"> · {{ formatTime(o.scheduled_at) }}</text>
-      </text>
-    </view>
-    <view v-if="!loading && !shown.length" class="empty">暂无订单</view>
+    </scroll-view>
     <RoleTabBar role="family" current="/package-family/order/list" />
   </view>
 </template>
@@ -25,9 +32,11 @@
 import { computed, ref } from 'vue';
 import { onShow } from '@dcloudio/uni-app';
 import RoleTabBar from '../../components/RoleTabBar.vue';
+import ListCountBar from '../../components/ListCountBar.vue';
 import { listBoundElders, listPendingPaymentOrders } from '../../api/family';
 import { pbList, type PbRecord } from '../../api/pb';
 import { useRoleStore } from '../../store/role';
+import { guardPackageRoute } from '../../utils/nav-guard';
 import { orderStatusLabel } from '../../utils/order-status';
 import { pbErrorMessage } from '../../utils/request';
 
@@ -87,7 +96,10 @@ async function reload() {
   }
 }
 
-onShow(reload);
+onShow(() => {
+  if (!guardPackageRoute('/package-family/order/list')) return;
+  reload();
+});
 
 function onTap(o: OrderItem) {
   uni.navigateTo({ url: `/package-family/order/detail?id=${o.id}` });
@@ -119,6 +131,14 @@ function onTap(o: OrderItem) {
   color: #c45c26;
   font-weight: 600;
   background: #fffaf5;
+}
+.order-scroll {
+  max-height: calc(100vh - 320rpx);
+}
+.state {
+  text-align: center;
+  color: #999;
+  padding: 80rpx 32rpx;
 }
 .card {
   background: #fff;

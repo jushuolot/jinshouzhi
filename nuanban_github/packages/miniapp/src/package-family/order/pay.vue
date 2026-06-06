@@ -52,10 +52,11 @@
 </template>
 
 <script setup lang="ts">
-import { onLoad } from '@dcloudio/uni-app';
+import { onLoad, onShow } from '@dcloudio/uni-app';
 import { ref } from 'vue';
 import { payOrder } from '../../api/family';
 import { pbGet } from '../../api/pb';
+import { guardPackageRoute } from '../../utils/nav-guard';
 import { pbErrorMessage } from '../../utils/request';
 
 const orderId = ref('');
@@ -65,6 +66,10 @@ const serviceName = ref('');
 const scheduledAt = ref('');
 const loading = ref(false);
 const phase = ref<'idle' | 'confirming' | 'paying' | 'success'>('idle');
+
+onShow(() => {
+  guardPackageRoute('/package-family/order/pay');
+});
 
 onLoad(async (q) => {
   orderId.value = (q?.id as string) || '';

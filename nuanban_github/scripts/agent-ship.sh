@@ -10,14 +10,21 @@ echo "==> 暖伴 agent-ship"
 echo "    app:  $ROOT"
 echo "    git:  $GIT_ROOT"
 
-echo "==> 1/3 路由校验"
+echo "==> 1/4 路由校验"
 node "$ROOT/scripts/check-routes.mjs"
 
-echo "==> 2/3 构建 H5"
+echo "==> 2/4 构建 H5"
 (cd "$ROOT/packages/miniapp" && npm run build:h5)
 
-echo "==> 3/3 Git 状态（nuanban_github）"
+echo "==> 3/4 Git 状态（nuanban_github）"
 (cd "$GIT_ROOT" && git status -sb -- nuanban_github/ docs/nuanban/ 2>/dev/null || git status -sb)
+
+echo "==> 4/4 公网冒烟"
+if bash "$ROOT/scripts/smoke-demo.sh"; then
+  echo "    smoke: OK"
+else
+  echo "    smoke: WARN (network fail or Pages not ready)" >&2
+fi
 
 echo ""
 echo "=========================================="

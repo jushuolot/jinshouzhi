@@ -165,11 +165,29 @@ function roleFromEmail(email: string): RoleKey {
   return 'student';
 }
 
+const mockRegisterRoles: {
+  role: RoleKey;
+  status: string;
+  elderProfileId?: string | null;
+}[] = [];
+
 function loginByEmail(email: string, pickRole?: RoleKey) {
   const em = email.toLowerCase();
   const role = pickRole || roleFromEmail(email);
   let user: { id: string; email: string; nickname: string };
   let studentStatus = 'active';
+
+  if (em.includes('multi1')) {
+    return {
+      token: MOCK_TOKEN,
+      user: { id: USERS.multi.id, nickname: USERS.multi.nickname, email },
+      roles: [
+        { role: 'elder', status: 'active', elderProfileId: 'elder-zhang' },
+        { role: 'family', status: 'active', elderProfileId: null },
+        { role: 'student', status: 'active', elderProfileId: null },
+      ],
+    };
+  }
 
   if (em.includes('student3')) {
     user = { ...DEMO_USERS.studentPending, email };
@@ -346,6 +364,20 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
   const rawUrl = options.url || '';
   const { path, query } = parsePath(rawUrl.startsWith('http') ? rawUrl : `/api${rawUrl}`);
   const data = parseBody(options.data);
+
+  if (method === 'POST' && path === '/nuanban/auth/register') {
+    const role = (data.role as RoleKey) || 'student';
+    const status = role === 'student' ? 'pending' : 'active';
+    const existing = mockRegisterRoles.find((r) => r.role === role);
+    if (!existing) {
+      mockRegisterRoles.push({
+        role,
+        status,
+        elderProfileId: role === 'elder' ? 'elder-zhang' : null,
+      });
+    }
+    return delay({ ok: true, roles: [...mockRegisterRoles] } as T);
+  }
 
   if (method === 'POST' && path === '/nuanban/dev-login') {
     const email = String(data.email || 'student1@test.nuanban.dev');

@@ -24,6 +24,11 @@ const roleLabel: Record<RoleKey, string> = {
 };
 
 async function select(role: RoleKey) {
+  const studentRole = roleStore.roles.find((r) => r.role === 'student');
+  if (role === 'student' && studentRole?.status === 'pending') {
+    uni.reLaunch({ url: '/pages/common/student-pending' });
+    return;
+  }
   roleStore.setAuth({
     token: roleStore.token,
     roles: roleStore.roles,

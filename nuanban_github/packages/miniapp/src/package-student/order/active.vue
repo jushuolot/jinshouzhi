@@ -1,15 +1,19 @@
 <template>
   <view class="page">
     <text class="tip">待服务 / 服务中的订单</text>
-    <view v-for="o in list" :key="o.id" class="card" @tap="open(o.id)">
-      <view class="card-head">
-        <text class="svc">{{ o.serviceName || '陪护服务' }}</text>
-        <text class="status-tag" :class="o.status">{{ statusLabel(o.status) }}</text>
+    <view v-if="loading" class="state">加载中…</view>
+    <view v-else-if="!list.length" class="empty">暂无进行中订单</view>
+    <scroll-view v-else scroll-y class="order-scroll">
+      <ListCountBar :count="list.length" hint="服务中 · 可滚动" />
+      <view v-for="o in list" :key="o.id" class="card" @tap="open(o.id)">
+        <view class="card-head">
+          <text class="svc">{{ o.serviceName || '陪护服务' }}</text>
+          <text class="status-tag" :class="o.status">{{ statusLabel(o.status) }}</text>
+        </view>
+        <text class="elder">服务老人 · {{ o.elderName || '—' }}</text>
+        <text class="meta">{{ formatTime(o.scheduledAt) }} · ¥{{ ((o.amountCents || 0) / 100).toFixed(0) }}</text>
       </view>
-      <text class="elder">服务老人 · {{ o.elderName || '—' }}</text>
-      <text class="meta">{{ formatTime(o.scheduledAt) }} · ¥{{ ((o.amountCents || 0) / 100).toFixed(0) }}</text>
-    </view>
-    <view v-if="!loading && !list.length" class="empty">暂无进行中订单</view>
+    </scroll-view>
     <RoleTabBar role="student" current="/package-student/order/active" />
   </view>
 </template>
@@ -18,7 +22,9 @@
 import { ref } from 'vue';
 import { onShow } from '@dcloudio/uni-app';
 import RoleTabBar from '../../components/RoleTabBar.vue';
+import ListCountBar from '../../components/ListCountBar.vue';
 import { listActiveOrders, type PendingOrder } from '../../api/student';
+import { guardPackageRoute } from '../../utils/nav-guard';
 import { orderStatusLabel } from '../../utils/order-status';
 import { pbErrorMessage } from '../../utils/request';
 
@@ -48,7 +54,10 @@ async function reload() {
   }
 }
 
-onShow(reload);
+onShow(() => {
+  if (!guardPackageRoute('/package-student/order/active')) return;
+  reload();
+});
 
 function open(id: string) {
   uni.navigateTo({ url: `/package-student/order/request?id=${id}` });
@@ -65,6 +74,9 @@ function open(id: string) {
 .tip {
   color: #666;
   font-size: 26rpx;
+}
+.order-scroll {
+  max-height: calc(100vh - 280rpx);
 }
 .card {
   background: #fff;

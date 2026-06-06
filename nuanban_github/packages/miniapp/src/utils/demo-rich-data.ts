@@ -18,6 +18,7 @@ export const DEMO_USERS = {
   studentPending: { id: 'user-student-pending', email: 'student3@test.nuanban.dev', nickname: '待审同学' },
   family: { id: 'user-family', email: 'family1@test.nuanban.dev', nickname: '家属1' },
   elder: { id: 'user-elder', email: 'elder1@test.nuanban.dev', nickname: '老人1' },
+  multi: { id: 'user-multi', email: 'multi1@test.nuanban.dev', nickname: '多角色演示' },
 } as const;
 
 /** 家属可购服务包 — 演示数据 */

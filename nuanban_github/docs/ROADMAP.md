@@ -16,8 +16,9 @@
 | **Phase 8** | **PERFECT 验收清单**、GAP/ROADMAP/NIGHT_LOG 更新 |
 | **Phase 9** | **发现页 scroll-view**、**地图 marker 富化**、**profile/edit 统一 API** |
 | **Phase 10** | **mock 微信登录/支付**、**服务包购买**、**admin-hub**、**student3 审核守卫**、**结算展示**、**X-Active-Role** |
+| **Phase 11** | **nav-guard 全覆盖**、**家属/老人订单 scroll-view**、**multi1 多角色演示**、**注册 pending 流程**、**smoke-demo.sh** |
 
-## Phase 11+（真实上线时再开）
+## Phase 12+（真实上线时再开）
 
 - 微信支付 / 微信登录 **商户实装**
 - 云服务器常驻 API、独立 Admin Web

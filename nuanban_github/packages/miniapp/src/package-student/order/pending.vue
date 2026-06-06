@@ -51,6 +51,7 @@ import { ref } from 'vue';
 import RoleTabBar from '../../components/RoleTabBar.vue';
 import ListCountBar from '../../components/ListCountBar.vue';
 import { listPendingOrders, type PendingOrder } from '../../api/student';
+import { guardPackageRoute } from '../../utils/nav-guard';
 import { pbErrorMessage } from '../../utils/request';
 
 const list = ref<PendingOrder[]>([]);
@@ -75,7 +76,10 @@ async function reload() {
   }
 }
 
-onShow(reload);
+onShow(() => {
+  if (!guardPackageRoute('/package-student/order/pending')) return;
+  reload();
+});
 
 function open(id: string) {
   uni.navigateTo({ url: `/package-student/order/request?id=${id}` });

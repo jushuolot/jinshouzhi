@@ -95,6 +95,7 @@ import ListCountBar from '../../components/ListCountBar.vue';
 import { fetchStudentProfile, listNearbyElders, type ElderRow } from '../../api/student';
 import { getLocationWithFallback } from '../../utils/location';
 import { filterEldersBySchoolCoop, orgPartnersSchool } from '../../utils/school-coop';
+import { guardPackageRoute } from '../../utils/nav-guard';
 import { pbErrorMessage } from '../../utils/request';
 
 type ElderListItem = ElderRow & {
@@ -218,7 +219,10 @@ async function reload() {
   }
 }
 
-onShow(reload);
+onShow(() => {
+  if (!guardPackageRoute('/package-student/discover/list')) return;
+  reload();
+});
 
 function onCoopToggle(e: { detail: { value: boolean } }) {
   schoolCoopOnly.value = e.detail.value;

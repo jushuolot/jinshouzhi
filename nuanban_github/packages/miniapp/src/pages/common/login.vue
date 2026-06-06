@@ -47,6 +47,7 @@ const DEV_ACCOUNTS = [
   { label: '学生3(审核中)', email: 'student3@test.nuanban.dev' },
   { label: '家属', email: 'family1@test.nuanban.dev' },
   { label: '老人', email: 'elder1@test.nuanban.dev' },
+  { label: '多角色', email: 'multi1@test.nuanban.dev' },
 ] as const;
 
 function afterLogin(res: Awaited<ReturnType<typeof loginWithWxCode>>) {
@@ -60,16 +61,19 @@ function afterLogin(res: Awaited<ReturnType<typeof loginWithWxCode>>) {
     uni.navigateTo({ url: '/pages/common/register' });
     return;
   }
-  const active = res.activeRole ?? res.roles.find((r) => r.status === 'active')?.role;
   const studentRole = res.roles.find((r) => r.role === 'student');
   if (studentRole?.status === 'pending') {
     uni.reLaunch({ url: '/pages/common/student-pending' });
     return;
   }
+  const activeRoles = res.roles.filter((r) => r.status === 'active');
+  if (activeRoles.length > 1 && !res.activeRole) {
+    uni.navigateTo({ url: '/pages/common/role-select' });
+    return;
+  }
+  const active = res.activeRole ?? activeRoles[0]?.role;
   if (active) {
     uni.reLaunch({ url: ROLE_HOME[active] });
-  } else if (res.roles.filter((r) => r.status === 'active').length > 1) {
-    uni.navigateTo({ url: '/pages/common/role-select' });
   } else {
     uni.navigateTo({ url: '/pages/common/register' });
   }

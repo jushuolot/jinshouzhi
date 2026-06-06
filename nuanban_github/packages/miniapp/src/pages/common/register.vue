@@ -54,8 +54,13 @@ async function submit() {
       token: roleStore.token,
       roles,
       user: roleStore.user ?? undefined,
-      activeRole: role.value,
+      activeRole: role.value === 'student' ? undefined : role.value,
     });
+    if (role.value === 'student') {
+      uni.showToast({ title: '已提交，等待审核', icon: 'none' });
+      uni.reLaunch({ url: '/pages/common/student-pending' });
+      return;
+    }
     uni.showToast({ title: '已提交', icon: 'success' });
     uni.navigateBack();
   } catch (e) {

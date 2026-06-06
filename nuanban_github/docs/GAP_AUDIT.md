@@ -38,7 +38,7 @@
 
 | 页面 | 状态 | 备注 |
 |------|------|------|
-| launch / login / role-select / register | ✅ | login 含 student2/3、微信演示登录 |
+| launch / login / role-select / register | ✅ | login 含 student2/3、multi1、微信演示登录 |
 | agreement / org-dispatch / admin-hub / school-coop / student-pending | ✅ | Phase 10 注册 |
 
 ### 2.2 老人分包 package-elder

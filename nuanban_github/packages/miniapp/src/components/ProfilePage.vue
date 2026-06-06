@@ -87,8 +87,13 @@ const statItems = computed(() => {
 });
 
 const menuItems = computed(() => {
+  const switchRole =
+    roleStore.activeRoles.length > 1
+      ? [{ label: '切换身份', action: goRoleSelect }]
+      : [];
   if (props.role === 'family') {
     return [
+      ...switchRole,
       { label: '待支付订单', action: goFamilyPay },
       { label: '订单列表', action: () => uni.redirectTo({ url: '/package-family/order/list' }) },
       { label: '绑定老人', action: () => uni.navigateTo({ url: '/package-family/bind' }) },
@@ -97,6 +102,7 @@ const menuItems = computed(() => {
   }
   if (props.role === 'elder') {
     return [
+      ...switchRole,
       { label: '找陪护', action: () => uni.navigateTo({ url: '/package-elder/caregivers/list' }) },
       { label: '我的服务', action: () => uni.redirectTo({ url: '/package-elder/order/list' }) },
       { label: '家属绑定码', action: () => uni.navigateTo({ url: '/package-elder/bind-code' }) },
@@ -130,6 +136,10 @@ async function goFamilyPay() {
   } catch (e) {
     uni.showToast({ title: pbErrorMessage(e), icon: 'none' });
   }
+}
+
+function goRoleSelect() {
+  uni.navigateTo({ url: '/pages/common/role-select' });
 }
 
 function goLogin() {

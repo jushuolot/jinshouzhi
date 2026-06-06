@@ -57,6 +57,7 @@ git pull --rebase origin main && git push origin main
 | `student2@test.nuanban.dev` | 学生 | 城东师范学院、学校合作筛选 |
 | `family1@test.nuanban.dev` | 家属 | 代付、外出、服务包 |
 | `elder1@test.nuanban.dev` | 老人 | 找陪护、SOS |
+| `multi1@test.nuanban.dev` | 三角色 | 身份切换演示 |
 
 ## 文档索引
 

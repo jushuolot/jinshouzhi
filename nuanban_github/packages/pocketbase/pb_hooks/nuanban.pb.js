@@ -194,6 +194,12 @@ routerAdd("POST", "/api/nuanban/dev-login", (e) => {
     roles.push({ role: activeRole, status: "active", elderProfileId: null });
   }
 
+  const activeRoles = roles.filter(function (r) {
+    return r.status === "active";
+  });
+  const resolvedActive =
+    activeRoles.length === 1 ? activeRoles[0].role : activeRoles.length > 1 ? null : activeRole;
+
   return e.json(200, {
     token: user.newAuthToken(),
     user: {
@@ -202,7 +208,7 @@ routerAdd("POST", "/api/nuanban/dev-login", (e) => {
       email: user.getString("email"),
     },
     roles: roles,
-    activeRole: activeRole,
+    activeRole: resolvedActive,
   });
 });
 
