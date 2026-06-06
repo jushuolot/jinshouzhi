@@ -25,6 +25,7 @@ from src.storage.history_store import mark_dirty
 from src.storage.serialize import route_report_from_session
 from src.analysis.compare_stocks import compare_table_rows, compare_to_markdown, compare_two_stocks
 from src.analysis.sector_heatmap import aggregate_sector_distribution, sector_bar_values, sector_distribution_rows
+from src.analysis.similar_pick import similar_pick_rows, suggest_similar_picks
 from src.ui.alert_panel import render_alert_panel
 from src.ui.auto_refresh import auto_refresh_fragment, render_auto_refresh_controls
 from src.ui.currency_tool import render_floating_currency_tool
@@ -465,6 +466,21 @@ def render() -> None:
                     st.caption("板块来自摘要 fin_summary 或简报财务段；无数据记为「未知」。")
                 else:
                     st.caption("暂无板块分布数据。")
+
+        if display_wl and snaps:
+            similar = suggest_similar_picks(
+                display_wl,
+                snaps,
+                brief_for_code=lambda c: st.session_state.get(f"brief_md_{c}"),
+            )
+            if similar:
+                with st.expander("🔗 相似股推荐", expanded=False):
+                    st.caption("同板块自选内按评分推荐（仅用本地快照，非外部荐股）")
+                    st.dataframe(
+                        pd.DataFrame(similar_pick_rows(similar)),
+                        use_container_width=True,
+                        hide_index=True,
+                    )
 
         if len(display_wl) >= 2:
             with st.expander("📊 双股对比", expanded=False):

@@ -57,6 +57,9 @@
 | **P49** | 组合权重视图 | ✅ 已完成 | user_prefs.watch_weights、工作台 ⚖ 饼图 |
 | **P50** | cron 周报 | ✅ 已完成 | weekly_report_cron.py、STOCK_USER |
 | **P51** | 文档与 v3.1 | ✅ 已完成 | EVOLUTION 481–510、v3.1.0 step 510 |
+| **P52** | 相似股推荐 | ✅ 已完成 | similar_pick、工作台 🔗 同板块推荐 |
+| **P53** | 会话恢复提示 | ✅ 已完成 | welcome_banner、启动欢迎条 |
+| **P54** | 文档与 v3.2 | ✅ 已完成 | EVOLUTION 511–540、v3.2.0 step 540 |
 
 ## P1：信息架构（本次）
 
@@ -194,6 +197,12 @@
 - **P50 cron 周报**：`scripts/weekly_report_cron.py`；`STOCK_USER` 读 history；写入 `data/weekly_report_YYYYMMDD.md` 或 `--stdout`；`test_p50_weekly_cron`
 - **P51 文档与 v3.1**：EVOLUTION_100 步 481–510；v3.1.0 step 510；`evolve_verify.sh` 覆盖 P49–P51 测试
 
+## P52–P54：相似股、会话欢迎、v3.2（已完成）
+
+- **P52 相似股推荐 lite**：`src/analysis/similar_pick.py`；按自选板块与快照评分推荐 1–3 只同板块标的（无外部 API）；工作台「🔗 相似股推荐」expander；`test_p52_similar`
+- **P53 会话恢复提示**：`src/ui/welcome_banner.py`；历史含自选时启动展示数量与上次刷新；`history_store._restored_watchlist`；`test_p53_welcome`
+- **P54 文档与 v3.2**：EVOLUTION_100 步 511–540；v3.2.0 step 540；`evolve_verify.sh` 覆盖 P52–P54 测试
+
 ## 进化原则
 
 1. **先可读，再炫功能** — 每轮至少产出一种「能发给同事看的资料」
@@ -265,3 +274,6 @@ streamlit run app.py
 - [x] 组合权重饼图 watch_weights · P49
 - [x] cron 周报 weekly_report_cron · P50
 - [x] v3.1.0 · 进化 step 510 · P51
+- [x] 相似股推荐 similar_pick · 工作台同板块 · P52
+- [x] 会话恢复欢迎条 welcome_banner · P53
+- [x] v3.2.0 · 进化 step 540 · P54

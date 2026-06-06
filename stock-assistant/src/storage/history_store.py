@@ -548,6 +548,7 @@ def load_into_session() -> None:
     store = load_history()
     if store.get("watchlist"):
         st.session_state.watchlist = store["watchlist"]
+        st.session_state["_restored_watchlist"] = True
     if not st.session_state.get("query_log"):
         st.session_state.query_log = store.get("query_log", [])
     else:
