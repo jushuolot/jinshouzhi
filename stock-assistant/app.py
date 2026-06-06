@@ -40,6 +40,8 @@ from src.util.currency import (
     normalize_watchlist,
 )
 from src.ui.currency_tool import render_floating_currency_tool
+from src.ui.readable_report_panel import build_and_store_brief, render_readable_brief_panel
+from src.ui.workflow_sidebar import render_workflow_sidebar
 from src.analysis.capital_attribution import CapitalMix, capital_mix_from_dict
 from src.analysis.global_anomaly import (
     analyze_movers_batch,
@@ -352,22 +354,58 @@ def _apply_pending_session_keys() -> None:
         st.session_state["movers_pick_code"] = pending
 
 
+def _render_route_report_block(rep: ActionRouteReport) -> None:
+    st.markdown(f"### {rep.title}")
+    st.markdown(f"**一、结果**　{rep.result}")
+    st.markdown(f"**二、过程**　{rep.process}")
+    st.markdown("**三、可能原因**")
+    for c in rep.causes:
+        st.markdown(f"- {c}")
+    st.markdown("**四、参与者**")
+    for p in rep.participants:
+        st.markdown(f"- {p}")
+    st.markdown("**五、行动路线**")
+    for b in rep.playbooks:
+        st.markdown(f"- {b}")
+    st.markdown("**六、相关新闻**")
+    if not rep.news:
+        st.write("暂无聚合新闻。")
+    else:
+        for n in rep.news:
+            t = n.get("标题") or ""
+            link = n.get("链接") or ""
+            src = n.get("来源") or ""
+            if link:
+                st.markdown(f"- [{t}]({link})（{src}）")
+            else:
+                st.write(f"- {t}（{src}）")
+    st.caption(f"数据交叉：{'；'.join(rep.data_sources)}。{rep.disclaimer}")
+
+
 st.set_page_config(page_title="Stock Assistant", layout="wide")
 _login_gate()
 _init_state()
 load_into_session()
 _apply_pending_session_keys()
+render_workflow_sidebar()
 
-st.title("Stock Assistant（全市场）")
+st.title("Stock Assistant · 快速分析")
 st.caption(
-    "多源公开数据：A 股（东财→新浪）、港股/美股（Yahoo）。"
-    "全球股市页可生成「行动路线」：结果→过程→原因→参与者→思路（规则推演，非投资建议）。"
+    "三步：**发现标的 → 工作台分析 → 导出可读简报**。数据来自东财 / Yahoo 等公开源（规则推演，非投资建议）。"
 )
 if st.session_state.get("query_at_latest"):
     st.info(f"📅 最近查询时间：{format_query_datetime(st.session_state['query_at_latest'])}")
 
 tab_watch, tab_search, tab_plates, tab_movers, tab_panorama, tab_insight, tab_history = st.tabs(
-    ["自选股", "搜索/添加", "板块行情", "全球股市", "异动全景", "异动溯源", "历史记录"]
+    [
+        "① 分析工作台",
+        "② 搜索添加",
+        "③ 板块行情",
+        "④ 全球股市",
+        "⑤ 异动全景",
+        "⑥ 行动路线",
+        "⑦ 历史记录",
+    ]
 )
 
 with tab_search:
@@ -420,12 +458,13 @@ with tab_search:
         st.info("输入关键词后点「全球搜索」。纯英文公司名（如 synnex）请直接搜，会走 Yahoo。")
 
 with tab_watch:
-    st.subheader("自选股")
+    st.subheader("分析工作台")
+    st.caption("选标的 → 看 K 线 / 财务 / 板块 → 生成简报或行动路线。")
     _show_query_banner("watch")
     if st.session_state.watchlist:
         st.session_state.watchlist = normalize_watchlist(st.session_state.watchlist)
     if not st.session_state.watchlist:
-        st.info("还没有自选股：到「搜索/添加」里搜到后加入。")
+        st.info("还没有自选股：到「② 搜索添加」里搜到后加入。")
     else:
         wl = pd.DataFrame(st.session_state.watchlist)
         show_cols = [c for c in ["名称", "代码", "货币", "类型", "市场", "Yahoo"] if c in wl.columns]
@@ -456,6 +495,8 @@ with tab_watch:
         is_a6 = item and _is_a_share_code6(code) and kind == "A"
         watch_df: pd.DataFrame | None = None
         watch_ksrc = ""
+        watch_stats: dict[str, Any] | None = None
+        watch_score = None
 
         if item:
             with st.expander("K线", expanded=True):
@@ -548,6 +589,8 @@ with tab_watch:
                     )
                     st.plotly_chart(fig, use_container_width=True, config=PLOTLY_CHART_CONFIG)
                     s = score_stock(df)
+                    watch_stats = stats
+                    watch_score = s
                     st.metric("综合评分", f"{s.total:.1f}")
                     st.caption("评分拆分：趋势/动量/风险/流动性")
                     st.write({"趋势": s.trend, "动量": s.momentum, "风险": s.risk, "流动性": s.liquidity})
@@ -577,24 +620,19 @@ with tab_watch:
                         lazy=True,
                     )
 
-            st.subheader("重大新闻（多源）")
+            st.divider()
+            st.subheader("分析与导出")
             code6 = code if kind == "A" and code.isdigit() else None
             yh = str(item.get("Yahoo") or code)
-            news = fetch_aggregated_news(code6=code6, yahoo_ticker=yh, limit=15)
-            if not news:
-                st.info("暂无新闻或接口不可用。")
-            else:
-                for n in news:
-                    ntitle = n.get("标题") or ""
-                    link = n.get("链接") or ""
-                    src = n.get("来源") or ""
-                    when = n.get("时间") or ""
-                    if link:
-                        st.markdown(f"- [{ntitle}]({link})（{src} {when}）")
-                    else:
-                        st.write(f"- {ntitle}（{src} {when}）")
+            news_watch = fetch_aggregated_news(code6=code6, yahoo_ticker=yh, limit=15)
 
-            if st.button("生成行动路线报告", key="watch_route"):
+            btn_route, btn_brief = st.columns(2)
+            with btn_route:
+                gen_route = st.button("生成行动路线", type="primary", key="watch_route", use_container_width=True)
+            with btn_brief:
+                gen_brief = st.button("生成可读简报", key="watch_brief", use_container_width=True)
+
+            if gen_route:
                 if watch_df is None or watch_df.empty:
                     route_end = date.today()
                     route_start = route_end - timedelta(days=100)
@@ -602,6 +640,8 @@ with tab_watch:
                         watch_df, watch_ksrc = _fetch_one(
                             item, start=route_start, end=route_end, kline="日K"
                         )
+                        watch_stats = last_bar_stats(watch_df)
+                        watch_score = score_stock(watch_df)
                     except Exception as e:
                         st.error(f"无法生成报告：{e}")
                         watch_df = None
@@ -620,10 +660,64 @@ with tab_watch:
                     st.session_state["insight_pick"] = {
                         "代码": code,
                         "名称": item.get("名称"),
+                        "市场": item.get("市场"),
                     }
                     mark_dirty()
-                    _save_history(log_kind="insight", log_label=f"自选股溯源 {item.get('名称')}")
-                    st.success("报告已生成，请切换到「异动溯源」页查看。")
+                    _save_history(log_kind="insight", log_label=f"工作台溯源 {item.get('名称')}")
+                    st.success("行动路线已生成，见下方展开区。")
+
+            if gen_brief:
+                if watch_df is None or watch_df.empty:
+                    st.warning("请先在上方「K线」区加载行情（展开后自动拉取）。")
+                else:
+                    rep_brief = route_report_from_session(st.session_state.get("route_report"))
+                    pick = st.session_state.get("insight_pick") or {}
+                    if pick and str(pick.get("代码") or "") != str(code):
+                        rep_brief = None
+                    with st.spinner("正在整理可读简报…"):
+                        build_and_store_brief(
+                            session_key=f"brief_md_{code}",
+                            name=str(item.get("名称") or ""),
+                            code=code,
+                            kind=kind,
+                            market=str(item.get("市场") or ""),
+                            currency=quote_ccy,
+                            stats=watch_stats,
+                            score=watch_score,
+                            kline_src=watch_ksrc,
+                            query_label=_query_label("watch") or format_query_datetime(),
+                            route_report=rep_brief,
+                            news=news_watch,
+                        )
+                    st.success("可读简报已生成，见下方。")
+
+            rep_inline = route_report_from_session(st.session_state.get("route_report"))
+            pick_inline = st.session_state.get("insight_pick") or {}
+            if rep_inline and str(pick_inline.get("代码") or "") == str(code):
+                with st.expander("📋 行动路线", expanded=False):
+                    _render_route_report_block(rep_inline)
+
+            brief_md = st.session_state.get(f"brief_md_{code}")
+            if brief_md:
+                render_readable_brief_panel(
+                    brief_md=brief_md,
+                    file_stem=f"{item.get('名称', '')}_{code}",
+                    key_prefix=f"watch_brief_{code}",
+                )
+
+            with st.expander("重大新闻（多源）", expanded=False):
+                if not news_watch:
+                    st.info("暂无新闻或接口不可用。")
+                else:
+                    for n in news_watch:
+                        ntitle = n.get("标题") or ""
+                        link = n.get("链接") or ""
+                        src = n.get("来源") or ""
+                        when = n.get("时间") or ""
+                        if link:
+                            st.markdown(f"- [{ntitle}]({link})（{src} {when}）")
+                        else:
+                            st.write(f"- {ntitle}（{src} {when}）")
 
 with tab_plates:
     st.subheader("板块行情")
@@ -1005,18 +1099,18 @@ with tab_panorama:
                 st.success("已载入，请切换到「异动溯源」页。")
 
 with tab_insight:
-    st.subheader("异动溯源 · 行动路线")
-    st.caption("把「涨跌结果」拆成：过程（量价）→ 原因（新闻/趋势）→ 参与者（资金风格）→ 可能思路（推演）。")
+    st.subheader("行动路线")
+    st.caption("完整版报告页；日常建议在「① 分析工作台」内查看并导出简报。")
     _show_query_banner("insight", extra=st.session_state.get("insight_range") or "")
 
     pick = st.session_state.get("insight_pick")
     if not pick:
-        st.info("请先在「全球股市」选一只股票并点「生成行动路线」，或在自选股里生成报告。")
+        st.info("请先在「④ 全球股市」或「① 分析工作台」生成行动路线。")
     else:
         code = str(pick.get("代码") or "")
         name = str(pick.get("名称") or "")
         st.write(f"当前标的：**{name}（{code}）**　|　市场：{pick.get('市场', '')}")
-        st.caption("K 线、财务对比、所属板块请在「自选股 → 行情与分析」查看。")
+        st.caption("K 线、财务对比、所属板块请在「① 分析工作台」查看。")
         if _query_label("insight"):
             st.caption(f"本次报告查询时间：{_query_label('insight')}")
         default_days = int(st.session_state.pop("insight_auto_days", 90))
@@ -1026,33 +1120,9 @@ with tab_insight:
 
     rep = route_report_from_session(st.session_state.get("route_report"))
     if rep:
-        st.markdown(f"### {rep.title}")
-        st.markdown(f"**一、结果（发生了什么）**  \n{rep.result}")
-        st.markdown(f"**二、过程（怎么走出来的）**  \n{rep.process}")
-        st.markdown("**三、可能原因（公开信息线索）**")
-        for c in rep.causes:
-            st.markdown(f"- {c}")
-        st.markdown("**四、谁在参与（资金风格推测）**")
-        for p in rep.participants:
-            st.markdown(f"- {p}")
-        st.markdown("**五、行动路线（参与者可能怎么想、怎么做）**")
-        for b in rep.playbooks:
-            st.markdown(f"- {b}")
-        st.markdown("**六、相关新闻**")
-        if not rep.news:
-            st.write("暂无聚合新闻。")
-        else:
-            for n in rep.news:
-                t = n.get("标题") or ""
-                link = n.get("链接") or ""
-                src = n.get("来源") or ""
-                if link:
-                    st.markdown(f"- [{t}]({link})（{src}）")
-                else:
-                    st.write(f"- {t}（{src}）")
+        _render_route_report_block(rep)
         if _query_label("insight"):
             st.caption(f"本次查询时间：{_query_label('insight')}")
-        st.caption(f"数据交叉：{'；'.join(rep.data_sources)}。{rep.disclaimer}")
 
 with tab_history:
     st.subheader("历史记录")

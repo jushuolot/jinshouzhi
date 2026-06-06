@@ -1,8 +1,24 @@
 # Stock Assistant（Streamlit 股票助手）
 
-板块热度、专业 K 线、行业对比、异动解读等；数据源为公开行情接口（东方财富、雅虎等）。
+在浏览器里完成：**发现标的 → 分析工作台 → 导出可读简报**。  
+支持 A 股 / 港股 / 美股搜索、K 线、板块榜单、异动解读；数据来自东财、Yahoo 等公开接口（**非投资建议**）。
 
-## 本地运行
+---
+
+## 文档索引
+
+| 文档 | 说明 | 适合谁 |
+|------|------|--------|
+| [docs/PRODUCT.md](docs/PRODUCT.md) | 产品定位、功能地图、使用场景、数据来源、局限、公网访问 | 想先了解「这是什么」 |
+| [docs/USER_GUIDE.md](docs/USER_GUIDE.md) | 编号步骤：本地启动、登录、自选股、生成简报、Streamlit Cloud | 第一次上手操作 |
+| [EVOLUTION.md](EVOLUTION.md) | P1～P4 进化路线与验证清单 | 关心后续规划 |
+| [DEPLOY_STREAMLIT.md](DEPLOY_STREAMLIT.md) | Streamlit Cloud 公网部署专篇 | 要给同事发链接 |
+
+---
+
+## 本地运行（简版）
+
+完整步骤见 [docs/USER_GUIDE.md](docs/USER_GUIDE.md#1-本地启动在你自己的电脑上)。
 
 ```bash
 cd stock-assistant
@@ -16,33 +32,20 @@ streamlit run app.py
 
 或双击 `启动网页.command`（macOS）。
 
+---
+
 ## 公网部署（同事测试）
 
-### 方式 A — Streamlit Community Cloud（推荐）
+推荐 **Streamlit Community Cloud**，详见 [DEPLOY_STREAMLIT.md](DEPLOY_STREAMLIT.md) 与 [docs/USER_GUIDE.md §5](docs/USER_GUIDE.md#5-部署到-streamlit-cloud给同事公网访问)。
 
-1. 确保本目录已在 GitHub 仓库 `jushuolot/jinshouzhi` 的 `stock-assistant/` 下  
-2. 打开 https://streamlit.io/cloud → **New app** → 选择仓库  
-3. **Main file path**：`stock-assistant/app.py`  
-4. **Secrets** 添加：
+| 配置项 | 值 |
+|--------|-----|
+| Main file path | `stock-assistant/app.py` |
+| Secrets | `STOCK_ASSISTANT_PASSWORD = "强密码"` |
 
-```toml
-STOCK_ASSISTANT_PASSWORD = "强密码"
-```
+其他方式（Railway / Render、临时隧道）见 [docs/PRODUCT.md §6](docs/PRODUCT.md#6-公网访问)。
 
-5. Deploy 后把生成的 `*.streamlit.app` 链接发给同事。
-
-### 方式 B — Railway / Render
-
-- **Build**：`pip install -r stock-assistant/requirements.txt`  
-- **Start**：`streamlit run stock-assistant/app.py --server.port=$PORT --server.address=0.0.0.0`  
-- 环境变量：`STOCK_ASSISTANT_PASSWORD=强密码`
-
-### 方式 C — 临时隧道（本机已跑通时）
-
-```bash
-cloudflared tunnel --url http://localhost:8501
-# 或 ngrok http 8501
-```
+---
 
 ## 配置说明
 
@@ -51,6 +54,8 @@ cloudflared tunnel --url http://localhost:8501
 | `.streamlit/secrets.toml.example` | 密码模板，复制为 `secrets.toml`（勿提交） |
 | `.streamlit/config.toml` | Streamlit 主题与端口 |
 | `requirements.txt` | Python 依赖 |
+
+---
 
 ## 勿提交
 

@@ -11,7 +11,7 @@
 | 目录 | 说明 | 公网 / 同事测试方式 |
 |------|------|---------------------|
 | **根目录 `client/` + `server/`** | **金手指** — 邀请制社交 MVP（React + Node + SQLite） | **推荐** [GitHub Codespaces](docs/方案A-Codespaces从零开始.md)：`npm run dev` → 打开端口 **5173**；可选 [Render](docs/在GitHub上运行.md#render-公网可选) |
-| [`stock-assistant/`](stock-assistant/README.md) | Streamlit 股票助手（板块、图表、行业对比） | [Streamlit Cloud](https://streamlit.io/cloud) 或 Railway；Secrets 配置 `STOCK_ASSISTANT_PASSWORD` |
+| [`stock-assistant/`](stock-assistant/README.md) | Streamlit 股票助手（自选、K 线、板块、可读简报） | [Streamlit Cloud](https://streamlit.io/cloud) 或 Railway；Secrets 配置 `STOCK_ASSISTANT_PASSWORD`；文档：[产品说明](stock-assistant/docs/PRODUCT.md) · [使用手册](stock-assistant/docs/USER_GUIDE.md) · [部署](stock-assistant/DEPLOY_STREAMLIT.md) · [进化路线](stock-assistant/EVOLUTION.md) |
 | [`python-stock-mini/`](python-stock-mini/使用说明.txt) | 轻量 Streamlit 行情页 | 同 stock-assistant：`STOCK_APP_PASSWORD` + Streamlit Cloud |
 | [`nuanban_github/`](nuanban_github/README.md) | **暖伴勤工** — uni-app + PocketBase | **GitHub Pages** 公网演示（内置 Mock，无需信用卡）；本地 Docker 联调 |
 | [`lo-delivery-platform/`](lo-delivery-platform/README.md) | 物流订单平台 — 产品文档 + Web 演示壳 | GitHub Pages：`Settings → Pages → /docs`；本地 `cd web && python3 -m http.server 8080` |

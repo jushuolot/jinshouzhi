@@ -1,0 +1,32 @@
+"""侧边栏：推荐使用路径。"""
+
+from __future__ import annotations
+
+import streamlit as st
+
+
+def render_workflow_sidebar() -> None:
+    with st.sidebar:
+        st.markdown("### 快速上手")
+        st.markdown(
+            """
+**① 发现**  
+「② 搜索添加」或「④ 全球股市」找标的 → 加入工作台
+
+**② 分析**  
+「① 分析工作台」选标的 → K 线 / 财务 / 板块
+
+**③ 导出**  
+「生成可读简报」→ 下载 `.md` 发给同事
+
+---
+*进化路线见仓库 `EVOLUTION.md`*
+            """
+        )
+        phase = st.selectbox(
+            "当前进化阶段",
+            ["P1 结构+可读资料", "P2 页面模块化", "P3 一键分析", "P4 公网协作"],
+            index=0,
+            disabled=True,
+        )
+        st.caption(phase)
