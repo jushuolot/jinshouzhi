@@ -47,8 +47,9 @@ def render_workflow_sidebar() -> None:
                 "P37 工作台仪表盘", "P38 只读分享", "P39 文档与v2.7",
                 "P40 多语言文案", "P41 快捷键提示", "P42 文档与v2.8",
                 "P43 自选排序", "P44 分析周报", "P45 文档与v2.9",
+                "P46 价格目标", "P47 新鲜度徽章", "P48 文档与v3.0",
             ],
-            index=44,
+            index=47,
             disabled=True,
         )
         st.caption(phase)

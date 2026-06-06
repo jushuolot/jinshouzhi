@@ -28,6 +28,7 @@ class WatchSnapshot:
     pct: float | None
     score: float | None
     one_line: str
+    price: float | None = None
     fin_summary: str = ""
     updated_at: str = ""
 
@@ -103,12 +104,19 @@ def build_watch_snapshot(
             pct = None
     one = one_line_verdict(score, stats) if score else "暂无评分。"
     fin = industry_fin_summary(fin_data)
+    price = None
+    if stats and stats.get("收盘") is not None:
+        try:
+            price = float(stats["收盘"])
+        except (TypeError, ValueError):
+            price = None
     return WatchSnapshot(
         code=code,
         name=name,
         pct=pct,
         score=float(score.total) if score else None,
         one_line=one,
+        price=price,
         fin_summary=fin,
         updated_at=query_label or format_query_datetime(datetime.now()),
     )

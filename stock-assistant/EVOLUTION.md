@@ -51,6 +51,9 @@
 | **P43** | 自选排序 | ✅ 已完成 | user_prefs.watch_sort、工作台排序持久化 |
 | **P44** | 分析周报 | ✅ 已完成 | weekly_report、历史页下载 .md |
 | **P45** | 文档与 v2.9 | ✅ 已完成 | EVOLUTION 421–450、v2.9.0 step 450 |
+| **P46** | 价格目标提醒 | ✅ 已完成 | user_prefs.price_targets、watch_alerts 现价对比 |
+| **P47** | 数据新鲜度 | ✅ 已完成 | stale_hours、freshness_badge、工作台 stale 列 |
+| **P48** | 文档与 v3.0 | ✅ 已完成 | EVOLUTION 451–480、v3.0.0 step 480 |
 
 ## P1：信息架构（本次）
 
@@ -176,6 +179,12 @@
 - **P44 分析周报**：`src/analysis/weekly_report.py`；近 7 日 query_log + 自选统计 Markdown；历史页「下载周报」；`test_p44_weekly_report`
 - **P45 文档与 v2.9**：EVOLUTION_100 步 421–450；v2.9.0 step 450；`evolve_verify.sh` 覆盖 P43–P45 测试
 
+## P46–P48：价格目标、新鲜度徽章、v3.0（已完成）
+
+- **P46 价格目标提醒**：`src/util/price_targets.py`；`user_prefs.price_targets` ticker→{above,below}；`watch_alerts` 现价对比；alert_panel + 工作台 🎯 expander；`test_p46_price_targets`
+- **P47 数据新鲜度徽章**：`src/util/freshness_badge.py`；`user_prefs.stale_hours` 默认 24h；摘要超期显示 ⏳ stale；`test_p47_freshness`
+- **P48 文档与 v3.0**：EVOLUTION_100 步 451–480；v3.0.0 step 480；`evolve_verify.sh` 覆盖 P46–P48 测试
+
 ## 进化原则
 
 1. **先可读，再炫功能** — 每轮至少产出一种「能发给同事看的资料」
@@ -241,3 +250,6 @@ streamlit run app.py
 - [x] 自选排序偏好 watch_sort · P43
 - [x] 历史页周报下载 weekly_report · P44
 - [x] v2.9.0 · 进化 step 450 · P45
+- [x] 价格目标提醒 price_targets · P46
+- [x] 摘要 stale 徽章 stale_hours · P47
+- [x] v3.0.0 · 进化 step 480 · P48

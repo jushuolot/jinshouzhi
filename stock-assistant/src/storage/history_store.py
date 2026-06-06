@@ -345,6 +345,8 @@ def collect_latest_state() -> dict[str, Any]:
             "dark_mode": bool(st.session_state.get("dark_mode", True)),
             "locale": str(st.session_state.get("locale") or "zh"),
             "watch_sort": dict(st.session_state.get("watch_sort") or {}),
+            "price_targets": dict(st.session_state.get("price_targets") or {}),
+            "stale_hours": float(st.session_state.get("stale_hours") or 24.0),
         },
     }
 
@@ -425,6 +427,14 @@ def apply_latest_to_session(latest: dict[str, Any]) -> None:
         ui = apply_watch_sort_to_session(ws)
         st.session_state.watch_sort_by = ui["by_ui"]
         st.session_state.watch_sort_desc = ui["desc"]
+    if prefs.get("price_targets") is not None:
+        from src.util.price_targets import normalize_price_targets
+
+        st.session_state.price_targets = normalize_price_targets(prefs["price_targets"])
+    if prefs.get("stale_hours") is not None:
+        from src.util.freshness_badge import normalize_stale_hours
+
+        st.session_state.stale_hours = normalize_stale_hours(prefs["stale_hours"])
 
     st.session_state["history_conclusions"] = latest.get("conclusions") or {}
 

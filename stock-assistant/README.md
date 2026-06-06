@@ -1,7 +1,7 @@
 # Stock Assistant（Streamlit 股票助手）
 
 在浏览器里完成：**发现标的 → 分析工作台 → 导出可读简报**。  
-支持 A 股 / 港股 / 美股；**v2.3.0 · 270 步进化** — 一键分析、板块分布、批量操作、百步清单见 [docs/EVOLUTION_100.md](docs/EVOLUTION_100.md)。
+支持 A 股 / 港股 / 美股；**v3.0.0 · 480 步进化** — 一键分析、板块分布、批量操作、百步清单见 [docs/EVOLUTION_100.md](docs/EVOLUTION_100.md)。
 
 ---
 

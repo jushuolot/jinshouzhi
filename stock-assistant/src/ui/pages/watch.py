@@ -70,6 +70,7 @@ from src.util.watch_notes import (
     remove_tickers_notes,
     set_note,
 )
+from src.util.price_targets import get_targets, normalize_price_targets, set_targets
 from src.util.watchlist_backup import (
     apply_backup_merge,
     backup_to_json_bytes,
@@ -83,23 +84,27 @@ from src.util.watch_sort import (
     prefs_from_ui,
     SORT_UI_OPTIONS,
 )
+from src.util.freshness_badge import freshness_badge, normalize_stale_hours
 from src.analysis.trend_summary import collect_trend_points, format_trend_markdown, trend_delta
 
 
 def _watchlist_display_rows(watchlist: list[dict[str, Any]]) -> list[dict[str, Any]]:
     snaps = st.session_state.get("watch_snapshots") or {}
+    stale_h = normalize_stale_hours(st.session_state.get("stale_hours", 24.0))
     rows: list[dict[str, Any]] = []
     for item in watchlist:
         code = str(item.get("代码") or "")
         snap = snaps.get(code) or {}
         pct = snap.get("pct")
         score = snap.get("score")
+        stale = freshness_badge(snap.get("updated_at"), stale_hours=stale_h)
         rows.append(
             {
                 "名称": item.get("名称"),
                 "代码": code,
                 "涨跌幅%": pct_badge(pct) if pct is not None else "—",
                 "评分": score_badge(score) if score is not None else "—",
+                "新鲜度": stale or "✓",
                 "一句话": snap.get("one_line") or "—",
                 "货币": item.get("货币"),
                 "类型": item.get("类型"),
@@ -582,6 +587,48 @@ def render() -> None:
                         st.success("笔记已保存。")
                     elif saved:
                         st.caption(f"已保存：{saved[:120]}{'…' if len(saved) > 120 else ''}")
+            with st.expander("🎯 价格目标", expanded=False):
+                targets = normalize_price_targets(st.session_state.get("price_targets") or {})
+                cur = get_targets(targets, code)
+                snap_one = (st.session_state.get("watch_snapshots") or {}).get(code) or {}
+                price = snap_one.get("price")
+                if price is not None:
+                    st.caption(f"摘要现价：**{float(price):.2f}**")
+                if readonly:
+                    parts = []
+                    if cur.get("above") is not None:
+                        parts.append(f"≥ {cur['above']:.2f}")
+                    if cur.get("below") is not None:
+                        parts.append(f"≤ {cur['below']:.2f}")
+                    st.caption(" / ".join(parts) if parts else "（未设置）")
+                else:
+                    st.session_state.price_targets = targets
+                    t1, t2 = st.columns(2)
+                    with t1:
+                        above_in = st.number_input(
+                            "≥ 止盈/卖出",
+                            min_value=0.0,
+                            value=float(cur.get("above") or 0.0),
+                            step=0.01,
+                            key=f"watch_pt_above_{code}",
+                        )
+                    with t2:
+                        below_in = st.number_input(
+                            "≤ 买入/止损",
+                            min_value=0.0,
+                            value=float(cur.get("below") or 0.0),
+                            step=0.01,
+                            key=f"watch_pt_below_{code}",
+                        )
+                    if st.button("保存价格目标", key=f"watch_pt_save_{code}", use_container_width=True):
+                        st.session_state.price_targets = set_targets(
+                            targets,
+                            code,
+                            above=above_in if above_in > 0 else None,
+                            below=below_in if below_in > 0 else None,
+                        )
+                        mark_dirty()
+                        st.success("价格目标已保存。")
             render_floating_currency_tool(default_from=quote_ccy, watch_code=code)
             snap_one = (st.session_state.get("watch_snapshots") or {}).get(code) or {}
             one_line = str(snap_one.get("one_line") or "").strip()
