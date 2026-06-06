@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# 一键验证：preflight + 单元测试（P14 / P48）
+# 一键验证：preflight + 单元测试（P14 / P51）
 set -euo pipefail
 cd "$(dirname "$0")/.."
 source .venv/bin/activate 2>/dev/null || true

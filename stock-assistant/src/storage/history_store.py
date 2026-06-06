@@ -347,6 +347,7 @@ def collect_latest_state() -> dict[str, Any]:
             "watch_sort": dict(st.session_state.get("watch_sort") or {}),
             "price_targets": dict(st.session_state.get("price_targets") or {}),
             "stale_hours": float(st.session_state.get("stale_hours") or 24.0),
+            "watch_weights": dict(st.session_state.get("watch_weights") or {}),
         },
     }
 
@@ -435,6 +436,10 @@ def apply_latest_to_session(latest: dict[str, Any]) -> None:
         from src.util.freshness_badge import normalize_stale_hours
 
         st.session_state.stale_hours = normalize_stale_hours(prefs["stale_hours"])
+    if prefs.get("watch_weights") is not None:
+        from src.util.watch_weights import normalize_watch_weights
+
+        st.session_state.watch_weights = normalize_watch_weights(prefs["watch_weights"])
 
     st.session_state["history_conclusions"] = latest.get("conclusions") or {}
 

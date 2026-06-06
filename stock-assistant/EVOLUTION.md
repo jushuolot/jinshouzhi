@@ -54,6 +54,9 @@
 | **P46** | 价格目标提醒 | ✅ 已完成 | user_prefs.price_targets、watch_alerts 现价对比 |
 | **P47** | 数据新鲜度 | ✅ 已完成 | stale_hours、freshness_badge、工作台 stale 列 |
 | **P48** | 文档与 v3.0 | ✅ 已完成 | EVOLUTION 451–480、v3.0.0 step 480 |
+| **P49** | 组合权重视图 | ✅ 已完成 | user_prefs.watch_weights、工作台 ⚖ 饼图 |
+| **P50** | cron 周报 | ✅ 已完成 | weekly_report_cron.py、STOCK_USER |
+| **P51** | 文档与 v3.1 | ✅ 已完成 | EVOLUTION 481–510、v3.1.0 step 510 |
 
 ## P1：信息架构（本次）
 
@@ -185,6 +188,12 @@
 - **P47 数据新鲜度徽章**：`src/util/freshness_badge.py`；`user_prefs.stale_hours` 默认 24h；摘要超期显示 ⏳ stale；`test_p47_freshness`
 - **P48 文档与 v3.0**：EVOLUTION_100 步 451–480；v3.0.0 step 480；`evolve_verify.sh` 覆盖 P46–P48 测试
 
+## P49–P51：组合权重、周报 cron、v3.1（已完成）
+
+- **P49 组合权重视图**：`src/util/watch_weights.py`；`user_prefs.watch_weights` ticker→weight%；工作台「⚖ 权重」expander 饼图（等权或归一化）；`test_p49_weights`
+- **P50 cron 周报**：`scripts/weekly_report_cron.py`；`STOCK_USER` 读 history；写入 `data/weekly_report_YYYYMMDD.md` 或 `--stdout`；`test_p50_weekly_cron`
+- **P51 文档与 v3.1**：EVOLUTION_100 步 481–510；v3.1.0 step 510；`evolve_verify.sh` 覆盖 P49–P51 测试
+
 ## 进化原则
 
 1. **先可读，再炫功能** — 每轮至少产出一种「能发给同事看的资料」
@@ -253,3 +262,6 @@ streamlit run app.py
 - [x] 价格目标提醒 price_targets · P46
 - [x] 摘要 stale 徽章 stale_hours · P47
 - [x] v3.0.0 · 进化 step 480 · P48
+- [x] 组合权重饼图 watch_weights · P49
+- [x] cron 周报 weekly_report_cron · P50
+- [x] v3.1.0 · 进化 step 510 · P51

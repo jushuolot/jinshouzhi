@@ -85,6 +85,12 @@ from src.util.watch_sort import (
     SORT_UI_OPTIONS,
 )
 from src.util.freshness_badge import freshness_badge, normalize_stale_hours
+from src.util.watch_weights import (
+    get_weight,
+    normalize_watch_weights,
+    pie_slices_for_watchlist,
+    set_weight,
+)
 from src.analysis.trend_summary import collect_trend_points, format_trend_markdown, trend_delta
 
 
@@ -372,6 +378,67 @@ def render() -> None:
             auto_refresh_fragment(C._fetch_one)
 
         render_alert_panel(watchlist=display_wl, snapshots=snaps)
+
+        if display_wl:
+            with st.expander("⚖ 权重", expanded=False):
+                ww = normalize_watch_weights(st.session_state.get("watch_weights") or {})
+                slices = pie_slices_for_watchlist(display_wl, ww)
+                if slices:
+                    labels = [f"{s['name']} ({s['code']})" for s in slices if s["pct"] > 0]
+                    values = [s["pct"] for s in slices if s["pct"] > 0]
+                    if not labels:
+                        labels = [f"{s['name']} ({s['code']})" for s in slices]
+                        values = [s["pct"] for s in slices]
+                    fig_w = go.Figure(
+                        data=[
+                            go.Pie(
+                                labels=labels,
+                                values=values,
+                                hole=0.35,
+                                textinfo="label+percent",
+                            )
+                        ]
+                    )
+                    fig_w.update_layout(title="组合权重（展示用）", height=360, margin=dict(l=20, r=20, t=40, b=20))
+                    st.plotly_chart(fig_w, use_container_width=True, config=PLOTLY_CHART_CONFIG)
+                    tbl = pd.DataFrame(
+                        [
+                            {
+                                "名称": s["name"],
+                                "代码": s["code"],
+                                "原始权重%": f"{s['raw']:.1f}" if s["raw"] is not None else "—",
+                                "归一化%": f"{s['pct']:.1f}",
+                            }
+                            for s in slices
+                        ]
+                    )
+                    st.dataframe(tbl, use_container_width=True, hide_index=True)
+                    has_custom = any(s["raw"] is not None for s in slices)
+                    st.caption(
+                        "等权分配" if not has_custom else "已按原始权重归一化至 100%（仅展示，不影响评分/提醒）"
+                    )
+                if not readonly and display_wl:
+                    st.session_state.watch_weights = ww
+                    pick_w = st.selectbox(
+                        "设置标的权重",
+                        [str(x.get("代码") or "") for x in display_wl if x.get("代码")],
+                        key="watch_weight_pick",
+                    )
+                    cur_w = get_weight(ww, pick_w)
+                    weight_in = st.number_input(
+                        "权重 %（留 0 清除）",
+                        min_value=0.0,
+                        value=float(cur_w or 0.0),
+                        step=1.0,
+                        key=f"watch_weight_val_{pick_w}",
+                    )
+                    if st.button("保存权重", key="watch_weight_save", use_container_width=True):
+                        st.session_state.watch_weights = set_weight(
+                            ww, pick_w, weight_in if weight_in > 0 else None
+                        )
+                        mark_dirty()
+                        st.success("权重已保存。")
+                        st.rerun()
 
         if display_wl and snaps:
             with st.expander("🗺 板块分布", expanded=False):

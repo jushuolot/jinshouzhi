@@ -48,8 +48,9 @@ def render_workflow_sidebar() -> None:
                 "P40 多语言文案", "P41 快捷键提示", "P42 文档与v2.8",
                 "P43 自选排序", "P44 分析周报", "P45 文档与v2.9",
                 "P46 价格目标", "P47 新鲜度徽章", "P48 文档与v3.0",
+                "P49 组合权重", "P50 周报cron", "P51 文档与v3.1",
             ],
-            index=47,
+            index=50,
             disabled=True,
         )
         st.caption(phase)
