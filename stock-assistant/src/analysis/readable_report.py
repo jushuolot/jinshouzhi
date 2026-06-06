@@ -31,7 +31,7 @@ def _num(v: Any, *, digits: int = 2) -> str:
         return "—"
 
 
-def _one_line_verdict(score: ScoreBreakdown, stats: dict[str, Any] | None) -> str:
+def one_line_verdict(score: ScoreBreakdown, stats: dict[str, Any] | None) -> str:
     pct = stats.get("涨跌幅%") if stats else None
     parts: list[str] = []
     if score.total >= 65:
@@ -65,6 +65,7 @@ def build_stock_brief_markdown(
     query_label: str = "",
     route_report: ActionRouteReport | None = None,
     news: list[dict[str, Any]] | None = None,
+    fin_summary: str = "",
 ) -> str:
     """组装 Markdown 简报，适合复制/下载/转发。"""
     now = query_label or format_query_datetime(datetime.now())
@@ -96,7 +97,7 @@ def build_stock_brief_markdown(
             [
                 "",
                 f"- **综合评分**：{score.total:.1f} / 100",
-                f"- **一句话**：{_one_line_verdict(score, stats)}",
+                f"- **一句话**：{one_line_verdict(score, stats)}",
             ]
         )
 
@@ -120,6 +121,16 @@ def build_stock_brief_markdown(
             lines.append("")
     else:
         lines.append("暂无评分数据。\n")
+
+    if fin_summary:
+        lines.extend(
+            [
+                "## 财务对比摘要（A 股）",
+                "",
+                fin_summary,
+                "",
+            ]
+        )
 
     if route_report:
         lines.extend(

@@ -77,6 +77,8 @@ def _init_state() -> None:
         st.session_state.query_log = []
     if "history_snapshots" not in st.session_state:
         st.session_state.history_snapshots = []
+    if "watch_snapshots" not in st.session_state:
+        st.session_state.watch_snapshots = {}  # code -> snapshot dict
 
 
 def _save_history(

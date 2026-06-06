@@ -14,10 +14,10 @@ def render_workflow_sidebar() -> None:
 「② 搜索添加」或「④ 全球股市」找标的 → 加入工作台
 
 **② 分析**  
-「① 分析工作台」选标的 → K 线 / 财务 / 板块
+「① 分析工作台」→ **一键分析** 或 K 线 / 财务 / 板块
 
 **③ 导出**  
-「生成可读简报」→ 下载 `.md` 发给同事
+一键分析后下载 `.md` 简报，或点「生成可读简报」
 
 ---
 *进化路线见仓库 `EVOLUTION.md`*
@@ -26,7 +26,7 @@ def render_workflow_sidebar() -> None:
         phase = st.selectbox(
             "当前进化阶段",
             ["P1 结构+可读资料", "P2 页面模块化", "P3 一键分析", "P4 公网协作"],
-            index=0,
+            index=2,
             disabled=True,
         )
         st.caption(phase)

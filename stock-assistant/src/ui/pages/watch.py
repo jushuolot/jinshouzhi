@@ -10,6 +10,7 @@ import streamlit as st
 from src.ui import app_core as C
 
 from src.analysis.mover_insight import build_action_route_report
+from src.analysis.quick_analyze import refresh_watch_snapshots, run_quick_analysis
 from src.analysis.signals import score_stock
 from src.providers import eastmoney
 from src.providers.eastmoney import KLINE_PERIOD_UI, is_intraday_kline
@@ -33,26 +34,65 @@ from src.util.currency import currency_display, normalize_watchlist
 from src.util.query_time import format_data_range, format_query_datetime
 
 
+def _watchlist_display_rows(watchlist: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    snaps = st.session_state.get("watch_snapshots") or {}
+    rows: list[dict[str, Any]] = []
+    for item in watchlist:
+        code = str(item.get("代码") or "")
+        snap = snaps.get(code) or {}
+        pct = snap.get("pct")
+        score = snap.get("score")
+        rows.append(
+            {
+                "名称": item.get("名称"),
+                "代码": code,
+                "涨跌幅%": f"{pct:+.2f}%" if pct is not None else "—",
+                "评分": f"{score:.1f}" if score is not None else "—",
+                "一句话": snap.get("one_line") or "—",
+                "货币": item.get("货币"),
+                "类型": item.get("类型"),
+                "市场": item.get("市场"),
+            }
+        )
+    return rows
+
+
 def render() -> None:
     st.subheader("分析工作台")
-    st.caption("选标的 → 看 K 线 / 财务 / 板块 → 生成简报或行动路线。")
+    st.caption("选标的 → **一键分析** 或看 K 线 / 财务 / 板块 → 导出简报。")
     C._show_query_banner("watch")
     if st.session_state.watchlist:
         st.session_state.watchlist = normalize_watchlist(st.session_state.watchlist)
     if not st.session_state.watchlist:
         st.info("还没有自选股：到「② 搜索添加」里搜到后加入。")
     else:
-        wl = pd.DataFrame(st.session_state.watchlist)
-        show_cols = [c for c in ["名称", "代码", "货币", "类型", "市场", "Yahoo"] if c in wl.columns]
+        c_refresh, c_hint = st.columns([1, 2])
+        with c_refresh:
+            if st.button("刷新全部摘要", key="watch_refresh_all", use_container_width=True):
+                with st.spinner("正在批量拉取日 K 与评分…"):
+                    st.session_state.watch_snapshots = refresh_watch_snapshots(
+                        st.session_state.watchlist,
+                        C._fetch_one,
+                        query_label=C._stamp_query("watch"),
+                    )
+                    mark_dirty()
+                st.success("自选股摘要已更新。")
+        with c_hint:
+            st.caption("摘要含涨跌幅、评分、一句话；完整分析请对单标的点「一键分析」。")
+
+        wl = pd.DataFrame(_watchlist_display_rows(st.session_state.watchlist))
+        show_cols = [c for c in ["名称", "代码", "涨跌幅%", "评分", "一句话", "货币", "类型", "市场"] if c in wl.columns]
         st.dataframe(
             wl[show_cols] if show_cols else wl,
             use_container_width=True,
             hide_index=True,
             column_config={
                 "货币": st.column_config.TextColumn("货币", help="报价货币：A股 CNY / 港股 HKD / 美股 USD"),
+                "一句话": st.column_config.TextColumn("一句话", width="large"),
             },
         )
-        to_remove = st.multiselect("删除哪些（按代码）", options=wl["代码"].tolist())
+        codes = [str(x.get("代码") or "") for x in st.session_state.watchlist]
+        to_remove = st.multiselect("删除哪些（按代码）", options=codes)
         if st.button("删除所选", use_container_width=True, disabled=not to_remove):
             st.session_state.watchlist = [x for x in st.session_state.watchlist if x.get("代码") not in set(to_remove)]
             mark_dirty()
@@ -192,7 +232,7 @@ def render() -> None:
                         code=code,
                         name=str(item.get("名称") or ""),
                         key_prefix=f"watch_{code}",
-                        on_add_watchlist=_add_a_watchlist_by_code,
+                        on_add_watchlist=C._add_a_watchlist_by_code,
                         lazy=True,
                     )
 
@@ -201,6 +241,39 @@ def render() -> None:
             code6 = code if kind == "A" and code.isdigit() else None
             yh = str(item.get("Yahoo") or code)
             news_watch = fetch_aggregated_news(code6=code6, yahoo_ticker=yh, limit=15)
+
+            if st.button("⚡ 一键分析", type="primary", key="watch_quick", use_container_width=True):
+                try:
+                    with st.spinner("并行拉取行情、新闻、财务对比并生成简报…"):
+                        q_label = C._stamp_query("watch")
+                        result = run_quick_analysis(
+                            item,
+                            C._fetch_one,
+                            query_label=q_label,
+                        )
+                    watch_df = result.df
+                    watch_ksrc = result.kline_src
+                    watch_stats = result.stats
+                    watch_score = result.score
+                    st.session_state.watch_snapshots[code] = result.snapshot.as_dict()
+                    st.session_state["route_report"] = result.route_report
+                    st.session_state["insight_pick"] = {
+                        "代码": code,
+                        "名称": item.get("名称"),
+                        "市场": item.get("市场"),
+                    }
+                    st.session_state[f"brief_md_{code}"] = result.brief_md
+                    if result.fin_data and result.fin_data.get("ok"):
+                        st.session_state[f"watch_fin_{code}"] = True
+                    mark_dirty()
+                    C._save_history(
+                        log_kind="insight",
+                        log_label=f"一键分析 {item.get('名称')}",
+                        conclusions_summary=result.snapshot.one_line[:120],
+                    )
+                    st.success("一键分析完成：摘要、行动路线、可读简报已就绪。")
+                except Exception as e:
+                    st.error(f"一键分析失败：{e}")
 
             btn_route, btn_brief = st.columns(2)
             with btn_route:
