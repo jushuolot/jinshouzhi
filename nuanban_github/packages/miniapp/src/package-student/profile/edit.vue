@@ -14,8 +14,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { onShow } from '@dcloudio/uni-app';
-import { fetchStudentProfile } from '../../api/student';
-import { request } from '../../utils/request';
+import { fetchStudentProfile, updateStudentProfile } from '../../api/student';
 import { DEMO_SCHOOLS } from '../../utils/demo-rich-data';
 import { pbErrorMessage } from '../../utils/request';
 
@@ -42,13 +41,9 @@ function onSchoolPick(e: { detail: { value: string } }) {
 async function save() {
   loading.value = true;
   try {
-    await request({
-      url: '/nuanban/student/profile',
-      method: 'PATCH',
-      data: {
-        displayName: displayName.value,
-        schoolName: schools[schoolIdx.value],
-      },
+    await updateStudentProfile({
+      displayName: displayName.value,
+      schoolName: schools[schoolIdx.value],
     });
     uni.showToast({ title: '已保存', icon: 'success' });
     setTimeout(() => uni.navigateBack(), 500);

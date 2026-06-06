@@ -27,22 +27,7 @@
     <view v-if="loading" class="state">加载中…</view>
 
     <!-- 列表模式 -->
-    <view v-else-if="mode === 'list'">
-      <ListCountBar
-        :count="list.length"
-        :hint="schoolCoopOnly ? '仅合作机构老人' : '全部附近老人'"
-      />
-      <PersonCard
-        v-for="e in list"
-        :key="e.id"
-        :name="e.name"
-        :subtitle="e.orgName"
-        :tags="e.tags"
-        :distance="formatDistance(e.distanceKm)"
-        cta-text="详情"
-        @tap="openElder(e)"
-      />
-
+    <template v-else-if="mode === 'list'">
       <view v-if="errorMsg" class="error" @tap="reload">
         <text>加载失败（点此重试）</text>
         <text class="mono">{{ errorMsg }}</text>
@@ -51,7 +36,23 @@
         <text>暂无附近老人</text>
         <text class="empty-hint">请先执行 ./scripts/seed-demo.sh</text>
       </view>
-    </view>
+      <scroll-view v-else scroll-y class="discover-scroll">
+        <ListCountBar
+          :count="list.length"
+          :hint="schoolCoopOnly ? '仅合作机构 · 可滚动' : '全部附近 · 可滚动'"
+        />
+        <PersonCard
+          v-for="e in list"
+          :key="e.id"
+          :name="e.name"
+          :subtitle="e.orgName"
+          :tags="e.tags"
+          :distance="formatDistance(e.distanceKm)"
+          cta-text="详情"
+          @tap="openElder(e)"
+        />
+      </scroll-view>
+    </template>
 
     <!-- 地图模式 -->
     <view v-else class="map-wrap">
@@ -73,7 +74,10 @@
       </view>
       <view v-if="list.length" class="map-legend">
         <text class="dot self">●</text><text class="legend-text">我的位置</text>
-        <text class="dot elder">●</text><text class="legend-text">附近老人 {{ list.length }} 位</text>
+        <text class="dot coop">●</text><text class="legend-text">合作机构</text>
+        <text v-if="!schoolCoopOnly" class="dot other">●</text>
+        <text v-if="!schoolCoopOnly" class="legend-text">非合作</text>
+        <text class="legend-count">共 {{ list.length }} 位</text>
       </view>
       <view v-else-if="!errorMsg" class="empty map-empty">附近暂无老人标注</view>
     </view>
@@ -90,10 +94,15 @@ import PersonCard from '../../components/PersonCard.vue';
 import ListCountBar from '../../components/ListCountBar.vue';
 import { fetchStudentProfile, listNearbyElders, type ElderRow } from '../../api/student';
 import { getLocationWithFallback } from '../../utils/location';
-import { filterEldersBySchoolCoop } from '../../utils/school-coop';
+import { filterEldersBySchoolCoop, orgPartnersSchool } from '../../utils/school-coop';
 import { pbErrorMessage } from '../../utils/request';
 
-type ElderListItem = ElderRow & { distanceKm: number; orgName: string; tags?: string[] };
+type ElderListItem = ElderRow & {
+  distanceKm: number;
+  orgName: string;
+  tags?: string[];
+  isCoop: boolean;
+};
 
 const DEMO = { lat: 31.2304, lng: 121.4737, label: '演示定位（上海）' };
 
@@ -129,6 +138,10 @@ const markers = computed(() => {
     const lat = e.latitude as number | undefined;
     const lng = e.longitude as number | undefined;
     if (!lat || !lng) return;
+    const coopTag = e.isCoop ? '合作' : '非合作';
+    const calloutText = schoolCoopOnly.value
+      ? `${e.name} · ${formatDistance(e.distanceKm)}`
+      : `${e.name} · ${coopTag} · ${formatDistance(e.distanceKm)}`;
     items.push({
       id: idx + 1,
       latitude: lat,
@@ -136,8 +149,21 @@ const markers = computed(() => {
       title: e.name,
       width: 28,
       height: 28,
+      label: {
+        content: e.name,
+        color: e.isCoop ? '#c45c26' : '#888',
+        fontSize: 11,
+        bgColor: e.isCoop ? '#fff5ef' : '#f5f5f5',
+        borderRadius: 4,
+        padding: 4,
+        textAlign: 'center',
+      },
       callout: {
-        content: `${e.name} · ${formatDistance(e.distanceKm)}`,
+        content: calloutText,
+        color: e.isCoop ? '#c45c26' : '#666',
+        bgColor: e.isCoop ? '#fff5ef' : '#f5f5f5',
+        borderColor: e.isCoop ? '#f0dcc8' : '#e0e0e0',
+        borderWidth: 1,
         display: 'BYCLICK',
         padding: 8,
         borderRadius: 6,
@@ -171,14 +197,19 @@ async function reload() {
     const profile = await fetchStudentProfile().catch(() => null);
     if (profile?.schoolName) schoolName.value = profile.schoolName;
     let rows = await listNearbyElders(userLat.value, userLng.value);
-    if (schoolCoopOnly.value) {
-      rows = filterEldersBySchoolCoop(rows, schoolName.value);
-    }
-    list.value = rows.map((e) => ({
-      ...e,
-      orgName: e.expand?.org?.name || '暖伴示范养老院',
-      tags: (e as { tags?: string[] }).tags,
-    }));
+    const mapped = rows.map((e) => {
+      const orgId = (e.org as string) || e.expand?.org?.id || '';
+      const isCoop = orgPartnersSchool(orgId, schoolName.value);
+      return {
+        ...e,
+        orgName: e.expand?.org?.name || '暖伴示范养老院',
+        tags: (e as { tags?: string[] }).tags,
+        isCoop,
+      };
+    });
+    list.value = schoolCoopOnly.value
+      ? filterEldersBySchoolCoop(mapped, schoolName.value)
+      : mapped;
   } catch (e) {
     list.value = [];
     errorMsg.value = pbErrorMessage(e);
@@ -385,12 +416,23 @@ function onCalloutTap(e: { detail: { markerId: number } }) {
 .dot.self {
   color: #2196f3;
 }
-.dot.elder {
+.dot.coop {
   color: #c45c26;
+  margin-left: 24rpx;
+}
+.dot.other {
+  color: #999;
   margin-left: 24rpx;
 }
 .legend-text {
   margin-right: 8rpx;
+}
+.legend-count {
+  margin-left: auto;
+  color: #999;
+}
+.discover-scroll {
+  max-height: calc(100vh - 360rpx);
 }
 .map-empty {
   padding: 24rpx;

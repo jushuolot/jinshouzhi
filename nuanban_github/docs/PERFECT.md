@@ -18,7 +18,7 @@
 ## 3. 学生端
 
 - [ ] 待接单列表 **10 单**，可滚动（scroll-view）
-- [ ] 发现页「学校合作」开关过滤合作机构老人
+- [ ] 发现页「学校合作」开关过滤合作机构老人；列表可滚动（scroll-view）
 - [ ] 我的 → **编辑资料** → 改学校后发现页筛选变化
 - [ ] 接单 → 服务中 → 签到/完成 → 收入明细
 - [ ] 服务日志 8+ 条
@@ -44,7 +44,7 @@
 
 - [ ] [MINIAPP_ROUTING.md](./MINIAPP_ROUTING.md) 与 `pages.json` 一致
 - [ ] [GAP_AUDIT.md](./GAP_AUDIT.md) 学校合作 / 机构派单 / 资料编辑 已 ✅
-- [ ] [ROADMAP.md](./ROADMAP.md) Phase 6–10+ 已更新
+- [ ] [ROADMAP.md](./ROADMAP.md) Phase 6–10+ 已更新（含 Phase 9 polish）
 
 ## 8. 明确不做（零成本边界）
 

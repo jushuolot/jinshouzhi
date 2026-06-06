@@ -2,7 +2,14 @@
 
 > 您休息期间已推送 GitHub，Actions 会自动更新公网演示。
 
-## 本轮（Phase 6–8 · Perfect 零成本 demo）
+## 本轮（Phase 9 · discover / profile polish）
+
+1. **discover/list** 列表 scroll-view（与 pending 一致，长列表可滚动）
+2. **地图模式** marker 富化：老人姓名 label/callout、合作/非合作配色与图例
+3. **profile/edit** 改用 `updateStudentProfile()` 统一 API 层
+4. **ListCountBar** hint 统一为「· 可滚动」风格
+
+## 上一轮（Phase 6–8 · Perfect 零成本 demo）
 
 1. **pages.json** 注册 agreement、org-dispatch、profile/edit、package/buy
 2. **login** student2 账号 + 协议/机构派单链接

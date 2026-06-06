@@ -13,12 +13,7 @@
 | **Phase 6** | **学校合作筛选**、**机构派单演示页**、**资料编辑**、**服务包购买**、待接单 scroll-view、student2 账号 |
 | **Phase 7** | **路由 parity**（pages.json 注册 + MINIAPP_ROUTING 文档） |
 | **Phase 8** | **PERFECT 验收清单**、GAP/ROADMAP/NIGHT_LOG 更新 |
-
-## Phase 9（可选 polish）
-
-- discover/list 列表 scroll-view（与 pending 一致）
-- 地图模式 marker 富化
-- profile/edit 使用 `updateStudentProfile()` 统一 API 层
+| **Phase 9** | **发现页 scroll-view**、**地图 marker 富化**、**profile/edit 统一 API** |
 
 ## Phase 10+（需预算或商户资质）
 
