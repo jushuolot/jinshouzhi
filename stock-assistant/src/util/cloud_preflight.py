@@ -90,6 +90,19 @@ print("imports_ok")
     return []
 
 
+def check_data_writable(root: Path | None = None) -> list[str]:
+    base = root or ROOT
+    data = base / "data"
+    try:
+        data.mkdir(parents=True, exist_ok=True)
+        probe = data / ".write_probe"
+        probe.write_text("ok", encoding="utf-8")
+        probe.unlink(missing_ok=True)
+    except OSError as exc:
+        return [f"data/ 不可写：{exc}"]
+    return []
+
+
 def run_preflight(*, skip_imports: bool = False, root: Path | None = None) -> list[str]:
     base = root or ROOT
     errors: list[str] = []
@@ -99,6 +112,7 @@ def run_preflight(*, skip_imports: bool = False, root: Path | None = None) -> li
     else:
         errors.append("缺少 requirements.txt")
     errors.extend(check_project_layout(base))
+    errors.extend(check_data_writable(base))
     errors.extend(check_compile(base))
     if not skip_imports:
         errors.extend(check_imports(base))

@@ -39,7 +39,12 @@ def load_store(user_id: str) -> dict:
 
 def main() -> int:
     user = os.environ.get("STOCK_USER", "default").strip() or "default"
-    store = load_store(user)
+    dry = "--dry-run" in sys.argv
+    try:
+        store = load_store(user)
+    except FileNotFoundError as exc:
+        print(str(exc))
+        return 1
     wl = store.get("watchlist") or []
     latest = store.get("latest") or {}
     snaps = latest.get("watch_snapshots") or {}
@@ -47,6 +52,9 @@ def main() -> int:
         print("[push_digest_cron] 自选股为空，跳过")
         return 0
     digest = build_watchlist_digest(wl, snaps)
+    if dry:
+        print(f"[push_digest_cron] dry-run bytes={len(digest.encode('utf-8'))}")
+        return 0
 
     class _SS:
         def __init__(self) -> None:

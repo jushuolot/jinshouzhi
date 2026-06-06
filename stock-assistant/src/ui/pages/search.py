@@ -16,11 +16,19 @@ def render() -> None:
     st.caption("并行查询：A 股/北交所（东财）+ 港股/美股/英文名（Yahoo）。支持 XSHE:300755、SNX、synnex、茅台、0700.HK 等。")
     C._show_query_banner("search")
     kw = st.text_input("关键词", value="茅台", placeholder="中文名、代码、拼音、美股代码 SNX、公司英文名 synnex…")
+    if "recent_searches" not in st.session_state:
+        st.session_state.recent_searches = []
+    if st.session_state.recent_searches:
+        st.caption("最近搜索：" + " · ".join(st.session_state.recent_searches[:8]))
     col1, col2 = st.columns([1, 1])
     with col1:
         if st.button("全球搜索", type="primary", use_container_width=True):
             with st.spinner("正在并行搜索 A 股 / 港股 / 美股…"):
                 st.session_state.last_hits = symbol_search.suggest(kw, limit=40)
+                q = (kw or "").strip()
+                if q:
+                    rs = [x for x in st.session_state.recent_searches if x != q]
+                    st.session_state.recent_searches = ([q] + rs)[:12]
             C._stamp_query("search")
     with col2:
         st.caption("每次同时查东财与 Yahoo，不是只搜 A 股。")

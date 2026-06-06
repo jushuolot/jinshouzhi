@@ -14,7 +14,10 @@
 | **P6** | 体验极限 | ✅ 已完成 | 移动端、定时刷新、多简报合并 HTML/PDF |
 | **P7** | 智能增强 | ✅ 已完成 | 板块联动、语音朗读、只读 JSON 快照 |
 | **P8** | 生态扩展 | ✅ 已完成 | Webhook/邮件推送、多用户隔离、cron 脚本 |
-| **P9** | 运维与观测 | 规划中 | 推送日志、失败重试、健康告警 |
+| **P9** | 运维观测 | ✅ 已完成 | 推送日志、重试队列、健康告警 Webhook |
+| **P10** | 导出增强 | ✅ 已完成 | CSV、筛选排序、备份脚本 |
+| **P11** | 文档与版本 | ✅ 已完成 | 页脚版本、进化日志、snapshot v2 |
+| **P12** | 百步进化 | ✅ 已完成 | [120 步清单](docs/EVOLUTION_100.md)、v1.8.0 |
 
 ## P1：信息架构（本次）
 
@@ -68,13 +71,17 @@
 
 ## P8：生态扩展（已完成）
 
-- **Webhook / 邮件** 推送自选股速览（侧边栏 📣，可勾选自动刷新后推送）
-- **多用户密码隔离**：`[passwords]` → `data/users/<id>/`
-- **定时脚本** `scripts/push_digest_cron.py`（见 [docs/PUSH.md](docs/PUSH.md)）
+（见上文表格与 `docs/PUSH.md`）
 
-## P9：运维与观测（规划中）
+## P9–P12：百步进化（已完成）
 
-- 推送失败日志、重试队列、健康告警 Webhook
+详见 **[docs/EVOLUTION_100.md](docs/EVOLUTION_100.md)**（120 步全部 ✅）
+
+要点：
+- **P9**：`push_log.jsonl`、Webhook/邮件退避重试、重试队列、`STOCK_HEALTH_ALERT_WEBHOOK_URL`
+- **P10**：自选股 CSV、筛选/排序、 `scripts/backup_data.py`
+- **P11**：页脚 v1.8.0、侧边栏进化日志、snapshot v2
+- **P12**：测试 30+、累计进化 step 120
 
 ## 进化原则
 
@@ -106,3 +113,6 @@ streamlit run app.py
 - [x] 板块联动扫描（A 股多自选）
 - [x] 朗读一句话摘要 · 导出 snapshot.json
 - [x] Webhook / 邮件推送速览 · 多用户密码隔离
+- [x] 推送日志 + 重试队列 + 健康告警 Webhook
+- [x] 自选股 CSV / 筛选 / 排序
+- [x] **120 步进化完成**（见 docs/EVOLUTION_100.md）

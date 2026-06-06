@@ -31,7 +31,7 @@ class ReadonlySnapshotTests(unittest.TestCase):
         )
         raw = snapshot_to_json_bytes(snap)
         data = json.loads(raw.decode("utf-8"))
-        self.assertEqual(data["schema"], "stock-assistant-readonly-v1")
+        self.assertEqual(data["schema"], "stock-assistant-readonly-v2")
         self.assertEqual(data["counts"]["briefs"], 1)
 
 

@@ -10,6 +10,7 @@ from src.ui.pages import history, insight, movers, panorama, plates, search, wat
 from src.ui.workflow_sidebar import render_workflow_sidebar
 from src.ui.mobile_style import inject_mobile_styles
 from src.ui.onboarding import render_onboarding_banner
+from src.ui.footer import render_app_footer
 from src.util.query_time import format_query_datetime
 
 st.set_page_config(page_title="Stock Assistant", layout="wide", initial_sidebar_state="auto")
@@ -65,3 +66,5 @@ with tab_history:
 
 if st.session_state.get("_history_dirty"):
     persist_session()
+
+render_app_footer()

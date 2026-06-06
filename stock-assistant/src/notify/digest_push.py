@@ -10,6 +10,8 @@ import streamlit as st
 from src.analysis.daily_digest import build_watchlist_digest
 from src.auth.users import current_user_id
 from src.notify.email_digest import get_smtp_config, send_digest_email
+from src.notify.push_log import read_recent, record_push
+from src.notify.retry import enqueue_retry, retry_with_backoff
 from src.notify.webhook import build_webhook_payload, get_webhook_url, post_webhook
 
 
@@ -21,6 +23,15 @@ def _app_url() -> str:
     except Exception:
         pass
     return os.environ.get("STOCK_APP_PUBLIC_URL", "").strip()
+
+
+def _uid(session_state: Any | None) -> str:
+    if session_state is None:
+        try:
+            return current_user_id()
+        except Exception:
+            return "default"
+    return str(session_state.get("_auth_user") or "default")
 
 
 def build_current_digest(session_state: Any | None = None) -> str:
@@ -36,18 +47,47 @@ def push_digest_webhook(*, digest: str, session_state: Any | None = None) -> tup
     if not url:
         return False, "未配置 STOCK_WEBHOOK_URL"
     ss = session_state if session_state is not None else st.session_state
+    uid = _uid(session_state)
     payload = build_webhook_payload(
         digest_markdown=digest,
         watchlist=list(ss.get("watchlist") or []),
         snapshots=dict(ss.get("watch_snapshots") or {}),
-        user_id=current_user_id() if session_state is None else str(ss.get("_auth_user") or "default"),
+        user_id=uid,
         app_url=_app_url(),
     )
-    return post_webhook(url, payload)
+
+    def _post() -> tuple[bool, str]:
+        return post_webhook(url, payload)
+
+    ok, msg = retry_with_backoff(_post, max_attempts=3)
+    record_push(channel="webhook", ok=ok, detail=msg, user_id=uid)
+    if not ok:
+        enqueue_retry(
+            {
+                "channel": "webhook",
+                "digest": digest,
+                "session": {
+                    "watchlist": list(ss.get("watchlist") or []),
+                    "watch_snapshots": dict(ss.get("watch_snapshots") or {}),
+                    "_auth_user": uid,
+                },
+            },
+            user_id=uid,
+        )
+    return ok, msg
 
 
-def push_digest_email(*, digest: str, subject: str = "Stock Assistant · 自选股速览") -> tuple[bool, str]:
-    return send_digest_email(subject=subject, body=digest)
+def push_digest_email(*, digest: str, session_state: Any | None = None) -> tuple[bool, str]:
+    uid = _uid(session_state)
+
+    def _send() -> tuple[bool, str]:
+        return send_digest_email(subject="Stock Assistant · 自选股速览", body=digest)
+
+    ok, msg = retry_with_backoff(_send, max_attempts=3)
+    record_push(channel="email", ok=ok, detail=msg, user_id=uid)
+    if not ok:
+        enqueue_retry({"channel": "email", "digest": digest, "session": {"_auth_user": uid}}, user_id=uid)
+    return ok, msg
 
 
 def push_digest_all(session_state: Any | None = None) -> list[str]:
@@ -59,7 +99,7 @@ def push_digest_all(session_state: Any | None = None) -> list[str]:
         ok, msg = push_digest_webhook(digest=digest, session_state=session_state)
         lines.append(f"Webhook: {'✓' if ok else '✗'} {msg}")
     if get_smtp_config():
-        ok, msg = push_digest_email(digest=digest)
+        ok, msg = push_digest_email(digest=digest, session_state=session_state)
         lines.append(f"邮件: {'✓' if ok else '✗'} {msg}")
     if len(lines) == 0:
         lines.append("未配置 Webhook 或 SMTP，见 docs/PUSH.md")
@@ -71,7 +111,22 @@ def maybe_push_after_refresh(session_state: Any | None = None) -> None:
     if not ss.get("push_webhook_on_refresh") and not ss.get("push_email_on_refresh"):
         return
     digest = build_current_digest(ss)
+    results: list[str] = []
     if ss.get("push_webhook_on_refresh") and get_webhook_url():
-        push_digest_webhook(digest=digest, session_state=ss)
+        ok, msg = push_digest_webhook(digest=digest, session_state=ss)
+        results.append(f"Webhook: {'✓' if ok else '✗'} {msg}")
     if ss.get("push_email_on_refresh") and get_smtp_config():
-        push_digest_email(digest=digest)
+        ok, msg = push_digest_email(digest=digest, session_state=ss)
+        results.append(f"邮件: {'✓' if ok else '✗'} {msg}")
+    ss["_last_push_results"] = results
+
+
+def recent_push_lines(*, user_id: str | None = None, limit: int = 5) -> list[str]:
+    uid = user_id or _uid(None)
+    rows = read_recent(user_id=uid, limit=limit)
+    out: list[str] = []
+    for r in rows:
+        icon = "✓" if r.get("ok") else "✗"
+        out.append(f"{r.get('at')} {r.get('channel')} {icon} {r.get('detail')}")
+    return out
+

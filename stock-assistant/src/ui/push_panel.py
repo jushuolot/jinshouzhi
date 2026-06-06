@@ -5,7 +5,7 @@ from __future__ import annotations
 import streamlit as st
 
 from src.auth.users import auth_mode_label
-from src.notify.digest_push import push_digest_all
+from src.notify.digest_push import push_digest_all, recent_push_lines
 from src.notify.email_digest import get_smtp_config
 from src.notify.webhook import get_webhook_url
 
@@ -37,3 +37,5 @@ def render_push_panel() -> None:
                         st.info(line)
                     else:
                         st.warning(line)
+        for line in recent_push_lines(limit=5):
+            st.caption(line)

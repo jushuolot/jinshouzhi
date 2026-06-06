@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import os
 from typing import Callable
 
 import streamlit as st
+
+from src.notify.health_alert import maybe_send_health_alert
 
 
 @dataclass(frozen=True)
@@ -59,4 +62,17 @@ def render_health_panel(*, on_refresh: Callable[[], None] | None = None) -> None
         for row in probe_all_sources():
             icon = "🟢" if row["ok"] else "🔴"
             st.caption(f"{icon} **{row['name']}** — {row['detail']}")
+        probes = list(probe_all_sources())
+        app_url = os.environ.get("STOCK_APP_PUBLIC_URL", "").strip()
+        try:
+            import streamlit as _st
+
+            v = _st.secrets.get("STOCK_APP_PUBLIC_URL")
+            if v:
+                app_url = str(v).strip()
+        except Exception:
+            pass
+        ok, alert_msg = maybe_send_health_alert(probes, app_url=app_url)
+        if ok:
+            st.caption(f"⚠️ 已发送健康告警 Webhook：{alert_msg}")
         st.caption("检测缓存 2 分钟；行情延迟以各数据源为准。")

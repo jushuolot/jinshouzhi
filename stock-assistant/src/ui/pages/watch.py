@@ -41,6 +41,11 @@ from src.ui.speech_summary import render_speech_button
 from src.ui.stock_plates_panel import render_stock_plates_panel
 from src.util.currency import currency_display, normalize_watchlist
 from src.util.query_time import format_data_range, format_query_datetime
+from src.util.watchlist_export import (
+    filter_watchlist,
+    sort_watchlist,
+    watchlist_to_csv_bytes,
+)
 
 
 def _watchlist_display_rows(watchlist: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -90,9 +95,33 @@ def render() -> None:
             st.caption("摘要含涨跌幅、评分、一句话；完整分析请对单标的点「一键分析」。")
 
         snaps = st.session_state.get("watch_snapshots") or {}
+        f1, f2, f3 = st.columns([2, 1, 1])
+        with f1:
+            filter_kw = st.text_input("筛选", key="watch_filter", placeholder="名称 / 代码 / 市场")
+        with f2:
+            sort_by = st.selectbox("排序", ["代码", "涨跌幅", "评分"], key="watch_sort_by")
+        with f3:
+            sort_desc = st.checkbox("降序", key="watch_sort_desc")
+        display_wl = sort_watchlist(
+            filter_watchlist(st.session_state.watchlist, filter_kw),
+            snaps,
+            by=sort_by,
+            descending=sort_desc,
+        )
+        csv_bytes = watchlist_to_csv_bytes(display_wl, snaps)
+        if csv_bytes:
+            st.download_button(
+                "📊 导出 CSV",
+                data=csv_bytes,
+                file_name="自选股.csv",
+                mime="text/csv",
+                key="watch_csv_dl",
+                use_container_width=True,
+            )
+
         if snaps:
             digest = build_watchlist_digest(
-                st.session_state.watchlist,
+                display_wl,
                 snaps,
                 query_label=C._query_label("watch") or format_query_datetime(),
             )
@@ -109,14 +138,14 @@ def render() -> None:
             v = st.session_state.get(f"brief_md_{c}")
             return str(v) if v else None
 
-        briefs = collect_briefs_for_watchlist(st.session_state.watchlist, _brief_for_code)
+        briefs = collect_briefs_for_watchlist(display_wl, _brief_for_code)
         if briefs:
             q_merge = C._query_label("watch") or format_query_datetime()
             merged_md = build_merged_briefs_markdown(
-                st.session_state.watchlist, briefs, query_label=q_merge
+                display_wl, briefs, query_label=q_merge
             )
             merged_html = build_merged_briefs_html(
-                st.session_state.watchlist, briefs, query_label=q_merge
+                display_wl, briefs, query_label=q_merge
             )
             m1, m2 = st.columns(2)
             with m1:
@@ -181,7 +210,7 @@ def render() -> None:
         with c_batch_hint:
             st.caption("依次生成简报并写入各标的；适合早晨快速过一遍重点自选。")
 
-        wl = pd.DataFrame(_watchlist_display_rows(st.session_state.watchlist))
+        wl = pd.DataFrame(_watchlist_display_rows(display_wl))
         show_cols = [c for c in ["名称", "代码", "涨跌幅%", "评分", "一句话", "货币", "类型", "市场"] if c in wl.columns]
         st.dataframe(
             wl[show_cols] if show_cols else wl,
@@ -200,7 +229,7 @@ def render() -> None:
             C._save_history(log_kind="watchlist", log_label="删除自选股")
             st.rerun()
 
-        render_sector_linkage_panel(watchlist=st.session_state.watchlist)
+        render_sector_linkage_panel(watchlist=display_wl)
 
         st.divider()
         st.subheader("行情与分析")

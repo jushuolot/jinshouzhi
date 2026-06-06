@@ -8,7 +8,13 @@ from typing import Any
 
 from src.util.query_time import format_query_datetime
 
-SCHEMA = "stock-assistant-readonly-v1"
+try:
+    from src.util.app_meta import APP_VERSION, EVOLUTION_STEP
+except ImportError:
+    APP_VERSION = "1.0.0"
+    EVOLUTION_STEP = 0
+
+SCHEMA = "stock-assistant-readonly-v2"
 
 
 def _briefs_from_keys(session_state: Any) -> dict[str, str]:
@@ -43,6 +49,8 @@ def build_readonly_snapshot(
             "snapshots": len(watch_snapshots),
             "briefs": len(briefs),
         },
+        "app_version": APP_VERSION,
+        "evolution_step": EVOLUTION_STEP,
     }
     if extra:
         payload["meta"] = extra
