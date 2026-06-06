@@ -51,8 +51,9 @@ def render_workflow_sidebar() -> None:
                 "P49 组合权重", "P50 周报cron", "P51 文档与v3.1",
                 "P52 相似股推荐", "P53 会话欢迎", "P54 文档与v3.2",
                 "P55 分析置顶", "P56 失败重试", "P57 文档与v3.3",
+                "P58 快捷加自选", "P59 邮件主题", "P60 文档与v3.4",
             ],
-            index=56,
+            index=59,
             disabled=True,
         )
         st.caption(phase)

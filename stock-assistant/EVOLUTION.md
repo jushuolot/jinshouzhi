@@ -63,6 +63,9 @@
 | **P55** | 分析结果置顶 | ✅ 已完成 | user_prefs.pinned_tickers、工作台置顶 |
 | **P56** | 错误重试 UI | ✅ 已完成 | retry_fetch_ui、失败行 🔄 重试 |
 | **P57** | 文档与 v3.3 | ✅ 已完成 | EVOLUTION 541–570、v3.3.0 step 570 |
+| **P58** | 快捷加自选 | ✅ 已完成 | watchlist_add、搜索页逐行加入自选 |
+| **P59** | 邮件主题 | ✅ 已完成 | digest_push 日期+提醒数主题行 |
+| **P60** | 文档与 v3.4 | ✅ 已完成 | EVOLUTION 571–600、v3.4.0 step 600 |
 
 ## P1：信息架构（本次）
 
@@ -212,6 +215,12 @@
 - **P56 错误重试 UI**：`src/util/retry_fetch_ui.py`；摘要拉取失败时逐行 🔄 重试；`test_p56_retry_ui`
 - **P57 文档与 v3.3**：EVOLUTION_100 步 541–570；v3.3.0 step 570；`evolve_verify.sh` 覆盖 P55–P57 测试
 
+## P58–P60：快捷加自选、邮件主题、v3.4（已完成）
+
+- **P58 快捷添加自选**：`src/util/watchlist_add.py`；搜索页每行「加入自选」按钮（非只读）；`test_p58_quick_add`
+- **P59 汇总邮件主题行**：`digest_push.format_digest_email_subject`；日期 + 提醒条数；`test_p59_email_subject`
+- **P60 文档与 v3.4**：EVOLUTION_100 步 571–600；v3.4.0 step 600；`evolve_verify.sh` 覆盖 P58–P60 测试
+
 ## 进化原则
 
 1. **先可读，再炫功能** — 每轮至少产出一种「能发给同事看的资料」
@@ -289,3 +298,6 @@ streamlit run app.py
 - [x] 分析置顶 pinned_tickers · 工作台 📌 · P55
 - [x] 摘要失败逐行重试 retry_fetch_ui · P56
 - [x] v3.3.0 · 进化 step 570 · P57
+- [x] 搜索页逐行加入自选 watchlist_add · P58
+- [x] 汇总邮件主题 日期+提醒数 · P59
+- [x] v3.4.0 · 进化 step 600 · P60

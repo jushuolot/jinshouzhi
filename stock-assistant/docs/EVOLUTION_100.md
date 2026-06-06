@@ -572,3 +572,33 @@
 - [x] **568** 进化加固 #243
 - [x] **569** 进化加固 #244
 - [x] **570** 进化加固 #245 · v3.3.0 milestone
+- [x] **571** P58 watchlist_add 模块
+- [x] **572** P58 hit_to_watchlist_item 转换
+- [x] **573** P58 is_in_watchlist 检测
+- [x] **574** P58 搜索页逐行加入自选
+- [x] **575** P58 test_p58_quick_add
+- [x] **576** P58 workflow 阶段标记
+- [x] **577** 进化加固 #246
+- [x] **578** 进化加固 #247
+- [x] **579** 进化加固 #248
+- [x] **580** 进化加固 #249
+- [x] **581** P59 format_digest_email_subject
+- [x] **582** P59 alert_count_for_session
+- [x] **583** P59 push_digest_email 智能主题
+- [x] **584** P59 cron 传递 alert_count
+- [x] **585** P59 test_p59_email_subject
+- [x] **586** P59 workflow 阶段标记
+- [x] **587** 进化加固 #250
+- [x] **588** 进化加固 #251
+- [x] **589** 进化加固 #252
+- [x] **590** 进化加固 #253
+- [x] **591** P60 v3.4.0 app_meta
+- [x] **592** P60 EVOLUTION 文档
+- [x] **593** P60 EVOLUTION_100 571-600
+- [x] **594** P60 workflow P58-P60
+- [x] **595** P60 evolve_verify 通过
+- [x] **596** P60 README 版本徽章
+- [x] **597** 进化加固 #254
+- [x] **598** 进化加固 #255
+- [x] **599** 进化加固 #256
+- [x] **600** 进化加固 #257 · v3.4.0 milestone

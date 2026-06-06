@@ -3,11 +3,14 @@
 from __future__ import annotations
 
 import os
+from datetime import datetime
 from typing import Any
 
 import streamlit as st
 
 from src.analysis.daily_digest import build_watchlist_digest
+from src.analysis.watch_alerts import compute_watch_alerts
+from src.util.price_targets import normalize_price_targets
 from src.auth.users import current_user_id
 from src.notify.email_digest import get_smtp_config, send_digest_email
 from src.notify.push_log import read_recent, record_push
@@ -32,6 +35,39 @@ def _uid(session_state: Any | None) -> str:
         except Exception:
             return "default"
     return str(session_state.get("_auth_user") or "default")
+
+
+def format_digest_email_subject(
+    *,
+    alert_count: int = 0,
+    watch_count: int = 0,
+    when: datetime | None = None,
+) -> str:
+    """汇总邮件主题：日期 + 提醒条数（P59）。"""
+    day = (when or datetime.now()).strftime("%Y-%m-%d")
+    base = f"Stock Assistant · 自选股速览 · {day}"
+    if alert_count > 0:
+        return f"{base} · {alert_count} 条提醒"
+    if watch_count > 0:
+        return f"{base} · {watch_count} 只"
+    return base
+
+
+def alert_count_for_session(session_state: Any) -> int:
+    wl = list(session_state.get("watchlist") or [])
+    snaps = dict(session_state.get("watch_snapshots") or {})
+    if not wl:
+        return 0
+    alerts = compute_watch_alerts(
+        wl,
+        snaps,
+        pct_up=float(session_state.get("alert_pct_up") or 5.0),
+        pct_down=float(session_state.get("alert_pct_down") or -5.0),
+        score_low=float(session_state.get("alert_score_low") or 40.0),
+        score_high=float(session_state.get("alert_score_high") or 65.0),
+        price_targets=normalize_price_targets(session_state.get("price_targets") or {}),
+    )
+    return len(alerts)
 
 
 def build_current_digest(session_state: Any | None = None) -> str:
@@ -78,11 +114,20 @@ def push_digest_webhook(*, digest: str, session_state: Any | None = None) -> tup
     return ok, msg
 
 
-def push_digest_email(*, digest: str, session_state: Any | None = None) -> tuple[bool, str]:
+def push_digest_email(
+    *,
+    digest: str,
+    session_state: Any | None = None,
+    alert_count: int | None = None,
+) -> tuple[bool, str]:
     uid = _uid(session_state)
+    ss = session_state if session_state is not None else st.session_state
+    wl = list(ss.get("watchlist") or [])
+    n_alerts = alert_count if alert_count is not None else alert_count_for_session(ss)
+    subject = format_digest_email_subject(alert_count=n_alerts, watch_count=len(wl))
 
     def _send() -> tuple[bool, str]:
-        return send_digest_email(subject="Stock Assistant · 自选股速览", body=digest)
+        return send_digest_email(subject=subject, body=digest)
 
     ok, msg = retry_with_backoff(_send, max_attempts=3)
     record_push(channel="email", ok=ok, detail=msg, user_id=uid)

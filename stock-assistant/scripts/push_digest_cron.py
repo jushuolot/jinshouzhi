@@ -124,7 +124,7 @@ def main() -> int:
         print(f"Webhook: {'OK' if ok else 'FAIL'} {msg}")
         ok_any = ok_any or ok
     if get_smtp_config():
-        ok, msg = push_digest_email(digest=digest)
+        ok, msg = push_digest_email(digest=digest, session_state=ss, alert_count=len(alerts))
         print(f"Email: {'OK' if ok else 'FAIL'} {msg}")
         ok_any = ok_any or ok
     if not get_webhook_url() and not get_smtp_config():

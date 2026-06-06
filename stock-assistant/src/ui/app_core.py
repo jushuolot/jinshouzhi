@@ -22,7 +22,8 @@ from src.providers.ticker_util import a_market_label, is_bj_code, yahoo_ticker_a
 from src.auth.users import auth_mode_label, list_auth_users, verify_password
 from src.storage.history_store import mark_dirty, persist_session
 from src.storage.serialize import capital_mix_to_dict, route_report_from_session
-from src.util.currency import enrich_watchlist_item, infer_currency_for_hit, normalize_watchlist
+from src.util.currency import normalize_watchlist
+from src.util.watchlist_add import add_hit_to_watchlist
 from src.util.query_time import format_data_range, format_query_date, format_query_datetime
 
 def _get_password() -> str | None:
@@ -173,29 +174,13 @@ def _hit_label(h: eastmoney.SearchHit) -> str:
     return f"{h.name}  ({code})  [{h.market}]"
 
 
-def _add_to_watchlist(h: eastmoney.SearchHit) -> None:
-    code = h.code
-    yahoo_code = h.yahoo
-    kind = h.kind
-    if kind in ("US", "HK") and yahoo_code:
-        code = yahoo_code
-    item = enrich_watchlist_item(
-        {
-            "名称": h.name,
-            "代码": code,
-            "类型": kind,
-            "市场": h.market,
-            "Yahoo": yahoo_code,
-            "货币": infer_currency_for_hit(
-                kind=kind, market=h.market, code=code, yahoo=yahoo_code or ""
-            ),
-        }
-    )
-    exists = any(x.get("代码") == item["代码"] for x in st.session_state.watchlist)
-    if not exists:
-        st.session_state.watchlist.append(item)
+def _add_to_watchlist(h: eastmoney.SearchHit) -> bool:
+    new_wl, added = add_hit_to_watchlist(st.session_state.watchlist, h)
+    if added:
+        st.session_state.watchlist = new_wl
         mark_dirty()
         _save_history(log_kind="watchlist", log_label=f"加入自选股 {h.name}")
+    return added
 
 
 def _add_a_watchlist_by_code(code: str, name: str) -> None:
