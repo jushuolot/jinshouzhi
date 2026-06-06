@@ -42,6 +42,9 @@
 | **P34** | 搜索历史 | ✅ 已完成 | user_prefs.search_history、搜索页 chips 重搜 |
 | **P35** | 提醒模板 | ✅ 已完成 | 保守/均衡/激进 阈值一键套用 |
 | **P36** | 文档与 v2.6 | ✅ 已完成 | EVOLUTION 331–360、v2.6.0 step 360 |
+| **P37** | 工作台仪表盘 | ✅ 已完成 | dashboard_stats、均分/涨跌/提醒概览 |
+| **P38** | 只读分享 | ✅ 已完成 | ?readonly=1 隐藏编辑控件 |
+| **P39** | 文档与 v2.7 | ✅ 已完成 | EVOLUTION 361–390、v2.7.0 step 390 |
 
 ## P1：信息架构（本次）
 
@@ -149,6 +152,12 @@
 - **P35 提醒模板**：`src/util/alert_profiles.py`；保守/均衡/激进 pct/score 阈值；alert_panel 一键套用
 - **P36 文档与 v2.6**：EVOLUTION_100 步 331–360；v2.6.0 step 360；`evolve_verify.sh` 覆盖 P34–P36 测试
 
+## P37–P39：工作台仪表盘、只读分享、v2.7（已完成）
+
+- **P37 工作台仪表盘**：`src/analysis/dashboard_stats.py`；工作台顶部均分/上涨/下跌/今日提醒 metrics；`test_p37_dashboard_stats`
+- **P38 只读分享**：`?readonly=1` 隐藏加入自选、刷新、批量操作、分析写入；snapshot meta 含 `readonly_mode`；`test_p38_readonly_param`
+- **P39 文档与 v2.7**：EVOLUTION_100 步 361–390；v2.7.0 step 390；`evolve_verify.sh` 覆盖 P37–P39 测试
+
 ## 进化原则
 
 1. **先可读，再炫功能** — 每轮至少产出一种「能发给同事看的资料」
@@ -205,3 +214,6 @@ streamlit run app.py
 - [x] 搜索历史 chips · search_history · P34
 - [x] 提醒模板 保守/均衡/激进 · alert_profiles · P35
 - [x] v2.6.0 · 进化 step 360 · P36
+- [x] 工作台仪表盘 · dashboard_stats · P37
+- [x] 只读分享 ?readonly=1 · P38
+- [x] v2.7.0 · 进化 step 390 · P39

@@ -71,5 +71,6 @@ def collect_snapshot_from_session(session_state: Any) -> dict[str, Any]:
         extra={
             "auto_refresh_enabled": bool(session_state.get("auto_refresh_enabled")),
             "auto_refresh_minutes": int(session_state.get("auto_refresh_minutes") or 0),
+            "readonly_mode": bool(session_state.get("_readonly_mode")),
         },
     )

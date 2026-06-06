@@ -11,6 +11,7 @@ from src.storage.history_store import mark_dirty
 from src.ui import app_core as C
 from src.ui.quick_actions import render_search_quick_actions
 from src.providers import eastmoney, symbol_search, yahoo
+from src.util.readonly_mode import is_readonly_mode
 from src.util.search_history import normalize_search_history, push_search
 
 
@@ -86,7 +87,9 @@ def render() -> None:
                 st.warning(f"简介拉取失败：{e}")
         else:
             st.write(eastmoney.fetch_company_profile_stub(h))
-        if st.button("加入自选股", use_container_width=True):
+        if is_readonly_mode():
+            st.caption("只读模式：无法加入自选股。")
+        elif st.button("加入自选股", use_container_width=True):
             C._add_to_watchlist(h)
             C._save_history(log_kind="watchlist", log_label=f"加入自选股 {h.name}")
             st.success("已加入自选股。")

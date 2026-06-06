@@ -14,11 +14,13 @@ from src.ui.theme_style import inject_theme_styles
 from src.ui.onboarding import render_onboarding_banner
 from src.ui.footer import render_app_footer
 from src.util.query_time import format_query_datetime
+from src.util.readonly_mode import apply_readonly_from_query, is_readonly_mode
 
 st.set_page_config(page_title="Stock Assistant", layout="wide", initial_sidebar_state="auto")
 C._login_gate()
 C._init_state()
 load_into_session()
+apply_readonly_from_query()
 C._apply_pending_session_keys()
 inject_mobile_styles()
 inject_theme_styles()
@@ -29,6 +31,8 @@ st.caption(
     "三步：**发现标的 → 工作台分析 → 导出可读简报**。数据来自东财 / Yahoo 等公开源（规则推演，非投资建议）。"
 )
 render_onboarding_banner()
+if is_readonly_mode():
+    st.info("👁 **只读模式**：链接带 `?readonly=1`，已隐藏编辑与写入操作。")
 _resolved_tab = apply_tab_from_query()
 if _resolved_tab:
     _tab_labels = {

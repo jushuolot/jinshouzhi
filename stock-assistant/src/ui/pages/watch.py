@@ -28,6 +28,7 @@ from src.analysis.sector_heatmap import aggregate_sector_distribution, sector_ba
 from src.ui.alert_panel import render_alert_panel
 from src.ui.auto_refresh import auto_refresh_fragment, render_auto_refresh_controls
 from src.ui.currency_tool import render_floating_currency_tool
+from src.ui.dashboard_panel import render_dashboard_panel
 from src.ui.industry_compare import show_industry_compare_block
 from src.ui.pro_chart import (
     CHART_INDICATORS,
@@ -75,6 +76,7 @@ from src.util.watchlist_backup import (
     build_watch_backup,
     parse_backup_bytes,
 )
+from src.util.readonly_mode import is_readonly_mode
 from src.analysis.trend_summary import collect_trend_points, format_trend_markdown, trend_delta
 
 
@@ -105,14 +107,26 @@ def render() -> None:
     st.subheader("分析工作台")
     st.caption("选标的 → **一键分析** 或看 K 线 / 财务 / 板块 → 导出简报。")
     C._show_query_banner("watch")
+    readonly = is_readonly_mode()
     if st.session_state.watchlist:
         st.session_state.watchlist = normalize_watchlist(st.session_state.watchlist)
     if not st.session_state.watchlist:
         st.info("还没有自选股：到「② 搜索添加」里搜到后加入。")
     else:
+        snaps_early = st.session_state.get("watch_snapshots") or {}
+        render_dashboard_panel(
+            watchlist=st.session_state.watchlist,
+            snapshots=snaps_early,
+            pct_up=float(st.session_state.get("alert_pct_up", 5.0)),
+            pct_down=float(st.session_state.get("alert_pct_down", -5.0)),
+            score_low=float(st.session_state.get("alert_score_low", 40.0)),
+            score_high=float(st.session_state.get("alert_score_high", 65.0)),
+        )
         c_refresh, c_hint = st.columns([1, 2])
         with c_refresh:
-            if st.button("刷新全部摘要", key="watch_refresh_all", use_container_width=True):
+            if readonly:
+                st.caption("只读模式：不可刷新摘要。")
+            elif st.button("刷新全部摘要", key="watch_refresh_all", use_container_width=True):
                 with st.spinner("正在批量拉取日 K 与评分…"):
                     st.session_state.watch_snapshots = refresh_watch_snapshots(
                         st.session_state.watchlist,
@@ -173,66 +187,72 @@ def render() -> None:
                 use_container_width=True,
             )
         with b2:
-            uploaded = st.file_uploader(
-                "导入 JSON 备份（合并）",
-                type=["json"],
-                key="watch_json_backup_ul",
-            )
-            if uploaded is not None:
-                if st.button("确认合并导入", key="watch_json_backup_apply", use_container_width=True):
-                    try:
-                        raw = uploaded.getvalue()
-                        backup = parse_backup_bytes(raw)
-                        wl, merged_snaps, merged_groups, merged_notes, stats = apply_backup_merge(
-                            watchlist=st.session_state.watchlist,
-                            watch_snapshots=snaps,
-                            watch_groups=groups,
-                            watch_notes=notes,
-                            backup=backup,
-                        )
-                        st.session_state.watchlist = wl
-                        st.session_state.watch_snapshots = merged_snaps
-                        st.session_state.watch_groups = merged_groups
-                        st.session_state.watch_notes = merged_notes
-                        mark_dirty()
-                        C._save_history(log_kind="watchlist", log_label="导入 JSON 备份")
-                        st.success(
-                            f"已合并：新增 {stats['watchlist_added']} 只自选，"
-                            f"快照 {stats['snapshots_merged']} 条，分组 {stats['groups_merged']} 组。"
-                        )
-                        st.rerun()
-                    except Exception as e:
-                        st.error(f"导入失败：{e}")
-
-        with st.expander("🏷 分组管理", expanded=False):
-            new_group = st.text_input("新建分组名", key="watch_new_group", placeholder="如 核心持仓")
-            if st.button("创建分组", key="watch_create_group", disabled=not new_group.strip()):
-                gname = new_group.strip()
-                if gname not in groups:
-                    groups[gname] = []
-                    st.session_state.watch_groups = groups
-                    mark_dirty()
-                    st.rerun()
-            codes_all = [str(x.get("代码") or "") for x in st.session_state.watchlist if x.get("代码")]
-            if codes_all and group_names(groups):
-                pick_code = st.selectbox("选择标的", codes_all, key="watch_group_pick_code")
-                pick_group = st.selectbox(
-                    "加入分组",
-                    group_names(groups),
-                    key="watch_group_pick_group",
+            if readonly:
+                st.caption("只读模式：不可导入备份。")
+            else:
+                uploaded = st.file_uploader(
+                    "导入 JSON 备份（合并）",
+                    type=["json"],
+                    key="watch_json_backup_ul",
                 )
-                if st.button("加入分组", key="watch_group_assign", use_container_width=True):
-                    st.session_state.watch_groups = assign_ticker_to_group(
-                        groups, ticker=pick_code, group_name=pick_group
+                if uploaded is not None:
+                    if st.button("确认合并导入", key="watch_json_backup_apply", use_container_width=True):
+                        try:
+                            raw = uploaded.getvalue()
+                            backup = parse_backup_bytes(raw)
+                            wl, merged_snaps, merged_groups, merged_notes, stats = apply_backup_merge(
+                                watchlist=st.session_state.watchlist,
+                                watch_snapshots=snaps,
+                                watch_groups=groups,
+                                watch_notes=notes,
+                                backup=backup,
+                            )
+                            st.session_state.watchlist = wl
+                            st.session_state.watch_snapshots = merged_snaps
+                            st.session_state.watch_groups = merged_groups
+                            st.session_state.watch_notes = merged_notes
+                            mark_dirty()
+                            C._save_history(log_kind="watchlist", log_label="导入 JSON 备份")
+                            st.success(
+                                f"已合并：新增 {stats['watchlist_added']} 只自选，"
+                                f"快照 {stats['snapshots_merged']} 条，分组 {stats['groups_merged']} 组。"
+                            )
+                            st.rerun()
+                        except Exception as e:
+                            st.error(f"导入失败：{e}")
+
+        if not readonly:
+            with st.expander("🏷 分组管理", expanded=False):
+                new_group = st.text_input("新建分组名", key="watch_new_group", placeholder="如 核心持仓")
+                if st.button("创建分组", key="watch_create_group", disabled=not new_group.strip()):
+                    gname = new_group.strip()
+                    if gname not in groups:
+                        groups[gname] = []
+                        st.session_state.watch_groups = groups
+                        mark_dirty()
+                        st.rerun()
+                codes_all = [str(x.get("代码") or "") for x in st.session_state.watchlist if x.get("代码")]
+                if codes_all and group_names(groups):
+                    pick_code = st.selectbox("选择标的", codes_all, key="watch_group_pick_code")
+                    pick_group = st.selectbox(
+                        "加入分组",
+                        group_names(groups),
+                        key="watch_group_pick_group",
                     )
-                    mark_dirty()
-                    st.success(f"{pick_code} 已加入「{pick_group}」")
-                    st.rerun()
-                assigned = groups_for_ticker(groups, pick_code)
-                if assigned:
-                    st.caption(f"当前分组：{'、'.join(assigned)}")
-            elif not group_names(groups):
-                st.caption("先创建分组，再把标的加入。")
+                    if st.button("加入分组", key="watch_group_assign", use_container_width=True):
+                        st.session_state.watch_groups = assign_ticker_to_group(
+                            groups, ticker=pick_code, group_name=pick_group
+                        )
+                        mark_dirty()
+                        st.success(f"{pick_code} 已加入「{pick_group}」")
+                        st.rerun()
+                    assigned = groups_for_ticker(groups, pick_code)
+                    if assigned:
+                        st.caption(f"当前分组：{'、'.join(assigned)}")
+                elif not group_names(groups):
+                    st.caption("先创建分组，再把标的加入。")
+        else:
+            codes_all = [str(x.get("代码") or "") for x in st.session_state.watchlist if x.get("代码")]
 
         with st.expander("📈 趋势", expanded=False):
             trend_codes = [str(x.get("代码") or "") for x in display_wl if x.get("代码")] or codes_all
@@ -325,8 +345,9 @@ def render() -> None:
                 )
             st.caption(f"已合并 {len(briefs)} 份一键分析简报；HTML 用浏览器「打印 → 另存为 PDF」。")
 
-        render_auto_refresh_controls()
-        auto_refresh_fragment(C._fetch_one)
+        render_auto_refresh_controls() if not readonly else None
+        if not readonly:
+            auto_refresh_fragment(C._fetch_one)
 
         render_alert_panel(watchlist=display_wl, snapshots=snaps)
 
@@ -403,7 +424,9 @@ def render() -> None:
 
         c_batch, c_batch_hint = st.columns([1, 2])
         with c_batch:
-            if st.button("⚡ 深度分析前 3 只", key="watch_batch_quick", use_container_width=True):
+            if readonly:
+                st.caption("只读模式：不可批量分析。")
+            elif st.button("⚡ 深度分析前 3 只", key="watch_batch_quick", use_container_width=True):
                 with st.spinner("正在对前 3 只自选股做完整一键分析（约 30–90 秒）…"):
                     q_label = C._stamp_query("watch")
                     results = batch_run_quick_analysis(
@@ -451,62 +474,63 @@ def render() -> None:
                 "一句话": st.column_config.TextColumn("一句话", width="large"),
             },
         )
-        with st.expander("📦 批量操作", expanded=False):
-            pick_codes = [
-                str(x.get("代码") or "")
-                for x in display_wl
-                if x.get("代码")
-            ] or [str(x.get("代码") or "") for x in st.session_state.watchlist if x.get("代码")]
-            batch_sel = st.multiselect(
-                "选择标的（当前筛选列表）",
-                options=pick_codes,
-                key="watch_batch_sel",
-            )
-            b_rm, b_grp = st.columns(2)
-            with b_rm:
-                if st.button(
-                    "批量移出自选",
-                    key="watch_batch_remove",
-                    use_container_width=True,
-                    disabled=not batch_sel,
-                ):
-                    valid = codes_in_watchlist(st.session_state.watchlist, batch_sel)
-                    new_wl, removed = batch_remove_from_watchlist(st.session_state.watchlist, valid)
-                    st.session_state.watchlist = new_wl
-                    st.session_state.watch_groups = batch_remove_from_groups(groups, removed)
-                    for code in removed:
-                        st.session_state.get("watch_snapshots", {}).pop(code, None)
-                        st.session_state.pop(f"brief_md_{code}", None)
-                    st.session_state.watch_notes = remove_tickers_notes(
-                        normalize_watch_notes(st.session_state.get("watch_notes") or {}),
-                        removed,
-                    )
-                    mark_dirty()
-                    C._save_history(log_kind="watchlist", log_label=f"批量删除 {len(removed)} 只")
-                    st.success(f"已移除 {len(removed)} 只自选股。")
-                    st.rerun()
-            with b_grp:
-                if group_names(groups):
-                    batch_group = st.selectbox(
-                        "加入分组",
-                        group_names(groups),
-                        key="watch_batch_group",
-                    )
+        if not readonly:
+            with st.expander("📦 批量操作", expanded=False):
+                pick_codes = [
+                    str(x.get("代码") or "")
+                    for x in display_wl
+                    if x.get("代码")
+                ] or [str(x.get("代码") or "") for x in st.session_state.watchlist if x.get("代码")]
+                batch_sel = st.multiselect(
+                    "选择标的（当前筛选列表）",
+                    options=pick_codes,
+                    key="watch_batch_sel",
+                )
+                b_rm, b_grp = st.columns(2)
+                with b_rm:
                     if st.button(
-                        "批量加入分组",
-                        key="watch_batch_assign",
+                        "批量移出自选",
+                        key="watch_batch_remove",
                         use_container_width=True,
-                        disabled=not batch_sel or not batch_group,
+                        disabled=not batch_sel,
                     ):
                         valid = codes_in_watchlist(st.session_state.watchlist, batch_sel)
-                        st.session_state.watch_groups = batch_add_to_group(
-                            groups, valid, batch_group
+                        new_wl, removed = batch_remove_from_watchlist(st.session_state.watchlist, valid)
+                        st.session_state.watchlist = new_wl
+                        st.session_state.watch_groups = batch_remove_from_groups(groups, removed)
+                        for code in removed:
+                            st.session_state.get("watch_snapshots", {}).pop(code, None)
+                            st.session_state.pop(f"brief_md_{code}", None)
+                        st.session_state.watch_notes = remove_tickers_notes(
+                            normalize_watch_notes(st.session_state.get("watch_notes") or {}),
+                            removed,
                         )
                         mark_dirty()
-                        st.success(f"已将 {len(valid)} 只加入「{batch_group}」。")
+                        C._save_history(log_kind="watchlist", log_label=f"批量删除 {len(removed)} 只")
+                        st.success(f"已移除 {len(removed)} 只自选股。")
                         st.rerun()
-                else:
-                    st.caption("请先在「分组管理」中创建分组。")
+                with b_grp:
+                    if group_names(groups):
+                        batch_group = st.selectbox(
+                            "加入分组",
+                            group_names(groups),
+                            key="watch_batch_group",
+                        )
+                        if st.button(
+                            "批量加入分组",
+                            key="watch_batch_assign",
+                            use_container_width=True,
+                            disabled=not batch_sel or not batch_group,
+                        ):
+                            valid = codes_in_watchlist(st.session_state.watchlist, batch_sel)
+                            st.session_state.watch_groups = batch_add_to_group(
+                                groups, valid, batch_group
+                            )
+                            mark_dirty()
+                            st.success(f"已将 {len(valid)} 只加入「{batch_group}」。")
+                            st.rerun()
+                    else:
+                        st.caption("请先在「分组管理」中创建分组。")
 
         render_sector_linkage_panel(watchlist=display_wl)
 
@@ -520,21 +544,27 @@ def render() -> None:
             st.caption(f"报价货币：**{currency_display(quote_ccy)}**")
             with st.expander("📝 笔记/标注", expanded=False):
                 notes = normalize_watch_notes(st.session_state.get("watch_notes") or {})
-                st.session_state.watch_notes = notes
                 saved = get_note(notes, code)
-                draft = st.text_area(
-                    "本标的备注（持久保存）",
-                    value=saved,
-                    height=88,
-                    key=f"watch_note_{code}",
-                    placeholder="如：目标价、持仓逻辑、下次复查事项…",
-                )
-                if st.button("保存笔记", key=f"watch_note_save_{code}", use_container_width=True):
-                    st.session_state.watch_notes = set_note(notes, code, draft)
-                    mark_dirty()
-                    st.success("笔记已保存。")
-                elif saved:
-                    st.caption(f"已保存：{saved[:120]}{'…' if len(saved) > 120 else ''}")
+                if readonly:
+                    if saved:
+                        st.caption(saved)
+                    else:
+                        st.caption("（无笔记）")
+                else:
+                    st.session_state.watch_notes = notes
+                    draft = st.text_area(
+                        "本标的备注（持久保存）",
+                        value=saved,
+                        height=88,
+                        key=f"watch_note_{code}",
+                        placeholder="如：目标价、持仓逻辑、下次复查事项…",
+                    )
+                    if st.button("保存笔记", key=f"watch_note_save_{code}", use_container_width=True):
+                        st.session_state.watch_notes = set_note(notes, code, draft)
+                        mark_dirty()
+                        st.success("笔记已保存。")
+                    elif saved:
+                        st.caption(f"已保存：{saved[:120]}{'…' if len(saved) > 120 else ''}")
             render_floating_currency_tool(default_from=quote_ccy, watch_code=code)
             snap_one = (st.session_state.get("watch_snapshots") or {}).get(code) or {}
             one_line = str(snap_one.get("one_line") or "").strip()
@@ -674,44 +704,49 @@ def render() -> None:
             yh = str(item.get("Yahoo") or code)
             news_watch = fetch_aggregated_news(code6=code6, yahoo_ticker=yh, limit=15)
 
-            if st.button("⚡ 一键分析", type="primary", key="watch_quick", use_container_width=True):
-                try:
-                    with st.spinner("并行拉取行情、新闻、财务对比并生成简报…"):
-                        q_label = C._stamp_query("watch")
-                        result = run_quick_analysis(
-                            item,
-                            C._fetch_one,
-                            query_label=q_label,
+            gen_route = False
+            gen_brief = False
+            if readonly:
+                st.caption("只读模式：不可运行一键分析或生成新简报。")
+            else:
+                if st.button("⚡ 一键分析", type="primary", key="watch_quick", use_container_width=True):
+                    try:
+                        with st.spinner("并行拉取行情、新闻、财务对比并生成简报…"):
+                            q_label = C._stamp_query("watch")
+                            result = run_quick_analysis(
+                                item,
+                                C._fetch_one,
+                                query_label=q_label,
+                            )
+                        watch_df = result.df
+                        watch_ksrc = result.kline_src
+                        watch_stats = result.stats
+                        watch_score = result.score
+                        st.session_state.watch_snapshots[code] = result.snapshot.as_dict()
+                        st.session_state["route_report"] = result.route_report
+                        st.session_state["insight_pick"] = {
+                            "代码": code,
+                            "名称": item.get("名称"),
+                            "市场": item.get("市场"),
+                        }
+                        st.session_state[f"brief_md_{code}"] = result.brief_md
+                        if result.fin_data and result.fin_data.get("ok"):
+                            st.session_state[f"watch_fin_{code}"] = True
+                        mark_dirty()
+                        C._save_history(
+                            log_kind="insight",
+                            log_label=f"一键分析 {item.get('名称')}",
+                            conclusions_summary=result.snapshot.one_line[:120],
                         )
-                    watch_df = result.df
-                    watch_ksrc = result.kline_src
-                    watch_stats = result.stats
-                    watch_score = result.score
-                    st.session_state.watch_snapshots[code] = result.snapshot.as_dict()
-                    st.session_state["route_report"] = result.route_report
-                    st.session_state["insight_pick"] = {
-                        "代码": code,
-                        "名称": item.get("名称"),
-                        "市场": item.get("市场"),
-                    }
-                    st.session_state[f"brief_md_{code}"] = result.brief_md
-                    if result.fin_data and result.fin_data.get("ok"):
-                        st.session_state[f"watch_fin_{code}"] = True
-                    mark_dirty()
-                    C._save_history(
-                        log_kind="insight",
-                        log_label=f"一键分析 {item.get('名称')}",
-                        conclusions_summary=result.snapshot.one_line[:120],
-                    )
-                    st.success("一键分析完成：摘要、行动路线、可读简报已就绪。")
-                except Exception as e:
-                    st.error(f"一键分析失败：{e}")
+                        st.success("一键分析完成：摘要、行动路线、可读简报已就绪。")
+                    except Exception as e:
+                        st.error(f"一键分析失败：{e}")
 
-            btn_route, btn_brief = st.columns(2)
-            with btn_route:
-                gen_route = st.button("生成行动路线", type="primary", key="watch_route", use_container_width=True)
-            with btn_brief:
-                gen_brief = st.button("生成可读简报", key="watch_brief", use_container_width=True)
+                btn_route, btn_brief = st.columns(2)
+                with btn_route:
+                    gen_route = st.button("生成行动路线", type="primary", key="watch_route", use_container_width=True)
+                with btn_brief:
+                    gen_brief = st.button("生成可读简报", key="watch_brief", use_container_width=True)
 
             if gen_route:
                 if watch_df is None or watch_df.empty:

@@ -9,11 +9,29 @@ from src.notify.alert_push import maybe_push_alerts_if_configured, push_alerts_w
 from src.notify.webhook import get_webhook_url
 from src.storage.history_store import mark_dirty
 from src.util.alert_profiles import ALERT_PROFILES, apply_alert_profile, profile_caption
+from src.util.readonly_mode import is_readonly_mode
 
 
 def render_alert_panel(*, watchlist: list[dict], snapshots: dict) -> list:
     alerts: list = []
+    readonly = is_readonly_mode()
     with st.expander("🔔 智能提醒（涨跌幅 / 评分）", expanded=False):
+        if readonly:
+            alerts = compute_watch_alerts(
+                watchlist,
+                snapshots,
+                pct_up=float(st.session_state.get("alert_pct_up", 5.0)),
+                pct_down=float(st.session_state.get("alert_pct_down", -5.0)),
+                score_low=float(st.session_state.get("alert_score_low", 40.0)),
+                score_high=float(st.session_state.get("alert_score_high", 65.0)),
+            )
+            if not alerts:
+                st.caption("当前无触发项。")
+            else:
+                for a in alerts[:12]:
+                    icon = {"hot": "🔥", "warn": "⚠️", "info": "ℹ️"}.get(a.level, "•")
+                    st.markdown(f"{icon} **{a.name}（{a.code}）** — {a.message}")
+            return alerts
         st.session_state.setdefault("alert_pct_up", 5.0)
         st.session_state.setdefault("alert_pct_down", -5.0)
         st.session_state.setdefault("alert_score_low", 40.0)
