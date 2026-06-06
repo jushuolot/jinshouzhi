@@ -45,6 +45,9 @@
 | **P37** | 工作台仪表盘 | ✅ 已完成 | dashboard_stats、均分/涨跌/提醒概览 |
 | **P38** | 只读分享 | ✅ 已完成 | ?readonly=1 隐藏编辑控件 |
 | **P39** | 文档与 v2.7 | ✅ 已完成 | EVOLUTION 361–390、v2.7.0 step 390 |
+| **P40** | 多语言文案 | ✅ 已完成 | user_prefs.locale、Tab/仪表盘 i18n lite |
+| **P41** | 快捷键提示 | ✅ 已完成 | 页脚 ?tab= / ?readonly=1 链接提示 |
+| **P42** | 文档与 v2.8 | ✅ 已完成 | EVOLUTION 391–420、v2.8.0 step 420 |
 
 ## P1：信息架构（本次）
 
@@ -158,6 +161,12 @@
 - **P38 只读分享**：`?readonly=1` 隐藏加入自选、刷新、批量操作、分析写入；snapshot meta 含 `readonly_mode`；`test_p38_readonly_param`
 - **P39 文档与 v2.7**：EVOLUTION_100 步 361–390；v2.7.0 step 390；`evolve_verify.sh` 覆盖 P37–P39 测试
 
+## P40–P42：多语言、快捷键提示、v2.8（已完成）
+
+- **P40 多语言文案**：`src/util/i18n_strings.py`；`user_prefs.locale` zh/en；Tab 名与工作台 metrics；侧边栏语言切换；`test_p40_i18n`
+- **P41 快捷键提示**：页脚 `?tab=` / `?readonly=1` 链接提示；`test_p41_hints`
+- **P42 文档与 v2.8**：EVOLUTION_100 步 391–420；v2.8.0 step 420；`evolve_verify.sh` 覆盖 P40–P42 测试
+
 ## 进化原则
 
 1. **先可读，再炫功能** — 每轮至少产出一种「能发给同事看的资料」
@@ -217,3 +226,6 @@ streamlit run app.py
 - [x] 工作台仪表盘 · dashboard_stats · P37
 - [x] 只读分享 ?readonly=1 · P38
 - [x] v2.7.0 · 进化 step 390 · P39
+- [x] 多语言 Tab/仪表盘 · locale zh/en · P40
+- [x] 页脚链接提示 ?tab= ?readonly=1 · P41
+- [x] v2.8.0 · 进化 step 420 · P42

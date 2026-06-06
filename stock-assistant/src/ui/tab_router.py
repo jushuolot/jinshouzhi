@@ -1,4 +1,4 @@
-"""主 Tab 路由与 ?tab= 深链接（P18）。"""
+"""主 Tab 路由与 ?tab= 深链接（P18）；标签 i18n（P40）。"""
 
 from __future__ import annotations
 
@@ -6,6 +6,8 @@ from collections.abc import Callable
 from typing import Any
 
 import streamlit as st
+
+from src.util.i18n_strings import TAB_IDS, get_locale, tab_label, tab_order
 
 TAB_ORDER: list[tuple[str, str]] = [
     ("watch", "① 分析工作台"),
@@ -17,9 +19,19 @@ TAB_ORDER: list[tuple[str, str]] = [
     ("history", "⑦ 历史记录"),
 ]
 
-_TAB_IDS = {tid for tid, _ in TAB_ORDER}
-_TAB_LABELS = [label for _, label in TAB_ORDER]
-_TAB_ID_BY_LABEL = {label: tid for tid, label in TAB_ORDER}
+_TAB_IDS = frozenset(TAB_IDS)
+
+
+def _current_tab_order() -> list[tuple[str, str]]:
+    return tab_order(locale=get_locale())
+
+
+def _tab_labels() -> list[str]:
+    return [label for _, label in _current_tab_order()]
+
+
+def _tab_id_by_label() -> dict[str, str]:
+    return {label: tid for tid, label in _current_tab_order()}
 
 _TAB_ALIASES: dict[str, str] = {
     "watch": "watch",
@@ -48,9 +60,15 @@ _TAB_ALIASES: dict[str, str] = {
     "行动路线": "insight",
     "历史": "history",
     "历史记录": "history",
+    "watchlist": "watch",
+    "sectors": "plates",
+    "global markets": "movers",
+    "movers panorama": "panorama",
+    "action route": "insight",
 }
-for tid, label in TAB_ORDER:
-    _TAB_ALIASES[label] = tid
+for tid in TAB_IDS:
+    _TAB_ALIASES[tab_label(tid, locale="zh")] = tid
+    _TAB_ALIASES[tab_label(tid, locale="en")] = tid
 
 
 def resolve_tab_id(raw: str) -> str | None:
@@ -65,12 +83,15 @@ def resolve_tab_id(raw: str) -> str | None:
     for tid, label in TAB_ORDER:
         if key in label or label in key:
             return tid
+    for tid, label in tab_order():
+        if key in label or label in key:
+            return tid
     return None
 
 
 def apply_tab_from_query() -> str | None:
     """读取 ?tab= 并写入 session_state.active_tab。"""
-    st.session_state.setdefault("active_tab", TAB_ORDER[0][0])
+    st.session_state.setdefault("active_tab", TAB_IDS[0])
     raw = st.query_params.get("tab", "")
     if not raw:
         return None
@@ -82,7 +103,10 @@ def apply_tab_from_query() -> str | None:
 
 
 def render_main_tabs(pages: dict[str, Callable[[], None]]) -> None:
-    ids = [tid for tid, _ in TAB_ORDER]
+    order = _current_tab_order()
+    ids = [tid for tid, _ in order]
+    labels = _tab_labels()
+    id_by_label = _tab_id_by_label()
     current = str(st.session_state.get("active_tab") or ids[0])
     if current not in ids:
         current = ids[0]
@@ -90,12 +114,12 @@ def render_main_tabs(pages: dict[str, Callable[[], None]]) -> None:
 
     selected_label = st.radio(
         "主导航",
-        options=_TAB_LABELS,
+        options=labels,
         index=idx,
         horizontal=True,
         label_visibility="collapsed",
     )
-    selected_id = _TAB_ID_BY_LABEL[selected_label]
+    selected_id = id_by_label[selected_label]
     st.session_state.active_tab = selected_id
 
     render_fn = pages.get(selected_id)

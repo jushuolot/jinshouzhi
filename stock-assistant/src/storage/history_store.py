@@ -343,6 +343,7 @@ def collect_latest_state() -> dict[str, Any]:
             "watch_notes": dict(st.session_state.get("watch_notes") or {}),
             "search_history": list(st.session_state.get("search_history") or []),
             "dark_mode": bool(st.session_state.get("dark_mode", True)),
+            "locale": str(st.session_state.get("locale") or "zh"),
         },
     }
 
@@ -411,6 +412,10 @@ def apply_latest_to_session(latest: dict[str, Any]) -> None:
         st.session_state.search_history = list(prefs["search_history"])
     if "dark_mode" in prefs:
         st.session_state.dark_mode = bool(prefs["dark_mode"])
+    if prefs.get("locale"):
+        from src.util.i18n_strings import normalize_locale
+
+        st.session_state.locale = normalize_locale(str(prefs["locale"]))
 
     st.session_state["history_conclusions"] = latest.get("conclusions") or {}
 

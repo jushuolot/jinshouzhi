@@ -10,6 +10,7 @@ from src.ui.push_panel import render_push_panel
 from src.ui.readonly_export_panel import render_readonly_export_panel
 from src.ui.share_panel import render_share_panel
 from src.ui.theme_style import render_theme_toggle
+from src.util.i18n_strings import render_locale_toggle
 from src.util.readonly_mode import is_readonly_mode
 
 
@@ -44,13 +45,15 @@ def render_workflow_sidebar() -> None:
                 "P31 笔记导出", "P32 健康面板", "P33 文档与v2.5",
                 "P34 搜索历史", "P35 提醒模板", "P36 文档与v2.6",
                 "P37 工作台仪表盘", "P38 只读分享", "P39 文档与v2.7",
+                "P40 多语言文案", "P41 快捷键提示", "P42 文档与v2.8",
             ],
-            index=38,
+            index=41,
             disabled=True,
         )
         st.caption(phase)
 
         render_theme_toggle()
+        render_locale_toggle()
         render_share_panel()
         if not is_readonly_mode():
             render_push_panel()

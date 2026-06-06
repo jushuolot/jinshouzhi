@@ -107,6 +107,8 @@ def _init_state() -> None:
         st.session_state.search_history = []
     if "dark_mode" not in st.session_state:
         st.session_state.dark_mode = True
+    if "locale" not in st.session_state:
+        st.session_state.locale = "zh"
 
 
 def _save_history(

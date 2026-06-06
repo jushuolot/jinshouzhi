@@ -7,6 +7,7 @@ from typing import Any
 import streamlit as st
 
 from src.analysis.dashboard_stats import DashboardStats, compute_dashboard_stats
+from src.util.i18n_strings import get_locale, t
 
 
 def render_dashboard_panel(
@@ -29,22 +30,39 @@ def render_dashboard_panel(
     if stats.watch_count <= 0:
         return stats
 
-    st.markdown("#### 📊 工作台概览")
+    loc = get_locale()
+    st.markdown(f"#### {t('dash_title', locale=loc)}")
     c1, c2, c3, c4, c5 = st.columns(5)
     with c1:
-        st.metric("自选", stats.watch_count, help="当前自选股数量")
+        st.metric(t("dash_watch", locale=loc), stats.watch_count, help=t("dash_help_watch", locale=loc))
     with c2:
         avg_label = f"{stats.avg_score:.1f}" if stats.avg_score is not None else "—"
-        st.metric("均分", avg_label, help=f"有评分 {stats.scored_count} 只")
+        st.metric(
+            t("dash_avg_score", locale=loc),
+            avg_label,
+            help=t("dash_help_avg", locale=loc, n=stats.scored_count),
+        )
     with c3:
-        st.metric("上涨", stats.up_count, delta=None, help="涨跌幅 > 0")
+        st.metric(t("dash_up", locale=loc), stats.up_count, delta=None, help=t("dash_help_up", locale=loc))
     with c4:
-        st.metric("下跌", stats.down_count, delta=None, help="涨跌幅 < 0")
+        st.metric(t("dash_down", locale=loc), stats.down_count, delta=None, help=t("dash_help_down", locale=loc))
     with c5:
-        st.metric("今日提醒", stats.alert_count, help="按当前阈值计算的触发项")
+        st.metric(
+            t("dash_alerts", locale=loc),
+            stats.alert_count,
+            help=t("dash_help_alerts", locale=loc),
+        )
     if stats.snapshot_count < stats.watch_count:
         missing = stats.watch_count - stats.snapshot_count
-        st.caption(f"摘要覆盖 {stats.snapshot_count}/{stats.watch_count} 只；{missing} 只尚无快照。")
+        st.caption(
+            t(
+                "dash_missing_snap",
+                locale=loc,
+                have=stats.snapshot_count,
+                total=stats.watch_count,
+                missing=missing,
+            )
+        )
     elif stats.flat_count:
-        st.caption(f"平盘/无涨跌 {stats.flat_count} 只。")
+        st.caption(t("dash_flat", locale=loc, n=stats.flat_count))
     return stats
