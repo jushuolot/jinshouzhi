@@ -36,6 +36,8 @@ from src.ui.pro_chart import (
     last_bar_stats,
 )
 from src.ui.readable_report_panel import build_and_store_brief, render_readable_brief_panel
+from src.ui.sector_alert_panel import render_sector_linkage_panel
+from src.ui.speech_summary import render_speech_button
 from src.ui.stock_plates_panel import render_stock_plates_panel
 from src.util.currency import currency_display, normalize_watchlist
 from src.util.query_time import format_data_range, format_query_datetime
@@ -198,6 +200,8 @@ def render() -> None:
             C._save_history(log_kind="watchlist", log_label="删除自选股")
             st.rerun()
 
+        render_sector_linkage_panel(watchlist=st.session_state.watchlist)
+
         st.divider()
         st.subheader("行情与分析")
         code = st.selectbox("选择标的（按代码）", options=wl["代码"].tolist(), key="watch_code")
@@ -207,6 +211,10 @@ def render() -> None:
         if item:
             st.caption(f"报价货币：**{currency_display(quote_ccy)}**")
             render_floating_currency_tool(default_from=quote_ccy, watch_code=code)
+            snap_one = (st.session_state.get("watch_snapshots") or {}).get(code) or {}
+            one_line = str(snap_one.get("one_line") or "").strip()
+            if one_line and one_line not in ("—", "暂无评分。"):
+                render_speech_button(text=one_line, key=f"speech_{code}")
         is_a6 = item and C._is_a_share_code6(code) and kind == "A"
         watch_df: pd.DataFrame | None = None
         watch_ksrc = ""
