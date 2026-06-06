@@ -164,7 +164,7 @@ def refresh_watch_snapshots(
             snap.updated_at = label
             out[code] = snap.as_dict()
         except Exception as exc:
-            out[code] = WatchSnapshot(
+            fail = WatchSnapshot(
                 code=code,
                 name=str(item.get("名称") or code),
                 pct=None,
@@ -172,6 +172,8 @@ def refresh_watch_snapshots(
                 one_line=f"拉取失败：{exc}",
                 updated_at=label,
             ).as_dict()
+            fail["fetch_failed"] = True
+            out[code] = fail
     set_cached_snapshots(codes, out)
     return out
 

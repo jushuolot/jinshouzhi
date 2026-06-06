@@ -92,6 +92,18 @@ from src.util.watch_weights import (
     pie_slices_for_watchlist,
     set_weight,
 )
+from src.util.pinned_tickers import (
+    apply_pinned_order,
+    is_pinned,
+    normalize_pinned_tickers,
+    pin_ticker,
+    unpin_ticker,
+)
+from src.util.retry_fetch_ui import (
+    failed_tickers,
+    refresh_one_snapshot,
+    retry_button_key,
+)
 from src.analysis.trend_summary import collect_trend_points, format_trend_markdown, trend_delta
 
 
@@ -181,12 +193,16 @@ def render() -> None:
         else:
             st.session_state.watch_sort = new_ws
         grouped_wl = filter_watchlist_by_group(st.session_state.watchlist, groups, filter_group)
+        filtered_wl = filter_watchlist(grouped_wl, filter_kw)
         display_wl = sort_watchlist(
-            filter_watchlist(grouped_wl, filter_kw),
+            filtered_wl,
             snaps,
             by=sort_by,
             descending=sort_desc,
         )
+        pinned = normalize_pinned_tickers(st.session_state.get("pinned_tickers") or [])
+        st.session_state.pinned_tickers = pinned
+        display_wl = apply_pinned_order(display_wl, pinned)
         notes = normalize_watch_notes(st.session_state.get("watch_notes") or {})
         csv_bytes = watchlist_to_csv_bytes(display_wl, snaps, watch_notes=notes)
         if csv_bytes:
@@ -249,6 +265,36 @@ def render() -> None:
                             st.rerun()
                         except Exception as e:
                             st.error(f"导入失败：{e}")
+
+        if not readonly:
+            with st.expander("📌 置顶", expanded=False):
+                pin_codes = [
+                    str(x.get("代码") or "")
+                    for x in st.session_state.watchlist
+                    if x.get("代码")
+                ]
+                if pin_codes:
+                    pick_pin = st.selectbox("选择标的", pin_codes, key="watch_pin_pick")
+                    p1, p2 = st.columns(2)
+                    with p1:
+                        if st.button("置顶", key="watch_pin_add", use_container_width=True):
+                            st.session_state.pinned_tickers = pin_ticker(pinned, pick_pin)
+                            mark_dirty()
+                            st.rerun()
+                    with p2:
+                        if st.button(
+                            "取消置顶",
+                            key="watch_pin_remove",
+                            use_container_width=True,
+                            disabled=not is_pinned(pinned, pick_pin),
+                        ):
+                            st.session_state.pinned_tickers = unpin_ticker(pinned, pick_pin)
+                            mark_dirty()
+                            st.rerun()
+                    if pinned:
+                        st.caption("已置顶：" + "、".join(pinned))
+                else:
+                    st.caption("暂无自选股可置顶。")
 
         if not readonly:
             with st.expander("🏷 分组管理", expanded=False):
@@ -567,6 +613,39 @@ def render() -> None:
                         st.success(f"已完成 {len(results)} 只的深度分析与简报。")
         with c_batch_hint:
             st.caption("依次生成简报并写入各标的；适合早晨快速过一遍重点自选。")
+
+        fail_codes = failed_tickers(display_wl, snaps) if snaps else []
+        if fail_codes and not readonly:
+            st.caption("以下标的摘要拉取失败，可逐行重试：")
+            for code in fail_codes:
+                item_fail = next(
+                    (x for x in display_wl if str(x.get("代码") or "") == code),
+                    None,
+                )
+                if not item_fail:
+                    continue
+                snap_fail = snaps.get(code) or {}
+                fc1, fc2 = st.columns([4, 1])
+                with fc1:
+                    st.text(
+                        f"{item_fail.get('名称')} ({code}) — {snap_fail.get('one_line') or '拉取失败'}"
+                    )
+                with fc2:
+                    if st.button("🔄 重试", key=retry_button_key(code), use_container_width=True):
+                        new_snap, ok = refresh_one_snapshot(
+                            item_fail,
+                            C._fetch_one,
+                            query_label=C._stamp_query("watch"),
+                        )
+                        if "watch_snapshots" not in st.session_state:
+                            st.session_state.watch_snapshots = {}
+                        st.session_state.watch_snapshots[code] = new_snap
+                        mark_dirty()
+                        if ok:
+                            st.success(f"{code} 摘要已更新。")
+                        else:
+                            st.warning(f"{code} 仍拉取失败。")
+                        st.rerun()
 
         wl = pd.DataFrame(_watchlist_display_rows(display_wl))
         show_cols = [c for c in ["名称", "代码", "涨跌幅%", "评分", "一句话", "货币", "类型", "市场"] if c in wl.columns]

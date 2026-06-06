@@ -60,6 +60,9 @@
 | **P52** | 相似股推荐 | ✅ 已完成 | similar_pick、工作台 🔗 同板块推荐 |
 | **P53** | 会话恢复提示 | ✅ 已完成 | welcome_banner、启动欢迎条 |
 | **P54** | 文档与 v3.2 | ✅ 已完成 | EVOLUTION 511–540、v3.2.0 step 540 |
+| **P55** | 分析结果置顶 | ✅ 已完成 | user_prefs.pinned_tickers、工作台置顶 |
+| **P56** | 错误重试 UI | ✅ 已完成 | retry_fetch_ui、失败行 🔄 重试 |
+| **P57** | 文档与 v3.3 | ✅ 已完成 | EVOLUTION 541–570、v3.3.0 step 570 |
 
 ## P1：信息架构（本次）
 
@@ -203,6 +206,12 @@
 - **P53 会话恢复提示**：`src/ui/welcome_banner.py`；历史含自选时启动展示数量与上次刷新；`history_store._restored_watchlist`；`test_p53_welcome`
 - **P54 文档与 v3.2**：EVOLUTION_100 步 511–540；v3.2.0 step 540；`evolve_verify.sh` 覆盖 P52–P54 测试
 
+## P55–P57：分析置顶、失败重试、v3.3（已完成）
+
+- **P55 分析结果置顶**：`src/util/pinned_tickers.py`；`user_prefs.pinned_tickers` 列表；排序后仍置顶；工作台「📌 置顶」expander；`test_p55_pinned`
+- **P56 错误重试 UI**：`src/util/retry_fetch_ui.py`；摘要拉取失败时逐行 🔄 重试；`test_p56_retry_ui`
+- **P57 文档与 v3.3**：EVOLUTION_100 步 541–570；v3.3.0 step 570；`evolve_verify.sh` 覆盖 P55–P57 测试
+
 ## 进化原则
 
 1. **先可读，再炫功能** — 每轮至少产出一种「能发给同事看的资料」
@@ -277,3 +286,6 @@ streamlit run app.py
 - [x] 相似股推荐 similar_pick · 工作台同板块 · P52
 - [x] 会话恢复欢迎条 welcome_banner · P53
 - [x] v3.2.0 · 进化 step 540 · P54
+- [x] 分析置顶 pinned_tickers · 工作台 📌 · P55
+- [x] 摘要失败逐行重试 retry_fetch_ui · P56
+- [x] v3.3.0 · 进化 step 570 · P57
