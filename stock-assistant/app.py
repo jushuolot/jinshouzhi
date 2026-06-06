@@ -7,6 +7,7 @@ import streamlit as st
 from src.storage.history_store import load_into_session, persist_session
 from src.ui import app_core as C
 from src.ui.pages import history, insight, movers, panorama, plates, search, watch
+from src.ui.tab_router import apply_tab_from_query, render_main_tabs
 from src.ui.workflow_sidebar import render_workflow_sidebar
 from src.ui.mobile_style import inject_mobile_styles
 from src.ui.onboarding import render_onboarding_banner
@@ -26,46 +27,32 @@ st.caption(
     "三步：**发现标的 → 工作台分析 → 导出可读简报**。数据来自东财 / Yahoo 等公开源（规则推演，非投资建议）。"
 )
 render_onboarding_banner()
-_tab_hint = st.query_params.get("tab", "")
-if _tab_hint:
-    st.caption(f"💡 深链接 tab={_tab_hint} — 请点上方对应标签页。")
+_resolved_tab = apply_tab_from_query()
+if _resolved_tab:
+    _tab_labels = {
+        "watch": "① 分析工作台",
+        "search": "② 搜索添加",
+        "plates": "③ 板块行情",
+        "movers": "④ 全球股市",
+        "panorama": "⑤ 异动全景",
+        "insight": "⑥ 行动路线",
+        "history": "⑦ 历史记录",
+    }
+    st.caption(f"🔗 已根据链接打开：**{_tab_labels.get(_resolved_tab, _resolved_tab)}**")
 if st.session_state.get("query_at_latest"):
     st.info(f"📅 最近查询时间：{format_query_datetime(st.session_state['query_at_latest'])}")
 
-(
-    tab_watch,
-    tab_search,
-    tab_plates,
-    tab_movers,
-    tab_panorama,
-    tab_insight,
-    tab_history,
-) = st.tabs(
-    [
-        "① 分析工作台",
-        "② 搜索添加",
-        "③ 板块行情",
-        "④ 全球股市",
-        "⑤ 异动全景",
-        "⑥ 行动路线",
-        "⑦ 历史记录",
-    ]
+render_main_tabs(
+    {
+        "watch": watch.render,
+        "search": search.render,
+        "plates": plates.render,
+        "movers": movers.render,
+        "panorama": panorama.render,
+        "insight": insight.render,
+        "history": history.render,
+    }
 )
-
-with tab_search:
-    search.render()
-with tab_watch:
-    watch.render()
-with tab_plates:
-    plates.render()
-with tab_movers:
-    movers.render()
-with tab_panorama:
-    panorama.render()
-with tab_insight:
-    insight.render()
-with tab_history:
-    history.render()
 
 if st.session_state.get("_history_dirty"):
     persist_session()

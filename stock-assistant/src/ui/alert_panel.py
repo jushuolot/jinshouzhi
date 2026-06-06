@@ -1,19 +1,23 @@
-"""自选股阈值提醒 UI（P13）。"""
+"""自选股阈值提醒 UI（P13）+ Webhook 推送（P17）。"""
 
 from __future__ import annotations
 
 import streamlit as st
 
 from src.analysis.watch_alerts import alerts_to_markdown, compute_watch_alerts
+from src.notify.alert_push import maybe_push_alerts_if_configured, push_alerts_webhook
+from src.notify.webhook import get_webhook_url
 from src.storage.history_store import mark_dirty
 
 
 def render_alert_panel(*, watchlist: list[dict], snapshots: dict) -> list:
+    alerts: list = []
     with st.expander("🔔 智能提醒（涨跌幅 / 评分）", expanded=False):
         st.session_state.setdefault("alert_pct_up", 5.0)
         st.session_state.setdefault("alert_pct_down", -5.0)
         st.session_state.setdefault("alert_score_low", 40.0)
         st.session_state.setdefault("alert_score_high", 65.0)
+        st.session_state.setdefault("push_webhook_on_alerts", False)
         c1, c2, c3, c4 = st.columns(4)
         with c1:
             st.number_input("涨幅≥%", key="alert_pct_up", step=0.5)
@@ -31,6 +35,9 @@ def render_alert_panel(*, watchlist: list[dict], snapshots: dict) -> list:
             score_low=float(st.session_state.alert_score_low),
             score_high=float(st.session_state.alert_score_high),
         )
+        wh = get_webhook_url()
+        if wh:
+            st.checkbox("提醒触发时自动推送 Webhook", key="push_webhook_on_alerts")
         if not alerts:
             st.caption("当前无触发项；请先「刷新全部摘要」。")
         else:
@@ -46,7 +53,20 @@ def render_alert_panel(*, watchlist: list[dict], snapshots: dict) -> list:
                 key="alert_md_dl",
                 use_container_width=True,
             )
+            if wh:
+                if st.button("推送到 Webhook", key="alert_push_webhook", use_container_width=True):
+                    with st.spinner("推送提醒中…"):
+                        ok, msg = push_alerts_webhook(alerts)
+                    if ok:
+                        st.success(f"Webhook: ✓ {msg}")
+                    else:
+                        st.warning(f"Webhook: ✗ {msg}")
+            last = st.session_state.get("_last_alert_push_result")
+            if last:
+                st.caption(f"上次提醒推送：{last}")
         if st.button("保存提醒阈值", key="alert_save_prefs", use_container_width=True):
             mark_dirty()
             st.success("阈值已保存（随会话持久化）。")
+    if alerts:
+        maybe_push_alerts_if_configured(alerts)
     return alerts

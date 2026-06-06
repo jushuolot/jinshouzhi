@@ -23,6 +23,7 @@ from src.providers.eastmoney import KLINE_PERIOD_UI, is_intraday_kline
 from src.providers.news_feed import fetch_aggregated_news
 from src.storage.history_store import mark_dirty
 from src.storage.serialize import route_report_from_session
+from src.analysis.compare_stocks import compare_table_rows, compare_to_markdown, compare_two_stocks
 from src.ui.alert_panel import render_alert_panel
 from src.ui.auto_refresh import auto_refresh_fragment, render_auto_refresh_controls
 from src.ui.currency_tool import render_floating_currency_tool
@@ -174,6 +175,51 @@ def render() -> None:
         auto_refresh_fragment(C._fetch_one)
 
         render_alert_panel(watchlist=display_wl, snapshots=snaps)
+
+        if len(display_wl) >= 2:
+            with st.expander("📊 双股对比", expanded=False):
+                codes = [str(x.get("代码") or "") for x in display_wl if x.get("代码")]
+                ca, cb = st.columns(2)
+                with ca:
+                    code_a = st.selectbox("标的 A", options=codes, key="compare_code_a")
+                with cb:
+                    other = [c for c in codes if c != code_a] or codes
+                    code_b = st.selectbox("标的 B", options=other, key="compare_code_b")
+                item_a = next((x for x in display_wl if str(x.get("代码") or "") == code_a), None)
+                item_b = next((x for x in display_wl if str(x.get("代码") or "") == code_b), None)
+                if item_a and item_b and code_a != code_b:
+                    result = compare_two_stocks(
+                        item_a,
+                        item_b,
+                        snaps.get(code_a),
+                        snaps.get(code_b),
+                    )
+                    tbl = pd.DataFrame(compare_table_rows(result))
+                    st.dataframe(tbl, use_container_width=True, hide_index=True)
+                    if result.pct_delta is not None or result.score_delta is not None:
+                        hints: list[str] = []
+                        if result.pct_delta is not None:
+                            hints.append(
+                                f"涨跌幅：A 比 B {'高' if result.pct_delta >= 0 else '低'} {abs(result.pct_delta):.2f} 个百分点"
+                            )
+                        if result.score_delta is not None:
+                            hints.append(
+                                f"评分：A 比 B {'高' if result.score_delta >= 0 else '低'} {abs(result.score_delta):.1f} 分"
+                            )
+                        st.caption(" · ".join(hints))
+                    cmp_md = compare_to_markdown(result)
+                    st.download_button(
+                        "下载对比 (.md)",
+                        data=cmp_md.encode("utf-8"),
+                        file_name=f"双股对比_{code_a}_{code_b}.md",
+                        mime="text/markdown",
+                        key="compare_md_dl",
+                        use_container_width=True,
+                    )
+                elif code_a == code_b:
+                    st.info("请选择两只不同标的。")
+                else:
+                    st.caption("请先刷新摘要以填充涨跌幅与评分。")
 
         c_batch, c_batch_hint = st.columns([1, 2])
         with c_batch:

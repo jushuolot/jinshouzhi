@@ -58,9 +58,20 @@ def _tick_auto_refresh(fetch_fn: Callable[..., Any]) -> None:
         st.session_state._auto_refresh_ts = now
         st.session_state._auto_refresh_at = label
         mark_dirty()
+        from src.analysis.watch_alerts import compute_watch_alerts
+        from src.notify.alert_push import maybe_push_alerts_if_configured
         from src.notify.digest_push import maybe_push_after_refresh
 
         maybe_push_after_refresh()
+        alerts = compute_watch_alerts(
+            st.session_state.watchlist,
+            st.session_state.watch_snapshots,
+            pct_up=float(st.session_state.get("alert_pct_up") or 5.0),
+            pct_down=float(st.session_state.get("alert_pct_down") or -5.0),
+            score_low=float(st.session_state.get("alert_score_low") or 40.0),
+            score_high=float(st.session_state.get("alert_score_high") or 65.0),
+        )
+        maybe_push_alerts_if_configured(alerts)
     except Exception as exc:
         st.session_state._auto_refresh_last_error = str(exc)[:120]
 

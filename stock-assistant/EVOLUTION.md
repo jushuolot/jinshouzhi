@@ -21,6 +21,9 @@
 | **P13** | 智能提醒 | ✅ 已完成 | 涨跌幅/评分阈值、提醒 Markdown |
 | **P14** | 运维脚本 | ✅ 已完成 | evolve_verify、health_check_cron、历史 CSV |
 | **P15** | 体验抛光 | ✅ 已完成 | 评分徽章、深链接 tab、v1.9.0 step 150 |
+| **P16** | 双股对比 | ✅ 已完成 | 并排涨跌幅/评分/摘要、对比 Markdown |
+| **P17** | 提醒推送 | ✅ 已完成 | 提醒 Webhook、自动推送、alert_push |
+| **P18** | 体验与 v2 | ✅ 已完成 | ?tab= 自动切换、v2.0.0 step 180 |
 
 ## P1：信息架构（本次）
 
@@ -86,6 +89,12 @@
 - **P11**：页脚 v1.8.0、侧边栏进化日志、snapshot v2
 - **P12**：测试 30+、累计进化 step 120
 
+## P16–P18：对比、提醒推送、v2.0（已完成）
+
+- **P16 双股对比**：工作台「📊 双股对比」expander，并排涨跌幅/评分/一句话/财务摘要，可下载 `.md`
+- **P17 提醒推送**：`push_webhook_on_alerts` 偏好；有触发项时「推送到 Webhook」；自动刷新后可选自动推送（去重）
+- **P18 体验**：`?tab=watch|search|…|1-7` 自动选中主导航；`src/ui/tab_router.py`
+
 ## 进化原则
 
 1. **先可读，再炫功能** — 每轮至少产出一种「能发给同事看的资料」
@@ -122,3 +131,6 @@ streamlit run app.py
 - [x] 智能提醒阈值（🔔 涨跌幅/评分）
 - [x] 历史记录导出 CSV · `scripts/evolve_verify.sh`
 - [x] v1.9.0 · 进化 step 150
+- [x] 双股对比 expander · 下载对比 Markdown
+- [x] 提醒 Webhook 推送 · push_webhook_on_alerts
+- [x] ?tab= 深链接自动打开对应页 · v2.0.0 step 180
