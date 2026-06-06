@@ -74,6 +74,36 @@ function orderToFamilyDto(order) {
   };
 }
 
+/** X-Active-Role 演示校验：header 与 token 用户角色不一致时 403 */
+function userHasRole(userId, role) {
+  const roles = $app.findRecordsByFilter(
+    "user_roles",
+    "user = {:uid} && role = {:role}",
+    "",
+    1,
+    0,
+    { uid: userId, role: role }
+  );
+  if (roles.length === 0) return false;
+  return roles[0].getString("status") === "active" || roles[0].getString("status") === "pending";
+}
+
+function assertActiveRoleHeader(e, expectedRole) {
+  if (!e.auth) return { ok: false, code: 401, body: { message: "需要登录" } };
+  let headerRole = "";
+  try {
+    headerRole = e.request.header.get("X-Active-Role") || "";
+  } catch (_) {}
+  if (!headerRole) return { ok: true };
+  if (headerRole !== expectedRole) {
+    return { ok: false, code: 403, body: { message: "当前身份无权访问" } };
+  }
+  if (!userHasRole(e.auth.id, headerRole)) {
+    return { ok: false, code: 403, body: { message: "身份不匹配" } };
+  }
+  return { ok: true };
+}
+
 routerAdd("GET", "/api/nuanban/ping", (e) => {
   return e.json(200, { ok: true, hooks: true, hasToString: typeof toString });
 });
@@ -465,6 +495,8 @@ routerAdd("POST", "/api/nuanban/student/order-requests/{id}/reject", (e) => {
 });
 
 routerAdd("POST", "/api/nuanban/family/orders/{id}/pay", (e) => {
+  const rc = assertActiveRoleHeader(e, "family");
+  if (!rc.ok) return e.json(rc.code, rc.body);
   if (!e.auth) return e.json(401, { message: "需要登录" });
   const orderId = e.request.pathValue("id");
   let order;
@@ -564,6 +596,8 @@ routerAdd("POST", "/api/nuanban/family/outdoor/{id}/approve", (e) => {
 });
 
 routerAdd("GET", "/api/nuanban/student/orders/pending", (e) => {
+  const rc = assertActiveRoleHeader(e, "student");
+  if (!rc.ok) return e.json(rc.code, rc.body);
   try {
     const records = $app.findRecordsByFilter(
       "orders",
@@ -583,6 +617,8 @@ routerAdd("GET", "/api/nuanban/student/orders/pending", (e) => {
 });
 
 routerAdd("GET", "/api/nuanban/student/profile", (e) => {
+  const rc = assertActiveRoleHeader(e, "student");
+  if (!rc.ok) return e.json(rc.code, rc.body);
   const auth = e.auth;
   if (!auth) return e.json(401, { message: "需要登录" });
   let schoolName = "";
@@ -794,6 +830,8 @@ routerAdd("GET", "/api/nuanban/student/stats", (e) => {
 });
 
 routerAdd("GET", "/api/nuanban/family/stats", (e) => {
+  const rc = assertActiveRoleHeader(e, "family");
+  if (!rc.ok) return e.json(rc.code, rc.body);
   const auth = e.auth;
   if (!auth) return e.json(401, { message: "需要登录" });
   const bindings = $app.findRecordsByFilter(
@@ -858,6 +896,8 @@ routerAdd("GET", "/api/nuanban/family/stats", (e) => {
 });
 
 routerAdd("GET", "/api/nuanban/elder/stats", (e) => {
+  const rc = assertActiveRoleHeader(e, "elder");
+  if (!rc.ok) return e.json(rc.code, rc.body);
   const auth = e.auth;
   if (!auth) return e.json(401, { message: "需要登录" });
   let elderProfileId = null;
@@ -1247,6 +1287,8 @@ routerAdd("GET", "/api/nuanban/student/service-logs", (e) => {
 });
 
 routerAdd("GET", "/api/nuanban/family/orders/{id}", (e) => {
+  const rc = assertActiveRoleHeader(e, "family");
+  if (!rc.ok) return e.json(rc.code, rc.body);
   const auth = e.auth;
   if (!auth) return e.json(401, { message: "需要登录" });
   const orderId = e.request.pathValue("id");
@@ -1257,4 +1299,52 @@ routerAdd("GET", "/api/nuanban/family/orders/{id}", (e) => {
     return e.json(404, { message: "订单不存在" });
   }
   return e.json(200, orderToFamilyDto(order));
+});
+
+routerAdd("GET", "/api/nuanban/student/settlements", (e) => {
+  const rc = assertActiveRoleHeader(e, "student");
+  if (!rc.ok) return e.json(rc.code, rc.body);
+  if (!e.auth) return e.json(401, { message: "需要登录" });
+  return e.json(200, {
+    list: [
+      { id: "stl-2025-04", period: "2025-04", amountCents: 24800, status: "paid", paidAt: "2025-05-05" },
+      { id: "stl-2025-05", period: "2025-05", amountCents: 28500, status: "paid", paidAt: "2025-06-01" },
+      { id: "stl-2025-06", period: "2025-06", amountCents: 35200, status: "pending" },
+    ],
+  });
+});
+
+routerAdd("POST", "/api/nuanban/family/packages/purchase", (e) => {
+  const rc = assertActiveRoleHeader(e, "family");
+  if (!rc.ok) return e.json(rc.code, rc.body);
+  const auth = e.auth;
+  if (!auth) return e.json(401, { message: "需要登录" });
+  const raw = toString(e.request.body);
+  const body = raw ? JSON.parse(raw) : {};
+  const pkgId = body.packageId || "pkg-basic";
+  const prices = { "pkg-basic": 19900, "pkg-rehab": 39900, "pkg-family": 59900 };
+  const names = { "pkg-basic": "基础陪护包", "pkg-rehab": "康复关爱包", "pkg-family": "全家安心包" };
+  const amount = prices[pkgId] || 19900;
+  const col = $app.findCollectionByNameOrId("orders");
+  const order = new Record(col);
+  order.set("status", "pending_payment");
+  order.set("payment_status", "unpaid");
+  order.set("amount_cents", amount);
+  order.set("family_user", auth.id);
+  order.set("scheduled_at", new Date(Date.now() + 86400000 * 3).toISOString());
+  try {
+    const elders = $app.findRecordsByFilter("elders", "enabled = true", "", 1, 0);
+    if (elders.length > 0) order.set("elder", elders[0].id);
+  } catch (_) {}
+  try {
+    const items = $app.findRecordsByFilter("service_items", 'name != ""', "", 1, 0);
+    if (items.length > 0) order.set("service_item", items[0].id);
+  } catch (_) {}
+  $app.save(order);
+  return e.json(200, {
+    ok: true,
+    orderId: order.id,
+    status: "pending_payment",
+    packageName: names[pkgId] || "服务包",
+  });
 });

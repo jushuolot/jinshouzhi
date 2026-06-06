@@ -23,6 +23,19 @@
     </view>
     <view v-if="!loading && !(income?.records?.length)" class="empty">暂无已完成收入记录</view>
 
+    <view class="section-title">结算记录（演示）</view>
+    <view v-for="s in settlements" :key="s.id" class="record settlement">
+      <view class="record-main">
+        <text class="svc">{{ s.period }} 月结</text>
+        <text class="elder">{{ s.status === 'paid' ? '已打款' : '待结算' }}</text>
+        <text v-if="s.paidAt" class="time">打款日 {{ s.paidAt }}</text>
+      </view>
+      <text class="amount" :class="{ pending: s.status === 'pending' }">
+        ¥{{ (s.amountCents / 100).toFixed(2) }}
+      </text>
+    </view>
+    <view v-if="!loading && !settlements.length" class="empty">暂无结算记录</view>
+
     <RoleTabBar role="student" current="/package-student/profile" />
   </view>
 </template>
@@ -31,10 +44,16 @@
 import { ref } from 'vue';
 import { onShow } from '@dcloudio/uni-app';
 import RoleTabBar from '../components/RoleTabBar.vue';
-import { fetchStudentIncome, type StudentIncome } from '../api/student';
+import {
+  fetchStudentIncome,
+  fetchStudentSettlements,
+  type SettlementRecord,
+  type StudentIncome,
+} from '../api/student';
 import { pbErrorMessage } from '../utils/request';
 
 const income = ref<StudentIncome | null>(null);
+const settlements = ref<SettlementRecord[]>([]);
 const loading = ref(false);
 
 function formatTime(iso: string) {
@@ -46,9 +65,12 @@ function formatTime(iso: string) {
 async function reload() {
   loading.value = true;
   try {
-    income.value = await fetchStudentIncome();
+    const [inc, stl] = await Promise.all([fetchStudentIncome(), fetchStudentSettlements()]);
+    income.value = inc;
+    settlements.value = stl;
   } catch (e) {
     income.value = null;
+    settlements.value = [];
     uni.showToast({ title: pbErrorMessage(e), icon: 'none' });
   } finally {
     loading.value = false;
@@ -131,6 +153,12 @@ onShow(reload);
   font-size: 32rpx;
   font-weight: 600;
   color: #2e7d32;
+}
+.amount.pending {
+  color: #c45c26;
+}
+.settlement {
+  margin-top: 0;
 }
 .empty {
   text-align: center;

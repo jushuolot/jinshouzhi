@@ -22,6 +22,10 @@ export function guardPackageRoute(path: string): boolean {
   }
   if (need === 'student') {
     const st = roleStore.roles.find((r) => r.role === 'student');
+    if (st?.status === 'pending') {
+      uni.reLaunch({ url: '/pages/common/student-pending' });
+      return false;
+    }
     if (st?.status !== 'active') {
       uni.showToast({ title: '学生资质审核中', icon: 'none' });
       return false;

@@ -48,10 +48,16 @@ export function pbErrorMessage(err: unknown): string {
 }
 
 export function request<T>(options: UniApp.RequestOptions): Promise<T> {
-  if (isDemoMockEnabled()) {
-    return demoMockRequest<T>(options);
-  }
   const role = useRoleStore();
+  const headers = {
+    'Content-Type': 'application/json',
+    ...(options.header || {}),
+    ...(role.token ? { Authorization: `Bearer ${role.token}` } : {}),
+    ...(role.activeRole ? { 'X-Active-Role': role.activeRole } : {}),
+  };
+  if (isDemoMockEnabled()) {
+    return demoMockRequest<T>({ ...options, header: headers });
+  }
   const url = options.url.startsWith('http') ? options.url : `${API_BASE}${options.url}`;
 
   return new Promise((resolve, reject) => {
@@ -59,12 +65,7 @@ export function request<T>(options: UniApp.RequestOptions): Promise<T> {
       ...options,
       url,
       timeout: 15000,
-      header: {
-        'Content-Type': 'application/json',
-        ...(options.header || {}),
-        ...(role.token ? { Authorization: `Bearer ${role.token}` } : {}),
-        ...(role.activeRole ? { 'X-Active-Role': role.activeRole } : {}),
-      },
+      header: headers,
       success: (res) => {
         if (res.statusCode >= 200 && res.statusCode < 300) {
           resolve(res.data as T);

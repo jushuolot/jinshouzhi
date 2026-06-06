@@ -1,14 +1,53 @@
 <template>
   <view class="page">
     <view v-if="!orderId" class="hint">请从「订单」Tab 进入待支付订单</view>
-    <view v-else class="card">
-      <text class="badge">待支付</text>
-      <text class="svc">{{ serviceName || '陪护服务' }}</text>
-      <text class="elder">服务对象：{{ elderName || '—' }}</text>
-      <text v-if="scheduledAt" class="meta">预约：{{ formatTime(scheduledAt) }}</text>
-      <text class="price">应付 ¥{{ (amountCents / 100).toFixed(0) }}</text>
-    </view>
-    <button class="btn" :loading="loading" :disabled="!orderId" @tap="pay">模拟支付</button>
+
+    <template v-else>
+      <view v-if="phase === 'success'" class="success-card">
+        <text class="success-icon">✓</text>
+        <text class="success-title">支付成功</text>
+        <text class="success-desc">订单已进入待接单池，陪护同学将尽快响应</text>
+        <button class="btn" @tap="goOrders">查看订单</button>
+      </view>
+
+      <template v-else>
+        <view class="card">
+          <text class="badge">待支付</text>
+          <text class="svc">{{ serviceName || '陪护服务' }}</text>
+          <text class="elder">服务对象：{{ elderName || '—' }}</text>
+          <text v-if="scheduledAt" class="meta">预约：{{ formatTime(scheduledAt) }}</text>
+          <view class="amount-row">
+            <text class="amount-label">应付金额</text>
+            <text class="price">¥{{ (amountCents / 100).toFixed(2) }}</text>
+          </view>
+        </view>
+
+        <view v-if="phase === 'paying'" class="wx-pay-overlay">
+          <view class="wx-pay-box">
+            <text class="wx-logo">微信支付</text>
+            <view class="wx-spinner" />
+            <text class="wx-hint">正在支付…</text>
+          </view>
+        </view>
+
+        <view v-if="phase === 'idle'" class="pay-methods">
+          <view class="method active">
+            <text class="method-icon">💚</text>
+            <text>微信支付（演示）</text>
+          </view>
+        </view>
+
+        <button
+          v-if="phase !== 'paying'"
+          class="btn"
+          :loading="loading"
+          :disabled="phase === 'paying'"
+          @tap="confirmPay"
+        >
+          {{ phase === 'idle' ? '确认支付 ¥' + (amountCents / 100).toFixed(2) : '微信支付' }}
+        </button>
+      </template>
+    </template>
   </view>
 </template>
 
@@ -25,6 +64,7 @@ const elderName = ref('');
 const serviceName = ref('');
 const scheduledAt = ref('');
 const loading = ref(false);
+const phase = ref<'idle' | 'confirming' | 'paying' | 'success'>('idle');
 
 onLoad(async (q) => {
   orderId.value = (q?.id as string) || '';
@@ -46,34 +86,198 @@ onLoad(async (q) => {
 
 function formatTime(iso: string) {
   try {
-    return new Date(iso).toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    return new Date(iso).toLocaleString('zh-CN', {
+      month: 'numeric',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
   } catch {
     return iso;
   }
 }
 
+function confirmPay() {
+  if (phase.value === 'idle') {
+    phase.value = 'confirming';
+    uni.showModal({
+      title: '确认支付',
+      content: `使用微信支付 ¥${(amountCents.value / 100).toFixed(2)}？（演示，不产生真实扣款）`,
+      success: (res) => {
+        if (res.confirm) pay();
+        else phase.value = 'idle';
+      },
+    });
+    return;
+  }
+  pay();
+}
+
 async function pay() {
   if (!orderId.value) return;
+  phase.value = 'paying';
   loading.value = true;
   try {
+    await new Promise((r) => setTimeout(r, 1500));
     await payOrder(orderId.value);
-    uni.showToast({ title: '支付成功', icon: 'success' });
-    setTimeout(() => uni.navigateBack(), 800);
+    phase.value = 'success';
   } catch (e) {
+    phase.value = 'idle';
     uni.showToast({ title: pbErrorMessage(e), icon: 'none' });
   } finally {
     loading.value = false;
   }
 }
+
+function goOrders() {
+  uni.redirectTo({ url: '/package-family/order/list' });
+}
 </script>
 
 <style scoped>
-.page { padding: 48rpx; }
-.hint { color: #999; text-align: center; }
-.card { padding: 32rpx; background: #fff; border-radius: 16rpx; }
-.badge { display: inline-block; padding: 4rpx 16rpx; font-size: 22rpx; color: #c45c26; background: #ffe8d9; border-radius: 8rpx; }
-.svc { display: block; margin-top: 20rpx; font-size: 36rpx; font-weight: 600; }
-.elder, .meta { display: block; margin-top: 12rpx; color: #666; font-size: 28rpx; }
-.price { display: block; margin-top: 24rpx; font-size: 40rpx; color: #c45c26; font-weight: 600; }
-.btn { margin-top: 48rpx; background: #c45c26; color: #fff; }
+.page {
+  padding: 48rpx;
+  min-height: 100vh;
+  background: #f5f5f5;
+}
+.hint {
+  color: #999;
+  text-align: center;
+}
+.card {
+  padding: 32rpx;
+  background: #fff;
+  border-radius: 16rpx;
+}
+.badge {
+  display: inline-block;
+  padding: 4rpx 16rpx;
+  font-size: 22rpx;
+  color: #c45c26;
+  background: #ffe8d9;
+  border-radius: 8rpx;
+}
+.svc {
+  display: block;
+  margin-top: 20rpx;
+  font-size: 36rpx;
+  font-weight: 600;
+}
+.elder,
+.meta {
+  display: block;
+  margin-top: 12rpx;
+  color: #666;
+  font-size: 28rpx;
+}
+.amount-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-top: 32rpx;
+  padding-top: 24rpx;
+  border-top: 1rpx solid #f0f0f0;
+}
+.amount-label {
+  font-size: 28rpx;
+  color: #666;
+}
+.price {
+  font-size: 40rpx;
+  color: #c45c26;
+  font-weight: 600;
+}
+.pay-methods {
+  margin-top: 32rpx;
+  background: #fff;
+  border-radius: 12rpx;
+  padding: 8rpx 0;
+}
+.method {
+  display: flex;
+  align-items: center;
+  padding: 24rpx;
+  font-size: 28rpx;
+}
+.method.active {
+  color: #07c160;
+}
+.method-icon {
+  margin-right: 16rpx;
+  font-size: 32rpx;
+}
+.btn {
+  margin-top: 48rpx;
+  background: #07c160;
+  color: #fff;
+  border-radius: 12rpx;
+}
+.wx-pay-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+.wx-pay-box {
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 48rpx 64rpx;
+  text-align: center;
+}
+.wx-logo {
+  display: block;
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #07c160;
+}
+.wx-spinner {
+  width: 64rpx;
+  height: 64rpx;
+  margin: 32rpx auto;
+  border: 4rpx solid #e0e0e0;
+  border-top-color: #07c160;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.wx-hint {
+  font-size: 26rpx;
+  color: #888;
+}
+.success-card {
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 64rpx 32rpx;
+  text-align: center;
+}
+.success-icon {
+  display: block;
+  width: 96rpx;
+  height: 96rpx;
+  line-height: 96rpx;
+  margin: 0 auto;
+  font-size: 48rpx;
+  color: #fff;
+  background: #07c160;
+  border-radius: 50%;
+}
+.success-title {
+  display: block;
+  margin-top: 32rpx;
+  font-size: 40rpx;
+  font-weight: 600;
+}
+.success-desc {
+  display: block;
+  margin-top: 16rpx;
+  font-size: 28rpx;
+  color: #888;
+}
 </style>

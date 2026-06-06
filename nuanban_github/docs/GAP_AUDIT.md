@@ -38,8 +38,8 @@
 
 | 页面 | 状态 | 备注 |
 |------|------|------|
-| launch / login / role-select / register | ✅ | login 含 student2、协议/派单链接 |
-| agreement / org-dispatch | ✅ | Phase 6 注册 |
+| launch / login / role-select / register | ✅ | login 含 student2/3、微信演示登录 |
+| agreement / org-dispatch / admin-hub / school-coop / student-pending | ✅ | Phase 10 注册 |
 
 ### 2.2 老人分包 package-elder
 
@@ -56,7 +56,8 @@
 | 页面 | 状态 | 备注 |
 |------|------|------|
 | home | 🟡→✅ | 绑定老人、待支付、外出审批、**服务包购买** |
-| package/buy | ✅ | 演示占位 |
+| package/buy | ✅ | SERVICE_PACKAGES + 创建待支付订单 |
+| order/pay | ✅ | 微信支付演示 UX（1.5s + 成功态） |
 | order/list / pay | ✅ | |
 | outdoor/approve | 🟡→✅ | 本次 UI 完善 |
 | profile | ✅ | |
@@ -71,7 +72,7 @@
 | order/pending | 🟡→✅ | 富订单卡片 + **scroll-view** |
 | order/request | ✅ | 时间轴 + 接单/签到/完成 |
 | order/active | ✅ | 服务中列表 |
-| income | ✅ | 收入明细页 |
+| income | ✅ | 收入明细 + **结算记录** |
 | profile | ✅ | 含 **编辑资料** 入口 |
 | profile/edit | ✅ | 学校 / 显示名 PATCH |
 
@@ -104,8 +105,13 @@
 | 家属订单详情 | — | family/order/detail | ✅ |
 | 学校合作过滤 | 二期 | discover + ORG_SCHOOL_PARTNERS | ✅ |
 | 老人 SOS 落库 | 产品目标 | PB + mock + 待办 | ✅ |
-| 微信支付实装 | 上线后 | stub | ❌ |
-| X-Active-Role 服务端校验 | 二期 | 客户端 only | ❌ |
+| 微信支付实装 | 上线后 | pay.vue 演示 UX + mock | ✅ demo |
+| 微信登录实装 | 上线后 | login 演示流程 + 身份选择 | ✅ demo |
+| X-Active-Role 服务端校验 | 二期 | PB hooks + demo-mock 宽松校验 | ✅ demo |
+| 学生审核守卫 pending | 二期 | student-pending 页 + student3 | ✅ demo |
+| 服务包购买 | 二期 | package/buy + POST purchase | ✅ demo |
+| 结算展示 | 二期 | income 页 + GET settlements | ✅ demo |
+| Admin 运营后台 | 上线后 | admin-hub + school-coop 只读 | ✅ demo |
 
 ---
 
@@ -120,15 +126,15 @@
 | outdoor_approvals 集合 | 🟡→✅ | pbList mock |
 | student/elder/family stats | ✅ | |
 | PATCH profile / org dispatch | ✅ | Phase 6 |
+| packages/purchase / student/settlements | ✅ | Phase 10 |
 
 ---
 
 ## 5. 仍延期（不阻塞零成本演示）
 
-- 真实微信登录 / 支付
+- 真实微信登录 / 支付（商户资质）
 - 微信原生扫码（当前为绑定码/免费 QR 图 + 链接）
-- Admin 运营后台（派单由 org-dispatch 页替代）
-- X-Active-Role 服务端校验
+- 完整 Admin 运营后台写库（派单/合作由 admin-hub 演示页替代）
 
 ---
 

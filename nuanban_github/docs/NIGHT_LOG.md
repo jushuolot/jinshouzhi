@@ -2,7 +2,19 @@
 
 > 您休息期间已推送 GitHub，Actions 会自动更新公网演示。
 
-## 本轮（Phase 9 · discover / profile polish）
+## 本轮（Phase 0 + Phase 10）
+
+**自我进化**
+1. `AGENTS.md` · `AGENT_EVOLUTION.md` · `agent-ship.sh` · `check-routes.mjs` · Cursor 规则
+
+**Phase 10 mock（不考虑预算/资质）**
+1. 微信登录演示流程（快速登录 / 选身份）
+2. 家属支付页 mock 微信支付动画 + 成功态
+3. 服务包购买 → 待支付订单
+4. `admin-hub` / `school-coop` / `student-pending` + student3 审核账号
+5. 收入页结算记录 · X-Active-Role demo 校验
+
+## 上一轮（Phase 9 · discover / profile polish）
 
 1. **discover/list** 列表 scroll-view（与 pending 一致，长列表可滚动）
 2. **地图模式** marker 富化：老人姓名 label/callout、合作/非合作配色与图例

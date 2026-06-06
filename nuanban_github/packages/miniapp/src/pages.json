@@ -5,7 +5,10 @@
     { "path": "pages/common/role-select", "style": { "navigationBarTitleText": "选择身份" } },
     { "path": "pages/common/register", "style": { "navigationBarTitleText": "注册" } },
     { "path": "pages/common/agreement", "style": { "navigationBarTitleText": "用户协议" } },
-    { "path": "pages/common/org-dispatch", "style": { "navigationBarTitleText": "机构派单" } }
+    { "path": "pages/common/org-dispatch", "style": { "navigationBarTitleText": "机构派单" } },
+    { "path": "pages/common/admin-hub", "style": { "navigationBarTitleText": "运营演示" } },
+    { "path": "pages/common/school-coop", "style": { "navigationBarTitleText": "学校合作" } },
+    { "path": "pages/common/student-pending", "style": { "navigationBarTitleText": "审核中" } }
   ],
   "subPackages": [
     {

@@ -15,9 +15,40 @@ export const DEMO_SCHOOLS = ['示范大学', '城东师范学院', '医科大学
 
 export const DEMO_USERS = {
   student: { id: 'user-student', email: 'student1@test.nuanban.dev', nickname: '林同学' },
+  studentPending: { id: 'user-student-pending', email: 'student3@test.nuanban.dev', nickname: '待审同学' },
   family: { id: 'user-family', email: 'family1@test.nuanban.dev', nickname: '家属1' },
   elder: { id: 'user-elder', email: 'elder1@test.nuanban.dev', nickname: '老人1' },
 } as const;
+
+/** 家属可购服务包 — 演示数据 */
+export interface ServicePackage {
+  id: string;
+  name: string;
+  desc: string;
+  priceYuan: number;
+  sessionsPerMonth: number;
+}
+
+export const SERVICE_PACKAGES: ServicePackage[] = [
+  { id: 'pkg-basic', name: '基础陪护包', desc: '每月 4 次聊天陪伴', priceYuan: 199, sessionsPerMonth: 4 },
+  { id: 'pkg-rehab', name: '康复关爱包', desc: '每月 2 次康复协助 + 2 次生活陪护', priceYuan: 399, sessionsPerMonth: 4 },
+  { id: 'pkg-family', name: '全家安心包', desc: '含外出陪同审批优先通道', priceYuan: 599, sessionsPerMonth: 6 },
+];
+
+/** 学生结算记录 — 演示数据 */
+export interface SettlementRecord {
+  id: string;
+  period: string;
+  amountCents: number;
+  status: 'pending' | 'paid';
+  paidAt?: string;
+}
+
+export const SETTLEMENTS: SettlementRecord[] = [
+  { id: 'stl-2025-04', period: '2025-04', amountCents: 24800, status: 'paid', paidAt: '2025-05-05' },
+  { id: 'stl-2025-05', period: '2025-05', amountCents: 28500, status: 'paid', paidAt: '2025-06-01' },
+  { id: 'stl-2025-06', period: '2025-06', amountCents: 35200, status: 'pending' },
+];
 
 export type RichOrderStatus =
   | 'pending_accept'

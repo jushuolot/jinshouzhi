@@ -143,3 +143,11 @@ export async function getFamilyOrder(orderId: string) {
     method: 'GET',
   });
 }
+
+export async function purchaseFamilyPackage(packageId: string) {
+  return request<{ ok: boolean; orderId: string; status: string; packageName?: string }>({
+    url: '/nuanban/family/packages/purchase',
+    method: 'POST',
+    data: { packageId },
+  });
+}

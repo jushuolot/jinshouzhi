@@ -8,6 +8,8 @@ import {
   DEMO_USERS,
   normalizeElderId,
   orgNameById,
+  SERVICE_PACKAGES,
+  SETTLEMENTS,
   type RichOrder,
   type RichServiceLog,
 } from './demo-rich-data';
@@ -163,24 +165,39 @@ function roleFromEmail(email: string): RoleKey {
   return 'student';
 }
 
-function loginByEmail(email: string) {
-  const role = roleFromEmail(email);
-  const user =
-    email.toLowerCase().includes('student2')
-      ? { id: USERS.student.id, email, nickname: '周同学' }
-      : USERS[role];
-  if (email.toLowerCase().includes('student2')) {
+function loginByEmail(email: string, pickRole?: RoleKey) {
+  const em = email.toLowerCase();
+  const role = pickRole || roleFromEmail(email);
+  let user: { id: string; email: string; nickname: string };
+  let studentStatus = 'active';
+
+  if (em.includes('student3')) {
+    user = { ...DEMO_USERS.studentPending, email };
+    studentProfileState.displayName = '待审同学';
+    studentProfileState.schoolName = '示范大学';
+    studentStatus = 'pending';
+  } else if (em.includes('student2')) {
+    user = { id: USERS.student.id, email, nickname: '周同学' };
     studentProfileState.displayName = '周同学';
     studentProfileState.schoolName = '城东师范学院';
-  } else if (role === 'student') {
-    studentProfileState.displayName = '林同学';
-    studentProfileState.schoolName = '示范大学';
+  } else {
+    user =
+      role === 'student'
+        ? { ...USERS.student, email }
+        : role === 'family'
+          ? { ...USERS.family, email }
+          : { ...USERS.elder, email };
+    if (role === 'student') {
+      studentProfileState.displayName = '林同学';
+      studentProfileState.schoolName = '示范大学';
+    }
   }
+
   const roles: { role: RoleKey; status: string; elderProfileId?: string | null }[] = [
     {
       role,
-      status: 'active',
-      elderProfileId: role === 'elder' ? 'elder-zhang' : null, // 兼容旧演示账号，映射 elder-1
+      status: role === 'student' ? studentStatus : 'active',
+      elderProfileId: role === 'elder' ? 'elder-zhang' : null,
     },
   ];
   return {
@@ -189,6 +206,26 @@ function loginByEmail(email: string) {
     roles,
     activeRole: role,
   };
+}
+
+/** 演示模式：宽松校验 X-Active-Role（仅关键端点），返回错误文案或 null */
+function assertDemoActiveRole(
+  options: UniApp.RequestOptions,
+  path: string,
+  expectedRole: RoleKey,
+): string | null {
+  const hdr = (options.header || {}) as Record<string, string>;
+  const active = hdr['X-Active-Role'];
+  if (!active) return null;
+  const strictPaths = [
+    '/nuanban/student/orders/pending',
+    '/nuanban/family/stats',
+    '/nuanban/elder/stats',
+  ];
+  if (strictPaths.some((p) => path === p || path.startsWith(p)) && active !== expectedRole) {
+    return '身份不匹配';
+  }
+  return null;
 }
 
 function pbList<T>(items: T[]) {
@@ -316,10 +353,42 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
   }
 
   if (method === 'POST' && path === '/nuanban/wx-login') {
-    return delay(loginByEmail('student1@test.nuanban.dev') as T);
+    const pickRole = data.role as RoleKey | undefined;
+    const email =
+      pickRole === 'family'
+        ? 'family1@test.nuanban.dev'
+        : pickRole === 'elder'
+          ? 'elder1@test.nuanban.dev'
+          : 'student1@test.nuanban.dev';
+    return delay(loginByEmail(email, pickRole) as T);
   }
 
+  if (method === 'GET' && path === '/nuanban/student/settlements') {
+    const roleErr = assertDemoActiveRole(options, path, 'student');
+    if (roleErr) return Promise.reject({ message: roleErr, statusCode: 403 });
+    return delay({ list: SETTLEMENTS } as T);
+  }
+  if (method === 'POST' && path === '/nuanban/family/packages/purchase') {
+    const roleErr = assertDemoActiveRole(options, path, 'family');
+    if (roleErr) return Promise.reject({ message: roleErr, statusCode: 403 });
+    const pkgId = String(data.packageId || SERVICE_PACKAGES[0].id);
+    const pkg = SERVICE_PACKAGES.find((p) => p.id === pkgId) || SERVICE_PACKAGES[0];
+    const id = `order-pkg-${Date.now()}`;
+    state.orders.push({
+      id,
+      elder: 'elder-1',
+      service_item: 'svc-chat',
+      status: 'pending_payment',
+      amount_cents: pkg.priceYuan * 100,
+      payment_status: 'unpaid',
+      family_user: USERS.family.id,
+      scheduled_at: new Date(Date.now() + 86400000 * 3).toISOString(),
+    });
+    return delay({ ok: true, orderId: id, status: 'pending_payment', packageName: pkg.name } as T);
+  }
   if (method === 'GET' && path === '/nuanban/student/profile') {
+    const roleErr = assertDemoActiveRole(options, path, 'student');
+    if (roleErr) return Promise.reject({ message: roleErr, statusCode: 403 });
     return delay({
       nickname: USERS.student.nickname,
       email: USERS.student.email,
@@ -371,6 +440,8 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
     return delay({ list: state.serviceLogs } as T);
   }
   if (method === 'GET' && path === '/nuanban/student/orders/pending') {
+    const roleErr = assertDemoActiveRole(options, path, 'student');
+    if (roleErr) return Promise.reject({ message: roleErr, statusCode: 403 });
     const list = state.orders.filter((o) => o.status === 'pending_accept').map(pendingOrderDto);
     return delay({ list } as T);
   }
@@ -495,6 +566,8 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
   }
 
   if (method === 'GET' && path === '/nuanban/family/stats') {
+    const roleErr = assertDemoActiveRole(options, path, 'family');
+    if (roleErr) return Promise.reject({ message: roleErr, statusCode: 403 });
     const pendingPay = state.orders.filter((o) => o.status === 'pending_payment').length;
     const outdoorPending = state.outdoorApprovals.filter((a) => a.status === 'pending_family').length;
     const sosPending = state.sosAlerts.filter((a) => a.status === 'active').length;
@@ -560,6 +633,8 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
   }
 
   if (method === 'GET' && path === '/nuanban/elder/stats') {
+    const roleErr = assertDemoActiveRole(options, path, 'elder');
+    if (roleErr) return Promise.reject({ message: roleErr, statusCode: 403 });
     const elderId = normalizeElderId('elder-zhang', ELDERS);
     const elderOrders = state.orders.filter((o) => o.elder === elderId);
     const elder = elderById(elderId);

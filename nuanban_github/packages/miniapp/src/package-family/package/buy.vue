@@ -1,29 +1,50 @@
 <template>
   <view class="page">
-    <text class="title">服务包（演示）</text>
-    <text class="sub">零成本占位：正式版对接机构套餐与家属购买</text>
+    <text class="title">服务包购买</text>
+    <text class="sub">演示购买流程 · 产生待支付订单（不产生真实扣款）</text>
     <view v-for="pkg in packages" :key="pkg.id" class="card">
       <text class="name">{{ pkg.name }}</text>
       <text class="desc">{{ pkg.desc }}</text>
+      <text class="meta">每月 {{ pkg.sessionsPerMonth }} 次服务</text>
       <text class="price">¥{{ pkg.priceYuan }}/月</text>
-      <button class="btn-sm" size="mini" @tap="buy(pkg.name)">模拟购买</button>
+      <button class="btn-sm" size="mini" :loading="buying === pkg.id" @tap="buy(pkg.id)">
+        模拟购买
+      </button>
     </view>
   </view>
 </template>
 
 <script setup lang="ts">
-const packages = [
-  { id: 'p1', name: '基础陪护包', desc: '每月 4 次聊天陪伴', priceYuan: 199 },
-  { id: 'p2', name: '康复关爱包', desc: '每月 2 次康复协助 + 2 次生活陪护', priceYuan: 399 },
-  { id: 'p3', name: '全家安心包', desc: '含外出陪同审批优先通道', priceYuan: 599 },
-];
+import { ref } from 'vue';
+import { purchaseFamilyPackage } from '../../api/family';
+import { SERVICE_PACKAGES } from '../../utils/demo-rich-data';
+import { pbErrorMessage } from '../../utils/request';
 
-function buy(name: string) {
-  uni.showModal({
-    title: '演示购买',
-    content: `「${name}」为演示占位，不产生真实扣款。`,
-    showCancel: false,
-  });
+const packages = SERVICE_PACKAGES;
+const buying = ref('');
+
+async function buy(packageId: string) {
+  const pkg = packages.find((p) => p.id === packageId);
+  if (!pkg) return;
+  buying.value = packageId;
+  try {
+    const res = await purchaseFamilyPackage(packageId);
+    uni.showModal({
+      title: '购买成功（演示）',
+      content: `已创建待支付订单「${res.packageName || pkg.name}」，可前往订单列表完成支付。`,
+      confirmText: '查看订单',
+      cancelText: '留在此页',
+      success: (r) => {
+        if (r.confirm) {
+          uni.navigateTo({ url: '/package-family/order/list' });
+        }
+      },
+    });
+  } catch (e) {
+    uni.showToast({ title: pbErrorMessage(e), icon: 'none' });
+  } finally {
+    buying.value = '';
+  }
 }
 </script>
 
@@ -60,6 +81,12 @@ function buy(name: string) {
   margin-top: 8rpx;
   font-size: 26rpx;
   color: #666;
+}
+.meta {
+  display: block;
+  margin-top: 6rpx;
+  font-size: 24rpx;
+  color: #999;
 }
 .price {
   display: block;

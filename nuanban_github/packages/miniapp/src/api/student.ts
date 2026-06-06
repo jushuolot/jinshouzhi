@@ -149,6 +149,22 @@ export async function fetchStudentIncome() {
   });
 }
 
+export interface SettlementRecord {
+  id: string;
+  period: string;
+  amountCents: number;
+  status: 'pending' | 'paid';
+  paidAt?: string;
+}
+
+export async function fetchStudentSettlements() {
+  const res = await request<{ list: SettlementRecord[] }>({
+    url: '/nuanban/student/settlements',
+    method: 'GET',
+  });
+  return res.list ?? [];
+}
+
 export async function listActiveSosAlerts() {
   const res = await request<{ list: SosAlert[] }>({
     url: '/nuanban/student/sos/active',

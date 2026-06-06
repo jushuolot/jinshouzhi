@@ -15,11 +15,11 @@ export interface LoginResult {
   activeRole?: RoleKey;
 }
 
-export async function loginWithWxCode(code: string): Promise<LoginResult> {
+export async function loginWithWxCode(code: string, role?: RoleKey): Promise<LoginResult> {
   return request<LoginResult>({
     url: '/nuanban/wx-login',
     method: 'POST',
-    data: { code },
+    data: { code, ...(role ? { role } : {}) },
   });
 }
 

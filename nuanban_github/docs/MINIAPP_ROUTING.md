@@ -7,11 +7,14 @@
 ```
 主包 pages/common/
   launch           启动（深链 role/target/id）
-  login            微信登录 + 开发账号登录（含 student2）
+  login            微信登录（演示流程）+ 开发账号（student1/2/3、家属、老人）
   role-select      多角色选择
   register         注册角色（写 user_roles）
   agreement        用户协议与隐私说明
   org-dispatch     机构派单演示（零成本 Mock）
+  admin-hub        运营演示入口（派单 + 学校合作）
+  school-coop      学校合作配置（只读）
+  student-pending  学生资质审核中拦截页
 
 分包 package-elder/
   home
@@ -31,7 +34,7 @@
   order/pay          模拟支付
   order/detail
   outdoor/approve    外出审批
-  package/buy        服务包购买（演示占位）
+  package/buy        服务包购买（mock 下单 → 待支付）
   profile
 
 分包 package-student/

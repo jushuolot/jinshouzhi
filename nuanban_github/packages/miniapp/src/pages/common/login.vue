@@ -20,7 +20,7 @@
     </view>
     <view class="links secondary">
       <text @tap="goAgreement">用户协议</text>
-      <text @tap="goOrgDispatch">机构派单（演示）</text>
+      <text @tap="goAdminHub">运营演示</text>
     </view>
   </view>
 </template>
@@ -36,7 +36,7 @@ import { isDemoMockEnabled } from '../../utils/demo-mock';
 const loading = ref(false);
 const loginHint = computed(() =>
   isDemoMockEnabled()
-    ? '公网演示 · 富数据集（8老人/6同学/20+订单）· 零成本 Mock'
+    ? '公网演示 · 微信登录可走演示流程 · 富数据集零成本 Mock'
     : '本地联调：先 seed-demo；富数据支持列表与压力场景测试'
 );
 const roleStore = useRoleStore();
@@ -44,6 +44,7 @@ const roleStore = useRoleStore();
 const DEV_ACCOUNTS = [
   { label: '学生', email: 'student1@test.nuanban.dev' },
   { label: '学生2', email: 'student2@test.nuanban.dev' },
+  { label: '学生3(审核中)', email: 'student3@test.nuanban.dev' },
   { label: '家属', email: 'family1@test.nuanban.dev' },
   { label: '老人', email: 'elder1@test.nuanban.dev' },
 ] as const;
@@ -60,6 +61,11 @@ function afterLogin(res: Awaited<ReturnType<typeof loginWithWxCode>>) {
     return;
   }
   const active = res.activeRole ?? res.roles.find((r) => r.status === 'active')?.role;
+  const studentRole = res.roles.find((r) => r.role === 'student');
+  if (studentRole?.status === 'pending') {
+    uni.reLaunch({ url: '/pages/common/student-pending' });
+    return;
+  }
   if (active) {
     uni.reLaunch({ url: ROLE_HOME[active] });
   } else if (res.roles.filter((r) => r.status === 'active').length > 1) {
@@ -69,9 +75,40 @@ function afterLogin(res: Awaited<ReturnType<typeof loginWithWxCode>>) {
   }
 }
 
+function showDemoWxRolePicker() {
+  uni.showActionSheet({
+    itemList: ['学生（林同学）', '家属', '老人'],
+    success: async (res) => {
+      const roles: RoleKey[] = ['student', 'family', 'elder'];
+      loading.value = true;
+      try {
+        const pick = roles[res.tapIndex];
+        const result = await loginWithWxCode('demo', pick);
+        afterLogin(result);
+      } catch (e) {
+        uni.showToast({ title: pbErrorMessage(e), icon: 'none' });
+      } finally {
+        loading.value = false;
+      }
+    },
+  });
+}
+
 async function onWxLogin() {
   if (isDemoMockEnabled()) {
-    uni.showToast({ title: '公网演示请用下方开发登录', icon: 'none' });
+    uni.showModal({
+      title: '微信登录（演示）',
+      content: '演示模式模拟微信授权，不产生真实商户登录。请选择登录方式：',
+      confirmText: '快速登录学生',
+      cancelText: '选择身份',
+      success: async (res) => {
+        if (res.confirm) {
+          await onDevLogin('student1@test.nuanban.dev');
+        } else if (res.cancel) {
+          showDemoWxRolePicker();
+        }
+      },
+    });
     return;
   }
   loading.value = true;
@@ -108,8 +145,8 @@ function goAgreement() {
   uni.navigateTo({ url: '/pages/common/agreement' });
 }
 
-function goOrgDispatch() {
-  uni.navigateTo({ url: '/pages/common/org-dispatch' });
+function goAdminHub() {
+  uni.navigateTo({ url: '/pages/common/admin-hub' });
 }
 </script>
 
