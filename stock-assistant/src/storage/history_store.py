@@ -340,6 +340,7 @@ def collect_latest_state() -> dict[str, Any]:
             "alert_score_low": float(st.session_state.get("alert_score_low") or 40.0),
             "alert_score_high": float(st.session_state.get("alert_score_high") or 65.0),
             "watch_groups": dict(st.session_state.get("watch_groups") or {}),
+            "watch_notes": dict(st.session_state.get("watch_notes") or {}),
             "dark_mode": bool(st.session_state.get("dark_mode", True)),
         },
     }
@@ -403,6 +404,8 @@ def apply_latest_to_session(latest: dict[str, Any]) -> None:
             st.session_state[k] = float(prefs[k])
     if prefs.get("watch_groups") is not None:
         st.session_state.watch_groups = dict(prefs["watch_groups"])
+    if prefs.get("watch_notes") is not None:
+        st.session_state.watch_notes = dict(prefs["watch_notes"])
     if "dark_mode" in prefs:
         st.session_state.dark_mode = bool(prefs["dark_mode"])
 

@@ -39,8 +39,9 @@ def render_workflow_sidebar() -> None:
                 "P16 双股对比", "P17 提醒推送", "P18 体验与v2", "P19 自选分组", "P20 历史趋势",
                 "P21 备份导入", "P22 快捷筛选", "P23 定时摘要", "P24 体验抛光",
                 "P25 板块热力图", "P26 批量操作", "P27 文档与v2.3",
+                "P28 笔记标注", "P29 性能缓存", "P30 文档与v2.4",
             ],
-            index=26,
+            index=29,
             disabled=True,
         )
         st.caption(phase)

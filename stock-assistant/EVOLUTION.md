@@ -33,6 +33,9 @@
 | **P25** | 板块热力图 | ✅ 已完成 | sector_heatmap、工作台 🗺 板块分布 |
 | **P26** | 批量操作 | ✅ 已完成 | 多选删除、批量加入分组 |
 | **P27** | 文档与 v2.3 | ✅ 已完成 | EVOLUTION 241–270、v2.3.0 step 270 |
+| **P28** | 笔记/标注 | ✅ 已完成 | user_prefs.watch_notes、工作台笔记 expander |
+| **P29** | 性能/缓存 | ✅ 已完成 | 摘要刷新 60s in-session 缓存 |
+| **P30** | 文档与 v2.4 | ✅ 已完成 | EVOLUTION 271–300、v2.4.0 step 300 |
 
 ## P1：信息架构（本次）
 
@@ -122,6 +125,12 @@
 - **P26 批量操作**：多选标的 → 批量移出自选 / 批量加入分组；`src/util/batch_watch_ops.py`
 - **P27 文档与 v2.3**：EVOLUTION_100 步 241–270；v2.3.0 step 270；README cron `--alerts-only` 说明
 
+## P28–P30：笔记、缓存、v2.4（已完成）
+
+- **P28 笔记/标注**：`user_prefs.watch_notes`；工作台单标的「📝 笔记/标注」expander，持久化到 `user_history.json`
+- **P29 性能/缓存**：`src/util/fetch_cache.py`；同一批 ticker 60 秒内重复「刷新全部摘要」/自动刷新跳过网络拉取
+- **P30 文档与 v2.4**：EVOLUTION_100 步 271–300；v2.4.0 step 300；`evolve_verify.sh` 覆盖 P28–P30 测试
+
 ## 进化原则
 
 1. **先可读，再炫功能** — 每轮至少产出一种「能发给同事看的资料」
@@ -169,3 +178,6 @@ streamlit run app.py
 - [x] 深色模式偏好 · v2.2.0 step 240 · P24
 - [x] 板块分布热力图 lite · 批量自选操作 · P25–P26
 - [x] v2.3.0 · 进化 step 270 · P27
+- [x] 自选笔记/标注 · watch_notes · P28
+- [x] 摘要刷新 in-session 缓存 · fetch_cache · P29
+- [x] v2.4.0 · 进化 step 300 · P30

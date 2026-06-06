@@ -63,6 +63,12 @@ from src.util.batch_watch_ops import (
     batch_remove_from_watchlist,
     codes_in_watchlist,
 )
+from src.util.watch_notes import (
+    get_note,
+    normalize_watch_notes,
+    remove_tickers_notes,
+    set_note,
+)
 from src.util.watchlist_backup import (
     apply_backup_merge,
     backup_to_json_bytes,
@@ -466,6 +472,10 @@ def render() -> None:
                     for code in removed:
                         st.session_state.get("watch_snapshots", {}).pop(code, None)
                         st.session_state.pop(f"brief_md_{code}", None)
+                    st.session_state.watch_notes = remove_tickers_notes(
+                        normalize_watch_notes(st.session_state.get("watch_notes") or {}),
+                        removed,
+                    )
                     mark_dirty()
                     C._save_history(log_kind="watchlist", log_label=f"批量删除 {len(removed)} 只")
                     st.success(f"已移除 {len(removed)} 只自选股。")
@@ -503,6 +513,23 @@ def render() -> None:
         quote_ccy = str(item.get("货币") or "CNY") if item else "CNY"
         if item:
             st.caption(f"报价货币：**{currency_display(quote_ccy)}**")
+            with st.expander("📝 笔记/标注", expanded=False):
+                notes = normalize_watch_notes(st.session_state.get("watch_notes") or {})
+                st.session_state.watch_notes = notes
+                saved = get_note(notes, code)
+                draft = st.text_area(
+                    "本标的备注（持久保存）",
+                    value=saved,
+                    height=88,
+                    key=f"watch_note_{code}",
+                    placeholder="如：目标价、持仓逻辑、下次复查事项…",
+                )
+                if st.button("保存笔记", key=f"watch_note_save_{code}", use_container_width=True):
+                    st.session_state.watch_notes = set_note(notes, code, draft)
+                    mark_dirty()
+                    st.success("笔记已保存。")
+                elif saved:
+                    st.caption(f"已保存：{saved[:120]}{'…' if len(saved) > 120 else ''}")
             render_floating_currency_tool(default_from=quote_ccy, watch_code=code)
             snap_one = (st.session_state.get("watch_snapshots") or {}).get(code) or {}
             one_line = str(snap_one.get("one_line") or "").strip()

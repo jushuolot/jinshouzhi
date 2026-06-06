@@ -14,6 +14,7 @@ from src.analysis.readable_report import build_stock_brief_markdown, one_line_ve
 from src.analysis.signals import ScoreBreakdown, score_stock
 from src.providers.news_feed import fetch_aggregated_news
 from src.ui.pro_chart import last_bar_stats
+from src.util.fetch_cache import get_cached_snapshots, set_cached_snapshots
 from src.util.query_time import format_query_datetime
 
 
@@ -138,9 +139,15 @@ def refresh_watch_snapshots(
     query_label: str = "",
 ) -> dict[str, dict[str, Any]]:
     """批量刷新自选股摘要，返回 code -> snapshot dict。"""
+    batch = watchlist[: max(1, int(max_items))]
+    codes = [str(item.get("代码") or "") for item in batch if item.get("代码")]
+    cached = get_cached_snapshots(codes)
+    if cached is not None:
+        return cached
+
     out: dict[str, dict[str, Any]] = {}
     label = query_label or format_query_datetime(datetime.now())
-    for item in watchlist[: max(1, int(max_items))]:
+    for item in batch:
         code = str(item.get("代码") or "")
         if not code:
             continue
@@ -157,6 +164,7 @@ def refresh_watch_snapshots(
                 one_line=f"拉取失败：{exc}",
                 updated_at=label,
             ).as_dict()
+    set_cached_snapshots(codes, out)
     return out
 
 
