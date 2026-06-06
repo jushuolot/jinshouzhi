@@ -8,6 +8,7 @@ from src.analysis.watch_alerts import alerts_to_markdown, compute_watch_alerts
 from src.notify.alert_push import maybe_push_alerts_if_configured, push_alerts_webhook
 from src.notify.webhook import get_webhook_url
 from src.storage.history_store import mark_dirty
+from src.util.alert_profiles import ALERT_PROFILES, apply_alert_profile, profile_caption
 
 
 def render_alert_panel(*, watchlist: list[dict], snapshots: dict) -> list:
@@ -18,6 +19,27 @@ def render_alert_panel(*, watchlist: list[dict], snapshots: dict) -> list:
         st.session_state.setdefault("alert_score_low", 40.0)
         st.session_state.setdefault("alert_score_high", 65.0)
         st.session_state.setdefault("push_webhook_on_alerts", False)
+        st.caption("提醒模板（一键套用阈值）")
+        prof_cols = st.columns(len(ALERT_PROFILES))
+        for i, prof in enumerate(ALERT_PROFILES):
+            with prof_cols[i]:
+                if st.button(prof.label, key=f"alert_prof_{prof.id}", use_container_width=True):
+                    apply_alert_profile(st.session_state, prof.id)
+                    mark_dirty()
+                    st.rerun()
+        active_prof = next(
+            (
+                p
+                for p in ALERT_PROFILES
+                if float(st.session_state.alert_pct_up) == p.pct_up
+                and float(st.session_state.alert_pct_down) == p.pct_down
+                and float(st.session_state.alert_score_low) == p.score_low
+                and float(st.session_state.alert_score_high) == p.score_high
+            ),
+            None,
+        )
+        if active_prof:
+            st.caption(f"当前：{active_prof.label} · {profile_caption(active_prof)}")
         c1, c2, c3, c4 = st.columns(4)
         with c1:
             st.number_input("涨幅≥%", key="alert_pct_up", step=0.5)

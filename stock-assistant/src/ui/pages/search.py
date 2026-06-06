@@ -7,9 +7,23 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
+from src.storage.history_store import mark_dirty
 from src.ui import app_core as C
 from src.ui.quick_actions import render_search_quick_actions
 from src.providers import eastmoney, symbol_search, yahoo
+from src.util.search_history import normalize_search_history, push_search
+
+
+def _run_global_search(keyword: str) -> None:
+    kw = (keyword or "").strip()
+    st.session_state.last_hits = symbol_search.suggest(kw, limit=40)
+    if kw:
+        st.session_state.search_history = push_search(
+            st.session_state.get("search_history"),
+            kw,
+        )
+        mark_dirty()
+    C._stamp_query("search")
 
 
 def render() -> None:
@@ -17,21 +31,30 @@ def render() -> None:
     st.caption("并行查询：A 股/北交所（东财）+ 港股/美股/英文名（Yahoo）。支持 XSHE:300755、SNX、synnex、茅台、0700.HK 等。")
     render_search_quick_actions()
     C._show_query_banner("search")
-    kw = st.text_input("关键词", value="茅台", placeholder="中文名、代码、拼音、美股代码 SNX、公司英文名 synnex…")
-    if "recent_searches" not in st.session_state:
-        st.session_state.recent_searches = []
-    if st.session_state.recent_searches:
-        st.caption("最近搜索：" + " · ".join(st.session_state.recent_searches[:8]))
+
+    st.session_state.setdefault("search_kw", "茅台")
+    history = normalize_search_history(st.session_state.get("search_history"))
+    if history:
+        st.caption("最近搜索（点击重搜）")
+        chip_cols = st.columns(min(len(history), 8))
+        for i, term in enumerate(history[:8]):
+            with chip_cols[i % len(chip_cols)]:
+                if st.button(term, key=f"search_hist_{i}", use_container_width=True):
+                    st.session_state.search_kw = term
+                    with st.spinner("正在并行搜索 A 股 / 港股 / 美股…"):
+                        _run_global_search(term)
+                    st.rerun()
+
+    kw = st.text_input(
+        "关键词",
+        key="search_kw",
+        placeholder="中文名、代码、拼音、美股代码 SNX、公司英文名 synnex…",
+    )
     col1, col2 = st.columns([1, 1])
     with col1:
         if st.button("全球搜索", type="primary", use_container_width=True):
             with st.spinner("正在并行搜索 A 股 / 港股 / 美股…"):
-                st.session_state.last_hits = symbol_search.suggest(kw, limit=40)
-                q = (kw or "").strip()
-                if q:
-                    rs = [x for x in st.session_state.recent_searches if x != q]
-                    st.session_state.recent_searches = ([q] + rs)[:12]
-            C._stamp_query("search")
+                _run_global_search(kw)
     with col2:
         st.caption("每次同时查东财与 Yahoo，不是只搜 A 股。")
 
@@ -69,4 +92,3 @@ def render() -> None:
             st.success("已加入自选股。")
     else:
         st.info("输入关键词后点「全球搜索」。纯英文公司名（如 synnex）请直接搜，会走 Yahoo。")
-

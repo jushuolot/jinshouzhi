@@ -39,6 +39,9 @@
 | **P31** | 笔记导出 | ✅ 已完成 | 速览/CSV/JSON 备份含 watch_notes |
 | **P32** | 健康面板 | ✅ 已完成 | 缓存统计、上次刷新、推送日志尾部 |
 | **P33** | 文档与 v2.5 | ✅ 已完成 | EVOLUTION 301–330、v2.5.0 step 330 |
+| **P34** | 搜索历史 | ✅ 已完成 | user_prefs.search_history、搜索页 chips 重搜 |
+| **P35** | 提醒模板 | ✅ 已完成 | 保守/均衡/激进 阈值一键套用 |
+| **P36** | 文档与 v2.6 | ✅ 已完成 | EVOLUTION 331–360、v2.6.0 step 360 |
 
 ## P1：信息架构（本次）
 
@@ -140,6 +143,12 @@
 - **P32 健康面板**：`cache_stats`、上次摘要刷新时间、推送日志尾部 5 条；`test_p32_health_panel` 逻辑测试
 - **P33 文档与 v2.5**：EVOLUTION_100 步 301–330；v2.5.0 step 330；`evolve_verify.sh` 覆盖 P31–P33 测试
 
+## P34–P36：搜索历史、提醒模板、v2.6（已完成）
+
+- **P34 搜索历史**：`user_prefs.search_history`（最近 20 条）；搜索页 chips 一键重搜；`test_p34_search_history`
+- **P35 提醒模板**：`src/util/alert_profiles.py`；保守/均衡/激进 pct/score 阈值；alert_panel 一键套用
+- **P36 文档与 v2.6**：EVOLUTION_100 步 331–360；v2.6.0 step 360；`evolve_verify.sh` 覆盖 P34–P36 测试
+
 ## 进化原则
 
 1. **先可读，再炫功能** — 每轮至少产出一种「能发给同事看的资料」
@@ -193,3 +202,6 @@ streamlit run app.py
 - [x] 笔记导出到速览/CSV/JSON · watch_notes · P31
 - [x] 健康面板缓存/刷新/推送尾 · P32
 - [x] v2.5.0 · 进化 step 330 · P33
+- [x] 搜索历史 chips · search_history · P34
+- [x] 提醒模板 保守/均衡/激进 · alert_profiles · P35
+- [x] v2.6.0 · 进化 step 360 · P36
