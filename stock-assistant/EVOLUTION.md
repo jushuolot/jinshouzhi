@@ -48,6 +48,9 @@
 | **P40** | 多语言文案 | ✅ 已完成 | user_prefs.locale、Tab/仪表盘 i18n lite |
 | **P41** | 快捷键提示 | ✅ 已完成 | 页脚 ?tab= / ?readonly=1 链接提示 |
 | **P42** | 文档与 v2.8 | ✅ 已完成 | EVOLUTION 391–420、v2.8.0 step 420 |
+| **P43** | 自选排序 | ✅ 已完成 | user_prefs.watch_sort、工作台排序持久化 |
+| **P44** | 分析周报 | ✅ 已完成 | weekly_report、历史页下载 .md |
+| **P45** | 文档与 v2.9 | ✅ 已完成 | EVOLUTION 421–450、v2.9.0 step 450 |
 
 ## P1：信息架构（本次）
 
@@ -167,6 +170,12 @@
 - **P41 快捷键提示**：页脚 `?tab=` / `?readonly=1` 链接提示；`test_p41_hints`
 - **P42 文档与 v2.8**：EVOLUTION_100 步 391–420；v2.8.0 step 420；`evolve_verify.sh` 覆盖 P40–P42 测试
 
+## P43–P45：自选排序、分析周报、v2.9（已完成）
+
+- **P43 自选排序**：`src/util/watch_sort.py`；`user_prefs.watch_sort` by score/pct/name + asc/desc；工作台排序下拉持久化；`test_p43_watch_sort`
+- **P44 分析周报**：`src/analysis/weekly_report.py`；近 7 日 query_log + 自选统计 Markdown；历史页「下载周报」；`test_p44_weekly_report`
+- **P45 文档与 v2.9**：EVOLUTION_100 步 421–450；v2.9.0 step 450；`evolve_verify.sh` 覆盖 P43–P45 测试
+
 ## 进化原则
 
 1. **先可读，再炫功能** — 每轮至少产出一种「能发给同事看的资料」
@@ -229,3 +238,6 @@ streamlit run app.py
 - [x] 多语言 Tab/仪表盘 · locale zh/en · P40
 - [x] 页脚链接提示 ?tab= ?readonly=1 · P41
 - [x] v2.8.0 · 进化 step 420 · P42
+- [x] 自选排序偏好 watch_sort · P43
+- [x] 历史页周报下载 weekly_report · P44
+- [x] v2.9.0 · 进化 step 450 · P45

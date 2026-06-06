@@ -22,6 +22,7 @@ from src.storage.history_store import (
     unique_stocks_from_log,
 )
 from src.analysis.trend_summary import collect_trend_points, format_trend_markdown, trend_delta
+from src.analysis.weekly_report import build_weekly_report
 
 
 def render() -> None:
@@ -74,6 +75,20 @@ def render() -> None:
             stock_kw=stock_kw,
         )
         st.caption(f"共 {len(log)} 条记录，筛选后 {len(filtered)} 条")
+
+        weekly_md = build_weekly_report(
+            log,
+            st.session_state.get("watchlist") or [],
+            st.session_state.get("watch_snapshots") or {},
+        )
+        st.download_button(
+            "📅 下载周报 (.md)",
+            data=weekly_md.encode("utf-8"),
+            file_name="分析周报.md",
+            mime="text/markdown",
+            key="hist_weekly_md",
+            use_container_width=True,
+        )
 
         with st.expander("📈 趋势", expanded=False):
             stock_opts_trend = unique_stocks_from_log(log)

@@ -77,6 +77,12 @@ from src.util.watchlist_backup import (
     parse_backup_bytes,
 )
 from src.util.readonly_mode import is_readonly_mode
+from src.util.watch_sort import (
+    apply_watch_sort_to_session,
+    normalize_watch_sort,
+    prefs_from_ui,
+    SORT_UI_OPTIONS,
+)
 from src.analysis.trend_summary import collect_trend_points, format_trend_markdown, trend_delta
 
 
@@ -147,10 +153,21 @@ def render() -> None:
         with f2:
             group_opts = ["全部"] + group_names(groups)
             filter_group = st.selectbox("分组", group_opts, key="watch_filter_group")
+        ws_prefs = normalize_watch_sort(st.session_state.get("watch_sort") or {})
+        if "watch_sort_by" not in st.session_state:
+            ui_init = apply_watch_sort_to_session(ws_prefs)
+            st.session_state.watch_sort_by = ui_init["by_ui"]
+            st.session_state.watch_sort_desc = ui_init["desc"]
         with f3:
-            sort_by = st.selectbox("排序", ["代码", "涨跌幅", "评分"], key="watch_sort_by")
+            sort_by = st.selectbox("排序", SORT_UI_OPTIONS, key="watch_sort_by")
         with f4:
             sort_desc = st.checkbox("降序", key="watch_sort_desc")
+        new_ws = prefs_from_ui(sort_by, sort_desc)
+        if new_ws != ws_prefs:
+            st.session_state.watch_sort = new_ws
+            mark_dirty()
+        else:
+            st.session_state.watch_sort = new_ws
         grouped_wl = filter_watchlist_by_group(st.session_state.watchlist, groups, filter_group)
         display_wl = sort_watchlist(
             filter_watchlist(grouped_wl, filter_kw),

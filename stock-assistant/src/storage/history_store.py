@@ -344,6 +344,7 @@ def collect_latest_state() -> dict[str, Any]:
             "search_history": list(st.session_state.get("search_history") or []),
             "dark_mode": bool(st.session_state.get("dark_mode", True)),
             "locale": str(st.session_state.get("locale") or "zh"),
+            "watch_sort": dict(st.session_state.get("watch_sort") or {}),
         },
     }
 
@@ -416,6 +417,14 @@ def apply_latest_to_session(latest: dict[str, Any]) -> None:
         from src.util.i18n_strings import normalize_locale
 
         st.session_state.locale = normalize_locale(str(prefs["locale"]))
+    if prefs.get("watch_sort") is not None:
+        from src.util.watch_sort import apply_watch_sort_to_session, normalize_watch_sort
+
+        ws = normalize_watch_sort(prefs["watch_sort"])
+        st.session_state.watch_sort = ws
+        ui = apply_watch_sort_to_session(ws)
+        st.session_state.watch_sort_by = ui["by_ui"]
+        st.session_state.watch_sort_desc = ui["desc"]
 
     st.session_state["history_conclusions"] = latest.get("conclusions") or {}
 
