@@ -56,6 +56,31 @@ def main() -> int:
         print(f"[push_digest_cron] dry-run bytes={len(digest.encode('utf-8'))}")
         return 0
 
+    from src.notify.retry import drain_queue, load_queue  # noqa: E402
+
+    def _retry_handler(item: dict) -> tuple[bool, str]:
+        d = str(item.get("digest") or digest)
+        ch = str(item.get("channel") or "")
+        ss_d = item.get("session") or {"watchlist": wl, "watch_snapshots": snaps, "_auth_user": user}
+
+        class SS:
+            def __init__(self, dct):
+                self._d = dct
+
+            def get(self, k, default=None):
+                return self._d.get(k, default)
+
+        ss = SS(ss_d)
+        if ch == "webhook":
+            return push_digest_webhook(digest=d, session_state=ss)
+        if ch == "email":
+            return push_digest_email(digest=d, session_state=ss)
+        return False, "unknown"
+
+    if load_queue(user_id=user):
+        for line in drain_queue(_retry_handler, user_id=user, max_items=5):
+            print(f"Retry: {line}")
+
     class _SS:
         def __init__(self) -> None:
             self._d = {

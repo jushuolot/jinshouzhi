@@ -18,6 +18,9 @@
 | **P10** | 导出增强 | ✅ 已完成 | CSV、筛选排序、备份脚本 |
 | **P11** | 文档与版本 | ✅ 已完成 | 页脚版本、进化日志、snapshot v2 |
 | **P12** | 百步进化 | ✅ 已完成 | [120 步清单](docs/EVOLUTION_100.md)、v1.8.0 |
+| **P13** | 智能提醒 | ✅ 已完成 | 涨跌幅/评分阈值、提醒 Markdown |
+| **P14** | 运维脚本 | ✅ 已完成 | evolve_verify、health_check_cron、历史 CSV |
+| **P15** | 体验抛光 | ✅ 已完成 | 评分徽章、深链接 tab、v1.9.0 step 150 |
 
 ## P1：信息架构（本次）
 
@@ -116,3 +119,6 @@ streamlit run app.py
 - [x] 推送日志 + 重试队列 + 健康告警 Webhook
 - [x] 自选股 CSV / 筛选 / 排序
 - [x] **120 步进化完成**（见 docs/EVOLUTION_100.md）
+- [x] 智能提醒阈值（🔔 涨跌幅/评分）
+- [x] 历史记录导出 CSV · `scripts/evolve_verify.sh`
+- [x] v1.9.0 · 进化 step 150

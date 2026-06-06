@@ -23,6 +23,7 @@ from src.providers.eastmoney import KLINE_PERIOD_UI, is_intraday_kline
 from src.providers.news_feed import fetch_aggregated_news
 from src.storage.history_store import mark_dirty
 from src.storage.serialize import route_report_from_session
+from src.ui.alert_panel import render_alert_panel
 from src.ui.auto_refresh import auto_refresh_fragment, render_auto_refresh_controls
 from src.ui.currency_tool import render_floating_currency_tool
 from src.ui.industry_compare import show_industry_compare_block
@@ -41,6 +42,7 @@ from src.ui.speech_summary import render_speech_button
 from src.ui.stock_plates_panel import render_stock_plates_panel
 from src.util.currency import currency_display, normalize_watchlist
 from src.util.query_time import format_data_range, format_query_datetime
+from src.util.score_badge import pct_badge, score_badge
 from src.util.watchlist_export import (
     filter_watchlist,
     sort_watchlist,
@@ -60,8 +62,8 @@ def _watchlist_display_rows(watchlist: list[dict[str, Any]]) -> list[dict[str, A
             {
                 "名称": item.get("名称"),
                 "代码": code,
-                "涨跌幅%": f"{pct:+.2f}%" if pct is not None else "—",
-                "评分": f"{score:.1f}" if score is not None else "—",
+                "涨跌幅%": pct_badge(pct) if pct is not None else "—",
+                "评分": score_badge(score) if score is not None else "—",
                 "一句话": snap.get("one_line") or "—",
                 "货币": item.get("货币"),
                 "类型": item.get("类型"),
@@ -170,6 +172,8 @@ def render() -> None:
 
         render_auto_refresh_controls()
         auto_refresh_fragment(C._fetch_one)
+
+        render_alert_panel(watchlist=display_wl, snapshots=snaps)
 
         c_batch, c_batch_hint = st.columns([1, 2])
         with c_batch:

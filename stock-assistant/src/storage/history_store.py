@@ -334,6 +334,10 @@ def collect_latest_state() -> dict[str, Any]:
             "auto_refresh_minutes": int(st.session_state.get("auto_refresh_minutes") or 5),
             "push_webhook_on_refresh": bool(st.session_state.get("push_webhook_on_refresh")),
             "push_email_on_refresh": bool(st.session_state.get("push_email_on_refresh")),
+            "alert_pct_up": float(st.session_state.get("alert_pct_up") or 5.0),
+            "alert_pct_down": float(st.session_state.get("alert_pct_down") or -5.0),
+            "alert_score_low": float(st.session_state.get("alert_score_low") or 40.0),
+            "alert_score_high": float(st.session_state.get("alert_score_high") or 65.0),
         },
     }
 
@@ -389,6 +393,9 @@ def apply_latest_to_session(latest: dict[str, Any]) -> None:
         st.session_state.push_webhook_on_refresh = bool(prefs["push_webhook_on_refresh"])
     if "push_email_on_refresh" in prefs:
         st.session_state.push_email_on_refresh = bool(prefs["push_email_on_refresh"])
+    for k in ("alert_pct_up", "alert_pct_down", "alert_score_low", "alert_score_high"):
+        if prefs.get(k) is not None:
+            st.session_state[k] = float(prefs[k])
 
     st.session_state["history_conclusions"] = latest.get("conclusions") or {}
 

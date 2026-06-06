@@ -75,6 +75,24 @@ def render() -> None:
         st.caption(f"共 {len(log)} 条记录，筛选后 {len(filtered)} 条")
 
         if filtered:
+            import csv
+            import io
+
+            buf = io.StringIO()
+            rows = [e for _, e in filtered]
+            if rows:
+                w = csv.DictWriter(buf, fieldnames=list(rows[0].keys()))
+                w.writeheader()
+                w.writerows(rows)
+                st.download_button(
+                    "导出筛选结果 CSV",
+                    data=buf.getvalue().encode("utf-8-sig"),
+                    file_name="查询历史.csv",
+                    mime="text/csv",
+                    key="hist_csv_dl",
+                )
+
+        if filtered:
             show_rows = [e for _, e in filtered]
             log_df = pd.DataFrame(show_rows)
             show_cols = [

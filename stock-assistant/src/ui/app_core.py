@@ -89,6 +89,14 @@ def _init_state() -> None:
         st.session_state.push_webhook_on_refresh = False
     if "push_email_on_refresh" not in st.session_state:
         st.session_state.push_email_on_refresh = False
+    if "alert_pct_up" not in st.session_state:
+        st.session_state.alert_pct_up = 5.0
+    if "alert_pct_down" not in st.session_state:
+        st.session_state.alert_pct_down = -5.0
+    if "alert_score_low" not in st.session_state:
+        st.session_state.alert_score_low = 40.0
+    if "alert_score_high" not in st.session_state:
+        st.session_state.alert_score_high = 65.0
 
 
 def _save_history(
