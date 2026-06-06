@@ -4,11 +4,14 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import os
-from typing import Callable
+from typing import Any, Callable
 
 import streamlit as st
 
+from src.auth.users import current_user_id
 from src.notify.health_alert import maybe_send_health_alert
+from src.notify.push_log import read_recent
+from src.util.fetch_cache import cache_stats
 
 
 @dataclass(frozen=True)
@@ -46,6 +49,33 @@ def _probe_yahoo() -> SourceHealth:
         return SourceHealth("Yahoo 港美", False, str(exc)[:60])
 
 
+def format_last_refresh_label(session_state: dict[str, Any]) -> str:
+    """上次自选摘要刷新时间（P32）。"""
+    label = session_state.get("query_label_watch") or session_state.get("_auto_refresh_at")
+    return str(label).strip() if label else "—"
+
+
+def format_cache_stats_line(stats: dict[str, Any]) -> str:
+    count = int(stats.get("count") or 0)
+    if count <= 0:
+        return "摘要缓存：0 条（60s TTL）"
+    entries = list(stats.get("entries") or [])
+    tickers = sum(int(e.get("tickers") or 0) for e in entries)
+    oldest = max((float(e.get("age_s") or 0) for e in entries), default=0.0)
+    return f"摘要缓存：{count} 批 / {tickers} 只 · 最久 {oldest:.0f}s 前"
+
+
+def format_push_log_tail(rows: list[dict[str, Any]], *, limit: int = 5) -> list[str]:
+    """推送日志尾部格式化（P32）。"""
+    out: list[str] = []
+    for row in rows[: max(limit, 1)]:
+        icon = "✓" if row.get("ok") else "✗"
+        out.append(
+            f"{row.get('at', '—')} {row.get('channel', '?')} {icon} {row.get('detail', '')}"
+        )
+    return out
+
+
 @st.cache_data(ttl=120, show_spinner=False)
 def probe_all_sources() -> tuple[dict[str, str], ...]:
     results = [_probe_eastmoney(), _probe_yahoo()]
@@ -75,4 +105,15 @@ def render_health_panel(*, on_refresh: Callable[[], None] | None = None) -> None
         ok, alert_msg = maybe_send_health_alert(probes, app_url=app_url)
         if ok:
             st.caption(f"⚠️ 已发送健康告警 Webhook：{alert_msg}")
+        st.caption(format_cache_stats_line(cache_stats()))
+        st.caption(f"上次摘要刷新：{format_last_refresh_label(dict(st.session_state))}")
+        try:
+            uid = current_user_id()
+        except Exception:
+            uid = str(st.session_state.get("_auth_user") or "default")
+        tail = format_push_log_tail(read_recent(user_id=uid, limit=5))
+        if tail:
+            st.caption("最近推送：")
+            for line in tail:
+                st.caption(f"· {line}")
         st.caption("检测缓存 2 分钟；行情延迟以各数据源为准。")

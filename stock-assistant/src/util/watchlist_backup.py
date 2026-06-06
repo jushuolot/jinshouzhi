@@ -8,6 +8,7 @@ from typing import Any
 
 from src.util.currency import normalize_watchlist
 from src.util.watch_groups import normalize_watch_groups
+from src.util.watch_notes import normalize_watch_notes
 
 SCHEMA = "stock-assistant-watch-backup-v1"
 
@@ -17,6 +18,7 @@ def build_watch_backup(
     watchlist: list[dict[str, Any]],
     watch_snapshots: dict[str, Any],
     watch_groups: dict[str, list[str]] | None = None,
+    watch_notes: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     return {
         "schema": SCHEMA,
@@ -24,6 +26,7 @@ def build_watch_backup(
         "watchlist": normalize_watchlist(list(watchlist)),
         "watch_snapshots": dict(watch_snapshots or {}),
         "watch_groups": normalize_watch_groups(watch_groups or {}),
+        "watch_notes": normalize_watch_notes(watch_notes or {}),
     }
 
 
@@ -69,6 +72,16 @@ def merge_snapshots(
     return out
 
 
+def merge_watch_notes(
+    existing: dict[str, str],
+    incoming: dict[str, str],
+) -> dict[str, str]:
+    out = normalize_watch_notes(existing)
+    for code, note in normalize_watch_notes(incoming).items():
+        out[code] = note
+    return out
+
+
 def merge_watch_groups(
     existing: dict[str, list[str]],
     incoming: dict[str, list[str]],
@@ -87,14 +100,17 @@ def apply_backup_merge(
     watchlist: list[dict[str, Any]],
     watch_snapshots: dict[str, Any],
     watch_groups: dict[str, list[str]],
+    watch_notes: dict[str, str] | None = None,
     backup: dict[str, Any],
-) -> tuple[list[dict[str, Any]], dict[str, Any], dict[str, list[str]], dict[str, int]]:
+) -> tuple[list[dict[str, Any]], dict[str, Any], dict[str, list[str]], dict[str, str], dict[str, int]]:
     wl = merge_watchlist(watchlist, backup.get("watchlist") or [])
     snaps = merge_snapshots(watch_snapshots, backup.get("watch_snapshots") or {})
     groups = merge_watch_groups(watch_groups, backup.get("watch_groups") or {})
+    notes = merge_watch_notes(watch_notes or {}, backup.get("watch_notes") or {})
     stats = {
         "watchlist_added": max(0, len(wl) - len(watchlist)),
         "snapshots_merged": len(backup.get("watch_snapshots") or {}),
         "groups_merged": len(backup.get("watch_groups") or {}),
+        "notes_merged": len(backup.get("watch_notes") or {}),
     }
-    return wl, snaps, groups, stats
+    return wl, snaps, groups, notes, stats

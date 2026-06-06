@@ -7,6 +7,7 @@ from typing import Any
 
 from src.analysis.watch_alerts import WatchAlert
 from src.util.query_time import format_query_datetime
+from src.util.watch_notes import get_note, normalize_watch_notes
 
 
 def _pct_str(v: Any) -> str:
@@ -16,6 +17,29 @@ def _pct_str(v: Any) -> str:
         return f"{float(v):+.2f}%"
     except (TypeError, ValueError):
         return "—"
+
+
+def format_notes_digest_section(
+    watchlist: list[dict[str, Any]],
+    watch_notes: dict[str, str] | None,
+) -> str:
+    """将自选笔记格式化为速览 Markdown 段落（P31）。"""
+    notes = normalize_watch_notes(watch_notes or {})
+    if not notes:
+        return ""
+    lines = ["## 自选笔记", ""]
+    for item in watchlist:
+        code = str(item.get("代码") or "")
+        text = get_note(notes, code)
+        if not text:
+            continue
+        name = str(item.get("名称") or code)
+        safe = text.replace("|", "｜").replace("\n", " ")
+        lines.append(f"- **{name}（{code}）** — {safe}")
+    if len(lines) <= 2:
+        return ""
+    lines.append("")
+    return "\n".join(lines)
 
 
 def format_alerts_digest_section(alerts: list[WatchAlert]) -> str:
@@ -37,6 +61,7 @@ def build_watchlist_digest(
     title: str = "自选股今日速览",
     query_label: str = "",
     alerts: list[WatchAlert] | None = None,
+    watch_notes: dict[str, str] | None = None,
 ) -> str:
     now = query_label or format_query_datetime(datetime.now())
     lines: list[str] = [
@@ -59,6 +84,10 @@ def build_watchlist_digest(
         lines.append(f"| {name} | {code} | {pct} | {score_s} | {one} |")
         if fin:
             lines.append(f"| ↳ 财务 | {code} | — | — | {fin.replace('|', '｜')[:100]} |")
+
+    notes_section = format_notes_digest_section(watchlist, watch_notes)
+    if notes_section:
+        lines.append(notes_section)
 
     if alerts:
         lines.append(format_alerts_digest_section(alerts))

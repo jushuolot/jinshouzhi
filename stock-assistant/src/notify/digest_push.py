@@ -39,7 +39,8 @@ def build_current_digest(session_state: Any | None = None) -> str:
     wl = list(ss.get("watchlist") or [])
     snaps = dict(ss.get("watch_snapshots") or {})
     label = str(ss.get("query_label_watch") or ss.get("_auto_refresh_at") or "")
-    return build_watchlist_digest(wl, snaps, query_label=label)
+    notes = dict(ss.get("watch_notes") or {})
+    return build_watchlist_digest(wl, snaps, query_label=label, watch_notes=notes)
 
 
 def push_digest_webhook(*, digest: str, session_state: Any | None = None) -> tuple[bool, str]:

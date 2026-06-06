@@ -1,6 +1,6 @@
 # Stock Assistant · 百步进化清单
 
-> 累计 **300** 步 · P28–P30 进化完成 · v2.4.0
+> 累计 **330** 步 · P31–P33 进化完成 · v2.5.0
 
 - [x] **001** P1 工作台导航与可读简报
 - [x] **002** P1 Tab 编号命名
@@ -302,3 +302,33 @@
 - [x] **298** P30 EVOLUTION_100 271-300
 - [x] **299** P30 workflow P28-P30
 - [x] **300** P30 evolve_verify · v2.4.0 milestone
+- [x] **301** P31 format_notes_digest_section
+- [x] **302** P31 daily_digest watch_notes
+- [x] **303** P31 watchlist_export 笔记列
+- [x] **304** P31 watchlist_backup watch_notes
+- [x] **305** P31 digest_push / push_digest_cron
+- [x] **306** P31 test_p31_notes_export
+- [x] **307** P31 workflow 阶段标记
+- [x] **308** 进化加固 #125
+- [x] **309** 进化加固 #126
+- [x] **310** 进化加固 #127
+- [x] **311** P32 fetch_cache cache_stats
+- [x] **312** P32 health_panel 刷新/缓存/推送尾
+- [x] **313** P32 test_p32_health_panel
+- [x] **314** P32 workflow 阶段标记
+- [x] **315** 进化加固 #128
+- [x] **316** 进化加固 #129
+- [x] **317** 进化加固 #130
+- [x] **318** 进化加固 #131
+- [x] **319** 进化加固 #132
+- [x] **320** 进化加固 #133
+- [x] **321** 进化加固 #134
+- [x] **322** 进化加固 #135
+- [x] **323** P33 v2.5.0 app_meta
+- [x] **324** P33 EVOLUTION 文档
+- [x] **325** P33 EVOLUTION_100 301-330
+- [x] **326** P33 workflow P31-P33
+- [x] **327** P33 evolve_verify 通过
+- [x] **328** 进化加固 #136
+- [x] **329** 进化加固 #137
+- [x] **330** 进化加固 #138 · v2.5.0 milestone

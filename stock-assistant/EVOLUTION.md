@@ -36,6 +36,9 @@
 | **P28** | 笔记/标注 | ✅ 已完成 | user_prefs.watch_notes、工作台笔记 expander |
 | **P29** | 性能/缓存 | ✅ 已完成 | 摘要刷新 60s in-session 缓存 |
 | **P30** | 文档与 v2.4 | ✅ 已完成 | EVOLUTION 271–300、v2.4.0 step 300 |
+| **P31** | 笔记导出 | ✅ 已完成 | 速览/CSV/JSON 备份含 watch_notes |
+| **P32** | 健康面板 | ✅ 已完成 | 缓存统计、上次刷新、推送日志尾部 |
+| **P33** | 文档与 v2.5 | ✅ 已完成 | EVOLUTION 301–330、v2.5.0 step 330 |
 
 ## P1：信息架构（本次）
 
@@ -131,6 +134,12 @@
 - **P29 性能/缓存**：`src/util/fetch_cache.py`；同一批 ticker 60 秒内重复「刷新全部摘要」/自动刷新跳过网络拉取
 - **P30 文档与 v2.4**：EVOLUTION_100 步 271–300；v2.4.0 step 300；`evolve_verify.sh` 覆盖 P28–P30 测试
 
+## P31–P33：笔记导出、健康面板、v2.5（已完成）
+
+- **P31 笔记导出**：`format_notes_digest_section`；速览 Markdown、CSV「笔记」列、JSON 备份 `watch_notes`；cron/推送摘要同步
+- **P32 健康面板**：`cache_stats`、上次摘要刷新时间、推送日志尾部 5 条；`test_p32_health_panel` 逻辑测试
+- **P33 文档与 v2.5**：EVOLUTION_100 步 301–330；v2.5.0 step 330；`evolve_verify.sh` 覆盖 P31–P33 测试
+
 ## 进化原则
 
 1. **先可读，再炫功能** — 每轮至少产出一种「能发给同事看的资料」
@@ -181,3 +190,6 @@ streamlit run app.py
 - [x] 自选笔记/标注 · watch_notes · P28
 - [x] 摘要刷新 in-session 缓存 · fetch_cache · P29
 - [x] v2.4.0 · 进化 step 300 · P30
+- [x] 笔记导出到速览/CSV/JSON · watch_notes · P31
+- [x] 健康面板缓存/刷新/推送尾 · P32
+- [x] v2.5.0 · 进化 step 330 · P33

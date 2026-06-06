@@ -144,7 +144,8 @@ def render() -> None:
             by=sort_by,
             descending=sort_desc,
         )
-        csv_bytes = watchlist_to_csv_bytes(display_wl, snaps)
+        notes = normalize_watch_notes(st.session_state.get("watch_notes") or {})
+        csv_bytes = watchlist_to_csv_bytes(display_wl, snaps, watch_notes=notes)
         if csv_bytes:
             st.download_button(
                 "📊 导出 CSV",
@@ -159,6 +160,7 @@ def render() -> None:
             watchlist=st.session_state.watchlist,
             watch_snapshots=snaps,
             watch_groups=groups,
+            watch_notes=notes,
         )
         b1, b2 = st.columns(2)
         with b1:
@@ -181,15 +183,17 @@ def render() -> None:
                     try:
                         raw = uploaded.getvalue()
                         backup = parse_backup_bytes(raw)
-                        wl, merged_snaps, merged_groups, stats = apply_backup_merge(
+                        wl, merged_snaps, merged_groups, merged_notes, stats = apply_backup_merge(
                             watchlist=st.session_state.watchlist,
                             watch_snapshots=snaps,
                             watch_groups=groups,
+                            watch_notes=notes,
                             backup=backup,
                         )
                         st.session_state.watchlist = wl
                         st.session_state.watch_snapshots = merged_snaps
                         st.session_state.watch_groups = merged_groups
+                        st.session_state.watch_notes = merged_notes
                         mark_dirty()
                         C._save_history(log_kind="watchlist", log_label="导入 JSON 备份")
                         st.success(
@@ -276,6 +280,7 @@ def render() -> None:
                 display_wl,
                 snaps,
                 query_label=C._query_label("watch") or format_query_datetime(),
+                watch_notes=notes,
             )
             st.download_button(
                 "📋 下载今日自选股速览 (.md)",

@@ -48,3 +48,19 @@ def set_cached_snapshots(
 
 def clear_fetch_cache() -> None:
     _cache.clear()
+
+
+def cache_stats(*, now: float | None = None) -> dict[str, Any]:
+    """返回 in-session 摘要缓存统计（P32）。"""
+    t = now if now is not None else time.time()
+    entries: list[dict[str, Any]] = []
+    for key, (ts, snaps) in _cache.items():
+        entries.append(
+            {
+                "key": key,
+                "tickers": len(snaps),
+                "age_s": max(0.0, round(t - ts, 1)),
+            }
+        )
+    entries.sort(key=lambda x: x["age_s"])
+    return {"count": len(_cache), "entries": entries}

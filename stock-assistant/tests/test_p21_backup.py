@@ -36,20 +36,23 @@ class WatchBackupTests(unittest.TestCase):
         self.assertEqual(codes, {"100", "200"})
 
     def test_apply_backup_merge(self):
-        wl, snaps, groups, stats = apply_backup_merge(
+        wl, snaps, groups, notes, stats = apply_backup_merge(
             watchlist=[{"名称": "旧", "代码": "1", "类型": "A"}],
             watch_snapshots={"1": {"score": 40.0}},
             watch_groups={},
+            watch_notes={"1": "旧笔记"},
             backup={
                 "schema": SCHEMA,
                 "watchlist": [{"名称": "新", "代码": "2", "类型": "A"}],
                 "watch_snapshots": {"2": {"score": 55.0}},
                 "watch_groups": {"观察": ["2"]},
+                "watch_notes": {"2": "新笔记"},
             },
         )
         self.assertEqual(len(wl), 2)
         self.assertIn("2", snaps)
         self.assertIn("观察", groups)
+        self.assertEqual(notes, {"1": "旧笔记", "2": "新笔记"})
         self.assertEqual(stats["watchlist_added"], 1)
 
     def test_invalid_schema(self):

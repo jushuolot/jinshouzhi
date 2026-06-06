@@ -63,6 +63,8 @@ def main() -> int:
     wl = store.get("watchlist") or []
     latest = store.get("latest") or {}
     snaps = latest.get("watch_snapshots") or {}
+    prefs = latest.get("user_prefs") or {}
+    notes = prefs.get("watch_notes") or {}
     if not wl:
         print("[push_digest_cron] 自选股为空，跳过")
         return 0
@@ -71,7 +73,7 @@ def main() -> int:
     if alerts_only and not alerts:
         print("[push_digest_cron] --alerts-only: 无提醒，跳过")
         return 0
-    digest = build_watchlist_digest(wl, snaps, alerts=alerts or None)
+    digest = build_watchlist_digest(wl, snaps, alerts=alerts or None, watch_notes=notes)
     if dry:
         print(
             f"[push_digest_cron] dry-run bytes={len(digest.encode('utf-8'))} "

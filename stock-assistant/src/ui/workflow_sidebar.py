@@ -40,8 +40,9 @@ def render_workflow_sidebar() -> None:
                 "P21 备份导入", "P22 快捷筛选", "P23 定时摘要", "P24 体验抛光",
                 "P25 板块热力图", "P26 批量操作", "P27 文档与v2.3",
                 "P28 笔记标注", "P29 性能缓存", "P30 文档与v2.4",
+                "P31 笔记导出", "P32 健康面板", "P33 文档与v2.5",
             ],
-            index=29,
+            index=32,
             disabled=True,
         )
         st.caption(phase)

@@ -6,12 +6,16 @@ import csv
 import io
 from typing import Any
 
+from src.util.watch_notes import get_note, normalize_watch_notes
+
 
 def watchlist_to_csv_rows(
     watchlist: list[dict[str, Any]],
     snapshots: dict[str, Any] | None = None,
+    watch_notes: dict[str, str] | None = None,
 ) -> list[dict[str, str]]:
     snaps = snapshots or {}
+    notes = normalize_watch_notes(watch_notes or {})
     rows: list[dict[str, str]] = []
     for item in watchlist:
         code = str(item.get("代码") or "")
@@ -25,6 +29,7 @@ def watchlist_to_csv_rows(
                 "涨跌幅%": f"{float(pct):+.2f}" if pct is not None else "",
                 "评分": f"{float(score):.1f}" if score is not None else "",
                 "一句话": str(snap.get("one_line") or ""),
+                "笔记": get_note(notes, code),
                 "货币": str(item.get("货币") or ""),
                 "类型": str(item.get("类型") or ""),
                 "市场": str(item.get("市场") or ""),
@@ -36,8 +41,9 @@ def watchlist_to_csv_rows(
 def watchlist_to_csv_bytes(
     watchlist: list[dict[str, Any]],
     snapshots: dict[str, Any] | None = None,
+    watch_notes: dict[str, str] | None = None,
 ) -> bytes:
-    rows = watchlist_to_csv_rows(watchlist, snapshots)
+    rows = watchlist_to_csv_rows(watchlist, snapshots, watch_notes=watch_notes)
     if not rows:
         return b""
     buf = io.StringIO()
