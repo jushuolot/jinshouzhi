@@ -7,7 +7,7 @@
 ```
 主包 pages/common/
   launch           启动（深链 role/target/id）
-  login            微信登录（演示流程）+ 开发账号（student1/2/3、家属、老人）
+  login            微信登录（演示）+ 开发账号：student1/2/3、family1、elder1、**multi1（多角色）**
   role-select      多角色选择
   register         注册角色（写 user_roles）
   agreement        用户协议与隐私说明

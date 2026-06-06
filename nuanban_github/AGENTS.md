@@ -26,8 +26,9 @@ docs/ROADMAP.md · docs/GAP_AUDIT.md · docs/PERFECT.md
 
 # 2. 实现功能（miniapp + mock + hooks）
 
-# 3. 发货前检查（推荐）
-./scripts/agent-ship.sh
+# 3. 发货前 / 全量复查
+./scripts/agent-ship.sh   # 发货前五步
+./scripts/audit.sh        # 全量审计（用户说「检查」「进化」时）
 
 # 4. 提交（git 根目录）
 cd ..  # 到 jinshouzhi 根

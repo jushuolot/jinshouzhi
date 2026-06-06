@@ -2,7 +2,14 @@
 
 > 您休息期间已推送 GitHub，Actions 会自动更新公网演示。
 
-## 本轮（Phase 11 · maturity polish）
+## 本轮（进化 R2 · 审计自动化）
+
+1. **audit.sh** — 一键全量复查
+2. **check-data.mjs** / **check-api-parity.mjs**
+3. **smoke-demo.sh --bundle** — 验证 Pages 含 multi1 等标记
+4. **agent-ship.sh** 升级为 5 步；**AUDIT_LOG.md** 归档
+
+## 上一轮（Phase 11 · maturity polish）
 
 1. **nav-guard** 学生 discover/pending/active/profile + 家属 order/list/pay；role-select 拦截 pending 学生
 2. **scroll-view** 家属/老人订单列表 + ListCountBar

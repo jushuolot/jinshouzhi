@@ -59,6 +59,15 @@
 
 ## 8. 明确不做（零成本边界）
 
-- 微信支付 / 微信登录商户
+- 微信支付 / 微信登录 **商户实装**
 - 云服务器常驻 API
-- Admin 运营后台（派单用登录页「机构派单」演示页替代）
+- 独立 Admin Web（小程序内 `admin-hub` + `org-dispatch` 演示替代）
+
+## 10. 自动化复查
+
+```bash
+./scripts/audit.sh      # 全量
+./scripts/agent-ship.sh # 发货前
+```
+
+见 [AUDIT_LOG.md](./AUDIT_LOG.md)
