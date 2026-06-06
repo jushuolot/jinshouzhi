@@ -9,8 +9,9 @@ import streamlit as st
 
 from src.ui import app_core as C
 
+from src.analysis.daily_digest import build_watchlist_digest
 from src.analysis.mover_insight import build_action_route_report
-from src.analysis.quick_analyze import refresh_watch_snapshots, run_quick_analysis
+from src.analysis.quick_analyze import batch_run_quick_analysis, refresh_watch_snapshots, run_quick_analysis
 from src.analysis.signals import score_stock
 from src.providers import eastmoney
 from src.providers.eastmoney import KLINE_PERIOD_UI, is_intraday_kline
@@ -79,6 +80,61 @@ def render() -> None:
                 st.success("自选股摘要已更新。")
         with c_hint:
             st.caption("摘要含涨跌幅、评分、一句话；完整分析请对单标的点「一键分析」。")
+
+        snaps = st.session_state.get("watch_snapshots") or {}
+        if snaps:
+            digest = build_watchlist_digest(
+                st.session_state.watchlist,
+                snaps,
+                query_label=C._query_label("watch") or format_query_datetime(),
+            )
+            st.download_button(
+                "📋 下载今日自选股速览 (.md)",
+                data=digest.encode("utf-8"),
+                file_name="自选股速览.md",
+                mime="text/markdown",
+                key="watch_digest_dl",
+                use_container_width=True,
+            )
+
+        c_batch, c_batch_hint = st.columns([1, 2])
+        with c_batch:
+            if st.button("⚡ 深度分析前 3 只", key="watch_batch_quick", use_container_width=True):
+                with st.spinner("正在对前 3 只自选股做完整一键分析（约 30–90 秒）…"):
+                    q_label = C._stamp_query("watch")
+                    results = batch_run_quick_analysis(
+                        st.session_state.watchlist,
+                        C._fetch_one,
+                        max_items=3,
+                        query_label=q_label,
+                    )
+                    if not results:
+                        st.error("批量分析失败，请检查网络或稍后重试。")
+                    else:
+                        if "watch_snapshots" not in st.session_state:
+                            st.session_state.watch_snapshots = {}
+                        for code, res in results.items():
+                            st.session_state.watch_snapshots[code] = res.snapshot.as_dict()
+                            st.session_state[f"brief_md_{code}"] = res.brief_md
+                        first = next(iter(results.values()))
+                        st.session_state["route_report"] = first.route_report
+                        st.session_state["insight_pick"] = {
+                            "代码": first.snapshot.code,
+                            "名称": first.snapshot.name,
+                            "市场": next(
+                                (x.get("市场") for x in st.session_state.watchlist if x.get("代码") == first.snapshot.code),
+                                "",
+                            ),
+                        }
+                        mark_dirty()
+                        C._save_history(
+                            log_kind="insight",
+                            log_label=f"批量一键分析 {len(results)} 只",
+                            conclusions_summary=f"完成{len(results)}只",
+                        )
+                        st.success(f"已完成 {len(results)} 只的深度分析与简报。")
+        with c_batch_hint:
+            st.caption("依次生成简报并写入各标的；适合早晨快速过一遍重点自选。")
 
         wl = pd.DataFrame(_watchlist_display_rows(st.session_state.watchlist))
         show_cols = [c for c in ["名称", "代码", "涨跌幅%", "评分", "一句话", "货币", "类型", "市场"] if c in wl.columns]

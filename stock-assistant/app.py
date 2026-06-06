@@ -8,6 +8,7 @@ from src.storage.history_store import load_into_session, persist_session
 from src.ui import app_core as C
 from src.ui.pages import history, insight, movers, panorama, plates, search, watch
 from src.ui.workflow_sidebar import render_workflow_sidebar
+from src.ui.onboarding import render_onboarding_banner
 from src.util.query_time import format_query_datetime
 
 st.set_page_config(page_title="Stock Assistant", layout="wide")
@@ -21,6 +22,7 @@ st.title("Stock Assistant · 快速分析")
 st.caption(
     "三步：**发现标的 → 工作台分析 → 导出可读简报**。数据来自东财 / Yahoo 等公开源（规则推演，非投资建议）。"
 )
+render_onboarding_banner()
 if st.session_state.get("query_at_latest"):
     st.info(f"📅 最近查询时间：{format_query_datetime(st.session_state['query_at_latest'])}")
 

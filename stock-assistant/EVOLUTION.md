@@ -10,6 +10,8 @@
 | **P2** | 页面模块化 | ✅ 已完成 | `src/ui/pages/*` 拆分 app.py |
 | **P3** | 一键分析链路 | ✅ 已完成 | 选标的 → 自动拉行情/评分/简报/路线 |
 | **P4** | 协作与公网 | ✅ 已完成 | Streamlit Cloud 稳定部署、分享链接模板 |
+| **P5** | 智能持久化 | ✅ 已完成 | 摘要/简报落盘、今日速览、健康检测、新手引导 |
+| **P6** | 体验极限 | 规划中 | 移动端优化、定时刷新、多简报合并 PDF |
 
 ## P1：信息架构（本次）
 
@@ -40,6 +42,18 @@
 - GitHub Actions：push 到 `stock-assistant/` 时跑 preflight + 单元测试
 - 迭代：`git push` → Streamlit Cloud **Reboot app**
 
+## P5：智能持久化（已完成）
+
+- **摘要 / 简报落盘**：`watch_snapshots` 与 `brief_md_*` 写入 `data/user_history.json`（v3）
+- **今日自选股速览**：工作台一键下载合并 Markdown
+- **批量深度分析**：「深度分析前 3 只」并行完整一键分析
+- **新手引导**：首页空状态三步提示
+- **数据源健康**：侧边栏东财 / Yahoo 连通性检测
+
+## P6：体验极限（规划中）
+
+- 移动端布局、定时刷新自选摘要、多简报合并导出
+
 ## 进化原则
 
 1. **先可读，再炫功能** — 每轮至少产出一种「能发给同事看的资料」
@@ -63,3 +77,5 @@ streamlit run app.py
 - [x] 「一键分析」生成简报 + 行动路线 + A 股财务摘要
 - [x] `python3 scripts/cloud_preflight.py` 通过后可 push / Reboot Cloud
 - [x] 侧边栏分享文案（配置 `STOCK_APP_PUBLIC_URL`）
+- [x] 关闭浏览器后再开，自选股摘要/简报仍保留（`data/user_history.json`）
+- [x] 下载「今日自选股速览」合并 Markdown

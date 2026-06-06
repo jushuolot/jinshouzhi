@@ -23,7 +23,7 @@ from src.storage.serialize import (
     route_report_to_dict,
 )
 
-_HISTORY_VERSION = 2
+_HISTORY_VERSION = 3
 _MAX_LOG = 50
 _MAX_SNAPSHOTS = 20
 
@@ -273,6 +273,23 @@ def conclusions_summary_line(*, kind: str, conclusions: dict[str, Any], extra: s
     return " · ".join(parts) if parts else (extra or kind)
 
 
+def _collect_brief_archive() -> dict[str, str]:
+    out: dict[str, str] = {}
+    for key, val in st.session_state.items():
+        sk = str(key)
+        if sk.startswith("brief_md_") and isinstance(val, str) and val.strip():
+            out[sk] = val
+    return out
+
+
+def _apply_brief_archive(archive: dict[str, Any] | None) -> None:
+    if not archive:
+        return
+    for key, val in archive.items():
+        if str(key).startswith("brief_md_") and isinstance(val, str):
+            st.session_state[str(key)] = val
+
+
 def collect_latest_state() -> dict[str, Any]:
     labels: dict[str, str | None] = {}
     for scope in ("movers", "panorama", "insight", "watch", "search"):
@@ -300,6 +317,8 @@ def collect_latest_state() -> dict[str, Any]:
         "insight_board": st.session_state.get("insight_board"),
         "query_labels": labels,
         "conclusions": conclusions,
+        "watch_snapshots": dict(st.session_state.get("watch_snapshots") or {}),
+        "brief_archive": _collect_brief_archive(),
     }
 
 
@@ -340,6 +359,10 @@ def apply_latest_to_session(latest: dict[str, Any]) -> None:
                 pass
     if ql.get("movers") or ql.get("panorama"):
         st.session_state["query_at_latest"] = st.session_state.get("query_at_panorama") or st.session_state.get("query_at_movers")
+
+    if latest.get("watch_snapshots"):
+        st.session_state.watch_snapshots = dict(latest["watch_snapshots"])
+    _apply_brief_archive(latest.get("brief_archive"))
 
     st.session_state["history_conclusions"] = latest.get("conclusions") or {}
 

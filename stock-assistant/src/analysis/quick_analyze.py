@@ -244,3 +244,24 @@ def run_quick_analysis(
         fin_data=fin_data,
         news=news,
     )
+
+
+def batch_run_quick_analysis(
+    watchlist: list[dict[str, Any]],
+    fetch_fn: FetchFn,
+    *,
+    max_items: int = 3,
+    query_label: str = "",
+) -> dict[str, QuickAnalysisResult]:
+    """对自选股前几只做完整一键分析（适合小白批量导出）。"""
+    out: dict[str, QuickAnalysisResult] = {}
+    label = query_label or format_query_datetime(datetime.now())
+    for item in watchlist[: max(1, int(max_items))]:
+        code = str(item.get("代码") or "")
+        if not code:
+            continue
+        try:
+            out[code] = run_quick_analysis(item, fetch_fn, query_label=label)
+        except Exception:
+            continue
+    return out
