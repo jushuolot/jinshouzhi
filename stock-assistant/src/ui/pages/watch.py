@@ -120,6 +120,15 @@ from src.analysis.sector_leader import (
 )
 from src.analysis.institutional_onepager import build_institutional_onepager
 from src.analysis.watch_alerts import compute_watch_alerts
+from src.analysis.priority_queue import (
+    format_priority_section,
+    priority_table_rows,
+    rank_watchlist_priority,
+)
+from src.export.priority_bundle import (
+    build_priority_export_bundle_md,
+    build_priority_export_bundle_zip,
+)
 
 
 def _watchlist_display_rows(watchlist: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -440,21 +449,36 @@ def render() -> None:
                 st.caption("添加自选股后可查看分析趋势。")
 
         if snaps:
-            digest = build_watchlist_digest(
-                display_wl,
-                snaps,
-                query_label=C._query_label("watch") or format_query_datetime(),
-                watch_notes=notes,
-            )
-            battle_md = build_battle_plan(
-                display_wl,
-                snaps,
-                query_label=C._query_label("watch") or format_query_datetime(),
+            q_watch = C._query_label("watch") or format_query_datetime()
+            alert_kw = dict(
                 pct_up=float(st.session_state.get("alert_pct_up", 5.0)),
                 pct_down=float(st.session_state.get("alert_pct_down", -5.0)),
                 score_low=float(st.session_state.get("alert_score_low", 40.0)),
                 score_high=float(st.session_state.get("alert_score_high", 65.0)),
                 price_targets=st.session_state.get("price_targets"),
+            )
+            watch_alerts = compute_watch_alerts(display_wl, snaps, **alert_kw)
+            priority_ranks = rank_watchlist_priority(
+                display_wl,
+                snaps,
+                alerts=watch_alerts,
+                stale_hours=float(st.session_state.get("stale_hours", 24.0)),
+                brief_for_code=lambda c: st.session_state.get(f"brief_md_{c}"),
+                **alert_kw,
+            )
+            digest = build_watchlist_digest(
+                display_wl,
+                snaps,
+                query_label=q_watch,
+                watch_notes=notes,
+                alerts=watch_alerts,
+            )
+            battle_md = build_battle_plan(
+                display_wl,
+                snaps,
+                query_label=q_watch,
+                alerts=watch_alerts,
+                **alert_kw,
             )
             d1, d2 = st.columns(2)
             with d1:
@@ -475,6 +499,69 @@ def render() -> None:
                     key="watch_battle_plan_dl",
                     use_container_width=True,
                 )
+            if priority_ranks:
+                top_priority = priority_ranks[0]
+                bundle_md = build_priority_export_bundle_md(
+                    display_wl,
+                    snaps,
+                    priority=top_priority,
+                    ranks=priority_ranks,
+                    query_label=q_watch,
+                    alerts=watch_alerts,
+                    watch_notes=notes,
+                    query_log=st.session_state.get("query_log") or [],
+                    history_snapshots=st.session_state.get("history_snapshots") or [],
+                    brief_for_code=lambda c: st.session_state.get(f"brief_md_{c}"),
+                    stale_hours=float(st.session_state.get("stale_hours", 24.0)),
+                    **alert_kw,
+                )
+                bundle_zip, bundle_zip_name = build_priority_export_bundle_zip(
+                    display_wl,
+                    snaps,
+                    priority=top_priority,
+                    ranks=priority_ranks,
+                    query_label=q_watch,
+                    alerts=watch_alerts,
+                    watch_notes=notes,
+                    query_log=st.session_state.get("query_log") or [],
+                    history_snapshots=st.session_state.get("history_snapshots") or [],
+                    brief_for_code=lambda c: st.session_state.get(f"brief_md_{c}"),
+                    stale_hours=float(st.session_state.get("stale_hours", 24.0)),
+                    **alert_kw,
+                )
+                b_md, b_zip = st.columns(2)
+                with b_md:
+                    st.download_button(
+                        "📦 合并导出 (.md)",
+                        data=bundle_md.encode("utf-8"),
+                        file_name=f"合并导出_{top_priority.code}.md",
+                        mime="text/markdown",
+                        key="watch_bundle_md_dl",
+                        use_container_width=True,
+                    )
+                with b_zip:
+                    st.download_button(
+                        "📦 合并导出 (.zip)",
+                        data=bundle_zip,
+                        file_name=bundle_zip_name,
+                        mime="application/zip",
+                        key="watch_bundle_zip_dl",
+                        use_container_width=True,
+                    )
+                st.caption(
+                    f"合并包含作战清单 + 速览 + 优先标的 **{top_priority.name}（{top_priority.code}）** 一页纸。"
+                )
+
+            with st.expander("🎯 今日优先关注", expanded=bool(priority_ranks and priority_ranks[0].score > 0)):
+                if priority_ranks:
+                    st.markdown(format_priority_section(priority_ranks))
+                    st.dataframe(
+                        pd.DataFrame(priority_table_rows(priority_ranks)),
+                        use_container_width=True,
+                        hide_index=True,
+                    )
+                else:
+                    st.caption("暂无优先排序，请先刷新全部摘要。")
 
         def _brief_for_code(c: str) -> str | None:
             v = st.session_state.get(f"brief_md_{c}")

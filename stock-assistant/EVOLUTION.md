@@ -90,6 +90,11 @@
 | **P82** | 作战清单 cron | ✅ 已完成 | battle_plan_cron.py、STOCK_USER、--stdout |
 | **P83** | 风险汇总推送 | ✅ 已完成 | digest 含 risk_radar 摘要（提醒时） |
 | **P84** | 文档与 v4.2 | ✅ 已完成 | EVOLUTION 811–840、v4.2.0 step 840 |
+| **P85** | 多标的作战优先级 | ✅ 已完成 | priority_queue、🎯 今日优先关注 |
+| **P86** | 合并导出包 | ✅ 已完成 | battle+digest+onepager zip/md 下载 |
+| **P87** | 文档与 v4.3 | ✅ 已完成 | EVOLUTION 841–870、v4.3.0 step 870 |
+
+**v4.3 定位**：在公开数据边缘强化「多标的注意力分配」——按提醒/风险/板块相对排序 Top 5，一键合并导出作战资料包，**非**真实交易指令。
 
 **v4.2 定位**：在公开数据边缘强化「傻瓜式运维闭环」——定时落盘作战清单、推送摘要自动附带风险旗标汇总，**非**真实风控或交易指令。
 
@@ -295,6 +300,12 @@
 - **P83 风险汇总推送**：`format_risk_digest_section`；提醒存在时在 digest 附带 risk_radar 计数与 Top 旗标；`test_p83_risk_digest`
 - **P84 文档与 v4.2**：EVOLUTION_100 步 811–840；v4.2.0 step 840；傻瓜式运维闭环；`evolve_verify.sh` 覆盖 P82–P84 测试
 
+## P85–P87：作战优先级、合并导出、v4.3（已完成）
+
+- **P85 多标的作战优先级**：`src/analysis/priority_queue.py`；提醒 + 风险旗标 + 跑输板块综合排序 Top 5；工作台「🎯 今日优先关注」expander；`test_p85_priority`
+- **P86 合并导出包**：`src/export/priority_bundle.py`；作战清单 + 速览 + 优先标的一页纸；`.md` / `.zip` 下载；`test_p86_export_bundle`
+- **P87 文档与 v4.3**：EVOLUTION_100 步 841–870；v4.3.0 step 870；多标的注意力分配；`evolve_verify.sh` 覆盖 P85–P87 测试
+
 ## 进化原则
 
 1. **先可读，再炫功能** — 每轮至少产出一种「能发给同事看的资料」
@@ -396,3 +407,6 @@ streamlit run app.py
 - [x] 作战清单 cron battle_plan_cron · P82
 - [x] 风险汇总推送 risk_digest · P83
 - [x] v4.2.0 · 进化 step 840 · P84
+- [x] 多标的作战优先级 priority_queue · 🎯 · P85
+- [x] 合并导出包 priority_bundle · 📦 · P86
+- [x] v4.3.0 · 进化 step 870 · P87
