@@ -6,10 +6,10 @@
   "use strict";
 
   var DEFAULT = {
-    version: "3.3.0",
-    generation: 22,
+    version: "3.4.0",
+    generation: 23,
     autoTune: { enabled: true, windowSize: 8, maxMoveAdjust: 3, targetWinRate: 0.52 },
-    patchNotes: ["三维探宝地图", "3D人物与文物"],
+    patchNotes: ["大片级视觉升级 Gen.23", "史诗镜头与精细3D"],
   };
 
   window.MATCH3_EVOLUTION = DEFAULT;

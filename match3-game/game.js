@@ -1681,7 +1681,13 @@
     if (mapStarTotalEl) mapStarTotalEl.textContent = "★ " + totalStarsEarned();
   }
 
+  function setBlockbusterMode(on) {
+    document.body.classList.toggle("blockbuster-mode", !!on);
+    if (on && window.BlockbusterIntro) window.BlockbusterIntro.enableFilmGrain();
+  }
+
   function showHome() {
+    setBlockbusterMode(false);
     updateHomeStats();
     renderEvolutionHome();
     renderChapterProgress();
@@ -1689,12 +1695,19 @@
   }
 
   function showMap() {
+    setBlockbusterMode(true);
     updateHomeStats();
     mapActiveChapter = getChapterForLevel(maxUnlockedLevel);
     destroyMap3D();
     showMapPhase("world");
-    renderWorldMap();
     showScreen("map");
+    if (window.BlockbusterIntro && mapPhaseWorldEl) {
+      window.BlockbusterIntro.show(mapPhaseWorldEl, "古蜀秘档", "蜀地 · 五级神墓", 2400, function () {
+        renderWorldMap();
+      });
+    } else {
+      renderWorldMap();
+    }
   }
 
   function getMapNarrative() {
@@ -1777,12 +1790,12 @@
 
   function initBriefingCinema() {
     if (!vnBriefingCinemaEl || !window.CharacterCinema) return;
-    if (!briefingCinema || !briefingCinema.ok) briefingCinema = window.CharacterCinema.create(vnBriefingCinemaEl);
+    briefingCinema = window.CharacterCinema.create(vnBriefingCinemaEl, "briefing");
   }
 
   function initAssemblyCinema() {
     if (!vnAssemblyCinemaEl || !window.CharacterCinema) return;
-    if (!assemblyCinema || !assemblyCinema.ok) assemblyCinema = window.CharacterCinema.create(vnAssemblyCinemaEl);
+    assemblyCinema = window.CharacterCinema.create(vnAssemblyCinemaEl, "assembly");
   }
 
   function renderWorldMap() {
@@ -1815,7 +1828,7 @@
     if (discoveryTitleEl) discoveryTitleEl.textContent = node.name;
     if (discoveryTextEl) discoveryTextEl.textContent = (roster[speakerId] || "旁白") + "：「" + text + "」";
     if (discoveryCinemaEl && window.CharacterCinema) {
-      var dc = window.CharacterCinema.create(discoveryCinemaEl);
+      var dc = window.CharacterCinema.create(discoveryCinemaEl, "discovery");
       if (dc && dc.ok) dc.showCharacter(speakerId, true);
     }
     if (window.ArtifactViewer3D && discoveryCinemaEl && node.artifactHint != null) {
@@ -1876,7 +1889,25 @@
   function enterChapterExpedition(chIdx) {
     if (!chapterUnlocked(chIdx)) return;
     mapActiveChapter = chIdx;
-    const narr = getMapChapterNarrative(chIdx);
+    var narr = getMapChapterNarrative(chIdx);
+    var world = WORLDS[chIdx];
+    var tier = window.MATCH3_EXPEDITION && window.MATCH3_EXPEDITION.tombTiers ? window.MATCH3_EXPEDITION.tombTiers[chIdx] : null;
+    if (window.BlockbusterIntro && mapPhaseBriefingEl) {
+      window.BlockbusterIntro.show(
+        mapPhaseBriefingEl,
+        world ? world.name : "新章节",
+        tier ? tier.name : "",
+        2200,
+        function () {
+          runChapterBriefing(chIdx, narr);
+        }
+      );
+    } else {
+      runChapterBriefing(chIdx, narr);
+    }
+  }
+
+  function runChapterBriefing(chIdx, narr) {
     showMapPhase("briefing");
     startVnSequence(
       "briefing",

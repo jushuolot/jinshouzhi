@@ -1,26 +1,36 @@
 /**
- * 三维文物展示
+ * 博物馆级 3D 文物
  */
 (function () {
   "use strict";
 
+  var TE = window.ThreeEngine;
   var instance = null;
 
   function buildMask() {
     var g = new THREE.Group();
     var face = new THREE.Mesh(
-      new THREE.BoxGeometry(1.2, 1.5, 0.35),
-      new THREE.MeshStandardMaterial({ color: 0x4a6a3a, roughness: 0.55, metalness: 0.45 })
+      new THREE.BoxGeometry(1.4, 1.7, 0.4),
+      new THREE.MeshStandardMaterial({ color: 0x3d5a30, roughness: 0.42, metalness: 0.55, emissive: 0x0a1508, emissiveIntensity: 0.15 })
     );
     g.add(face);
-    [-0.35, 0.35].forEach(function (x) {
+    [-0.42, 0.42].forEach(function (x) {
       var eye = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.12, 0.18, 0.9, 12),
-        new THREE.MeshStandardMaterial({ color: 0x3a5530, metalness: 0.5, roughness: 0.4 })
+        new THREE.CylinderGeometry(0.14, 0.2, 1.1, 16),
+        new THREE.MeshStandardMaterial({ color: 0x2a4020, metalness: 0.6, roughness: 0.35 })
       );
-      eye.position.set(x, 0.15, 0.35);
+      eye.position.set(x, 0.2, 0.45);
       eye.rotation.x = Math.PI / 2;
       g.add(eye);
+    });
+    [-0.55, 0.55].forEach(function (x) {
+      var ear = new THREE.Mesh(
+        new THREE.TorusGeometry(0.25, 0.08, 8, 16, Math.PI),
+        new THREE.MeshStandardMaterial({ color: 0x3d5a30, metalness: 0.5, roughness: 0.4 })
+      );
+      ear.position.set(x, 0, 0);
+      ear.rotation.y = x > 0 ? -Math.PI / 2 : Math.PI / 2;
+      g.add(ear);
     });
     return g;
   }
@@ -28,98 +38,114 @@
   function buildStaff() {
     var g = new THREE.Group();
     var rod = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.06, 0.08, 2.2, 12),
-      new THREE.MeshStandardMaterial({ color: 0xc9a227, metalness: 0.85, roughness: 0.25 })
+      new THREE.CylinderGeometry(0.05, 0.07, 2.4, 16),
+      new THREE.MeshStandardMaterial({ color: 0xc9a227, metalness: 0.92, roughness: 0.18 })
     );
     g.add(rod);
     var fin = new THREE.Mesh(
-      new THREE.SphereGeometry(0.15, 12, 12),
-      new THREE.MeshStandardMaterial({ color: 0xffd93d, metalness: 0.9, roughness: 0.15 })
+      new THREE.SphereGeometry(0.18, 24, 24),
+      new THREE.MeshStandardMaterial({ color: 0xffe080, metalness: 0.95, roughness: 0.1, emissive: 0x664400, emissiveIntensity: 0.3 })
     );
-    fin.position.y = 1.1;
+    fin.position.y = 1.2;
     g.add(fin);
+    for (var i = 0; i < 3; i++) {
+      var band = new THREE.Mesh(
+        new THREE.TorusGeometry(0.07, 0.015, 8, 24),
+        new THREE.MeshStandardMaterial({ color: 0xffd93d, metalness: 0.9, roughness: 0.15 })
+      );
+      band.position.y = -0.6 + i * 0.5;
+      band.rotation.x = Math.PI / 2;
+      g.add(band);
+    }
     return g;
   }
 
   function buildBird() {
     var g = new THREE.Group();
-    var body = new THREE.Mesh(
-      new THREE.SphereGeometry(0.35, 16, 16),
-      new THREE.MeshStandardMaterial({ color: 0xffd93d, metalness: 0.92, roughness: 0.12 })
+    var disc = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.9, 0.9, 0.02, 48),
+      new THREE.MeshStandardMaterial({ color: 0xffd93d, metalness: 0.95, roughness: 0.08, emissive: 0xaa6600, emissiveIntensity: 0.25 })
     );
-    g.add(body);
-    var wing = new THREE.Mesh(
-      new THREE.BoxGeometry(0.9, 0.04, 0.25),
-      new THREE.MeshStandardMaterial({ color: 0xe8a317, metalness: 0.88, roughness: 0.15 })
-    );
-    wing.position.y = 0.05;
-    g.add(wing);
+    g.add(disc);
+    for (var i = 0; i < 4; i++) {
+      var a = (i / 4) * Math.PI * 2;
+      var bird = new THREE.Mesh(
+        new THREE.ConeGeometry(0.12, 0.35, 8),
+        new THREE.MeshStandardMaterial({ color: 0xffe066, metalness: 0.9, roughness: 0.12 })
+      );
+      bird.position.set(Math.cos(a) * 0.45, 0.05, Math.sin(a) * 0.45);
+      bird.rotation.z = -Math.PI / 2;
+      bird.rotation.y = -a;
+      g.add(bird);
+    }
     return g;
   }
 
-  function buildDefault(type) {
-    var colors = [0x8b6914, 0xc9a227, 0x6ec6ff, 0xa08060, 0xf0e8d8, 0xffd93d];
-    return new THREE.Mesh(
-      new THREE.TorusKnotGeometry(0.5, 0.15, 64, 8),
-      new THREE.MeshStandardMaterial({ color: colors[type] || 0xc9a227, metalness: 0.5, roughness: 0.35 })
+  function buildPedestalModel(modelFn, typeId) {
+    var g = new THREE.Group();
+    var ped = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.9, 1, 0.15, 32),
+      new THREE.MeshStandardMaterial({ color: 0x1a1510, roughness: 0.9, metalness: 0.1 })
     );
+    ped.position.y = -0.9;
+    ped.receiveShadow = true;
+    g.add(ped);
+    var m = modelFn(typeId);
+    m.position.y = 0.2;
+    g.add(m);
+    return g;
   }
 
-  var BUILDERS = [buildMask, buildStaff, buildDefault, buildDefault, buildDefault, buildBird];
+  var BUILDERS = [buildMask, buildStaff, buildMask, buildStaff, buildStaff, buildBird];
 
   function ArtifactViewer3D(mount, typeId) {
-    if (!window.ThreeEngine || !window.ThreeEngine.ok || !mount) {
-      this.ok = false;
-      return;
-    }
-    this.ok = true;
-    this.mount = mount;
+    if (!TE || !TE.ok || !mount) { this.ok = false; return; }
     this.typeId = typeId || 0;
-
     var scene = new THREE.Scene();
-    scene.background = null;
+    scene.fog = new THREE.FogExp2(0x0a0806, 0.06);
     this.scene = scene;
 
-    var camera = new THREE.PerspectiveCamera(40, 1, 0.1, 50);
-    camera.position.set(0, 0.5, 3.5);
+    var camera = new THREE.PerspectiveCamera(38, 1, 0.1, 50);
+    camera.position.set(0, 0.8, 3.8);
     this.camera = camera;
 
-    this.renderer = window.ThreeEngine.createRenderer(mount, { exposure: 1.25 });
-    window.ThreeEngine.addLights(scene, 1.4);
+    this.renderer = TE.createRenderer(mount, { exposure: 1.5, alpha: false });
+    scene.background = new THREE.Color(0x0a0806);
+    TE.addCinematicLights(scene, 1.6);
 
-    var builder = BUILDERS[this.typeId] || buildDefault;
-    this.model = builder(this.typeId);
-    this.scene.add(this.model);
+    var spot = new THREE.SpotLight(0xffe8c8, 2, 15, 0.35, 0.5, 1);
+    spot.position.set(2, 5, 3);
+    scene.add(spot);
+
+    this.setType(typeId);
 
     var self = this;
-    this.loopId = window.ThreeEngine.startLoop(function (t) {
-      self._animate(t);
-    });
-    window.ThreeEngine.resizeObserver(mount, camera, this.renderer);
+    this.loopId = TE.startLoop(function (t) { self._animate(t); });
+    TE.resizeObserver(mount, camera, this.renderer);
   }
 
   ArtifactViewer3D.prototype.setType = function (typeId) {
     if (this.model) {
       this.scene.remove(this.model);
-      window.ThreeEngine.disposeScene(this.model);
+      TE.disposeObject(this.model);
     }
     this.typeId = typeId;
-    var builder = BUILDERS[typeId] || buildDefault;
-    this.model = builder(typeId);
+    var builder = BUILDERS[typeId] || BUILDERS[0];
+    this.model = buildPedestalModel(builder, typeId);
     this.scene.add(this.model);
   };
 
   ArtifactViewer3D.prototype._animate = function (t) {
     if (this.model) {
-      this.model.rotation.y = t * 0.6;
-      this.model.rotation.x = Math.sin(t * 0.4) * 0.12;
+      this.model.rotation.y = t * 0.5;
+      this.model.position.y = Math.sin(t * 0.8) * 0.04;
     }
     this.renderer.render(this.scene, this.camera);
   };
 
   ArtifactViewer3D.prototype.destroy = function () {
-    if (this.loopId) window.ThreeEngine.stopLoop(this.loopId);
-    window.ThreeEngine.disposeScene(this.scene);
+    if (this.loopId) TE.stopLoop(this.loopId);
+    TE.disposeScene(this.scene);
     this.mount.innerHTML = "";
   };
 
@@ -130,8 +156,6 @@
       return instance;
     },
     get: function () { return instance; },
-    destroy: function () {
-      if (instance) { instance.destroy(); instance = null; }
-    },
+    destroy: function () { if (instance) { instance.destroy(); instance = null; } },
   };
 })();
