@@ -105,6 +105,7 @@ from src.util.retry_fetch_ui import (
     retry_button_key,
 )
 from src.analysis.trend_summary import collect_trend_points, format_trend_markdown, trend_delta
+from src.analysis.contribution import contribution_table_rows
 
 
 def _watchlist_display_rows(watchlist: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -538,6 +539,24 @@ def render() -> None:
                         mark_dirty()
                         st.success("权重已保存。")
                         st.rerun()
+
+        if display_wl and snaps:
+            with st.expander("📈 涨跌贡献", expanded=False):
+                ww_c = normalize_watch_weights(st.session_state.get("watch_weights") or {})
+                portfolio_pct, contrib_rows = contribution_table_rows(display_wl, snaps, ww_c)
+                if portfolio_pct is not None:
+                    st.metric("组合加权涨跌幅", f"{portfolio_pct:+.2f}%")
+                    st.dataframe(
+                        pd.DataFrame(contrib_rows),
+                        use_container_width=True,
+                        hide_index=True,
+                    )
+                    st.caption(
+                        "贡献点 = 归一化权重 × 个股涨跌幅；贡献占比相对组合涨跌分解。"
+                        "权重来自 ⚖ 权重设置，未设则等权。"
+                    )
+                else:
+                    st.caption("暂无涨跌幅摘要，请先刷新全部摘要。")
 
         if display_wl and snaps:
             with st.expander("🗺 板块分布", expanded=False):

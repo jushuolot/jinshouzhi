@@ -351,6 +351,7 @@ def collect_latest_state() -> dict[str, Any]:
             "pinned_tickers": list(st.session_state.get("pinned_tickers") or []),
             "quiet_hours": dict(st.session_state.get("quiet_hours") or {}),
             "recent_viewed": list(st.session_state.get("recent_viewed") or []),
+            "sidebar_collapsed": dict(st.session_state.get("sidebar_collapsed") or {}),
         },
     }
 
@@ -455,6 +456,10 @@ def apply_latest_to_session(latest: dict[str, Any]) -> None:
         from src.util.recent_viewed import normalize_recent_viewed
 
         st.session_state.recent_viewed = normalize_recent_viewed(prefs["recent_viewed"])
+    if prefs.get("sidebar_collapsed") is not None:
+        from src.util.sidebar_state import normalize_sidebar_collapsed
+
+        st.session_state.sidebar_collapsed = normalize_sidebar_collapsed(prefs["sidebar_collapsed"])
 
     st.session_state["history_conclusions"] = latest.get("conclusions") or {}
 

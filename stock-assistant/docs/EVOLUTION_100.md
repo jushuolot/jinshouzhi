@@ -692,3 +692,33 @@
 - [x] **688** 进化加固 #289
 - [x] **689** 进化加固 #290
 - [x] **690** 进化加固 #291 · v3.7.0 milestone
+- [x] **691** P70 contribution 模块
+- [x] **692** P70 compute_portfolio_contribution
+- [x] **693** P70 contribution_table_rows
+- [x] **694** P70 复用 watch_weights 等权
+- [x] **695** P70 工作台 📈 涨跌贡献 expander
+- [x] **696** P70 test_p70_contribution
+- [x] **697** P70 workflow 阶段标记
+- [x] **698** 进化加固 #292
+- [x] **699** 进化加固 #293
+- [x] **700** 进化加固 #294
+- [x] **701** P71 sidebar_state 模块
+- [x] **702** P71 user_prefs 持久化
+- [x] **703** P71 is_section_collapsed
+- [x] **704** P71 workflow 快速上手 expander
+- [x] **705** P71 折叠 preference checkbox
+- [x] **706** P71 test_p71_sidebar_state
+- [x] **707** P71 workflow 阶段标记
+- [x] **708** 进化加固 #295
+- [x] **709** 进化加固 #296
+- [x] **710** 进化加固 #297
+- [x] **711** P72 v3.8.0 app_meta
+- [x] **712** P72 EVOLUTION 文档
+- [x] **713** P72 EVOLUTION_100 691-720
+- [x] **714** P72 workflow P70-P72
+- [x] **715** P72 evolve_verify 通过
+- [x] **716** P72 README 版本徽章
+- [x] **717** 进化加固 #298
+- [x] **718** 进化加固 #299
+- [x] **719** 进化加固 #300
+- [x] **720** 进化加固 #301 · v3.8.0 milestone

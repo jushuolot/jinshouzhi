@@ -75,6 +75,9 @@
 | **P67** | 自选 CSV 导出 | ✅ 已完成 | watchlist_csv_export、工作台导出 |
 | **P68** | 最近查看 | ✅ 已完成 | user_prefs.recent_viewed、工作台 chips |
 | **P69** | 文档与 v3.7 | ✅ 已完成 | EVOLUTION 661–690、v3.7.0 step 690 |
+| **P70** | 组合涨跌贡献 | ✅ 已完成 | contribution、工作台 📈 expander |
+| **P71** | 侧边栏折叠状态 | ✅ 已完成 | user_prefs.sidebar_collapsed、快速上手 expander |
+| **P72** | 文档与 v3.8 | ✅ 已完成 | EVOLUTION 691–720、v3.8.0 step 720 |
 
 ## P1：信息架构（本次）
 
@@ -248,6 +251,12 @@
 - **P68 最近查看**：`user_prefs.recent_viewed`（最近 10 只）；分析工作台 chips 切换标的；`test_p68_recent_viewed`
 - **P69 文档与 v3.7**：EVOLUTION_100 步 661–690；v3.7.0 step 690；`evolve_verify.sh` 覆盖 P67–P69 测试
 
+## P70–P72：涨跌贡献、侧边栏折叠、v3.8（已完成）
+
+- **P70 组合涨跌贡献**：`src/analysis/contribution.py`；各标的加权贡献组合涨跌幅（watch_weights 或等权）；工作台「📈 涨跌贡献」expander；`test_p70_contribution`
+- **P71 侧边栏折叠状态**：`src/util/sidebar_state.py`；`user_prefs.sidebar_collapsed`；快速上手 expander + 折叠偏好；`test_p71_sidebar_state`
+- **P72 文档与 v3.8**：EVOLUTION_100 步 691–720；v3.8.0 step 720；`evolve_verify.sh` 覆盖 P70–P72 测试
+
 ## 进化原则
 
 1. **先可读，再炫功能** — 每轮至少产出一种「能发给同事看的资料」
@@ -334,3 +343,6 @@ streamlit run app.py
 - [x] 自选 CSV 导出 code/name/score/pct/note/group · P67
 - [x] 最近查看 chips recent_viewed · P68
 - [x] v3.7.0 · 进化 step 690 · P69
+- [x] 组合涨跌贡献 contribution · P70
+- [x] 侧边栏折叠 sidebar_collapsed · P71
+- [x] v3.8.0 · 进化 step 720 · P72
