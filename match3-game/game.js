@@ -19,14 +19,18 @@
   const MAX_LEVEL = 100;
   /** 每步最多可得分（包含连锁），超出的连消只计到上限 */
   const MAX_POINTS_PER_MOVE = 10;
-  /** 系统自动设计每关步数：按关卡设定目标过关率（理论值） */
-  const PASS_RATE_LEVEL_1 = 0.9;
-  /** 第二关起：目标通过率上限不超过 1%（理论估算） */
-  const MAX_PASS_RATE_FROM_LEVEL_2 = 0.01;
-  /** 传给求解器的目标值，略低于上限便于数值误差 */
-  const PASS_RATE_FROM_LEVEL_2 = 0.0095;
-  const MATCH_ANIM_MS = 260;
-  const CASCADE_PAUSE_MS = 80;
+  /** 系统自动设计每关步数：按关卡设定目标过关率 */
+  const PASS_RATE_LEVEL_1 = 0.88;
+  /** 关卡越高通过率略降，仍保持可玩（接近市面消消乐曲线） */
+  const PASS_RATE_LEVEL_MAX = 0.28;
+  const MATCH_ANIM_MS = 280;
+  const CASCADE_PAUSE_MS = 100;
+  const STARS_STORAGE_KEY = "match3_level_stars";
+  /** 特殊糖：0 普通 1 横纹 2 竖纹 3 炸弹 */
+  const SPECIAL_NONE = 0;
+  const SPECIAL_ROW = 1;
+  const SPECIAL_COL = 2;
+  const SPECIAL_BOMB = 3;
 
   const DEFAULT_AD_CONFIG = {
     enabled: true,
@@ -45,7 +49,7 @@
       level_end: { label: "关尾广告" },
     },
     admin: {
-      passphrase: "萌植888",
+      passphrase: "Mz168",
       unlockTaps: 5,
     },
   };
@@ -159,6 +163,12 @@
 
   /** @type {number[][]} */
   let board = [];
+  /** @type {number[][]} */
+  let specialGrid = [];
+  let levelMovesTotal = 0;
+  let cascadeStep = 0;
+  /** @type {Record<number, number>} */
+  let levelStarsMap = {};
   let score = 0;
   let movesLeft = 0;
   /** 当前关卡目标分数（本关内累计当前分数达到即过关） */
@@ -187,9 +197,21 @@
   const boardEl = document.getElementById("board");
   const gameTitleEl = document.getElementById("game-title");
   const levelEl = document.getElementById("level");
+  const levelNumEl = document.getElementById("level-num");
   const targetScoreEl = document.getElementById("target-score");
   const scoreEl = document.getElementById("score");
   const movesEl = document.getElementById("moves");
+  const scoreProgressEl = document.getElementById("score-progress");
+  const progressTextEl = document.getElementById("progress-text");
+  const liveStarsEl = document.getElementById("live-stars");
+  const comboBannerEl = document.getElementById("combo-banner");
+  const fxLayerEl = document.getElementById("fx-layer");
+  const goalsModalEl = document.getElementById("goals-modal");
+  const goalsLevelNumEl = document.getElementById("goals-level-num");
+  const goalsTargetEl = document.getElementById("goals-target");
+  const goalsMovesEl = document.getElementById("goals-moves");
+  const goalsStartBtn = document.getElementById("goals-start");
+  const modalStarsEl = document.getElementById("modal-stars");
   const messageEl = document.getElementById("message");
   const restartBtn = document.getElementById("restart");
   const nextLevelBtn = document.getElementById("next-level");
@@ -707,35 +729,27 @@
     const level1Target = 100;
     const inc = 20;
     const pass1 = Math.round(PASS_RATE_LEVEL_1 * 100);
-    const pass2Cap = Math.round(MAX_PASS_RATE_FROM_LEVEL_2 * 10000) / 100;
     const moveSpec = getLevelSpec(currentLevelIndex);
     return (
       "<p><strong>过关目标</strong>：第 1 关目标 " +
       level1Target +
-      " 分；从第 2 关开始每关目标 +" +
+      " 分；之后每关 +" +
       inc +
-      " 分。达到目标即通关。</p>" +
+      " 分。</p>" +
       "<p><strong>本关参数</strong>：目标 " +
       moveSpec.target +
       " 分，步数 " +
       moveSpec.moves +
       "。</p>" +
-      "<p><strong>操作方式</strong>：</p>" +
-      "<ul>" +
-      "<li><strong>方向滑动交换</strong>：按住从格子向上/下/左/右滑动，与相邻格交换（必须能产生消除才生效）。</li>" +
-      "<li><strong>连线消除</strong>：按住滑过同一种植物，形成长度 ≥3 的路径，松开即可消除该路径。</li>" +
-      "</ul>" +
-      "<p><strong>计分</strong>：每段消除按“连消长度”计分：3 连=5、4 连=6、5 连=7……；并且<strong>每步（含连锁）最多 " +
-      MAX_POINTS_PER_MOVE +
-      " 分</strong>。</p>" +
-      "<p><strong>难度</strong>：系统按目标成功率自动反推步数：第 1 关约 " +
+      "<p><strong>操作</strong>：相邻滑动交换，或按住连线 ≥3 同色消除。</p>" +
+      "<p><strong>特殊糖果</strong>：4 连生成条纹糖（整行/列），5 连生成炸弹糖（3×3）。</p>" +
+      "<p><strong>星级</strong>：达标 1 星；高分或剩余步数多可获 2～3 星。</p>" +
+      "<p><strong>难度</strong>：第 1 关约 " +
       pass1 +
-      "%；第 2 关起通过率不超过 " +
-      pass2Cap +
-      "%。</p>" +
-      "<p><strong>免费体验</strong>：每关开始与结束会展示<strong>赞助内容</strong>（约 " +
+      "% 通过率，后续关卡逐步提升挑战。</p>" +
+      "<p><strong>赞助</strong>：每关开始/结束展示赞助内容（约 " +
       AD_CONFIG.minWatchSec +
-      " 秒后可继续）。点击「了解详情」可查看赞助商信息。</p>"
+      " 秒）。</p>"
     );
   }
 
@@ -805,7 +819,9 @@
    * @returns {{ moves: number, target: number }}
    */
   function targetPassRateForLevel(levelIdx) {
-    return levelIdx <= 0 ? PASS_RATE_LEVEL_1 : PASS_RATE_FROM_LEVEL_2;
+    if (levelIdx <= 0) return PASS_RATE_LEVEL_1;
+    const t = levelIdx / Math.max(1, MAX_LEVEL - 1);
+    return PASS_RATE_LEVEL_1 - t * (PASS_RATE_LEVEL_1 - PASS_RATE_LEVEL_MAX);
   }
 
   function getLevelSpec(idx) {
@@ -894,15 +910,6 @@
       }
     }
 
-    // 第二关起：若估算通过率仍高于 1%，减少步数压低通过率（直到封顶或到达下限）
-    if (levelIdx >= 1) {
-      while (bestMoves > minMoves) {
-        const pNow = estimatePassProbability(levelIdx, target, bestMoves);
-        if (pNow <= MAX_PASS_RATE_FROM_LEVEL_2 + 1e-9) break;
-        bestMoves--;
-      }
-    }
-
     return bestMoves;
   }
 
@@ -942,14 +949,25 @@
 
   function openResultModal(isWin) {
     if (!modalEl) return;
-    const quote = pickQuote();
+    const stars = isWin ? calcStars(score, levelTarget, movesLeft, levelMovesTotal) : 0;
+    if (isWin && stars > 0) {
+      const prev = levelStarsMap[currentLevelIndex] || 0;
+      if (stars > prev) levelStarsMap[currentLevelIndex] = stars;
+      saveLevelStars();
+    }
+    renderStarRow(modalStarsEl, stars);
+
     if (modalLevelEl) modalLevelEl.textContent = currentLevelIndex + 1 + " / " + MAX_LEVEL;
     if (modalTargetEl) modalTargetEl.textContent = String(levelTarget);
     if (modalScoreEl) modalScoreEl.textContent = String(score);
     if (modalLeftEl) modalLeftEl.textContent = String(movesLeft);
-    if (modalEggIconEl) modalEggIconEl.textContent = "📜";
-    if (modalEggTextEl)
-      modalEggTextEl.textContent = "“" + quote.q + "” —— " + quote.who + "（" + quote.src + "）";
+    if (modalEggIconEl) modalEggIconEl.textContent = isWin ? (stars >= 3 ? "👑" : "🏆") : "💪";
+    if (modalEggTextEl) {
+      if (!isWin) modalEggTextEl.textContent = "差一点点！调整策略再试，特殊糖果能帮你爆发得分。";
+      else if (stars >= 3) modalEggTextEl.textContent = "完美！三星通关，节奏与连锁都很棒。";
+      else if (stars === 2) modalEggTextEl.textContent = "不错！再剩些步数或刷更高分可冲击三星。";
+      else modalEggTextEl.textContent = "过关啦！试试更少步数通关拿更高星级。";
+    }
 
     const isLast = currentLevelIndex >= MAX_LEVEL - 1;
     const canPrev = currentLevelIndex > 0;
@@ -987,17 +1005,88 @@
     g[r2][c2] = t;
   }
 
-  /**
-   * 找出所有连成 3+ 的段（横或竖），并计算本轮得分。
-   * 计分规则：3连=5分，4连=6分……（每段得分 = len+2），并受“每步封顶”影响。
-   * @param {number[][]} g
-   * @returns {{ cells: Set<string>, points: number, maxLen: number }}
-   */
-  function findMatchInfo(g) {
-    const cells = new Set();
-    let points = 0;
-    let maxLen = 0;
+  function emptySpecialGrid() {
+    const g = [];
+    for (let r = 0; r < ROWS; r++) {
+      g[r] = [];
+      for (let c = 0; c < COLS; c++) g[r][c] = SPECIAL_NONE;
+    }
+    return g;
+  }
 
+  function loadLevelStars() {
+    try {
+      const raw = window.localStorage.getItem(STARS_STORAGE_KEY);
+      levelStarsMap = raw ? JSON.parse(raw) : {};
+    } catch (e) {
+      levelStarsMap = {};
+    }
+  }
+
+  function saveLevelStars() {
+    try {
+      window.localStorage.setItem(STARS_STORAGE_KEY, JSON.stringify(levelStarsMap));
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  function calcStars(scoreVal, target, movesLeftVal, movesTotal) {
+    if (scoreVal < target) return 0;
+    const scoreRatio = scoreVal / target;
+    const moveRatio = movesTotal > 0 ? movesLeftVal / movesTotal : 0;
+    if (scoreRatio >= 1.45 || moveRatio >= 0.35) return 3;
+    if (scoreRatio >= 1.12 || moveRatio >= 0.12) return 2;
+    return 1;
+  }
+
+  function renderStarRow(container, count) {
+    if (!container) return;
+    container.querySelectorAll(".star").forEach(function (el) {
+      const n = Number(el.getAttribute("data-star"));
+      el.classList.toggle("on", n <= count);
+    });
+  }
+
+  function updateProgressBar() {
+    const pct = levelTarget > 0 ? Math.min(100, (score / levelTarget) * 100) : 0;
+    if (scoreProgressEl) scoreProgressEl.style.width = pct.toFixed(1) + "%";
+    if (progressTextEl) progressTextEl.textContent = score + " / " + levelTarget;
+    renderStarRow(liveStarsEl, calcStars(score, levelTarget, movesLeft, levelMovesTotal));
+  }
+
+  function showComboBanner(step) {
+    if (!comboBannerEl || step < 2) return;
+    comboBannerEl.textContent = step + " 连击！";
+    comboBannerEl.hidden = false;
+    comboBannerEl.classList.add("show");
+    window.setTimeout(function () {
+      comboBannerEl.classList.remove("show");
+      window.setTimeout(function () {
+        comboBannerEl.hidden = true;
+      }, 200);
+    }, 700);
+  }
+
+  function spawnScoreFloat(points) {
+    if (!fxLayerEl || !boardEl || points <= 0) return;
+    const el = document.createElement("span");
+    el.className = "score-float";
+    el.textContent = "+" + points;
+    el.style.left = "50%";
+    el.style.top = "42%";
+    fxLayerEl.appendChild(el);
+    window.setTimeout(function () {
+      el.remove();
+    }, 800);
+  }
+
+  /**
+   * @param {number[][]} g
+   * @returns {{ cells: {r:number,c:number}[], len: number, orient: 'h'|'v', center: {r:number,c:number} }[]}
+   */
+  function findMatchSegments(g) {
+    const segments = [];
     for (let r = 0; r < ROWS; r++) {
       let c = 0;
       while (c < COLS) {
@@ -1009,14 +1098,13 @@
         let len = 1;
         while (c + len < COLS && g[r][c + len] === v) len++;
         if (len >= 3) {
-          points += Math.min(MAX_POINTS_PER_MOVE, len + 2);
-          if (len > maxLen) maxLen = len;
-          for (let k = 0; k < len; k++) cells.add(key(r, c + k));
+          const cells = [];
+          for (let k = 0; k < len; k++) cells.push({ r: r, c: c + k });
+          segments.push({ cells: cells, len: len, orient: "h", center: cells[Math.floor(len / 2)] });
         }
         c += len;
       }
     }
-
     for (let c = 0; c < COLS; c++) {
       let r = 0;
       while (r < ROWS) {
@@ -1028,15 +1116,167 @@
         let len = 1;
         while (r + len < ROWS && g[r + len][c] === v) len++;
         if (len >= 3) {
-          points += Math.min(MAX_POINTS_PER_MOVE, len + 2);
-          if (len > maxLen) maxLen = len;
-          for (let k = 0; k < len; k++) cells.add(key(r + k, c));
+          const cells = [];
+          for (let k = 0; k < len; k++) cells.push({ r: r + k, c: c });
+          segments.push({ cells: cells, len: len, orient: "v", center: cells[Math.floor(len / 2)] });
         }
         r += len;
       }
     }
+    return segments;
+  }
 
-    return { cells: cells, points: points, maxLen: maxLen };
+  function expandClearsWithSpecials(keys) {
+    const expanded = new Set(keys);
+    keys.forEach(function (k) {
+      const parts = k.split(",");
+      const r = Number(parts[0]);
+      const c = Number(parts[1]);
+      const sp = specialGrid[r] && specialGrid[r][c];
+      if (sp === SPECIAL_ROW) {
+        for (let cc = 0; cc < COLS; cc++) expanded.add(key(r, cc));
+      } else if (sp === SPECIAL_COL) {
+        for (let rr = 0; rr < ROWS; rr++) expanded.add(key(rr, c));
+      } else if (sp === SPECIAL_BOMB) {
+        for (let dr = -1; dr <= 1; dr++) {
+          for (let dc = -1; dc <= 1; dc++) {
+            const rr = r + dr;
+            const cc = c + dc;
+            if (rr >= 0 && rr < ROWS && cc >= 0 && cc < COLS) expanded.add(key(rr, cc));
+          }
+        }
+      }
+    });
+    return expanded;
+  }
+
+  function planSpecialCreations(segments) {
+    const creations = [];
+    const reserved = new Set();
+    segments
+      .slice()
+      .sort(function (a, b) {
+        return b.len - a.len;
+      })
+      .forEach(function (seg) {
+        if (seg.len < 4) return;
+        const k = key(seg.center.r, seg.center.c);
+        if (reserved.has(k)) return;
+        reserved.add(k);
+        creations.push({
+          r: seg.center.r,
+          c: seg.center.c,
+          kind: seg.len >= 5 ? SPECIAL_BOMB : seg.orient === "h" ? SPECIAL_ROW : SPECIAL_COL,
+        });
+      });
+    return creations;
+  }
+
+  function applySpecialClasses(el, r, c) {
+    if (!el) return;
+    el.classList.remove("special-row", "special-col", "special-bomb");
+    const sp = specialGrid[r][c];
+    if (sp === SPECIAL_ROW) el.classList.add("special-row");
+    else if (sp === SPECIAL_COL) el.classList.add("special-col");
+    else if (sp === SPECIAL_BOMB) el.classList.add("special-bomb");
+  }
+
+  function gravityAndRefillWithSpecials(g, sp) {
+    for (let c = 0; c < COLS; c++) {
+      const stack = [];
+      const specStack = [];
+      for (let r = ROWS - 1; r >= 0; r--) {
+        if (g[r][c] >= 0) {
+          stack.push(g[r][c]);
+          specStack.push(sp[r][c]);
+        }
+      }
+      for (let r = ROWS - 1; r >= 0; r--) {
+        if (stack.length) {
+          g[r][c] = stack.shift();
+          sp[r][c] = specStack.shift();
+        } else {
+          g[r][c] = randomRefill(g, r, c);
+          sp[r][c] = SPECIAL_NONE;
+        }
+      }
+    }
+  }
+
+  function hasAnyValidMove() {
+    for (let r = 0; r < ROWS; r++) {
+      for (let c = 0; c < COLS; c++) {
+        if (c + 1 < COLS && swapCreatesMatch(r, c, r, c + 1)) return true;
+        if (r + 1 < ROWS && swapCreatesMatch(r, c, r + 1, c)) return true;
+      }
+    }
+    return false;
+  }
+
+  function shuffleBoard() {
+    const types = [];
+    for (let r = 0; r < ROWS; r++) {
+      for (let c = 0; c < COLS; c++) {
+        types.push(board[r][c]);
+      }
+    }
+    let guard = 0;
+    do {
+      for (let i = types.length - 1; i > 0; i--) {
+        const j = randomInt(i + 1);
+        const t = types[i];
+        types[i] = types[j];
+        types[j] = t;
+      }
+      let idx = 0;
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+          board[r][c] = types[idx++];
+          specialGrid[r][c] = SPECIAL_NONE;
+        }
+      }
+      guard++;
+    } while ((!hasAnyValidMove() || findMatchInfo(board).cells.size > 0) && guard < 40);
+    renderCells();
+    setMessage("棋盘已重排，继续挑战！");
+  }
+
+  function showLevelGoals(onStart) {
+    if (!goalsModalEl) {
+      if (onStart) onStart();
+      return;
+    }
+    if (goalsLevelNumEl) goalsLevelNumEl.textContent = String(currentLevelIndex + 1);
+    if (goalsTargetEl) goalsTargetEl.textContent = String(levelTarget);
+    if (goalsMovesEl) goalsMovesEl.textContent = String(movesLeft);
+    goalsModalEl.hidden = false;
+    if (goalsStartBtn) {
+      goalsStartBtn.onclick = function () {
+        goalsModalEl.hidden = true;
+        goalsStartBtn.onclick = null;
+        if (onStart) onStart();
+      };
+    }
+  }
+
+  /**
+   * 找出所有连成 3+ 的段（横或竖），并计算本轮得分。
+   * @param {number[][]} g
+   * @returns {{ cells: Set<string>, points: number, maxLen: number }}
+   */
+  function findMatchInfo(g) {
+    const segments = findMatchSegments(g);
+    const cells = new Set();
+    let points = 0;
+    let maxLen = 0;
+    segments.forEach(function (seg) {
+      points += Math.min(MAX_POINTS_PER_MOVE, seg.len + 2);
+      if (seg.len > maxLen) maxLen = seg.len;
+      seg.cells.forEach(function (p) {
+        cells.add(key(p.r, p.c));
+      });
+    });
+    return { cells: cells, points: points, maxLen: maxLen, segments: segments };
   }
 
   /**
@@ -1137,6 +1377,7 @@
         cell.dataset.c = String(c);
         const t = board[r][c];
         cell.dataset.type = String(t);
+        applySpecialClasses(cell, r, c);
         cell.setAttribute("role", "gridcell");
         cell.setAttribute("aria-label", PLANT_NAMES[t] || "植物");
         cell.tabIndex = 0;
@@ -1146,13 +1387,18 @@
   }
 
   function updateHud() {
-    if (levelEl) levelEl.textContent = currentLevelIndex + 1 + " / " + MAX_LEVEL;
+    if (levelEl) levelEl.textContent = currentLevelIndex + 1 + "/" + MAX_LEVEL;
+    if (levelNumEl) levelNumEl.textContent = String(currentLevelIndex + 1);
     if (targetScoreEl) targetScoreEl.textContent = String(levelTarget);
     if (scoreEl) {
       scoreEl.textContent = String(score);
       scoreEl.classList.toggle("target-met", score >= levelTarget && levelTarget > 0);
     }
-    if (movesEl) movesEl.textContent = String(movesLeft);
+    if (movesEl) {
+      movesEl.textContent = String(movesLeft);
+      movesEl.classList.toggle("low", movesLeft <= 3 && movesLeft > 0);
+    }
+    updateProgressBar();
   }
 
   function setMessage(text, isGameOver) {
@@ -1225,6 +1471,7 @@
         if (el) {
           const t = board[r][c];
           el.dataset.type = String(t);
+          applySpecialClasses(el, r, c);
           if (t >= 0) el.setAttribute("aria-label", PLANT_NAMES[t] || "植物");
         }
       }
@@ -1247,16 +1494,28 @@
    */
   async function resolveAllMatches() {
     let totalCleared = 0;
+    cascadeStep = 0;
     while (true) {
       const info = findMatchInfo(board);
-      const matched = info.cells;
-      if (matched.size === 0) break;
+      if (info.cells.size === 0) break;
+
+      cascadeStep += 1;
+      if (cascadeStep > 1) showComboBanner(cascadeStep);
+
+      let matched = expandClearsWithSpecials(info.cells);
+      const creations = planSpecialCreations(info.segments || []);
+      creations.forEach(function (cr) {
+        const k = key(cr.r, cr.c);
+        matched.delete(k);
+        specialGrid[cr.r][cr.c] = cr.kind;
+      });
 
       totalCleared += matched.size;
       const add = Math.min(info.points, Math.max(0, movePointsLeft));
       movePointsLeft -= add;
       score += add;
       updateHud();
+      spawnScoreFloat(add);
 
       soundMatch(matched.size);
       flashBoard();
@@ -1274,9 +1533,16 @@
         const rr = Number(parts[0]);
         const cc = Number(parts[1]);
         board[rr][cc] = -1;
+        specialGrid[rr][cc] = SPECIAL_NONE;
       });
 
-      gravityAndRefill(board);
+      creations.forEach(function (cr) {
+        refreshCellTypes();
+        const el = boardEl && boardEl.querySelector('.cell[data-r="' + cr.r + '"][data-c="' + cr.c + '"]');
+        if (el) applySpecialClasses(el, cr.r, cr.c);
+      });
+
+      gravityAndRefillWithSpecials(board, specialGrid);
       refreshCellTypes();
       await sleep(CASCADE_PAUSE_MS);
     }
@@ -1366,12 +1632,19 @@
     clearSelection();
 
     swapCells(board, r1, c1, r2, c2);
+    const el1 = boardEl && boardEl.querySelector('.cell[data-r="' + r1 + '"][data-c="' + c1 + '"]');
+    const el2 = boardEl && boardEl.querySelector('.cell[data-r="' + r2 + '"][data-c="' + c2 + '"]');
+    if (el1) el1.classList.add("swapping");
+    if (el2) el2.classList.add("swapping");
     refreshCellTypes();
-    await sleep(90);
+    await sleep(120);
+    if (el1) el1.classList.remove("swapping");
+    if (el2) el2.classList.remove("swapping");
 
     await resolveAllMatches();
 
     setProcessing(false);
+    if (!gameOver && movesLeft > 0 && !hasAnyValidMove()) shuffleBoard();
     await finalizeTurn();
   }
 
@@ -1404,12 +1677,17 @@
     }
 
     applyClear(keysToClear);
-    gravityAndRefill(board);
+    keysToClear.forEach(function (k) {
+      const parts = k.split(",");
+      specialGrid[Number(parts[0])][Number(parts[1])] = SPECIAL_NONE;
+    });
+    gravityAndRefillWithSpecials(board, specialGrid);
     refreshCellTypes();
     await sleep(CASCADE_PAUSE_MS);
 
     await resolveAllMatches();
     setProcessing(false);
+    if (!gameOver && movesLeft > 0 && !hasAnyValidMove()) shuffleBoard();
     await finalizeTurn();
   }
 
@@ -1583,22 +1861,32 @@
     applyLevelState(idx);
   }
 
+  function beginLevelPlay() {
+    showLevelGoals(function () {
+      if (!hasAnyValidMove()) shuffleBoard();
+    });
+  }
+
   function applyLevelState(levelIdx) {
     currentLevelIndex = levelIdx;
     const spec = getLevelSpec(levelIdx);
     levelTarget = spec.target;
     movesLeft = spec.moves;
+    levelMovesTotal = spec.moves;
     score = 0;
     board = fillNoMatches();
+    specialGrid = emptySpecialGrid();
     gameOver = false;
     selected = null;
     processing = false;
     pendingPointerDown = null;
+    cascadeStep = 0;
     setMessage("");
     setLevelActionButtons(false, false);
     updateHud();
     renderCells();
     if (boardEl) boardEl.classList.remove("processing");
+    beginLevelPlay();
   }
 
   function resetCampaign() {
@@ -1747,6 +2035,7 @@
   }
 
   loadAdStats();
+  loadLevelStars();
 
   startLevel(0);
 })();

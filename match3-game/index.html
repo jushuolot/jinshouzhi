@@ -10,26 +10,56 @@
   <div class="wrap">
     <header class="header">
       <h1 id="game-title" class="title">萌植消消乐</h1>
-      <p class="subtitle">共 100 关：在限定步数内达到目标分数即可过关；点击一株再点相邻格交换，或按住拖到相邻格松开</p>
+      <p class="subtitle">滑动交换 · 连线消除 · 合成特殊糖果</p>
     </header>
 
-    <div class="hud">
-      <div class="hud-item">
-        <span class="hud-label">关卡</span>
-        <strong id="level" class="hud-value">1 / 100</strong>
+    <div class="game-shell">
+      <div class="level-bar">
+        <div class="level-badge">
+          <span class="level-badge-label">关卡</span>
+          <strong id="level-num" class="level-badge-num">1</strong>
+        </div>
+        <div id="live-stars" class="live-stars" aria-label="本关实时星级">
+          <span class="star" data-star="1">★</span>
+          <span class="star" data-star="2">★</span>
+          <span class="star" data-star="3">★</span>
+        </div>
+        <div class="moves-pill">
+          <span class="moves-pill-label">步数</span>
+          <strong id="moves" class="moves-pill-value">0</strong>
+        </div>
       </div>
-      <div class="hud-item">
-        <span class="hud-label">目标分数</span>
-        <strong id="target-score" class="hud-value">0</strong>
+
+      <div class="progress-block">
+        <div class="progress-meta">
+          <span class="progress-label">目标进度</span>
+          <span id="progress-text" class="progress-text">0 / 100</span>
+        </div>
+        <div class="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100">
+          <div id="score-progress" class="progress-fill"></div>
+        </div>
       </div>
-      <div class="hud-item">
-        <span class="hud-label">当前分数</span>
-        <strong id="score" class="hud-value">0</strong>
+
+      <div class="score-row">
+        <div class="score-chip">
+          <span>得分</span>
+          <strong id="score" class="hud-value">0</strong>
+        </div>
+        <div class="score-chip score-chip-muted">
+          <span>目标</span>
+          <strong id="target-score" class="hud-value">0</strong>
+        </div>
+        <div class="score-chip score-chip-muted">
+          <span>总关</span>
+          <strong id="level" class="hud-value">1/100</strong>
+        </div>
       </div>
-      <div class="hud-item">
-        <span class="hud-label">剩余步数</span>
-        <strong id="moves" class="hud-value">0</strong>
-      </div>
+    </div>
+
+    <div class="board-wrap">
+      <div id="combo-banner" class="combo-banner" hidden aria-live="polite"></div>
+      <div id="fx-layer" class="fx-layer" aria-hidden="true"></div>
+      <div id="board" class="board" role="grid" aria-label="游戏棋盘"></div>
     </div>
 
     <div class="audio-bar" aria-label="音频控制">
@@ -48,6 +78,26 @@
     </div>
   </div>
 
+  <div id="goals-modal" class="modal goals-modal" role="dialog" aria-modal="true" aria-labelledby="goals-title" hidden>
+    <div class="modal-backdrop"></div>
+    <div class="modal-panel goals-panel">
+      <div class="modal-head">
+        <h2 id="goals-title" class="modal-title">第 <span id="goals-level-num">1</span> 关</h2>
+      </div>
+      <div class="modal-body goals-body">
+        <ul class="goals-list">
+          <li>🎯 达到 <strong id="goals-target">100</strong> 分</li>
+          <li>👣 剩余步数 <strong id="goals-moves">20</strong></li>
+          <li>⭐ 三星：高分或剩较多步数</li>
+          <li>✨ 4 连 → 条纹糖 · 5 连 → 炸弹糖</li>
+        </ul>
+      </div>
+      <div class="modal-actions actions-row">
+        <button type="button" id="goals-start" class="btn">开始挑战</button>
+      </div>
+    </div>
+  </div>
+
   <div id="level-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" hidden>
     <div class="modal-backdrop" data-modal-close="1"></div>
     <div class="modal-panel">
@@ -57,6 +107,12 @@
       </div>
 
       <div class="modal-body">
+        <div class="modal-stars" id="modal-stars" aria-label="本关星级">
+          <span class="star star-lg" data-star="1">★</span>
+          <span class="star star-lg" data-star="2">★</span>
+          <span class="star star-lg" data-star="3">★</span>
+        </div>
+
         <div class="modal-score">
           <div class="modal-score-item">
             <span class="modal-label">关卡</span>
@@ -77,10 +133,10 @@
         </div>
 
         <div class="easter-egg">
-          <div id="modal-egg-icon" class="egg-icon">🌿</div>
+          <div id="modal-egg-icon" class="egg-icon">🏆</div>
           <div class="egg-text">
-            <div class="egg-title">彩蛋</div>
-            <div id="modal-egg-text" class="egg-desc">你发现了一片神秘的绿意。</div>
+            <div class="egg-title">本关评价</div>
+            <div id="modal-egg-text" class="egg-desc">继续加油，收集更多三星！</div>
           </div>
         </div>
       </div>
