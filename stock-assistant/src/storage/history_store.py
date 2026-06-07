@@ -349,6 +349,7 @@ def collect_latest_state() -> dict[str, Any]:
             "stale_hours": float(st.session_state.get("stale_hours") or 24.0),
             "watch_weights": dict(st.session_state.get("watch_weights") or {}),
             "pinned_tickers": list(st.session_state.get("pinned_tickers") or []),
+            "quiet_hours": dict(st.session_state.get("quiet_hours") or {}),
         },
     }
 
@@ -445,6 +446,10 @@ def apply_latest_to_session(latest: dict[str, Any]) -> None:
         from src.util.pinned_tickers import normalize_pinned_tickers
 
         st.session_state.pinned_tickers = normalize_pinned_tickers(prefs["pinned_tickers"])
+    if prefs.get("quiet_hours") is not None:
+        from src.util.quiet_hours import normalize_quiet_hours
+
+        st.session_state.quiet_hours = normalize_quiet_hours(prefs["quiet_hours"])
 
     st.session_state["history_conclusions"] = latest.get("conclusions") or {}
 

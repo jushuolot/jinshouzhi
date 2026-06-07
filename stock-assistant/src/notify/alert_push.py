@@ -13,6 +13,7 @@ from src.auth.users import current_user_id
 from src.notify.push_log import record_push
 from src.notify.retry import enqueue_retry, retry_with_backoff
 from src.notify.webhook import get_webhook_url, post_webhook
+from src.util.quiet_hours import is_in_quiet_hours, normalize_quiet_hours
 
 
 def _app_url() -> str:
@@ -93,16 +94,27 @@ def push_alerts_webhook(
     return ok, msg
 
 
+def _quiet_hours_from_session(ss: Any) -> dict[str, int | None]:
+    if hasattr(ss, "get"):
+        raw = ss.get("quiet_hours")
+    else:
+        raw = (ss or {}).get("quiet_hours")
+    return normalize_quiet_hours(raw)
+
+
 def maybe_push_alerts_if_configured(
     alerts: list[WatchAlert],
     *,
     session_state: Any | None = None,
+    now: Any | None = None,
 ) -> tuple[bool, str] | None:
     """开启 push_webhook_on_alerts 且提醒集合变化时自动推送。"""
     ss = session_state if session_state is not None else st.session_state
     if not alerts or not ss.get("push_webhook_on_alerts"):
         return None
     if not get_webhook_url():
+        return None
+    if is_in_quiet_hours(_quiet_hours_from_session(ss), now=now):
         return None
     fp = alerts_fingerprint(alerts)
     if ss.get("_last_alert_push_fp") == fp:

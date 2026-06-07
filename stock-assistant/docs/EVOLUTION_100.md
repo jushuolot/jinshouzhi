@@ -632,3 +632,33 @@
 - [x] **628** 进化加固 #267
 - [x] **629** 进化加固 #268
 - [x] **630** 进化加固 #269 · v3.5.0 milestone
+- [x] **631** P64 watchlist_csv_import 模块
+- [x] **632** P64 parse_tickers_from_csv
+- [x] **633** P64 ticker_to_watchlist_item
+- [x] **634** P64 merge_csv_tickers_into_watchlist
+- [x] **635** P64 工作台 CSV 导入 UI
+- [x] **636** P64 test_p64_csv_import
+- [x] **637** P64 workflow 阶段标记
+- [x] **638** 进化加固 #270
+- [x] **639** 进化加固 #271
+- [x] **640** 进化加固 #272
+- [x] **641** P65 quiet_hours 模块
+- [x] **642** P65 user_prefs 持久化
+- [x] **643** P65 alert_push 静默跳过
+- [x] **644** P65 alert_panel 静默 UI
+- [x] **645** P65 test_p65_quiet_hours
+- [x] **646** P65 workflow 阶段标记
+- [x] **647** 进化加固 #273
+- [x] **648** 进化加固 #274
+- [x] **649** 进化加固 #275
+- [x] **650** 进化加固 #276
+- [x] **651** P66 v3.6.0 app_meta
+- [x] **652** P66 EVOLUTION 文档
+- [x] **653** P66 EVOLUTION_100 631-660
+- [x] **654** P66 workflow P64-P66
+- [x] **655** P66 evolve_verify 通过
+- [x] **656** P66 README 版本徽章
+- [x] **657** 进化加固 #277
+- [x] **658** 进化加固 #278
+- [x] **659** 进化加固 #279
+- [x] **660** 进化加固 #280 · v3.6.0 milestone

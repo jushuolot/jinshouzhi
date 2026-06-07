@@ -11,6 +11,7 @@ from src.storage.history_store import mark_dirty
 from src.util.alert_profiles import ALERT_PROFILES, apply_alert_profile, profile_caption
 from src.util.freshness_badge import normalize_stale_hours
 from src.util.price_targets import normalize_price_targets, set_targets
+from src.util.quiet_hours import normalize_quiet_hours, quiet_hours_caption, quiet_hours_enabled
 from src.util.readonly_mode import is_readonly_mode
 
 
@@ -44,6 +45,8 @@ def render_alert_panel(*, watchlist: list[dict], snapshots: dict) -> list:
         st.session_state.setdefault("push_webhook_on_alerts", False)
         st.session_state.setdefault("price_targets", {})
         st.session_state.setdefault("stale_hours", 24.0)
+        st.session_state.setdefault("quiet_hours", {})
+        st.session_state.quiet_hours = normalize_quiet_hours(st.session_state.quiet_hours)
         st.session_state.price_targets = normalize_price_targets(st.session_state.price_targets)
         st.caption("提醒模板（一键套用阈值）")
         prof_cols = st.columns(len(ALERT_PROFILES))
@@ -120,6 +123,36 @@ def render_alert_panel(*, watchlist: list[dict], snapshots: dict) -> list:
         wh = get_webhook_url()
         if wh:
             st.checkbox("提醒触发时自动推送 Webhook", key="push_webhook_on_alerts")
+            qh = normalize_quiet_hours(st.session_state.quiet_hours)
+            qh_on = st.checkbox(
+                "启用静默时段（本地小时，跳过自动推送）",
+                value=quiet_hours_enabled(qh),
+                key="quiet_hours_enabled",
+            )
+            if qh_on:
+                q1, q2 = st.columns(2)
+                with q1:
+                    qh_start = st.number_input(
+                        "开始（时）",
+                        min_value=0,
+                        max_value=23,
+                        value=int(qh["start"] if qh["start"] is not None else 22),
+                        step=1,
+                        key="quiet_hours_start",
+                    )
+                with q2:
+                    qh_end = st.number_input(
+                        "结束（时）",
+                        min_value=0,
+                        max_value=23,
+                        value=int(qh["end"] if qh["end"] is not None else 8),
+                        step=1,
+                        key="quiet_hours_end",
+                    )
+                st.session_state.quiet_hours = {"start": int(qh_start), "end": int(qh_end)}
+                st.caption(f"静默：{quiet_hours_caption(st.session_state.quiet_hours)}")
+            else:
+                st.session_state.quiet_hours = {"start": None, "end": None}
         if not alerts:
             st.caption("当前无触发项；请先「刷新全部摘要」。")
         else:

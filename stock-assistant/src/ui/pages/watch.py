@@ -78,6 +78,7 @@ from src.util.watchlist_backup import (
     build_watch_backup,
     parse_backup_bytes,
 )
+from src.util.watchlist_csv_import import apply_csv_import
 from src.util.readonly_mode import is_readonly_mode
 from src.util.watch_sort import (
     apply_watch_sort_to_session,
@@ -224,7 +225,7 @@ def render() -> None:
             watch_groups=groups,
             watch_notes=notes,
         )
-        b1, b2 = st.columns(2)
+        b1, b2, b3 = st.columns(3)
         with b1:
             st.download_button(
                 "💾 下载 JSON 备份",
@@ -268,6 +269,33 @@ def render() -> None:
                             st.rerun()
                         except Exception as e:
                             st.error(f"导入失败：{e}")
+        with b3:
+            if readonly:
+                st.caption("只读模式：不可导入 CSV。")
+            else:
+                csv_upload = st.file_uploader(
+                    "导入 CSV（代码列，合并）",
+                    type=["csv"],
+                    key="watch_csv_import_ul",
+                )
+                if csv_upload is not None:
+                    if st.button("确认 CSV 合并导入", key="watch_csv_import_apply", use_container_width=True):
+                        try:
+                            wl, stats = apply_csv_import(
+                                st.session_state.watchlist,
+                                csv_upload.getvalue(),
+                            )
+                            st.session_state.watchlist = wl
+                            mark_dirty()
+                            C._save_history(log_kind="watchlist", log_label=f"CSV 导入 {stats['added']} 只")
+                            st.success(
+                                f"CSV 已合并：解析 {stats['parsed']} 条，"
+                                f"新增 {stats['added']} 只，"
+                                f"重复跳过 {stats['duplicates']} 只。"
+                            )
+                            st.rerun()
+                        except Exception as e:
+                            st.error(f"CSV 导入失败：{e}")
 
         if not readonly:
             with st.expander("📌 置顶", expanded=False):

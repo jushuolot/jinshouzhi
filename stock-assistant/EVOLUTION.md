@@ -69,6 +69,9 @@
 | **P61** | 600步庆祝 | ✅ 已完成 | milestone_banner、confetti 横幅 |
 | **P62** | 失败汇总 | ✅ 已完成 | fetch_failures_summary、刷新后折叠列表 |
 | **P63** | 文档与 v3.5 | ✅ 已完成 | EVOLUTION 601–630、v3.5.0 step 630 |
+| **P64** | 自选 CSV 导入 | ✅ 已完成 | watchlist_csv_import、工作台 CSV 合并 |
+| **P65** | 提醒静默时段 | ✅ 已完成 | quiet_hours、自动 Webhook 静默跳过 |
+| **P66** | 文档与 v3.6 | ✅ 已完成 | EVOLUTION 631–660、v3.6.0 step 660 |
 
 ## P1：信息架构（本次）
 
@@ -229,6 +232,12 @@
 - **P61 600步庆祝横幅**：`src/ui/milestone_banner.py`；step≥600 时会话内一次性 confetti 风格 info 条；侧边栏链接 `docs/EVOLUTION_100.md`；`test_p61_milestone`
 - **P62 批量刷新失败汇总**：`src/util/fetch_failures_summary.py`；刷新后可折叠「失败 N 只」+ 代码复制；`test_p62_failures_summary`
 - **P63 文档与 v3.5**：EVOLUTION_100 步 601–630；v3.5.0 step 630；`evolve_verify.sh` 覆盖 P61–P63 测试
+
+## P64–P66：CSV 导入、静默时段、v3.6（已完成）
+
+- **P64 自选 CSV 导入**：`src/util/watchlist_csv_import.py`；工作台上传 CSV 代码列合并进自选（去重）；`test_p64_csv_import`
+- **P65 提醒静默时段**：`user_prefs.quiet_hours` {start,end} 本地小时；`alert_push` 自动推送路径跳过静默窗口；`test_p65_quiet_hours`
+- **P66 文档与 v3.6**：EVOLUTION_100 步 631–660；v3.6.0 step 660；`evolve_verify.sh` 覆盖 P64–P66 测试
 
 ## 进化原则
 
