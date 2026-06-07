@@ -47,11 +47,9 @@ from src.ui.stock_plates_panel import render_stock_plates_panel
 from src.util.currency import currency_display, normalize_watchlist
 from src.util.query_time import format_data_range, format_query_datetime
 from src.util.score_badge import pct_badge, score_badge
-from src.util.watchlist_export import (
-    filter_watchlist,
-    sort_watchlist,
-    watchlist_to_csv_bytes,
-)
+from src.util.watchlist_export import filter_watchlist, sort_watchlist
+from src.util.watchlist_csv_export import watchlist_table_to_csv_bytes
+from src.util.recent_viewed import chip_label, normalize_recent_viewed, push_recent_viewed
 from src.util.watch_groups import (
     assign_ticker_to_group,
     filter_watchlist_by_group,
@@ -135,9 +133,27 @@ def _watchlist_display_rows(watchlist: list[dict[str, Any]]) -> list[dict[str, A
     return rows
 
 
+def _record_recent_viewed(code: str, name: str = "") -> None:
+    old = normalize_recent_viewed(st.session_state.get("recent_viewed"))
+    new = push_recent_viewed(old, code=code, name=name)
+    if new != old:
+        st.session_state.recent_viewed = new
+        mark_dirty()
+
+
 def render() -> None:
     st.subheader("分析工作台")
     st.caption("选标的 → **一键分析** 或看 K 线 / 财务 / 板块 → 导出简报。")
+    recent = normalize_recent_viewed(st.session_state.get("recent_viewed"))
+    if recent:
+        st.caption("最近查看（点击切换标的）")
+        chip_cols = st.columns(min(len(recent), 5))
+        for i, entry in enumerate(recent[:10]):
+            with chip_cols[i % len(chip_cols)]:
+                if st.button(chip_label(entry), key=f"recent_viewed_{i}", use_container_width=True):
+                    st.session_state.watch_code = entry["code"]
+                    _record_recent_viewed(entry["code"], entry.get("name", entry["code"]))
+                    st.rerun()
     C._show_query_banner("watch")
     readonly = is_readonly_mode()
     if st.session_state.watchlist:
@@ -208,7 +224,12 @@ def render() -> None:
         st.session_state.pinned_tickers = pinned
         display_wl = apply_pinned_order(display_wl, pinned)
         notes = normalize_watch_notes(st.session_state.get("watch_notes") or {})
-        csv_bytes = watchlist_to_csv_bytes(display_wl, snaps, watch_notes=notes)
+        csv_bytes = watchlist_table_to_csv_bytes(
+            display_wl,
+            snaps,
+            watch_notes=notes,
+            watch_groups=groups,
+        )
         if csv_bytes:
             st.download_button(
                 "📊 导出 CSV",
@@ -753,6 +774,8 @@ def render() -> None:
         st.subheader("行情与分析")
         code = st.selectbox("选择标的（按代码）", options=wl["代码"].tolist(), key="watch_code")
         item = next((x for x in st.session_state.watchlist if x.get("代码") == code), None)
+        if item and code:
+            _record_recent_viewed(code, str(item.get("名称") or code))
         kind = str(item.get("类型") or "A") if item else "A"
         quote_ccy = str(item.get("货币") or "CNY") if item else "CNY"
         if item:

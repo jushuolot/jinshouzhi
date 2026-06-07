@@ -662,3 +662,33 @@
 - [x] **658** 进化加固 #278
 - [x] **659** 进化加固 #279
 - [x] **660** 进化加固 #280 · v3.6.0 milestone
+- [x] **661** P67 watchlist_csv_export 模块
+- [x] **662** P67 watchlist_table_csv_rows
+- [x] **663** P67 watchlist_table_to_csv_bytes
+- [x] **664** P67 含 note/group 列
+- [x] **665** P67 工作台 CSV 导出按钮
+- [x] **666** P67 test_p67_csv_export
+- [x] **667** P67 workflow 阶段标记
+- [x] **668** 进化加固 #281
+- [x] **669** 进化加固 #282
+- [x] **670** 进化加固 #283
+- [x] **671** P68 recent_viewed 模块
+- [x] **672** P68 user_prefs 持久化
+- [x] **673** P68 push_recent_viewed
+- [x] **674** P68 工作台 chips UI
+- [x] **675** P68 test_p68_recent_viewed
+- [x] **676** P68 workflow 阶段标记
+- [x] **677** 进化加固 #284
+- [x] **678** 进化加固 #285
+- [x] **679** 进化加固 #286
+- [x] **680** 进化加固 #287
+- [x] **681** P69 v3.7.0 app_meta
+- [x] **682** P69 EVOLUTION 文档
+- [x] **683** P69 EVOLUTION_100 661-690
+- [x] **684** P69 workflow P67-P69
+- [x] **685** P69 evolve_verify 通过
+- [x] **686** P69 README 版本徽章
+- [x] **687** 进化加固 #288
+- [x] **688** 进化加固 #289
+- [x] **689** 进化加固 #290
+- [x] **690** 进化加固 #291 · v3.7.0 milestone

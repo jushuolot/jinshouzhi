@@ -350,6 +350,7 @@ def collect_latest_state() -> dict[str, Any]:
             "watch_weights": dict(st.session_state.get("watch_weights") or {}),
             "pinned_tickers": list(st.session_state.get("pinned_tickers") or []),
             "quiet_hours": dict(st.session_state.get("quiet_hours") or {}),
+            "recent_viewed": list(st.session_state.get("recent_viewed") or []),
         },
     }
 
@@ -450,6 +451,10 @@ def apply_latest_to_session(latest: dict[str, Any]) -> None:
         from src.util.quiet_hours import normalize_quiet_hours
 
         st.session_state.quiet_hours = normalize_quiet_hours(prefs["quiet_hours"])
+    if prefs.get("recent_viewed") is not None:
+        from src.util.recent_viewed import normalize_recent_viewed
+
+        st.session_state.recent_viewed = normalize_recent_viewed(prefs["recent_viewed"])
 
     st.session_state["history_conclusions"] = latest.get("conclusions") or {}
 

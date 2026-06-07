@@ -72,6 +72,9 @@
 | **P64** | 自选 CSV 导入 | ✅ 已完成 | watchlist_csv_import、工作台 CSV 合并 |
 | **P65** | 提醒静默时段 | ✅ 已完成 | quiet_hours、自动 Webhook 静默跳过 |
 | **P66** | 文档与 v3.6 | ✅ 已完成 | EVOLUTION 631–660、v3.6.0 step 660 |
+| **P67** | 自选 CSV 导出 | ✅ 已完成 | watchlist_csv_export、工作台导出 |
+| **P68** | 最近查看 | ✅ 已完成 | user_prefs.recent_viewed、工作台 chips |
+| **P69** | 文档与 v3.7 | ✅ 已完成 | EVOLUTION 661–690、v3.7.0 step 690 |
 
 ## P1：信息架构（本次）
 
@@ -239,6 +242,12 @@
 - **P65 提醒静默时段**：`user_prefs.quiet_hours` {start,end} 本地小时；`alert_push` 自动推送路径跳过静默窗口；`test_p65_quiet_hours`
 - **P66 文档与 v3.6**：EVOLUTION_100 步 631–660；v3.6.0 step 660；`evolve_verify.sh` 覆盖 P64–P66 测试
 
+## P67–P69：CSV 导出、最近查看、v3.7（已完成）
+
+- **P67 自选 CSV 导出**：`src/util/watchlist_csv_export.py`；导出 code/name/score/pct/note/group；工作台 📊 导出 CSV；`test_p67_csv_export`
+- **P68 最近查看**：`user_prefs.recent_viewed`（最近 10 只）；分析工作台 chips 切换标的；`test_p68_recent_viewed`
+- **P69 文档与 v3.7**：EVOLUTION_100 步 661–690；v3.7.0 step 690；`evolve_verify.sh` 覆盖 P67–P69 测试
+
 ## 进化原则
 
 1. **先可读，再炫功能** — 每轮至少产出一种「能发给同事看的资料」
@@ -322,3 +331,6 @@ streamlit run app.py
 - [x] 600步庆祝横幅 milestone_banner · P61
 - [x] 刷新失败汇总 fetch_failures_summary · P62
 - [x] v3.5.0 · 进化 step 630 · P63
+- [x] 自选 CSV 导出 code/name/score/pct/note/group · P67
+- [x] 最近查看 chips recent_viewed · P68
+- [x] v3.7.0 · 进化 step 690 · P69

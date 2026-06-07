@@ -56,8 +56,9 @@ def render_workflow_sidebar() -> None:
                 "P58 快捷加自选", "P59 邮件主题", "P60 文档与v3.4",
                 "P61 600步庆祝", "P62 失败汇总", "P63 文档与v3.5",
                 "P64 CSV导入", "P65 静默时段", "P66 文档与v3.6",
+                "P67 CSV导出", "P68 最近查看", "P69 文档与v3.7",
             ],
-            index=65,
+            index=68,
             disabled=True,
         )
         st.caption(phase)

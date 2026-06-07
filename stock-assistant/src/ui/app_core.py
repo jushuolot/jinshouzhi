@@ -106,6 +106,8 @@ def _init_state() -> None:
         st.session_state.watch_notes = {}
     if "search_history" not in st.session_state:
         st.session_state.search_history = []
+    if "recent_viewed" not in st.session_state:
+        st.session_state.recent_viewed = []
     if "dark_mode" not in st.session_state:
         st.session_state.dark_mode = True
     if "locale" not in st.session_state:
