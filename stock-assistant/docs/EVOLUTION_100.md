@@ -722,3 +722,33 @@
 - [x] **718** 进化加固 #299
 - [x] **719** 进化加固 #300
 - [x] **720** 进化加固 #301 · v3.8.0 milestone
+- [x] **721** P73 sector_relative 模块
+- [x] **722** P73 compute_sector_relative
+- [x] **723** P73 sector_relative_table_rows
+- [x] **724** P73 复用 sector_heatmap 板块聚合
+- [x] **725** P73 工作台 🏆 相对板块 expander
+- [x] **726** P73 test_p73_sector_relative
+- [x] **727** P73 workflow 阶段标记
+- [x] **728** 进化加固 #302
+- [x] **729** 进化加固 #303
+- [x] **730** 进化加固 #304
+- [x] **731** P74 institutional_onepager 模块
+- [x] **732** P74 build_institutional_onepager
+- [x] **733** P74 结论/相对板块/风险/下一步
+- [x] **734** P74 拼装 fin_summary + alerts + trend
+- [x] **735** P74 工作台 📄 下载一页纸按钮
+- [x] **736** P74 test_p74_onepager
+- [x] **737** P74 workflow 阶段标记
+- [x] **738** 进化加固 #305
+- [x] **739** 进化加固 #306
+- [x] **740** 进化加固 #307
+- [x] **741** P75 v3.9.0 app_meta
+- [x] **742** P75 EVOLUTION 文档
+- [x] **743** P75 EVOLUTION_100 721-750
+- [x] **744** P75 workflow P73-P75
+- [x] **745** P75 evolve_verify 通过
+- [x] **746** P75 README 版本徽章
+- [x] **747** 进化加固 #308
+- [x] **748** 进化加固 #309
+- [x] **749** 进化加固 #310
+- [x] **750** 进化加固 #311 · v3.9.0 milestone

@@ -78,6 +78,11 @@
 | **P70** | 组合涨跌贡献 | ✅ 已完成 | contribution、工作台 📈 expander |
 | **P71** | 侧边栏折叠状态 | ✅ 已完成 | user_prefs.sidebar_collapsed、快速上手 expander |
 | **P72** | 文档与 v3.8 | ✅ 已完成 | EVOLUTION 691–720、v3.8.0 step 720 |
+| **P73** | 相对板块强弱 | ✅ 已完成 | sector_relative、工作台 🏆 相对板块 |
+| **P74** | 机构式一页纸 | ✅ 已完成 | institutional_onepager、📄 下载一页纸 |
+| **P75** | 文档与 v3.9 | ✅ 已完成 | EVOLUTION 721–750、v3.9.0 step 750 |
+
+**v3.9 定位**：用东财/Yahoo 等**公开免费数据**拼装「机构式」结论——相对板块强弱、一页纸导出，让散户也能快速对齐信息维度，**非**真实机构持仓或 Level-2 数据。
 
 ## P1：信息架构（本次）
 
@@ -257,6 +262,12 @@
 - **P71 侧边栏折叠状态**：`src/util/sidebar_state.py`；`user_prefs.sidebar_collapsed`；快速上手 expander + 折叠偏好；`test_p71_sidebar_state`
 - **P72 文档与 v3.8**：EVOLUTION_100 步 691–720；v3.8.0 step 720；`evolve_verify.sh` 覆盖 P70–P72 测试
 
+## P73–P75：相对板块、机构一页纸、v3.9（已完成）
+
+- **P73 相对板块强弱**：`src/analysis/sector_relative.py`；自选内同板块均涨跌幅/均评分对比；工作台「🏆 相对板块」expander；`test_p73_sector_relative`
+- **P74 机构式一页纸**：`src/analysis/institutional_onepager.py`；结论/相对板块/风险/下一步 Markdown；工作台「📄 下载机构式一页纸」；`test_p74_onepager`
+- **P75 文档与 v3.9**：EVOLUTION_100 步 721–750；v3.9.0 step 750；公开数据拼装定位；`evolve_verify.sh` 覆盖 P73–P75 测试
+
 ## 进化原则
 
 1. **先可读，再炫功能** — 每轮至少产出一种「能发给同事看的资料」
@@ -346,3 +357,6 @@ streamlit run app.py
 - [x] 组合涨跌贡献 contribution · P70
 - [x] 侧边栏折叠 sidebar_collapsed · P71
 - [x] v3.8.0 · 进化 step 720 · P72
+- [x] 相对板块强弱 sector_relative · P73
+- [x] 机构式一页纸 institutional_onepager · P74
+- [x] v3.9.0 · 进化 step 750 · P75

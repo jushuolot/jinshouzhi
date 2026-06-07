@@ -107,6 +107,13 @@ from src.util.retry_fetch_ui import (
 )
 from src.analysis.trend_summary import collect_trend_points, format_trend_markdown, trend_delta
 from src.analysis.contribution import contribution_table_rows
+from src.analysis.sector_relative import (
+    compute_sector_relative,
+    sector_relative_for_ticker,
+    sector_relative_table_rows,
+)
+from src.analysis.institutional_onepager import build_institutional_onepager
+from src.analysis.watch_alerts import compute_watch_alerts
 
 
 def _watchlist_display_rows(watchlist: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -588,6 +595,28 @@ def render() -> None:
                     st.caption("暂无板块分布数据。")
 
         if display_wl and snaps:
+            with st.expander("🏆 相对板块", expanded=False):
+                rel_rows = compute_sector_relative(
+                    display_wl,
+                    snaps,
+                    brief_for_code=lambda c: st.session_state.get(f"brief_md_{c}"),
+                )
+                if rel_rows:
+                    st.dataframe(
+                        pd.DataFrame(sector_relative_table_rows(rel_rows)),
+                        use_container_width=True,
+                        hide_index=True,
+                    )
+                    outperform = sum(1 for r in rel_rows if r.label == "跑赢板块")
+                    underperform = sum(1 for r in rel_rows if r.label == "跑输板块")
+                    st.caption(
+                        f"傻瓜结论：跑赢板块 {outperform} 只 · 跑输板块 {underperform} 只。"
+                        "板块均值为自选内同板块快照均值（公开数据，非机构持仓）。"
+                    )
+                else:
+                    st.caption("暂无相对板块数据，请先刷新全部摘要。")
+
+        if display_wl and snaps:
             similar = suggest_similar_picks(
                 display_wl,
                 snaps,
@@ -884,6 +913,47 @@ def render() -> None:
                         st.success("价格目标已保存。")
             render_floating_currency_tool(default_from=quote_ccy, watch_code=code)
             snap_one = (st.session_state.get("watch_snapshots") or {}).get(code) or {}
+            rel_for_code = sector_relative_for_ticker(
+                compute_sector_relative(
+                    st.session_state.watchlist,
+                    st.session_state.get("watch_snapshots") or {},
+                    brief_for_code=lambda c: st.session_state.get(f"brief_md_{c}"),
+                ),
+                code,
+            )
+            log_one = st.session_state.get("query_log") or []
+            snaps_hist_one = st.session_state.get("snapshots") or []
+            trend_pts_one = collect_trend_points(log_one, snaps_hist_one, code, limit=6)
+            alerts_one = [
+                a
+                for a in compute_watch_alerts(
+                    [item],
+                    {code: snap_one},
+                    pct_up=float(st.session_state.get("alert_pct_up", 5.0)),
+                    pct_down=float(st.session_state.get("alert_pct_down", -5.0)),
+                    score_low=float(st.session_state.get("alert_score_low", 40.0)),
+                    score_high=float(st.session_state.get("alert_score_high", 65.0)),
+                    price_targets=st.session_state.get("price_targets"),
+                )
+                if a.code == code
+            ]
+            one_pager_md = build_institutional_onepager(
+                name=str(item.get("名称") or code),
+                code=code,
+                snap=snap_one,
+                sector_relative=rel_for_code,
+                trend_points=trend_pts_one,
+                alerts=alerts_one,
+                query_label=C._query_label("watch") or format_query_datetime(),
+            )
+            st.download_button(
+                "📄 下载机构式一页纸",
+                data=one_pager_md.encode("utf-8"),
+                file_name=f"一页纸_{code}.md",
+                mime="text/markdown",
+                key=f"watch_onepager_{code}",
+                use_container_width=True,
+            )
             one_line = str(snap_one.get("one_line") or "").strip()
             if one_line and one_line not in ("—", "暂无评分。"):
                 render_speech_button(text=one_line, key=f"speech_{code}")
