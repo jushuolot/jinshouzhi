@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-APP_VERSION = "4.3.0"
-EVOLUTION_STEP = 870
-EVOLUTION_PHASE = "P87"
+APP_VERSION = "4.4.0"
+EVOLUTION_STEP = 900
+EVOLUTION_PHASE = "P90"
 BUILD_LABEL = f"{EVOLUTION_PHASE} · step {EVOLUTION_STEP}"
 
 CHANGELOG: list[tuple[str, str]] = [
@@ -37,4 +37,5 @@ CHANGELOG: list[tuple[str, str]] = [
     ("P79–P81", "风险雷达、每日作战清单、v4.1.0"),
     ("P82–P84", "作战清单 cron、风险汇总推送、v4.2.0"),
     ("P85–P87", "多标的优先级、合并导出包、v4.3.0"),
+    ("P88–P90", "优先级推送、首页入口、v4.4.0"),
 ]

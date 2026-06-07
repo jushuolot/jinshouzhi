@@ -16,6 +16,7 @@ from src.ui.onboarding import render_onboarding_banner
 from src.ui.welcome_banner import render_welcome_banner
 from src.ui.milestone_banner import render_milestone_banner
 from src.ui.simple_result import render_home_steps
+from src.ui.priority_home import render_priority_home_entry
 from src.ui.footer import render_app_footer
 from src.util.query_time import format_query_datetime
 from src.util.readonly_mode import apply_readonly_from_query, is_readonly_mode
@@ -33,6 +34,7 @@ render_workflow_sidebar()
 st.title("Stock Assistant · 股票快速看懂")
 st.caption("不用懂术语：搜股票 → 看红绿结论框 → 下载简报发给同事。（公开数据推演，非投资建议）")
 render_home_steps()
+render_priority_home_entry()
 render_welcome_banner()
 render_milestone_banner()
 render_onboarding_banner()

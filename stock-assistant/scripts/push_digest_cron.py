@@ -14,6 +14,10 @@
   python3 scripts/push_digest_cron.py --with-onepager
   # 或 export STOCK_PUSH_ONEPAGER=1
 
+附带作战优先级 Top 3:
+  python3 scripts/push_digest_cron.py --with-priority
+  # 或 export STOCK_PUSH_PRIORITY=1
+
 多用户:
   export STOCK_USER='alice'   # 对应 secrets [passwords] 的键名
 """
@@ -31,6 +35,10 @@ if str(ROOT) not in sys.path:
 
 from src.analysis.daily_digest import build_watchlist_digest  # noqa: E402
 from src.analysis.institutional_onepager import build_onepager_push_summary  # noqa: E402
+from src.analysis.priority_queue import (  # noqa: E402
+    format_priority_digest_section,
+    rank_watchlist_priority,
+)
 from src.analysis.sector_relative import compute_sector_relative, sector_relative_for_ticker  # noqa: E402
 from src.analysis.watch_alerts import compute_watch_alerts, top_alert_ticker  # noqa: E402
 from src.notify.digest_push import push_digest_email, push_digest_webhook  # noqa: E402
@@ -63,6 +71,12 @@ def _onepager_enabled() -> bool:
     return os.environ.get("STOCK_PUSH_ONEPAGER", "").strip().lower() in ("1", "true", "yes")
 
 
+def _priority_enabled() -> bool:
+    if "--with-priority" in sys.argv:
+        return True
+    return os.environ.get("STOCK_PUSH_PRIORITY", "").strip().lower() in ("1", "true", "yes")
+
+
 def _build_onepager_section(
     *,
     alerts: list,
@@ -89,6 +103,7 @@ def main() -> int:
     dry = "--dry-run" in sys.argv
     alerts_only = "--alerts-only" in sys.argv
     with_onepager = _onepager_enabled()
+    with_priority = _priority_enabled()
     try:
         store = load_store(user)
     except FileNotFoundError as exc:
@@ -107,11 +122,16 @@ def main() -> int:
     if alerts_only and not alerts:
         print("[push_digest_cron] --alerts-only: 无提醒，跳过")
         return 0
+    priority_section = ""
+    if with_priority:
+        ranks = rank_watchlist_priority(wl, snaps, alerts=alerts, **thresholds, top_n=3)
+        priority_section = format_priority_digest_section(ranks, top_n=3)
     digest = build_watchlist_digest(
         wl,
         snaps,
         alerts=alerts or None,
         watch_notes=notes,
+        priority_section=priority_section,
         onepager_section=_build_onepager_section(alerts=alerts, wl=wl, snaps=snaps)
         if with_onepager
         else "",
@@ -119,7 +139,8 @@ def main() -> int:
     if dry:
         print(
             f"[push_digest_cron] dry-run bytes={len(digest.encode('utf-8'))} "
-            f"alerts={len(alerts)} alerts_only={alerts_only} with_onepager={with_onepager}"
+            f"alerts={len(alerts)} alerts_only={alerts_only} "
+            f"with_onepager={with_onepager} with_priority={with_priority}"
         )
         return 0
 

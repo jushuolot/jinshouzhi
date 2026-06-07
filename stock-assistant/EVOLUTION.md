@@ -93,6 +93,9 @@
 | **P85** | 多标的作战优先级 | ✅ 已完成 | priority_queue、🎯 今日优先关注 |
 | **P86** | 合并导出包 | ✅ 已完成 | battle+digest+onepager zip/md 下载 |
 | **P87** | 文档与 v4.3 | ✅ 已完成 | EVOLUTION 841–870、v4.3.0 step 870 |
+| **P88** | 优先级 Webhook 推送 | ✅ 已完成 | digest Top 3、`STOCK_PUSH_PRIORITY=1` |
+| **P89** | 首页作战入口 | ✅ 已完成 | 「今日先看这3只」Top 3 快捷跳转 |
+| **P90** | 文档与 v4.4 | ✅ 已完成 | EVOLUTION 871–900、v4.4.0 step 900 |
 
 **v4.3 定位**：在公开数据边缘强化「多标的注意力分配」——按提醒/风险/板块相对排序 Top 5，一键合并导出作战资料包，**非**真实交易指令。
 
@@ -306,6 +309,12 @@
 - **P86 合并导出包**：`src/export/priority_bundle.py`；作战清单 + 速览 + 优先标的一页纸；`.md` / `.zip` 下载；`test_p86_export_bundle`
 - **P87 文档与 v4.3**：EVOLUTION_100 步 841–870；v4.3.0 step 870；多标的注意力分配；`evolve_verify.sh` 覆盖 P85–P87 测试
 
+## P88–P90：优先级推送、首页入口、v4.4（已完成）
+
+- **P88 优先级 Webhook 推送**：`format_priority_digest_section`；`push_digest_cron.py --with-priority` / `STOCK_PUSH_PRIORITY=1`；digest/webhook 附带 Top 3 优先标的；`test_p88_priority_push`
+- **P89 首页作战入口**：`src/ui/priority_home.py`；首页「🎯 今日先看这3只」Top 3 按钮直达工作台；`test_p89_priority_home`
+- **P90 文档与 v4.4**：EVOLUTION_100 步 871–900；v4.4.0 step 900；开盘前注意力聚焦；`evolve_verify.sh` 覆盖 P88–P90 测试
+
 ## 进化原则
 
 1. **先可读，再炫功能** — 每轮至少产出一种「能发给同事看的资料」
@@ -410,3 +419,6 @@ streamlit run app.py
 - [x] 多标的作战优先级 priority_queue · 🎯 · P85
 - [x] 合并导出包 priority_bundle · 📦 · P86
 - [x] v4.3.0 · 进化 step 870 · P87
+- [x] 优先级 digest 推送 --with-priority · P88
+- [x] 首页今日先看这3只 priority_home · P89
+- [x] v4.4.0 · 进化 step 900 · P90

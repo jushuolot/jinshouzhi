@@ -101,6 +101,7 @@ def build_watchlist_digest(
     alerts: list[WatchAlert] | None = None,
     watch_notes: dict[str, str] | None = None,
     onepager_section: str = "",
+    priority_section: str = "",
 ) -> str:
     now = query_label or format_query_datetime(datetime.now())
     lines: list[str] = [
@@ -137,6 +138,10 @@ def build_watchlist_digest(
                 alerts,
             )
         )
+
+    prio = str(priority_section or "").strip()
+    if prio:
+        lines.append(prio)
 
     section = str(onepager_section or "").strip()
     if section:

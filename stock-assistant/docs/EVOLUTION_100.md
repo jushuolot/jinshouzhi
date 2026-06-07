@@ -872,3 +872,33 @@
 - [x] **868** 进化加固 #357
 - [x] **869** 进化加固 #358
 - [x] **870** 进化加固 #359 · v4.3.0 milestone
+- [x] **871** P88 format_priority_digest_section
+- [x] **872** P88 Top 3 digest Markdown
+- [x] **873** P88 build_watchlist_digest priority_section
+- [x] **874** P88 push_digest_cron --with-priority
+- [x] **875** P88 STOCK_PUSH_PRIORITY 环境变量
+- [x] **876** P88 test_p88_priority_push
+- [x] **877** P88 workflow 阶段标记
+- [x] **878** 进化加固 #360
+- [x] **879** 进化加固 #361
+- [x] **880** P89 priority_home 模块
+- [x] **881** P89 compute_priority_home_ranks
+- [x] **882** P89 首页 🎯 今日先看这3只
+- [x] **883** P89 按钮跳转工作台
+- [x] **884** P89 test_p89_priority_home
+- [x] **885** P89 workflow 阶段标记
+- [x] **886** 进化加固 #362
+- [x] **887** 进化加固 #363
+- [x] **888** 进化加固 #364
+- [x] **889** 进化加固 #365
+- [x] **890** P90 v4.4.0 app_meta
+- [x] **891** P90 EVOLUTION 文档
+- [x] **892** P90 EVOLUTION_100 871-900
+- [x] **893** P90 workflow P88-P90
+- [x] **894** P90 evolve_verify 通过
+- [x] **895** P90 README 版本徽章
+- [x] **896** 进化加固 #366
+- [x] **897** 进化加固 #367
+- [x] **898** 进化加固 #368
+- [x] **899** 进化加固 #369
+- [x] **900** 进化加固 #370 · v4.4.0 milestone

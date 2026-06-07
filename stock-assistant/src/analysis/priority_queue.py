@@ -153,3 +153,23 @@ def format_priority_section(ranks: list[PriorityRank]) -> str:
     lines.append("")
     lines.append("排序依据：阈值提醒 > 风险旗标 > 跑输板块（公开快照，非投资建议）。")
     return "\n".join(lines)
+
+
+def format_priority_digest_section(
+    ranks: list[PriorityRank],
+    *,
+    top_n: int = 3,
+) -> str:
+    """Markdown 段落，供 digest/webhook 推送 Top 3（P88）。"""
+    if not ranks:
+        return ""
+    top = ranks[: max(0, top_n)]
+    if not top:
+        return ""
+    lines = ["## 今日优先关注 Top 3", ""]
+    for i, r in enumerate(top, start=1):
+        lines.append(f"{i}. **{r.name}（{r.code}）** — {r.reason}")
+    lines.append("")
+    lines.append("排序依据：阈值提醒 > 风险旗标 > 跑输板块（公开快照，非投资建议）。")
+    lines.append("")
+    return "\n".join(lines)
