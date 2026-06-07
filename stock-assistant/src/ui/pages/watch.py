@@ -112,6 +112,10 @@ from src.analysis.sector_relative import (
     sector_relative_for_ticker,
     sector_relative_table_rows,
 )
+from src.analysis.sector_leader import (
+    compute_sector_leaders,
+    sector_leader_table_rows,
+)
 from src.analysis.institutional_onepager import build_institutional_onepager
 from src.analysis.watch_alerts import compute_watch_alerts
 
@@ -615,6 +619,27 @@ def render() -> None:
                     )
                 else:
                     st.caption("暂无相对板块数据，请先刷新全部摘要。")
+
+        if display_wl and snaps:
+            with st.expander("👑 板块龙头对标", expanded=False):
+                leader_rows = compute_sector_leaders(
+                    display_wl,
+                    snaps,
+                    brief_for_code=lambda c: st.session_state.get(f"brief_md_{c}"),
+                )
+                if leader_rows:
+                    st.dataframe(
+                        pd.DataFrame(sector_leader_table_rows(leader_rows)),
+                        use_container_width=True,
+                        hide_index=True,
+                    )
+                    leaders = sum(1 for r in leader_rows if r.is_leader)
+                    st.caption(
+                        f"傻瓜结论：同板块内 {leaders} 只龙头 · "
+                        "龙头按评分优先、涨跌幅次之（自选内公开快照，非外部排名）。"
+                    )
+                else:
+                    st.caption("暂无板块龙头数据，请先刷新全部摘要。")
 
         if display_wl and snaps:
             similar = suggest_similar_picks(

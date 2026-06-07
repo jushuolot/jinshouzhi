@@ -110,6 +110,11 @@ def compute_watch_alerts(
     return alerts
 
 
+def top_alert_ticker(alerts: list[WatchAlert]) -> WatchAlert | None:
+    """返回优先级最高的提醒标的（hot > warn > info，已排序）。"""
+    return alerts[0] if alerts else None
+
+
 def alerts_to_markdown(alerts: list[WatchAlert], *, title: str = "自选股提醒") -> str:
     if not alerts:
         return f"# {title}\n\n暂无触发项。\n"

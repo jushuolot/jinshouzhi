@@ -81,8 +81,11 @@
 | **P73** | 相对板块强弱 | ✅ 已完成 | sector_relative、工作台 🏆 相对板块 |
 | **P74** | 机构式一页纸 | ✅ 已完成 | institutional_onepager、📄 下载一页纸 |
 | **P75** | 文档与 v3.9 | ✅ 已完成 | EVOLUTION 721–750、v3.9.0 step 750 |
+| **P76** | 板块龙头对标 | ✅ 已完成 | sector_leader、工作台 👑 龙头对标 |
+| **P77** | 一页纸 cron 推送 | ✅ 已完成 | push_digest `--with-onepager`、重点提醒摘要 |
+| **P78** | 文档与 v4.0 | ✅ 已完成 | EVOLUTION 751–780、v4.0.0 step 780 |
 
-**v3.9 定位**：用东财/Yahoo 等**公开免费数据**拼装「机构式」结论——相对板块强弱、一页纸导出，让散户也能快速对齐信息维度，**非**真实机构持仓或 Level-2 数据。
+**v4.0 定位**：在公开数据边缘继续深化「对标决策」——自选内板块龙头差距、定时推送附带机构式一页纸摘要，让提醒直达可执行上下文，**非**真实机构持仓或 Level-2 数据。
 
 ## P1：信息架构（本次）
 
@@ -268,6 +271,12 @@
 - **P74 机构式一页纸**：`src/analysis/institutional_onepager.py`；结论/相对板块/风险/下一步 Markdown；工作台「📄 下载机构式一页纸」；`test_p74_onepager`
 - **P75 文档与 v3.9**：EVOLUTION_100 步 721–750；v3.9.0 step 750；公开数据拼装定位；`evolve_verify.sh` 覆盖 P73–P75 测试
 
+## P76–P78：板块龙头、一页纸推送、v4.0（已完成）
+
+- **P76 板块龙头对标**：`src/analysis/sector_leader.py`；自选同板块内标龙头（评分/涨跌幅）；展示距龙头差距；工作台「👑 板块龙头对标」expander；`test_p76_sector_leader`
+- **P77 一页纸 cron 推送**：`build_onepager_push_summary`；`push_digest_cron.py --with-onepager` / `STOCK_PUSH_ONEPAGER=1`；重点提醒标的一页纸摘要；`test_p77_onepager_push`
+- **P78 文档与 v4.0**：EVOLUTION_100 步 751–780；v4.0.0 step 780；公开数据边缘对标；`evolve_verify.sh` 覆盖 P76–P78 测试
+
 ## 进化原则
 
 1. **先可读，再炫功能** — 每轮至少产出一种「能发给同事看的资料」
@@ -360,3 +369,6 @@ streamlit run app.py
 - [x] 相对板块强弱 sector_relative · P73
 - [x] 机构式一页纸 institutional_onepager · P74
 - [x] v3.9.0 · 进化 step 750 · P75
+- [x] 板块龙头对标 sector_leader · P76
+- [x] 一页纸 cron 推送 --with-onepager · P77
+- [x] v4.0.0 · 进化 step 780 · P78

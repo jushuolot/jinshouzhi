@@ -62,6 +62,7 @@ def build_watchlist_digest(
     query_label: str = "",
     alerts: list[WatchAlert] | None = None,
     watch_notes: dict[str, str] | None = None,
+    onepager_section: str = "",
 ) -> str:
     now = query_label or format_query_datetime(datetime.now())
     lines: list[str] = [
@@ -91,6 +92,10 @@ def build_watchlist_digest(
 
     if alerts:
         lines.append(format_alerts_digest_section(alerts))
+
+    section = str(onepager_section or "").strip()
+    if section:
+        lines.append(section)
 
     lines.extend(
         [

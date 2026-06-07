@@ -43,6 +43,7 @@ _PHASE_OPTIONS = [
     "P67 CSV导出", "P68 最近查看", "P69 文档与v3.7",
     "P70 涨跌贡献", "P71 侧边栏折叠", "P72 文档与v3.8",
     "P73 相对板块", "P74 机构一页纸", "P75 文档与v3.9",
+    "P76 板块龙头", "P77 一页纸推送", "P78 文档与v4.0",
 ]
 
 
@@ -81,7 +82,7 @@ def render_workflow_sidebar() -> None:
             phase = st.selectbox(
                 "当前进化阶段",
                 _PHASE_OPTIONS,
-                index=74,
+                index=77,
                 disabled=True,
             )
             st.caption(phase)

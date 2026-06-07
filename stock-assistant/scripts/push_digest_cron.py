@@ -10,6 +10,10 @@
 仅在有提醒时推送:
   python3 scripts/push_digest_cron.py --alerts-only
 
+附带重点提醒标的一页纸摘要:
+  python3 scripts/push_digest_cron.py --with-onepager
+  # 或 export STOCK_PUSH_ONEPAGER=1
+
 多用户:
   export STOCK_USER='alice'   # 对应 secrets [passwords] 的键名
 """
@@ -26,7 +30,9 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from src.analysis.daily_digest import build_watchlist_digest  # noqa: E402
-from src.analysis.watch_alerts import compute_watch_alerts  # noqa: E402
+from src.analysis.institutional_onepager import build_onepager_push_summary  # noqa: E402
+from src.analysis.sector_relative import compute_sector_relative, sector_relative_for_ticker  # noqa: E402
+from src.analysis.watch_alerts import compute_watch_alerts, top_alert_ticker  # noqa: E402
 from src.notify.digest_push import push_digest_email, push_digest_webhook  # noqa: E402
 from src.notify.email_digest import get_smtp_config  # noqa: E402
 from src.notify.webhook import get_webhook_url  # noqa: E402
@@ -51,10 +57,38 @@ def _alert_thresholds(store: dict) -> dict[str, float]:
     }
 
 
+def _onepager_enabled() -> bool:
+    if "--with-onepager" in sys.argv:
+        return True
+    return os.environ.get("STOCK_PUSH_ONEPAGER", "").strip().lower() in ("1", "true", "yes")
+
+
+def _build_onepager_section(
+    *,
+    alerts: list,
+    wl: list,
+    snaps: dict,
+) -> str:
+    top = top_alert_ticker(alerts)
+    if not top:
+        return ""
+    rel_rows = compute_sector_relative(wl, snaps)
+    rel = sector_relative_for_ticker(rel_rows, top.code)
+    snap = snaps.get(top.code) or {}
+    return build_onepager_push_summary(
+        name=top.name,
+        code=top.code,
+        snap=snap,
+        sector_relative=rel,
+        alert_message=top.message,
+    )
+
+
 def main() -> int:
     user = os.environ.get("STOCK_USER", "default").strip() or "default"
     dry = "--dry-run" in sys.argv
     alerts_only = "--alerts-only" in sys.argv
+    with_onepager = _onepager_enabled()
     try:
         store = load_store(user)
     except FileNotFoundError as exc:
@@ -73,11 +107,19 @@ def main() -> int:
     if alerts_only and not alerts:
         print("[push_digest_cron] --alerts-only: 无提醒，跳过")
         return 0
-    digest = build_watchlist_digest(wl, snaps, alerts=alerts or None, watch_notes=notes)
+    digest = build_watchlist_digest(
+        wl,
+        snaps,
+        alerts=alerts or None,
+        watch_notes=notes,
+        onepager_section=_build_onepager_section(alerts=alerts, wl=wl, snaps=snaps)
+        if with_onepager
+        else "",
+    )
     if dry:
         print(
             f"[push_digest_cron] dry-run bytes={len(digest.encode('utf-8'))} "
-            f"alerts={len(alerts)} alerts_only={alerts_only}"
+            f"alerts={len(alerts)} alerts_only={alerts_only} with_onepager={with_onepager}"
         )
         return 0
 

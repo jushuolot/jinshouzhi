@@ -142,3 +142,50 @@ def build_institutional_onepager(
         lines.append(f"- {step}")
     lines.append("")
     return "\n".join(lines)
+
+
+def build_onepager_push_summary(
+    *,
+    name: str,
+    code: str,
+    snap: dict[str, Any] | None,
+    sector_relative: SectorRelativeRow | None = None,
+    alert_message: str = "",
+) -> str:
+    """cron/webhook 用精简一页纸段落（P77）。"""
+    snap = snap or {}
+    pct = snap.get("pct")
+    score = snap.get("score")
+    try:
+        pct_f = float(pct) if pct is not None else None
+    except (TypeError, ValueError):
+        pct_f = None
+    try:
+        score_f = float(score) if score is not None else None
+    except (TypeError, ValueError):
+        score_f = None
+    fin = str(snap.get("fin_summary") or "—").strip() or "—"
+    one_line = str(snap.get("one_line") or "—").strip() or "—"
+    lines: list[str] = [
+        "## 机构式一页纸（重点提醒标的）",
+        "",
+        f"**{name}（{code}）** — {_score_label(score_f)}"
+        + (f" · 评分 {score_f:.1f}" if score_f is not None else ""),
+        f"- 当日涨跌：{_pct_text(pct_f)}",
+        f"- 一句话：{one_line}",
+        f"- 财务摘要：{fin}",
+    ]
+    if alert_message:
+        lines.append(f"- 触发提醒：{alert_message}")
+    if sector_relative:
+        sr = sector_relative
+        lines.append(
+            f"- 相对板块：**{sr.label}**（{sr.sector}）— {sr.fool_conclusion}"
+        )
+        if sr.pct_vs_sector is not None:
+            lines.append(f"- 涨跌幅 vs 板块均：{sr.pct_vs_sector:+.2f} 个百分点")
+        if sr.score_vs_sector is not None:
+            lines.append(f"- 评分 vs 板块均：{sr.score_vs_sector:+.1f} 分")
+    lines.append("- 数据来自公开源，仅供研究，非投资建议。")
+    lines.append("")
+    return "\n".join(lines)

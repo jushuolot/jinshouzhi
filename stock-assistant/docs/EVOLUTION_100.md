@@ -752,3 +752,33 @@
 - [x] **748** 进化加固 #309
 - [x] **749** 进化加固 #310
 - [x] **750** 进化加固 #311 · v3.9.0 milestone
+- [x] **751** P76 sector_leader 模块
+- [x] **752** P76 compute_sector_leaders
+- [x] **753** P76 sector_leader_table_rows
+- [x] **754** P76 复用 sector_heatmap 板块提取
+- [x] **755** P76 工作台 👑 板块龙头对标 expander
+- [x] **756** P76 test_p76_sector_leader
+- [x] **757** P76 workflow 阶段标记
+- [x] **758** 进化加固 #312
+- [x] **759** 进化加固 #313
+- [x] **760** 进化加固 #314
+- [x] **761** P77 build_onepager_push_summary
+- [x] **762** P77 top_alert_ticker 重点提醒标的
+- [x] **763** P77 push_digest_cron --with-onepager
+- [x] **764** P77 build_watchlist_digest onepager_section
+- [x] **765** P77 test_p77_onepager_push
+- [x] **766** P77 workflow 阶段标记
+- [x] **767** 进化加固 #315
+- [x] **768** 进化加固 #316
+- [x] **769** 进化加固 #317
+- [x] **770** 进化加固 #318
+- [x] **771** P78 v4.0.0 app_meta
+- [x] **772** P78 EVOLUTION 文档
+- [x] **773** P78 EVOLUTION_100 751-780
+- [x] **774** P78 workflow P76-P78
+- [x] **775** P78 evolve_verify 通过
+- [x] **776** P78 README 版本徽章
+- [x] **777** 进化加固 #319
+- [x] **778** 进化加固 #320
+- [x] **779** 进化加固 #321
+- [x] **780** 进化加固 #322 · v4.0.0 milestone
