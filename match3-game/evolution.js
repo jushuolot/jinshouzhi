@@ -6,10 +6,10 @@
   "use strict";
 
   var DEFAULT = {
-    version: "3.1.0",
-    generation: 20,
+    version: "3.2.0",
+    generation: 21,
     autoTune: { enabled: true, windowSize: 8, maxMoveAdjust: 3, targetWinRate: 0.52 },
-    patchNotes: ["文物图鉴上线", "守关层挑战"],
+    patchNotes: ["叙事地图上线", "策划·集合·探关流程"],
   };
 
   window.MATCH3_EVOLUTION = DEFAULT;

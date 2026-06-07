@@ -205,6 +205,13 @@
   let storySeen = { prologues: {}, epilogues: {}, beats: {} };
   /** @type {{ counts: number[], unlocked: boolean[] }} */
   let codexState = { counts: [0, 0, 0, 0, 0, 0], unlocked: [false, false, false, false, false, false] };
+  let mapActiveChapter = 0;
+  let mapPhase = "world";
+  let vnLines = [];
+  let vnLineIndex = 0;
+  let vnTypingTimer = null;
+  let vnOnComplete = null;
+  let vnMode = "";
   let score = 0;
   let movesLeft = 0;
   /** 当前关卡目标分数（本关内累计当前分数达到即过关） */
@@ -256,9 +263,33 @@
   const homeMapBtn = document.getElementById("home-map");
   const homeTotalStarsEl = document.getElementById("home-total-stars");
   const homeMaxLevelEl = document.getElementById("home-max-level");
-  const mapScrollEl = document.getElementById("map-scroll");
   const mapBackHomeBtn = document.getElementById("map-back-home");
   const mapStarTotalEl = document.getElementById("map-star-total");
+  const mapHeadTitleEl = document.getElementById("map-head-title");
+  const mapPhaseStepsEl = document.getElementById("map-phase-steps");
+  const mapPhaseWorldEl = document.getElementById("map-phase-world");
+  const mapPhaseBriefingEl = document.getElementById("map-phase-briefing");
+  const mapPhaseAssemblyEl = document.getElementById("map-phase-assembly");
+  const mapPhaseRouteEl = document.getElementById("map-phase-route");
+  const worldMapIntroEl = document.getElementById("world-map-intro");
+  const worldChapterNodesEl = document.getElementById("world-chapter-nodes");
+  const vnBriefingCharsEl = document.getElementById("vn-briefing-chars");
+  const vnAssemblyCharsEl = document.getElementById("vn-assembly-chars");
+  const vnBriefingTitleEl = document.getElementById("vn-briefing-title");
+  const vnBriefingSpeakerEl = document.getElementById("vn-briefing-speaker");
+  const vnBriefingTextEl = document.getElementById("vn-briefing-text");
+  const vnBriefingNextBtn = document.getElementById("vn-briefing-next");
+  const vnBriefingSkipBtn = document.getElementById("vn-briefing-skip");
+  const vnAssemblyTitleEl = document.getElementById("vn-assembly-title");
+  const vnAssemblySpeakerEl = document.getElementById("vn-assembly-speaker");
+  const vnAssemblyTextEl = document.getElementById("vn-assembly-text");
+  const vnAssemblyNextBtn = document.getElementById("vn-assembly-next");
+  const vnAssemblySkipBtn = document.getElementById("vn-assembly-skip");
+  const routeChapterTitleEl = document.getElementById("route-chapter-title");
+  const routeChapterBlurbEl = document.getElementById("route-chapter-blurb");
+  const routePathEl = document.getElementById("route-path");
+  const mapBackWorldBtn = document.getElementById("map-back-world");
+  const mapReplayStoryBtn = document.getElementById("map-replay-story");
   const playBackMapBtn = document.getElementById("play-back-map");
   const worldBannerEl = document.getElementById("world-banner");
   const worldIconEl = document.getElementById("world-icon");
@@ -1604,71 +1635,299 @@
   }
 
   function showMap() {
-    renderLevelMap();
     updateHomeStats();
+    mapActiveChapter = getChapterForLevel(maxUnlockedLevel);
+    showMapPhase("world");
+    renderWorldMap();
     showScreen("map");
   }
 
-  function renderLevelMap() {
-    if (!mapScrollEl) return;
-    mapScrollEl.innerHTML = "";
-    WORLDS.forEach(function (world, wi) {
-      const section = document.createElement("div");
-      section.className = "world-section";
-      const head = document.createElement("div");
-      head.className = "world-head";
-      head.innerHTML =
-        '<span class="world-head-icon">' +
-        world.icon +
-        '</span><span class="world-head-name">' +
-        world.name +
-        (world.subtitle ? " · " + world.subtitle : "") +
-        " · L" +
-        (wi * 20 + 1) +
-        "-" +
-        (wi * 20 + 20) +
-        "</span>";
-      section.appendChild(head);
-      const chData = getChapterData(wi);
-      if (chData && chData.prologue) {
-        const replayBtn = document.createElement("button");
-        replayBtn.type = "button";
-        replayBtn.className = "map-chapter-btn";
-        replayBtn.textContent = "📖 重温 " + world.name;
-        replayBtn.addEventListener("click", function () {
-          showStoryScene(chData.prologue);
-        });
-        section.appendChild(replayBtn);
-      }
-      const grid = document.createElement("div");
-      grid.className = "map-grid";
-      for (let i = 0; i < 20; i++) {
-        const levelIdx = wi * 20 + i;
-        if (levelIdx >= MAX_LEVEL) break;
-        const btn = document.createElement("button");
-        btn.type = "button";
-        btn.className = "map-node";
-        btn.textContent = String(levelIdx + 1);
-        if (isBossLevel(levelIdx)) btn.classList.add("map-boss");
-        const locked = levelIdx > maxUnlockedLevel;
-        if (locked) btn.classList.add("locked");
-        if (levelIdx === maxUnlockedLevel) btn.classList.add("current");
-        btn.disabled = locked;
-        const stars = levelStarsMap[levelIdx] || 0;
-        if (stars > 0) {
-          const starEl = document.createElement("span");
-          starEl.className = "map-node-stars";
-          starEl.textContent = "★".repeat(stars) + "☆".repeat(3 - stars);
-          btn.appendChild(starEl);
+  function getMapNarrative() {
+    return typeof window !== "undefined" && window.MATCH3_MAP ? window.MATCH3_MAP : null;
+  }
+
+  function getMapChapterNarrative(chIdx) {
+    const m = getMapNarrative();
+    return m && m.chapters ? m.chapters[chIdx] : null;
+  }
+
+  function chapterUnlocked(chIdx) {
+    if (chIdx <= 0) return true;
+    return maxUnlockedLevel >= chIdx * 20;
+  }
+
+  function showMapPhase(phase) {
+    mapPhase = phase;
+    if (mapPhaseStepsEl) mapPhaseStepsEl.hidden = phase === "world";
+    if (mapPhaseWorldEl) mapPhaseWorldEl.hidden = phase !== "world";
+    if (mapPhaseBriefingEl) mapPhaseBriefingEl.hidden = phase !== "briefing";
+    if (mapPhaseAssemblyEl) mapPhaseAssemblyEl.hidden = phase !== "assembly";
+    if (mapPhaseRouteEl) mapPhaseRouteEl.hidden = phase !== "route";
+    const titles = { world: "蜀地总览", briefing: "② 作战策划", assembly: "③ 小队集合", route: "④ 探方路线" };
+    if (mapHeadTitleEl) mapHeadTitleEl.textContent = titles[phase] || "蜀地地图";
+    if (mapPhaseStepsEl) {
+      mapPhaseStepsEl.querySelectorAll(".map-step").forEach(function (el) {
+        const step = el.getAttribute("data-step");
+        el.classList.remove("active", "done");
+        if (step === phase) el.classList.add("active");
+        else if (
+          (phase === "briefing" && step === "world") ||
+          (phase === "assembly" && (step === "world" || step === "briefing")) ||
+          (phase === "route" && step !== "route")
+        ) {
+          el.classList.add("done");
         }
-        btn.addEventListener("click", function () {
-          startLevel(levelIdx);
-        });
-        grid.appendChild(btn);
-      }
-      section.appendChild(grid);
-      mapScrollEl.appendChild(section);
+      });
+    }
+  }
+
+  function renderWorldMap() {
+    if (!worldChapterNodesEl) return;
+    worldChapterNodesEl.innerHTML = "";
+    const mapData = getMapNarrative();
+    if (worldMapIntroEl && mapData && mapData.worldIntro) {
+      worldMapIntroEl.textContent =
+        mapData.worldIntro.lines && mapData.worldIntro.lines[0] ? mapData.worldIntro.lines[0].text : "";
+    }
+    WORLDS.forEach(function (world, wi) {
+      const narr = getMapChapterNarrative(wi);
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "world-chapter-node";
+      if (!chapterUnlocked(wi)) btn.disabled = true;
+      if (wi === getChapterForLevel(maxUnlockedLevel)) btn.classList.add("current");
+      const x = narr && narr.mapX != null ? narr.mapX : 20 + wi * 16;
+      const y = narr && narr.mapY != null ? narr.mapY : 70 - wi * 10;
+      btn.style.left = x + "%";
+      btn.style.top = y + "%";
+      btn.innerHTML =
+        '<span class="world-node-pin">' +
+        world.icon +
+        '</span><span class="world-node-label">' +
+        world.name +
+        "</span>";
+      btn.title = narr && narr.mapBlurb ? narr.mapBlurb : world.subtitle || "";
+      btn.addEventListener("click", function () {
+        enterChapterExpedition(wi);
+      });
+      worldChapterNodesEl.appendChild(btn);
     });
+  }
+
+  function enterChapterExpedition(chIdx) {
+    if (!chapterUnlocked(chIdx)) return;
+    mapActiveChapter = chIdx;
+    const narr = getMapChapterNarrative(chIdx);
+    showMapPhase("briefing");
+    startVnSequence(
+      "briefing",
+      narr && narr.briefing ? narr.briefing : [],
+      narr && narr.briefingTitle ? narr.briefingTitle : "作战策划",
+      function () {
+        showMapPhase("assembly");
+        startVnSequence(
+          "assembly",
+          narr && narr.assembly ? narr.assembly : [],
+          narr && narr.assemblyTitle ? narr.assemblyTitle : "小队集合",
+          function () {
+            showMapPhase("route");
+            renderStoryRoute(chIdx);
+          }
+        );
+      }
+    );
+  }
+
+  var VN_ROSTER = {
+    hutan: { name: "胡探", avatar: "🧭" },
+    wangdun: { name: "王墩", avatar: "💪" },
+    yangxue: { name: "杨雪", avatar: "🔬" },
+    jinyaliu: { name: "金牙刘", avatar: "💰" },
+    chenli: { name: "陈礼", avatar: "📚" },
+    narrator: { name: "旁白", avatar: "🌫" },
+  };
+
+  function ensureVnStage(stageEl) {
+    if (!stageEl || stageEl.dataset.built) return;
+    stageEl.innerHTML = "";
+    ["hutan", "wangdun", "yangxue", "jinyaliu", "chenli"].forEach(function (id) {
+      const p = VN_ROSTER[id];
+      const el = document.createElement("div");
+      el.className = "vn-char";
+      el.dataset.charId = id;
+      el.innerHTML =
+        '<div class="vn-char-avatar">' +
+        p.avatar +
+        '</div><div class="vn-char-name">' +
+        p.name +
+        "</div>";
+      stageEl.appendChild(el);
+    });
+    stageEl.dataset.built = "1";
+  }
+
+  function highlightVnSpeaker(stageEl, speakerId) {
+    if (!stageEl) return;
+    stageEl.querySelectorAll(".vn-char").forEach(function (el) {
+      const id = el.dataset.charId;
+      el.classList.remove("speaking", "visible");
+      if (speakerId === "narrator") {
+        if (id === "chenli" || id === "hutan") el.classList.add("visible");
+      } else if (id === speakerId) {
+        el.classList.add("visible", "speaking");
+      } else if (speakerId && speakerId !== "narrator") {
+        el.classList.add("visible");
+      }
+    });
+  }
+
+  function clearVnTyping() {
+    if (vnTypingTimer) {
+      window.clearInterval(vnTypingTimer);
+      vnTypingTimer = null;
+    }
+  }
+
+  function typewriteLine(el, text, onDone) {
+    if (!el) {
+      if (onDone) onDone();
+      return;
+    }
+    clearVnTyping();
+    el.textContent = "";
+    el.classList.add("typing");
+    let i = 0;
+    vnTypingTimer = window.setInterval(function () {
+      el.textContent += text.charAt(i);
+      i += 1;
+      if (i >= text.length) {
+        clearVnTyping();
+        el.classList.remove("typing");
+        if (onDone) onDone();
+      }
+    }, 32);
+  }
+
+  function getVnElements(mode) {
+    if (mode === "briefing") {
+      return {
+        stage: vnBriefingCharsEl,
+        title: vnBriefingTitleEl,
+        speaker: vnBriefingSpeakerEl,
+        text: vnBriefingTextEl,
+        next: vnBriefingNextBtn,
+        skip: vnBriefingSkipBtn,
+      };
+    }
+    return {
+      stage: vnAssemblyCharsEl,
+      title: vnAssemblyTitleEl,
+      speaker: vnAssemblySpeakerEl,
+      text: vnAssemblyTextEl,
+      next: vnAssemblyNextBtn,
+      skip: vnAssemblySkipBtn,
+    };
+  }
+
+  function showVnLine() {
+    const ui = getVnElements(vnMode);
+    if (!vnLines.length || vnLineIndex >= vnLines.length) {
+      clearVnTyping();
+      if (vnOnComplete) vnOnComplete();
+      vnOnComplete = null;
+      return;
+    }
+    const line = vnLines[vnLineIndex];
+    if (ui.title && vnLineIndex === 0) {
+      /* title set in startVnSequence */
+    }
+    if (ui.speaker) {
+      ui.speaker.textContent = line.speaker || "旁白";
+      ui.speaker.style.color = line.color || "#c9a227";
+    }
+    highlightVnSpeaker(ui.stage, line.id || "narrator");
+    typewriteLine(ui.text, line.text || "", function () {});
+  }
+
+  function advanceVnLine() {
+    const ui = getVnElements(vnMode);
+    if (ui.text && ui.text.classList.contains("typing")) {
+      clearVnTyping();
+      const line = vnLines[vnLineIndex];
+      ui.text.textContent = line ? line.text : "";
+      ui.text.classList.remove("typing");
+      return;
+    }
+    vnLineIndex += 1;
+    showVnLine();
+  }
+
+  function startVnSequence(mode, lines, title, onComplete) {
+    vnMode = mode;
+    vnLines = lines || [];
+    vnLineIndex = 0;
+    vnOnComplete = onComplete;
+    const ui = getVnElements(mode);
+    ensureVnStage(ui.stage);
+    if (ui.title) ui.title.textContent = title || "";
+    showVnLine();
+  }
+
+  function skipVnSequence(onSkipTo) {
+    clearVnTyping();
+    vnLines = [];
+    vnLineIndex = 0;
+    if (onSkipTo) onSkipTo();
+  }
+
+  function renderStoryRoute(chIdx) {
+    if (!routePathEl) return;
+    routePathEl.innerHTML = "";
+    const world = WORLDS[chIdx];
+    const narr = getMapChapterNarrative(chIdx);
+    if (routeChapterTitleEl) {
+      routeChapterTitleEl.textContent = (world ? world.icon + " " + world.name : "") + " · 探方路线";
+    }
+    if (routeChapterBlurbEl) {
+      routeChapterBlurbEl.textContent = narr && narr.routeIntro ? narr.routeIntro : world ? world.subtitle : "";
+    }
+    const milestones = narr && narr.milestones ? narr.milestones : {};
+    for (let i = 0; i < 20; i++) {
+      const levelIdx = chIdx * 20 + i;
+      if (levelIdx >= MAX_LEVEL) break;
+      const lvl = levelIdx + 1;
+      const wrap = document.createElement("div");
+      wrap.className = "route-node-wrap";
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "route-node-card";
+      if (milestones[lvl]) btn.classList.add("route-milestone");
+      if (isBossLevel(levelIdx)) btn.classList.add("boss");
+      const locked = levelIdx > maxUnlockedLevel;
+      if (locked) btn.disabled = true;
+      if (levelIdx === maxUnlockedLevel) btn.classList.add("current");
+      const label = milestones[lvl] || "第 " + lvl + " 层";
+      const stars = levelStarsMap[levelIdx] || 0;
+      btn.innerHTML =
+        '<div class="route-node-num">L' +
+        lvl +
+        (isBossLevel(levelIdx) ? " · 守关" : "") +
+        '</div><div class="route-node-name">' +
+        label +
+        "</div>" +
+        (stars > 0 ? '<div class="route-node-stars">' + "★".repeat(stars) + "☆".repeat(3 - stars) + "</div>" : "");
+      btn.addEventListener("click", function () {
+        startLevel(levelIdx);
+      });
+      wrap.appendChild(btn);
+      routePathEl.appendChild(wrap);
+    }
+    const currentNode = routePathEl.querySelector(".route-node-card.current");
+    if (currentNode && currentNode.scrollIntoView) {
+      window.setTimeout(function () {
+        currentNode.scrollIntoView({ block: "center", behavior: "smooth" });
+      }, 200);
+    }
   }
 
   function emptyIceGrid() {
@@ -2893,7 +3152,11 @@
 
   if (homeContinueBtn) {
     homeContinueBtn.addEventListener("click", function () {
-      startLevel(maxUnlockedLevel);
+      mapActiveChapter = getChapterForLevel(maxUnlockedLevel);
+      updateHomeStats();
+      showMapPhase("route");
+      renderStoryRoute(mapActiveChapter);
+      showScreen("map");
     });
   }
   if (homeMapBtn) {
@@ -2914,13 +3177,64 @@
   if (playBackMapBtn) {
     playBackMapBtn.addEventListener("click", function () {
       if (processing) return;
-      showMap();
+      mapActiveChapter = getChapterForLevel(currentLevelIndex);
+      updateHomeStats();
+      showMapPhase("route");
+      renderStoryRoute(mapActiveChapter);
+      showScreen("map");
     });
   }
   if (modalMapBtn) {
     modalMapBtn.addEventListener("click", function () {
       hideModal();
-      showMap();
+      mapActiveChapter = getChapterForLevel(currentLevelIndex);
+      updateHomeStats();
+      showMapPhase("route");
+      renderStoryRoute(mapActiveChapter);
+      showScreen("map");
+    });
+  }
+  if (mapBackWorldBtn) {
+    mapBackWorldBtn.addEventListener("click", function () {
+      clearVnTyping();
+      showMapPhase("world");
+      renderWorldMap();
+    });
+  }
+  if (mapReplayStoryBtn) {
+    mapReplayStoryBtn.addEventListener("click", function () {
+      enterChapterExpedition(mapActiveChapter);
+    });
+  }
+  if (vnBriefingNextBtn) {
+    vnBriefingNextBtn.addEventListener("click", advanceVnLine);
+  }
+  if (vnAssemblyNextBtn) {
+    vnAssemblyNextBtn.addEventListener("click", advanceVnLine);
+  }
+  if (vnBriefingSkipBtn) {
+    vnBriefingSkipBtn.addEventListener("click", function () {
+      const narr = getMapChapterNarrative(mapActiveChapter);
+      skipVnSequence(function () {
+        showMapPhase("assembly");
+        startVnSequence(
+          "assembly",
+          narr && narr.assembly ? narr.assembly : [],
+          narr && narr.assemblyTitle ? narr.assemblyTitle : "小队集合",
+          function () {
+            showMapPhase("route");
+            renderStoryRoute(mapActiveChapter);
+          }
+        );
+      });
+    });
+  }
+  if (vnAssemblySkipBtn) {
+    vnAssemblySkipBtn.addEventListener("click", function () {
+      skipVnSequence(function () {
+        showMapPhase("route");
+        renderStoryRoute(mapActiveChapter);
+      });
     });
   }
   if (boosterHammerBtn) {
