@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>萌植消消乐</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="wrap">
+    <header class="header">
+      <h1 id="game-title" class="title">萌植消消乐</h1>
+      <p class="subtitle">共 100 关：在限定步数内达到目标分数即可过关；点击一株再点相邻格交换，或按住拖到相邻格松开</p>
+    </header>
+
+    <div class="hud">
+      <div class="hud-item">
+        <span class="hud-label">关卡</span>
+        <strong id="level" class="hud-value">1 / 100</strong>
+      </div>
+      <div class="hud-item">
+        <span class="hud-label">目标分数</span>
+        <strong id="target-score" class="hud-value">0</strong>
+      </div>
+      <div class="hud-item">
+        <span class="hud-label">当前分数</span>
+        <strong id="score" class="hud-value">0</strong>
+      </div>
+      <div class="hud-item">
+        <span class="hud-label">剩余步数</span>
+        <strong id="moves" class="hud-value">0</strong>
+      </div>
+    </div>
+
+    <div class="audio-bar" aria-label="音频控制">
+      <button type="button" id="music-toggle" class="chip" aria-pressed="false">音乐：关</button>
+      <button type="button" id="rules-open" class="chip chip-secondary">游戏规则</button>
+    </div>
+
+    <div id="board" class="board" role="grid" aria-label="游戏棋盘"></div>
+
+    <p id="message" class="message" aria-live="polite"></p>
+
+    <div class="actions actions-row">
+      <button type="button" id="next-level" class="btn btn-secondary" hidden>下一关</button>
+      <button type="button" id="retry-level" class="btn btn-secondary" hidden>本关重试</button>
+      <button type="button" id="restart" class="btn">从第一关开始</button>
+    </div>
+  </div>
+
+  <div id="level-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" hidden>
+    <div class="modal-backdrop" data-modal-close="1"></div>
+    <div class="modal-panel">
+      <div class="modal-head">
+        <h2 id="modal-title" class="modal-title">本关结算</h2>
+        <button type="button" class="modal-close" aria-label="关闭" data-modal-close="1">×</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="modal-score">
+          <div class="modal-score-item">
+            <span class="modal-label">关卡</span>
+            <strong id="modal-level" class="modal-value">1 / 100</strong>
+          </div>
+          <div class="modal-score-item">
+            <span class="modal-label">目标</span>
+            <strong id="modal-target" class="modal-value">0</strong>
+          </div>
+          <div class="modal-score-item">
+            <span class="modal-label">得分</span>
+            <strong id="modal-score" class="modal-value">0</strong>
+          </div>
+          <div class="modal-score-item">
+            <span class="modal-label">剩余步数</span>
+            <strong id="modal-left" class="modal-value">0</strong>
+          </div>
+        </div>
+
+        <div class="easter-egg">
+          <div id="modal-egg-icon" class="egg-icon">🌿</div>
+          <div class="egg-text">
+            <div class="egg-title">彩蛋</div>
+            <div id="modal-egg-text" class="egg-desc">你发现了一片神秘的绿意。</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-actions actions-row">
+        <button type="button" id="modal-prev" class="btn btn-secondary" hidden>返回上一关</button>
+        <button type="button" id="modal-retry" class="btn btn-secondary" hidden>重玩本关</button>
+        <button type="button" id="modal-next" class="btn">下一关</button>
+        <button type="button" id="modal-restart" class="btn btn-secondary">从第一关开始</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="rules-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="rules-title" hidden>
+    <div class="modal-backdrop" data-rules-close="1"></div>
+    <div class="modal-panel">
+      <div class="modal-head">
+        <h2 id="rules-title" class="modal-title">游戏规则说明</h2>
+        <button type="button" class="modal-close" aria-label="关闭" data-rules-close="1">×</button>
+      </div>
+      <div class="modal-body rules-body">
+        <div id="rules-content" class="rules-content" aria-live="polite"></div>
+      </div>
+      <div class="modal-actions actions-row">
+        <button type="button" class="btn" data-rules-close="1">我知道了</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="ad-modal" class="modal ad-modal" role="dialog" aria-modal="true" aria-labelledby="ad-title" hidden>
+    <div class="modal-backdrop ad-backdrop"></div>
+    <div class="modal-panel ad-panel">
+      <div class="modal-head">
+        <h2 id="ad-title" class="modal-title">赞助内容</h2>
+        <span id="ad-countdown" class="ad-countdown">3</span>
+      </div>
+      <div class="modal-body ad-body">
+        <p id="ad-slot-label" class="ad-slot-label">关头广告</p>
+        <p id="ad-sponsor" class="ad-sponsor">示例广告主</p>
+        <div class="ad-frame" id="ad-frame">
+          <div class="ad-preview-card">
+            <span id="ad-preview-icon" class="ad-preview-icon" aria-hidden="true">🧃</span>
+            <div class="ad-preview-copy">
+              <p id="ad-preview-headline" class="ad-preview-headline">赞助预览</p>
+              <p id="ad-preview-teaser" class="ad-preview-teaser">点击查看详情</p>
+            </div>
+          </div>
+          <p id="ad-link-preview" class="ad-link-preview" hidden></p>
+        </div>
+      </div>
+      <div class="modal-actions actions-row ad-actions">
+        <button type="button" id="ad-visit" class="btn btn-secondary">了解详情</button>
+        <button type="button" id="ad-continue" class="btn" disabled>继续游戏</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="admin-gate-modal" class="modal admin-modal" role="dialog" aria-modal="true" aria-labelledby="admin-gate-title" hidden>
+    <div class="modal-backdrop" data-admin-gate-close="1"></div>
+    <div class="modal-panel admin-panel">
+      <div class="modal-head">
+        <h2 id="admin-gate-title" class="modal-title">开发者验证</h2>
+        <button type="button" class="modal-close" aria-label="关闭" data-admin-gate-close="1">×</button>
+      </div>
+      <div class="modal-body">
+        <p class="admin-hint">请输入管理口令以查看收益与提取记录。</p>
+        <label class="admin-field">
+          <span class="admin-field-label">口令</span>
+          <input id="admin-pass-input" class="admin-input" type="password" autocomplete="off" placeholder="输入口令" />
+        </label>
+        <p id="admin-gate-error" class="admin-error" hidden>口令错误，请重试</p>
+      </div>
+      <div class="modal-actions actions-row">
+        <button type="button" id="admin-gate-cancel" class="btn btn-secondary" data-admin-gate-close="1">取消</button>
+        <button type="button" id="admin-gate-submit" class="btn">进入</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="admin-panel-modal" class="modal admin-modal" role="dialog" aria-modal="true" aria-labelledby="admin-panel-title" hidden>
+    <div class="modal-backdrop" data-admin-panel-close="1"></div>
+    <div class="modal-panel admin-panel admin-panel-wide">
+      <div class="modal-head">
+        <h2 id="admin-panel-title" class="modal-title">收益管理</h2>
+        <button type="button" class="modal-close" aria-label="关闭" data-admin-panel-close="1">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="admin-stats">
+          <div class="admin-stat">
+            <span class="admin-stat-label">本局收益</span>
+            <strong id="admin-session" class="admin-stat-value">¥0.000</strong>
+          </div>
+          <div class="admin-stat">
+            <span class="admin-stat-label">累计收入</span>
+            <strong id="admin-total" class="admin-stat-value">¥0.000</strong>
+          </div>
+          <div class="admin-stat">
+            <span class="admin-stat-label">已提取</span>
+            <strong id="admin-withdrawn" class="admin-stat-value">¥0.000</strong>
+          </div>
+          <div class="admin-stat admin-stat-highlight">
+            <span class="admin-stat-label">可提取余额</span>
+            <strong id="admin-balance" class="admin-stat-value">¥0.000</strong>
+          </div>
+        </div>
+
+        <div class="admin-withdraw">
+          <h3 class="admin-section-title">提取费用</h3>
+          <label class="admin-field">
+            <span class="admin-field-label">提取金额（元）</span>
+            <input id="admin-withdraw-input" class="admin-input" type="number" min="0" step="0.001" placeholder="0.000" />
+          </label>
+          <div class="admin-withdraw-actions">
+            <button type="button" id="admin-withdraw-all" class="btn btn-secondary">全部提取</button>
+            <button type="button" id="admin-withdraw-submit" class="btn">确认提取</button>
+          </div>
+          <p id="admin-withdraw-msg" class="admin-msg" aria-live="polite"></p>
+        </div>
+
+        <div class="admin-history">
+          <h3 class="admin-section-title">提取记录</h3>
+          <ul id="admin-withdraw-list" class="admin-withdraw-list">
+            <li class="admin-withdraw-empty">暂无提取记录</li>
+          </ul>
+        </div>
+      </div>
+      <div class="modal-actions actions-row">
+        <button type="button" id="admin-panel-close" class="btn" data-admin-panel-close="1">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="landing/sponsors.js"></script>
+  <script src="ad-config.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>

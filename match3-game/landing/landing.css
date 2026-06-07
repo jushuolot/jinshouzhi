@@ -1,0 +1,194 @@
+:root {
+  --bg: linear-gradient(165deg, #1b2d1b 0%, #1a3d2e 42%, #0d2818 100%);
+  --panel: rgba(255, 255, 255, 0.08);
+  --text: #f2fff4;
+  --muted: #a8d4b8;
+  --accent: #5cb85c;
+  --gold: #ffd93d;
+  --radius: 14px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  background: var(--bg);
+  background-attachment: fixed;
+  color: var(--text);
+  padding: 1.25rem 1rem 2.5rem;
+}
+
+.wrap {
+  max-width: 420px;
+  margin: 0 auto;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.back-link {
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.back-link:hover {
+  color: var(--text);
+}
+
+.badge {
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  padding: 0.25rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(255, 217, 61, 0.14);
+  color: #ffe08a;
+  border: 1px solid rgba(255, 217, 61, 0.22);
+}
+
+.hero {
+  text-align: center;
+  padding: 1.5rem 1.1rem 1.25rem;
+  border-radius: var(--radius);
+  background: var(--panel);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 1rem;
+}
+
+.hero-icon {
+  font-size: 3.2rem;
+  line-height: 1;
+  margin-bottom: 0.5rem;
+}
+
+.hero h1 {
+  margin: 0 0 0.35rem;
+  font-size: 1.45rem;
+}
+
+.hero .sponsor {
+  margin: 0 0 0.5rem;
+  color: #ffe08a;
+  font-size: 0.85rem;
+}
+
+.hero .teaser {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.5;
+  font-size: 0.92rem;
+}
+
+.price-row {
+  display: flex;
+  justify-content: center;
+  align-items: baseline;
+  gap: 0.45rem;
+  margin-top: 1rem;
+}
+
+.price {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #ffe08a;
+}
+
+.price-note {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.card {
+  padding: 1rem;
+  border-radius: var(--radius);
+  background: rgba(0, 0, 0, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  margin-bottom: 1rem;
+}
+
+.card h2 {
+  margin: 0 0 0.65rem;
+  font-size: 0.95rem;
+}
+
+.card ul {
+  margin: 0;
+  padding-left: 1.1rem;
+  color: var(--muted);
+  line-height: 1.65;
+  font-size: 0.9rem;
+}
+
+.btn {
+  display: block;
+  width: 100%;
+  border: none;
+  border-radius: 999px;
+  padding: 0.85rem 1rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: linear-gradient(135deg, #6fcf6f, #3d9b4a);
+  color: #0d2818;
+}
+
+.btn:hover {
+  filter: brightness(1.05);
+}
+
+.btn-secondary {
+  margin-top: 0.65rem;
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.toast {
+  margin-top: 0.75rem;
+  min-height: 1.2rem;
+  text-align: center;
+  font-size: 0.85rem;
+  color: #ffe08a;
+}
+
+.partner {
+  margin-top: 1.25rem;
+  padding: 1rem;
+  border-radius: var(--radius);
+  border: 1px dashed rgba(255, 217, 61, 0.25);
+  background: rgba(255, 217, 61, 0.05);
+}
+
+.partner h2 {
+  margin: 0 0 0.45rem;
+  font-size: 0.95rem;
+  color: #ffe08a;
+}
+
+.partner p {
+  margin: 0 0 0.65rem;
+  color: var(--muted);
+  font-size: 0.86rem;
+  line-height: 1.55;
+}
+
+.partner a {
+  color: #9ee0ff;
+  word-break: break-all;
+}
+
+.stats-line {
+  margin-top: 0.75rem;
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.45);
+  text-align: center;
+}

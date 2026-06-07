@@ -1,28 +1,26 @@
-# Match3 Game（WIP）
+# 萌植消消乐
 
-三消小游戏 + 广告结算服务的占位目录，**当前未包含完整可玩游戏客户端**。
+8×8 三消小游戏，100 关，关头/关尾赞助广告，开发者隐藏收益后台。
 
-## 现有内容
-
-| 路径 | 说明 |
-|------|------|
-| `ad-server/settlements.jsonl` | 广告曝光/结算事件样例（JSONL） |
-
-## 本地预览（若有 landing 静态页）
+## 本地运行
 
 ```bash
-cd landing
-python3 -m http.server 8080
-# 浏览器 http://localhost:8080
+cd match3-game
+python3 -m http.server 3456
+# 浏览器 http://localhost:3456
 ```
 
-> 若 `landing/` 目录不存在，说明尚未合入前端资源。
+## 配置
 
-## 公网测试
+| 文件 | 说明 |
+|------|------|
+| `ad-config.js` | 广告开关、倒计时、管理口令 |
+| `landing/sponsors.js` | 内置赞助落地页文案 |
 
-完整游戏与 ad-server 就绪后，可：
+管理后台：连续点击标题 5 次 → 输入口令（默认见 `ad-config.js`）。
 
-- 静态页 → GitHub Pages 或任意静态托管  
-- ad-server → Railway / Fly.io / VPS Node 服务  
+## 公网地址
 
-当前阶段仅供了解广告结算数据格式，**不建议作为生产部署**。
+https://jushuolot.github.io/game/
+
+推送 `match3-game/**` 后 GitHub Actions 自动部署（见 `.github/workflows/deploy-match3.yml`）。

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>赞助详情 · 萌植消消乐</title>
+  <link rel="stylesheet" href="landing.css" />
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <a class="back-link" href="../index.html">← 返回游戏</a>
+      <span id="slot-badge" class="badge">赞助位</span>
+    </div>
+
+    <section class="hero">
+      <div id="hero-icon" class="hero-icon">🧃</div>
+      <p id="hero-sponsor" class="sponsor">赞助商</p>
+      <h1 id="hero-title">标题</h1>
+      <p id="hero-teaser" class="teaser">简介</p>
+      <div class="price-row">
+        <span id="hero-price" class="price">¥9.9</span>
+        <span id="hero-price-note" class="price-note">新客价</span>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>产品亮点</h2>
+      <ul id="bullet-list"></ul>
+    </section>
+
+    <button type="button" id="cta-btn" class="btn">立即领取</button>
+    <button type="button" id="share-btn" class="btn btn-secondary">复制本页链接（给广告主看数据）</button>
+    <p id="toast" class="toast" aria-live="polite"></p>
+    <p id="stats-line" class="stats-line"></p>
+
+    <section class="partner">
+      <h2>想在此投放广告？</h2>
+      <p>
+        本页为游戏内置赞助落地页，无需外部推广链接即可跑通展示→点击→结算全流程。
+        有真实商品后，只需改 <code>landing/sponsors.js</code> 文案，并把按钮改成你的购买链接。
+      </p>
+      <p>
+        商务合作可在 GitHub 提 Issue：
+        <a href="https://github.com/jushuolot/game/issues" target="_blank" rel="noopener noreferrer">jushuolot/game</a>
+      </p>
+    </section>
+  </div>
+
+  <script src="sponsors.js"></script>
+  <script src="landing.js"></script>
+</body>
+</html>

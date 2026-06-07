@@ -1,0 +1,1752 @@
+/**
+ * 共 100 关：每关有目标分数与步数；达标后进入下一关。
+ *
+ * 如何打开：
+ * 1. 直接用浏览器打开本目录下的 index.html（部分浏览器对 file:// 限制较严，若脚本异常可用方式 2）。
+ * 2. 在本目录终端执行：npx --yes serve -l 3456
+ *    然后访问终端里提示的本地地址（例如 http://localhost:3456）。
+ */
+
+(function () {
+  "use strict";
+
+  const ROWS = 8;
+  const COLS = 8;
+  const NUM_TYPES = 6;
+  /** 与 CSS .cell[data-type] 中植物顺序一致 */
+  const PLANT_NAMES = ["樱花", "香草叶", "四叶草", "向日葵", "仙人掌", "蘑菇"];
+  /** 共 100 关，关卡索引 0～99 */
+  const MAX_LEVEL = 100;
+  /** 每步最多可得分（包含连锁），超出的连消只计到上限 */
+  const MAX_POINTS_PER_MOVE = 10;
+  /** 系统自动设计每关步数：按关卡设定目标过关率（理论值） */
+  const PASS_RATE_LEVEL_1 = 0.9;
+  /** 第二关起：目标通过率上限不超过 1%（理论估算） */
+  const MAX_PASS_RATE_FROM_LEVEL_2 = 0.01;
+  /** 传给求解器的目标值，略低于上限便于数值误差 */
+  const PASS_RATE_FROM_LEVEL_2 = 0.0095;
+  const MATCH_ANIM_MS = 260;
+  const CASCADE_PAUSE_MS = 80;
+
+  const DEFAULT_AD_CONFIG = {
+    enabled: true,
+    minWatchSec: 5,
+    currencySymbol: "¥",
+    settlementWebhook: "",
+    useBuiltinLanding: true,
+    advertiser: {
+      name: "内置赞助位",
+      landingUrl: "",
+      cpm: 20,
+      cpc: 1.5,
+    },
+    slots: {
+      level_start: { label: "关头广告" },
+      level_end: { label: "关尾广告" },
+    },
+    admin: {
+      passphrase: "萌植888",
+      unlockTaps: 5,
+    },
+  };
+
+  function getBuiltinSponsorCatalog() {
+    if (typeof window !== "undefined" && window.MATCH3_SPONSORS) {
+      return window.MATCH3_SPONSORS;
+    }
+    return {
+      level_start: {
+        sponsor: "萌植能量饮",
+        headline: "玩前一杯，连线更顺",
+        teaser: "维生素气泡饮 · 0 糖 · 便携小瓶装",
+        icon: "🧃",
+        cpm: 20,
+        cpc: 1.2,
+      },
+      level_end: {
+        sponsor: "绿野轻骑",
+        headline: "过关庆祝，骑行更酷",
+        teaser: "头盔 / 风镜 / 手套 · 通关用户专享",
+        icon: "🚴",
+        cpm: 22,
+        cpc: 1.5,
+      },
+    };
+  }
+
+  function gameBasePath() {
+    if (typeof window === "undefined") return "/";
+    const path = window.location.pathname || "/";
+    if (path.endsWith("/")) return path;
+    const slash = path.lastIndexOf("/");
+    return slash >= 0 ? path.slice(0, slash + 1) : "/";
+  }
+
+  function builtinLandingUrl(slotKey) {
+    if (typeof window === "undefined") return "";
+    return (
+      window.location.origin +
+      gameBasePath() +
+      "landing/index.html?slot=" +
+      encodeURIComponent(slotKey) +
+      "&utm_source=match3&utm_medium=interstitial"
+    );
+  }
+
+  function isUnsetLandingUrl(url) {
+    if (!url) return true;
+    return /example\.com/i.test(url);
+  }
+
+  function buildAdConfig() {
+    const ext =
+      typeof window !== "undefined" && window.MATCH3_AD_CONFIG
+        ? window.MATCH3_AD_CONFIG
+        : {};
+    const base = Object.assign({}, DEFAULT_AD_CONFIG, ext);
+    const adv = Object.assign({}, DEFAULT_AD_CONFIG.advertiser, ext.advertiser || {});
+    const catalog = getBuiltinSponsorCatalog();
+    const useBuiltin = base.useBuiltinLanding !== false;
+    const slots = {};
+    ["level_start", "level_end"].forEach(function (key) {
+      const slotExt = (ext.slots && ext.slots[key]) || {};
+      const slotDefault = DEFAULT_AD_CONFIG.slots[key] || {};
+      const builtin = catalog[key] || catalog.level_start;
+      let landingUrl = slotExt.landingUrl || adv.landingUrl;
+      if (useBuiltin && isUnsetLandingUrl(landingUrl)) {
+        landingUrl = builtinLandingUrl(key);
+      }
+      slots[key] = {
+        label: slotExt.label || slotDefault.label || key,
+        sponsor: slotExt.sponsor || slotExt.name || builtin.sponsor || adv.name,
+        headline: slotExt.headline || builtin.headline || "",
+        teaser: slotExt.teaser || builtin.teaser || "",
+        icon: slotExt.icon || builtin.icon || "📣",
+        landingUrl: landingUrl,
+        cpm: slotExt.cpm != null ? slotExt.cpm : builtin.cpm != null ? builtin.cpm : adv.cpm,
+        cpc: slotExt.cpc != null ? slotExt.cpc : builtin.cpc != null ? builtin.cpc : adv.cpc,
+      };
+    });
+    base.advertiser = adv;
+    base.slots = slots;
+    base.admin = Object.assign({}, DEFAULT_AD_CONFIG.admin, ext.admin || {});
+    if (
+      !base.settlementWebhook &&
+      typeof window !== "undefined" &&
+      (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+    ) {
+      base.settlementWebhook = "http://localhost:3920/settle";
+    }
+    return base;
+  }
+
+  const AD_CONFIG = buildAdConfig();
+
+  const AD_STATS_KEY = "match3_ad_revenue_stats";
+  const ADMIN_SESSION_KEY = "match3_admin_unlocked";
+  let revenueSession = 0;
+  let revenueTotal = 0;
+  let revenueWithdrawn = 0;
+  /** @type {{ amount: number, ts: number, balanceAfter: number }[]} */
+  let withdrawalHistory = [];
+  /** @type {number | null} */
+  let adCountdownTimer = null;
+  /** @type {(() => void) | null} */
+  let adOnComplete = null;
+  /** @type {keyof AD_CONFIG.slots | null} */
+  let adCurrentSlot = null;
+  let adFinishing = false;
+
+  /** @type {number[][]} */
+  let board = [];
+  let score = 0;
+  let movesLeft = 0;
+  /** 当前关卡目标分数（本关内累计当前分数达到即过关） */
+  let levelTarget = 0;
+  /** 0-based，0 = 第 1 关 */
+  let currentLevelIndex = 0;
+  let gameOver = false;
+  /** @type {{ r: number, c: number } | null} */
+  let selected = null;
+  let processing = false;
+  /** @type {{ r: number, c: number } | null} */
+  let pendingPointerDown = null;
+  /** 滑动连线消除：当前路径（按住并滑过同种植物） */
+  /** @type {{ r: number, c: number }[]} */
+  let swipePath = [];
+  /** @type {number | null} */
+  let swipeType = null;
+  let swiping = false;
+  let swipePointerId = null;
+  let swipeStartX = 0;
+  let swipeStartY = 0;
+  let didDirectionalSwap = false;
+  let movePointsLeft = MAX_POINTS_PER_MOVE;
+
+  /** @type {HTMLElement | null} */
+  const boardEl = document.getElementById("board");
+  const gameTitleEl = document.getElementById("game-title");
+  const levelEl = document.getElementById("level");
+  const targetScoreEl = document.getElementById("target-score");
+  const scoreEl = document.getElementById("score");
+  const movesEl = document.getElementById("moves");
+  const messageEl = document.getElementById("message");
+  const restartBtn = document.getElementById("restart");
+  const nextLevelBtn = document.getElementById("next-level");
+  const retryLevelBtn = document.getElementById("retry-level");
+  const modalEl = document.getElementById("level-modal");
+  const modalLevelEl = document.getElementById("modal-level");
+  const modalTargetEl = document.getElementById("modal-target");
+  const modalScoreEl = document.getElementById("modal-score");
+  const modalLeftEl = document.getElementById("modal-left");
+  const modalEggIconEl = document.getElementById("modal-egg-icon");
+  const modalEggTextEl = document.getElementById("modal-egg-text");
+  const modalPrevBtn = document.getElementById("modal-prev");
+  const modalRetryBtn = document.getElementById("modal-retry");
+  const modalNextBtn = document.getElementById("modal-next");
+  const modalRestartBtn = document.getElementById("modal-restart");
+  const musicToggleBtn = document.getElementById("music-toggle");
+  const rulesOpenBtn = document.getElementById("rules-open");
+  const rulesModalEl = document.getElementById("rules-modal");
+  const rulesContentEl = document.getElementById("rules-content");
+  const adModalEl = document.getElementById("ad-modal");
+  const adTitleEl = document.getElementById("ad-title");
+  const adCountdownEl = document.getElementById("ad-countdown");
+  const adSlotLabelEl = document.getElementById("ad-slot-label");
+  const adSponsorEl = document.getElementById("ad-sponsor");
+  const adPreviewIconEl = document.getElementById("ad-preview-icon");
+  const adPreviewHeadlineEl = document.getElementById("ad-preview-headline");
+  const adPreviewTeaserEl = document.getElementById("ad-preview-teaser");
+  const adLinkPreviewEl = document.getElementById("ad-link-preview");
+  const adVisitBtn = document.getElementById("ad-visit");
+  const adContinueBtn = document.getElementById("ad-continue");
+  const adminGateModalEl = document.getElementById("admin-gate-modal");
+  const adminPanelModalEl = document.getElementById("admin-panel-modal");
+  const adminPassInputEl = document.getElementById("admin-pass-input");
+  const adminGateErrorEl = document.getElementById("admin-gate-error");
+  const adminGateSubmitBtn = document.getElementById("admin-gate-submit");
+  const adminSessionEl = document.getElementById("admin-session");
+  const adminTotalEl = document.getElementById("admin-total");
+  const adminWithdrawnEl = document.getElementById("admin-withdrawn");
+  const adminBalanceEl = document.getElementById("admin-balance");
+  const adminWithdrawInputEl = document.getElementById("admin-withdraw-input");
+  const adminWithdrawMsgEl = document.getElementById("admin-withdraw-msg");
+  const adminWithdrawListEl = document.getElementById("admin-withdraw-list");
+  const adminWithdrawAllBtn = document.getElementById("admin-withdraw-all");
+  const adminWithdrawSubmitBtn = document.getElementById("admin-withdraw-submit");
+
+  let adminTapCount = 0;
+  /** @type {number | null} */
+  let adminTapTimer = null;
+
+  /** @type {AudioContext | null} */
+  let audioCtx = null;
+  let musicEnabled = false;
+  let musicTrackIdx = 0;
+  let musicTimer = 0;
+  let musicNextAt = 0;
+
+  function resumeAudio() {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return;
+    if (!audioCtx) audioCtx = new Ctx();
+    if (audioCtx.state === "suspended") {
+      void audioCtx.resume();
+    }
+  }
+
+  function beep(freq, durSec, vol, type) {
+    if (!audioCtx) return;
+    const t0 = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    osc.connect(g);
+    g.connect(audioCtx.destination);
+    osc.type = type || "sine";
+    osc.frequency.setValueAtTime(freq, t0);
+    g.gain.setValueAtTime(0, t0);
+    g.gain.linearRampToValueAtTime(Math.min(vol, 0.35) * 0.5, t0 + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.0008, t0 + durSec);
+    osc.start(t0);
+    osc.stop(t0 + durSec + 0.04);
+  }
+
+  function noteFreq(midi) {
+    return 440 * Math.pow(2, (midi - 69) / 12);
+  }
+
+  function playToneAt(t0, freq, durSec, vol, type) {
+    if (!audioCtx) return;
+    const osc = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    osc.type = type || "sine";
+    osc.frequency.setValueAtTime(freq, t0);
+    g.gain.setValueAtTime(0, t0);
+    g.gain.linearRampToValueAtTime(Math.min(vol, 0.25), t0 + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0007, t0 + durSec);
+    osc.connect(g);
+    g.connect(audioCtx.destination);
+    osc.start(t0);
+    osc.stop(t0 + durSec + 0.05);
+  }
+
+  const MUSIC_TRACKS = [
+    {
+      name: "林间小调",
+      bpm: 104,
+      root: 60, // C
+      scale: [0, 2, 4, 7, 9], // pentatonic major
+      leadType: "sine",
+      bassType: "triangle",
+      patternLen: 16,
+    },
+    {
+      name: "蘑菇舞步",
+      bpm: 122,
+      root: 57, // A
+      scale: [0, 3, 5, 7, 10], // pentatonic minor
+      leadType: "triangle",
+      bassType: "sine",
+      patternLen: 16,
+    },
+    {
+      name: "仙人掌夜曲",
+      bpm: 96,
+      root: 62, // D
+      scale: [0, 2, 3, 5, 7, 10], // dorian-ish
+      leadType: "sine",
+      bassType: "triangle",
+      patternLen: 12,
+    },
+  ];
+
+  function stopMusic() {
+    if (musicTimer) {
+      window.clearInterval(musicTimer);
+      musicTimer = 0;
+    }
+    musicNextAt = 0;
+  }
+
+  function updateMusicButtons() {
+    if (musicToggleBtn) {
+      musicToggleBtn.setAttribute("aria-pressed", musicEnabled ? "true" : "false");
+      musicToggleBtn.textContent = musicEnabled ? "音乐：开" : "音乐：关";
+    }
+  }
+
+  function scheduleMusicChunk() {
+    if (!audioCtx) return;
+    const track = MUSIC_TRACKS[musicTrackIdx % MUSIC_TRACKS.length];
+    const beat = 60 / track.bpm;
+    const step = beat / 2; // 1/8
+    const now = audioCtx.currentTime;
+    const startAt = Math.max(now + 0.05, musicNextAt || now + 0.05);
+    const steps = track.patternLen;
+
+    for (let i = 0; i < steps; i++) {
+      const t = startAt + i * step;
+      const pos = i % steps;
+
+      // bass: every 4 steps
+      if (pos % 4 === 0) {
+        const bassMidi = track.root - 24 + (pos % 8 === 0 ? 0 : 7);
+        playToneAt(t, noteFreq(bassMidi), step * 1.45, 0.12, track.bassType);
+      }
+
+      // lead: pseudo-random but repeatable per chunk
+      const pick = (pos * 7 + track.root + Math.floor(startAt * 10)) % track.scale.length;
+      const interval = track.scale[pick];
+      const octave = pos % 8 < 4 ? 12 : 0;
+      const leadMidi = track.root + interval + octave;
+      const dur = pos % 3 === 0 ? step * 0.9 : step * 0.6;
+      playToneAt(t, noteFreq(leadMidi), dur, 0.065, track.leadType);
+
+      // sparkle on bar start
+      if (pos === 0) {
+        playToneAt(t, noteFreq(track.root + 24), step * 0.35, 0.04, "sine");
+      }
+    }
+
+    musicNextAt = startAt + steps * step;
+  }
+
+  function startMusic() {
+    resumeAudio();
+    if (!audioCtx) return;
+    stopMusic();
+    musicNextAt = audioCtx.currentTime + 0.08;
+    scheduleMusicChunk();
+    musicTimer = window.setInterval(function () {
+      if (!musicEnabled) return;
+      if (!audioCtx) return;
+      if (musicNextAt - audioCtx.currentTime < 1.2) scheduleMusicChunk();
+    }, 250);
+  }
+
+  function setMusicEnabled(on) {
+    musicEnabled = !!on;
+    updateMusicButtons();
+    if (musicEnabled) startMusic();
+    else stopMusic();
+  }
+
+  function randomizeMusic() {
+    const next = randomInt(MUSIC_TRACKS.length);
+    musicTrackIdx = next;
+    if (musicEnabled) startMusic();
+  }
+
+  function formatMoney(n) {
+    return AD_CONFIG.currencySymbol + n.toFixed(3);
+  }
+
+  function getRevenueBalance() {
+    return Math.max(0, Math.round((revenueTotal - revenueWithdrawn) * 1000) / 1000);
+  }
+
+  function loadAdStats() {
+    try {
+      const raw = window.localStorage.getItem(AD_STATS_KEY);
+      if (!raw) return;
+      const data = JSON.parse(raw);
+      if (data && typeof data.total === "number") revenueTotal = data.total;
+      if (data && typeof data.withdrawn === "number") revenueWithdrawn = data.withdrawn;
+      if (data && Array.isArray(data.withdrawals)) withdrawalHistory = data.withdrawals;
+    } catch (e) {
+      revenueTotal = 0;
+      revenueWithdrawn = 0;
+      withdrawalHistory = [];
+    }
+  }
+
+  function saveAdStats() {
+    try {
+      window.localStorage.setItem(
+        AD_STATS_KEY,
+        JSON.stringify({
+          total: revenueTotal,
+          withdrawn: revenueWithdrawn,
+          withdrawals: withdrawalHistory,
+          updatedAt: Date.now(),
+        })
+      );
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  function updateAdminPanel() {
+    const balance = getRevenueBalance();
+    if (adminSessionEl) adminSessionEl.textContent = formatMoney(revenueSession);
+    if (adminTotalEl) adminTotalEl.textContent = formatMoney(revenueTotal);
+    if (adminWithdrawnEl) adminWithdrawnEl.textContent = formatMoney(revenueWithdrawn);
+    if (adminBalanceEl) adminBalanceEl.textContent = formatMoney(balance);
+    if (adminWithdrawInputEl && document.activeElement !== adminWithdrawInputEl) {
+      adminWithdrawInputEl.placeholder = balance.toFixed(3);
+    }
+    if (!adminWithdrawListEl) return;
+    adminWithdrawListEl.innerHTML = "";
+    if (!withdrawalHistory.length) {
+      const empty = document.createElement("li");
+      empty.className = "admin-withdraw-empty";
+      empty.textContent = "暂无提取记录";
+      adminWithdrawListEl.appendChild(empty);
+      return;
+    }
+    withdrawalHistory
+      .slice()
+      .reverse()
+      .forEach(function (item) {
+        const li = document.createElement("li");
+        const when = new Date(item.ts);
+        li.textContent =
+          when.toLocaleString() +
+          " · 提取 " +
+          formatMoney(item.amount) +
+          " · 余额 " +
+          formatMoney(item.balanceAfter);
+        adminWithdrawListEl.appendChild(li);
+      });
+  }
+
+  function isAdminUnlocked() {
+    try {
+      return window.sessionStorage.getItem(ADMIN_SESSION_KEY) === "1";
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function setAdminUnlocked(on) {
+    try {
+      if (on) window.sessionStorage.setItem(ADMIN_SESSION_KEY, "1");
+      else window.sessionStorage.removeItem(ADMIN_SESSION_KEY);
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  function hideAdminGate() {
+    if (adminGateModalEl) adminGateModalEl.hidden = true;
+    if (adminPassInputEl) adminPassInputEl.value = "";
+    if (adminGateErrorEl) adminGateErrorEl.hidden = true;
+  }
+
+  function hideAdminPanel() {
+    if (adminPanelModalEl) adminPanelModalEl.hidden = true;
+    if (adminWithdrawMsgEl) adminWithdrawMsgEl.textContent = "";
+  }
+
+  function openAdminGate() {
+    if (isAdminUnlocked()) {
+      openAdminPanel();
+      return;
+    }
+    if (adminGateModalEl) adminGateModalEl.hidden = false;
+    if (adminPassInputEl) {
+      adminPassInputEl.value = "";
+      window.setTimeout(function () {
+        adminPassInputEl.focus();
+      }, 0);
+    }
+    if (adminGateErrorEl) adminGateErrorEl.hidden = true;
+  }
+
+  function openAdminPanel() {
+    updateAdminPanel();
+    if (adminPanelModalEl) adminPanelModalEl.hidden = false;
+  }
+
+  function tryAdminLogin() {
+    const input = adminPassInputEl ? adminPassInputEl.value : "";
+    const expected = (AD_CONFIG.admin && AD_CONFIG.admin.passphrase) || "萌植888";
+    if (input !== expected) {
+      if (adminGateErrorEl) adminGateErrorEl.hidden = false;
+      return;
+    }
+    setAdminUnlocked(true);
+    hideAdminGate();
+    openAdminPanel();
+  }
+
+  function withdrawRevenue(amount) {
+    const balance = getRevenueBalance();
+    const value = Math.round(amount * 1000) / 1000;
+    if (adminWithdrawMsgEl) adminWithdrawMsgEl.textContent = "";
+    if (!value || value <= 0) {
+      if (adminWithdrawMsgEl) adminWithdrawMsgEl.textContent = "请输入大于 0 的金额";
+      return;
+    }
+    if (value > balance + 0.0001) {
+      if (adminWithdrawMsgEl) adminWithdrawMsgEl.textContent = "超过可提取余额";
+      return;
+    }
+    revenueWithdrawn = Math.round((revenueWithdrawn + value) * 1000) / 1000;
+    const balanceAfter = getRevenueBalance();
+    withdrawalHistory.push({ amount: value, ts: Date.now(), balanceAfter: balanceAfter });
+    saveAdStats();
+    updateAdminPanel();
+    postSettlementEvent({
+      type: "withdraw",
+      amount: value,
+      balanceAfter: balanceAfter,
+      currency: "CNY",
+      ts: Date.now(),
+    });
+    if (adminWithdrawInputEl) adminWithdrawInputEl.value = "";
+    if (adminWithdrawMsgEl)
+      adminWithdrawMsgEl.textContent = "已提取 " + formatMoney(value) + "（演示记账，真实打款需对接后端）";
+  }
+
+  function onAdminTitleTap() {
+    const needed = (AD_CONFIG.admin && AD_CONFIG.admin.unlockTaps) || 5;
+    adminTapCount += 1;
+    if (adminTapTimer) window.clearTimeout(adminTapTimer);
+    adminTapTimer = window.setTimeout(function () {
+      adminTapCount = 0;
+      adminTapTimer = null;
+    }, 2000);
+    if (adminTapCount >= needed) {
+      adminTapCount = 0;
+      if (adminTapTimer) window.clearTimeout(adminTapTimer);
+      adminTapTimer = null;
+      openAdminGate();
+    }
+  }
+
+  function postSettlementEvent(payload) {
+    const url = AD_CONFIG.settlementWebhook;
+    if (!url) return;
+    try {
+      void fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+        keepalive: true,
+      });
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  function settleAdEvent(slotKey, type, amount) {
+    revenueSession += amount;
+    revenueTotal += amount;
+    if (adminPanelModalEl && !adminPanelModalEl.hidden) updateAdminPanel();
+    saveAdStats();
+    postSettlementEvent({
+      type: type,
+      slot: slotKey,
+      amount: amount,
+      currency: "CNY",
+      level: currentLevelIndex + 1,
+      ts: Date.now(),
+    });
+    return amount;
+  }
+
+  function clearAdCountdown() {
+    if (adCountdownTimer) {
+      window.clearInterval(adCountdownTimer);
+      adCountdownTimer = null;
+    }
+  }
+
+  function hideAdModal() {
+    clearAdCountdown();
+    if (adModalEl) adModalEl.hidden = true;
+    adOnComplete = null;
+    adCurrentSlot = null;
+    adFinishing = false;
+  }
+
+  function finishAdAndContinue() {
+    if (adFinishing || !adModalEl || adModalEl.hidden) return;
+    adFinishing = true;
+    const done = adOnComplete;
+    adOnComplete = null;
+    hideAdModal();
+    if (done) done();
+  }
+
+  function onAdBackdropClick(ev) {
+    if (!adModalEl || adModalEl.hidden || adFinishing) return;
+    if (adContinueBtn && adContinueBtn.disabled) return;
+    const t = ev.target;
+    if (t && t instanceof HTMLElement && t.closest(".modal-panel")) return;
+    finishAdAndContinue();
+  }
+
+  /**
+   * @param {"level_start"|"level_end"} slotKey
+   * @param {() => void} onComplete
+   */
+  function showForcedAd(slotKey, onComplete) {
+    if (!AD_CONFIG.enabled || !adModalEl) {
+      onComplete();
+      return;
+    }
+    const slot = AD_CONFIG.slots[slotKey];
+    if (!slot) {
+      onComplete();
+      return;
+    }
+
+    adOnComplete = onComplete;
+    adCurrentSlot = slotKey;
+    adFinishing = false;
+    clearAdCountdown();
+
+    if (adTitleEl) adTitleEl.textContent = "赞助内容";
+    if (adSlotLabelEl) adSlotLabelEl.textContent = slot.label;
+    if (adSponsorEl) adSponsorEl.textContent = slot.sponsor;
+    if (adPreviewIconEl) adPreviewIconEl.textContent = slot.icon || "📣";
+    if (adPreviewHeadlineEl) adPreviewHeadlineEl.textContent = slot.headline || slot.sponsor;
+    if (adPreviewTeaserEl) adPreviewTeaserEl.textContent = slot.teaser || "免费游戏由赞助支持";
+    if (adLinkPreviewEl) adLinkPreviewEl.textContent = slot.landingUrl;
+
+    settleAdEvent(slotKey, "impression", slot.cpm / 1000);
+
+    if (adContinueBtn) {
+      adContinueBtn.disabled = true;
+      adContinueBtn.textContent = "继续游戏（" + AD_CONFIG.minWatchSec + "s）";
+    }
+
+    adModalEl.hidden = false;
+
+    let left = AD_CONFIG.minWatchSec;
+    if (adCountdownEl) adCountdownEl.textContent = String(left);
+    clearAdCountdown();
+    adCountdownTimer = window.setInterval(function () {
+      left -= 1;
+      if (adCountdownEl) adCountdownEl.textContent = String(Math.max(0, left));
+      if (left <= 0) {
+        clearAdCountdown();
+        if (adContinueBtn) {
+          adContinueBtn.disabled = false;
+          adContinueBtn.textContent = "继续游戏";
+        }
+      }
+    }, 1000);
+  }
+
+  function onAdVisitClick() {
+    if (!adCurrentSlot) return;
+    const slot = AD_CONFIG.slots[adCurrentSlot];
+    if (!slot) return;
+    settleAdEvent(adCurrentSlot, "click", slot.cpc);
+    try {
+      window.open(slot.landingUrl, "_blank", "noopener,noreferrer");
+    } catch (e) {
+      window.location.href = slot.landingUrl;
+    }
+  }
+
+  function buildRulesHtml() {
+    const level1Target = 100;
+    const inc = 20;
+    const pass1 = Math.round(PASS_RATE_LEVEL_1 * 100);
+    const pass2Cap = Math.round(MAX_PASS_RATE_FROM_LEVEL_2 * 10000) / 100;
+    const moveSpec = getLevelSpec(currentLevelIndex);
+    return (
+      "<p><strong>过关目标</strong>：第 1 关目标 " +
+      level1Target +
+      " 分；从第 2 关开始每关目标 +" +
+      inc +
+      " 分。达到目标即通关。</p>" +
+      "<p><strong>本关参数</strong>：目标 " +
+      moveSpec.target +
+      " 分，步数 " +
+      moveSpec.moves +
+      "。</p>" +
+      "<p><strong>操作方式</strong>：</p>" +
+      "<ul>" +
+      "<li><strong>方向滑动交换</strong>：按住从格子向上/下/左/右滑动，与相邻格交换（必须能产生消除才生效）。</li>" +
+      "<li><strong>连线消除</strong>：按住滑过同一种植物，形成长度 ≥3 的路径，松开即可消除该路径。</li>" +
+      "</ul>" +
+      "<p><strong>计分</strong>：每段消除按“连消长度”计分：3 连=5、4 连=6、5 连=7……；并且<strong>每步（含连锁）最多 " +
+      MAX_POINTS_PER_MOVE +
+      " 分</strong>。</p>" +
+      "<p><strong>难度</strong>：系统按目标成功率自动反推步数：第 1 关约 " +
+      pass1 +
+      "%；第 2 关起通过率不超过 " +
+      pass2Cap +
+      "%。</p>" +
+      "<p><strong>免费体验</strong>：每关开始与结束会展示<strong>赞助内容</strong>（约 " +
+      AD_CONFIG.minWatchSec +
+      " 秒后可继续）。点击「了解详情」可查看赞助商信息。</p>"
+    );
+  }
+
+  function soundSelect() {
+    resumeAudio();
+    beep(660, 0.04, 0.25, "sine");
+  }
+
+  function soundSwap() {
+    resumeAudio();
+    beep(480, 0.055, 0.42, "sine");
+  }
+
+  function soundInvalid() {
+    resumeAudio();
+    beep(130, 0.11, 0.55, "triangle");
+  }
+
+  function soundMatch(matchCount) {
+    resumeAudio();
+    const n = Math.min(Math.max(matchCount, 3), 12);
+    const base = 380 + n * 28;
+    beep(base, 0.07, 0.48, "sine");
+    window.setTimeout(function () {
+      beep(base + 200, 0.09, 0.38, "sine");
+    }, 55);
+    window.setTimeout(function () {
+      beep(base + 340, 0.07, 0.28, "triangle");
+    }, 115);
+  }
+
+  function soundGameOver() {
+    resumeAudio();
+    beep(300, 0.12, 0.42, "sine");
+    window.setTimeout(function () {
+      beep(220, 0.14, 0.45, "sine");
+    }, 130);
+    window.setTimeout(function () {
+      beep(165, 0.28, 0.48, "sine");
+    }, 280);
+  }
+
+  function soundRestart() {
+    resumeAudio();
+    beep(523, 0.06, 0.35, "sine");
+    window.setTimeout(function () {
+      beep(784, 0.08, 0.32, "sine");
+    }, 70);
+  }
+
+  function soundLevelWin() {
+    resumeAudio();
+    beep(523, 0.07, 0.38, "sine");
+    window.setTimeout(function () {
+      beep(659, 0.07, 0.36, "sine");
+    }, 70);
+    window.setTimeout(function () {
+      beep(784, 0.09, 0.4, "sine");
+    }, 145);
+    window.setTimeout(function () {
+      beep(1046, 0.12, 0.32, "sine");
+    }, 230);
+  }
+
+  /**
+   * @param {number} idx 0-based 关卡
+   * @returns {{ moves: number, target: number }}
+   */
+  function targetPassRateForLevel(levelIdx) {
+    return levelIdx <= 0 ? PASS_RATE_LEVEL_1 : PASS_RATE_FROM_LEVEL_2;
+  }
+
+  function getLevelSpec(idx) {
+    const clamped = Math.min(Math.max(idx, 0), MAX_LEVEL - 1);
+    // 目标分：第 1 关 100 分，后续每关 +20 分
+    const target = 100 + clamped * 20;
+    const baseMoves = solveMovesForPassRate(clamped, target, targetPassRateForLevel(clamped));
+    const minMoves = clamped < 8 ? 18 : 12;
+    const maxMoves = 60;
+    const moves = Math.min(maxMoves, Math.max(minMoves, baseMoves));
+    return { moves: moves, target: target };
+  }
+
+  // --- 自动难度：用正态近似反推步数，使过关成功率接近目标值 ---
+  // 说明：这里不用真实模拟（成本高），而用“每步平均得分 + 波动”的概率模型，
+  // 让系统能对 100 关快速生成一条相对平滑且越来越难的步数曲线。
+
+  function erf(x) {
+    // Abramowitz and Stegun 7.1.26 近似
+    const sign = x < 0 ? -1 : 1;
+    const ax = Math.abs(x);
+    const a1 = 0.254829592;
+    const a2 = -0.284496736;
+    const a3 = 1.421413741;
+    const a4 = -1.453152027;
+    const a5 = 1.061405429;
+    const p = 0.3275911;
+    const t = 1 / (1 + p * ax);
+    const y =
+      1 -
+      (((((a5 * t + a4) * t + a3) * t + a2) * t + a1) * t) * Math.exp(-ax * ax);
+    return sign * y;
+  }
+
+  function normalCdf(z) {
+    // 标准正态分布的 CDF
+    return 0.5 * (1 + erf(z / Math.SQRT2));
+  }
+
+  function estimatePassProbability(levelIdx, target, moves) {
+    // 计分为 3连=5、4连=6...，且每步（含连锁）最多 10 分。
+    // 这里用一个简化模型估算成功率：每步平均得分随关卡下降、波动随关卡略增。
+    const mu = Math.max(2.2, 5.4 - levelIdx * 0.028);
+    const sigma = 1.9 + levelIdx * 0.01;
+
+    const mean = moves * mu;
+    const std = Math.sqrt(Math.max(moves, 1)) * sigma;
+    if (std <= 0.0001) return mean >= target ? 1 : 0;
+    const z = (target - mean) / std;
+    return 1 - normalCdf(z);
+  }
+
+  function solveMovesForPassRate(levelIdx, target, passRate) {
+    // 搜索一个整数步数，使得估计过关率接近 passRate
+    // 约束：前期最少 18 步保证可玩；后期最少 12 步保证不至于无解
+    const minMoves = levelIdx < 8 ? 18 : 12;
+    const maxMoves = 48;
+
+    let bestMoves = minMoves;
+    let bestDiff = 1e9;
+
+    // 二分不严格单调，但整体随 moves 增大成功率增加，够用
+    let lo = minMoves;
+    let hi = maxMoves;
+    for (let i = 0; i < 14; i++) {
+      const mid = Math.floor((lo + hi) / 2);
+      const p = estimatePassProbability(levelIdx, target, mid);
+      const diff = Math.abs(p - passRate);
+      if (diff < bestDiff) {
+        bestDiff = diff;
+        bestMoves = mid;
+      }
+      if (p > passRate) hi = mid - 1;
+      else lo = mid + 1;
+    }
+
+    // 保险：再扫一小段，避免二分落在台阶边缘
+    const start = Math.max(minMoves, bestMoves - 2);
+    const end = Math.min(maxMoves, bestMoves + 2);
+    for (let m = start; m <= end; m++) {
+      const p = estimatePassProbability(levelIdx, target, m);
+      const diff = Math.abs(p - passRate);
+      if (diff < bestDiff) {
+        bestDiff = diff;
+        bestMoves = m;
+      }
+    }
+
+    // 第二关起：若估算通过率仍高于 1%，减少步数压低通过率（直到封顶或到达下限）
+    if (levelIdx >= 1) {
+      while (bestMoves > minMoves) {
+        const pNow = estimatePassProbability(levelIdx, target, bestMoves);
+        if (pNow <= MAX_PASS_RATE_FROM_LEVEL_2 + 1e-9) break;
+        bestMoves--;
+      }
+    }
+
+    return bestMoves;
+  }
+
+  function setLevelActionButtons(showNext, showRetry) {
+    if (nextLevelBtn) {
+      nextLevelBtn.hidden = !showNext;
+      nextLevelBtn.style.display = showNext ? "" : "none";
+    }
+    if (retryLevelBtn) {
+      retryLevelBtn.hidden = !showRetry;
+      retryLevelBtn.style.display = showRetry ? "" : "none";
+    }
+  }
+
+  const WORLD_QUOTES = [
+    { q: "认识你自己。", who: "苏格拉底", src: "德尔斐神庙箴言（常归于苏格拉底）" },
+    { q: "我思故我在。", who: "勒内·笛卡尔", src: "《第一哲学沉思集》" },
+    { q: "凡杀不死我的，必使我更强大。", who: "弗里德里希·尼采", src: "《偶像的黄昏》" },
+    { q: "知识就是力量。", who: "弗朗西斯·培根", src: "《神圣的沉思》" },
+    { q: "人是目的，而非手段。", who: "伊曼努尔·康德", src: "《道德形而上学基础》" },
+    { q: "我们唯一需要恐惧的，就是恐惧本身。", who: "富兰克林·D·罗斯福", src: "1933 年就职演说" },
+    { q: "想象力比知识更重要。", who: "阿尔伯特·爱因斯坦", src: "（多处访谈常见引述）" },
+    { q: "你必须成为你希望在世界上看到的改变。", who: "圣雄甘地", src: "（常见引述）" },
+    { q: "时间会证明一切。", who: "威吉尔（维吉尔）", src: "《埃涅阿斯纪》（意译常见）" },
+    { q: "生命不止，折腾不息。", who: "伏尔泰", src: "（常见意译引述）" },
+  ];
+
+  function pickQuote() {
+    return WORLD_QUOTES[randomInt(WORLD_QUOTES.length)];
+  }
+
+  function showModalResult(isWin) {
+    showForcedAd("level_end", function () {
+      openResultModal(isWin);
+    });
+  }
+
+  function openResultModal(isWin) {
+    if (!modalEl) return;
+    const quote = pickQuote();
+    if (modalLevelEl) modalLevelEl.textContent = currentLevelIndex + 1 + " / " + MAX_LEVEL;
+    if (modalTargetEl) modalTargetEl.textContent = String(levelTarget);
+    if (modalScoreEl) modalScoreEl.textContent = String(score);
+    if (modalLeftEl) modalLeftEl.textContent = String(movesLeft);
+    if (modalEggIconEl) modalEggIconEl.textContent = "📜";
+    if (modalEggTextEl)
+      modalEggTextEl.textContent = "“" + quote.q + "” —— " + quote.who + "（" + quote.src + "）";
+
+    const isLast = currentLevelIndex >= MAX_LEVEL - 1;
+    const canPrev = currentLevelIndex > 0;
+
+    if (modalPrevBtn) modalPrevBtn.hidden = isWin ? true : !canPrev;
+    if (modalRetryBtn) modalRetryBtn.hidden = isWin;
+    if (modalNextBtn) modalNextBtn.hidden = !isWin || isLast;
+    if (modalRestartBtn) modalRestartBtn.hidden = isWin ? !isLast : false;
+
+    modalEl.hidden = false;
+  }
+
+  function hideModal() {
+    if (!modalEl) return;
+    modalEl.hidden = true;
+  }
+
+  function key(r, c) {
+    return r + "," + c;
+  }
+
+  function randomInt(n) {
+    return Math.floor(Math.random() * n);
+  }
+
+  function cloneGrid(g) {
+    return g.map(function (row) {
+      return row.slice();
+    });
+  }
+
+  function swapCells(g, r1, c1, r2, c2) {
+    const t = g[r1][c1];
+    g[r1][c1] = g[r2][c2];
+    g[r2][c2] = t;
+  }
+
+  /**
+   * 找出所有连成 3+ 的段（横或竖），并计算本轮得分。
+   * 计分规则：3连=5分，4连=6分……（每段得分 = len+2），并受“每步封顶”影响。
+   * @param {number[][]} g
+   * @returns {{ cells: Set<string>, points: number, maxLen: number }}
+   */
+  function findMatchInfo(g) {
+    const cells = new Set();
+    let points = 0;
+    let maxLen = 0;
+
+    for (let r = 0; r < ROWS; r++) {
+      let c = 0;
+      while (c < COLS) {
+        const v = g[r][c];
+        if (v < 0) {
+          c++;
+          continue;
+        }
+        let len = 1;
+        while (c + len < COLS && g[r][c + len] === v) len++;
+        if (len >= 3) {
+          points += Math.min(MAX_POINTS_PER_MOVE, len + 2);
+          if (len > maxLen) maxLen = len;
+          for (let k = 0; k < len; k++) cells.add(key(r, c + k));
+        }
+        c += len;
+      }
+    }
+
+    for (let c = 0; c < COLS; c++) {
+      let r = 0;
+      while (r < ROWS) {
+        const v = g[r][c];
+        if (v < 0) {
+          r++;
+          continue;
+        }
+        let len = 1;
+        while (r + len < ROWS && g[r + len][c] === v) len++;
+        if (len >= 3) {
+          points += Math.min(MAX_POINTS_PER_MOVE, len + 2);
+          if (len > maxLen) maxLen = len;
+          for (let k = 0; k < len; k++) cells.add(key(r + k, c));
+        }
+        r += len;
+      }
+    }
+
+    return { cells: cells, points: points, maxLen: maxLen };
+  }
+
+  /**
+   * 交换后是否会产生至少一组三连。
+   */
+  function swapCreatesMatch(r1, c1, r2, c2) {
+    const g = cloneGrid(board);
+    swapCells(g, r1, c1, r2, c2);
+    return findMatchInfo(g).cells.size > 0;
+  }
+
+  /**
+   * 生成初始盘面，避免出现开局即消除。
+   */
+  function fillNoMatches() {
+    const g = [];
+    for (let r = 0; r < ROWS; r++) {
+      g[r] = [];
+      for (let c = 0; c < COLS; c++) {
+        let t;
+        let guard = 0;
+        do {
+          t = randomInt(NUM_TYPES);
+          guard++;
+          if (guard > 80) break;
+        } while (
+          (c >= 2 && g[r][c - 1] === t && g[r][c - 2] === t) ||
+          (r >= 2 && g[r - 1][c] === t && g[r - 2][c] === t)
+        );
+        g[r][c] = t;
+      }
+    }
+    return g;
+  }
+
+  /**
+   * 顶部补块时尽量避免一步形成三连（尽力而为）。
+   */
+  function randomRefill(g, r, c) {
+    // 增加联消机会：一定概率“偏向选择能立即凑成三连的类型”
+    // 注意：仍尽量避免“一步就生成太多三连”导致节奏失控，采用概率性偏向而非强制。
+    const matchChance = currentLevelIndex <= 0 ? 0.65 : 0.42;
+
+    // vertical: 下面两个相同
+    if (r <= ROWS - 3 && g[r + 1][c] >= 0 && g[r + 1][c] === g[r + 2][c]) {
+      if (Math.random() < matchChance) return g[r + 1][c];
+    }
+    // horizontal: 左边两个相同（前面列已填完时可用）
+    if (c >= 2 && g[r][c - 1] >= 0 && g[r][c - 1] === g[r][c - 2]) {
+      if (Math.random() < matchChance * 0.75) return g[r][c - 1];
+    }
+
+    // fallback：随机，但尽量避免直接凑三连（保留一点“控盘”）
+    const bad = new Set();
+    if (c >= 2 && g[r][c - 1] === g[r][c - 2] && g[r][c - 1] >= 0) bad.add(g[r][c - 1]);
+    if (r <= ROWS - 3 && g[r + 1][c] === g[r + 2][c] && g[r + 1][c] >= 0) bad.add(g[r + 1][c]);
+
+    let t;
+    let guard = 0;
+    do {
+      t = randomInt(NUM_TYPES);
+      guard++;
+    } while (bad.has(t) && guard < 30);
+    return t;
+  }
+
+  function gravityAndRefill(g) {
+    for (let c = 0; c < COLS; c++) {
+      const stack = [];
+      for (let r = ROWS - 1; r >= 0; r--) {
+        if (g[r][c] >= 0) stack.push(g[r][c]);
+      }
+      for (let r = ROWS - 1; r >= 0; r--) {
+        if (stack.length) g[r][c] = stack.shift();
+        else g[r][c] = randomRefill(g, r, c);
+      }
+    }
+  }
+
+  function adjacent(r1, c1, r2, c2) {
+    return Math.abs(r1 - r2) + Math.abs(c1 - c2) === 1;
+  }
+
+  function sleep(ms) {
+    return new Promise(function (resolve) {
+      setTimeout(resolve, ms);
+    });
+  }
+
+  function renderCells() {
+    if (!boardEl) return;
+    boardEl.innerHTML = "";
+    for (let r = 0; r < ROWS; r++) {
+      for (let c = 0; c < COLS; c++) {
+        const cell = document.createElement("div");
+        cell.className = "cell";
+        cell.dataset.r = String(r);
+        cell.dataset.c = String(c);
+        const t = board[r][c];
+        cell.dataset.type = String(t);
+        cell.setAttribute("role", "gridcell");
+        cell.setAttribute("aria-label", PLANT_NAMES[t] || "植物");
+        cell.tabIndex = 0;
+        boardEl.appendChild(cell);
+      }
+    }
+  }
+
+  function updateHud() {
+    if (levelEl) levelEl.textContent = currentLevelIndex + 1 + " / " + MAX_LEVEL;
+    if (targetScoreEl) targetScoreEl.textContent = String(levelTarget);
+    if (scoreEl) {
+      scoreEl.textContent = String(score);
+      scoreEl.classList.toggle("target-met", score >= levelTarget && levelTarget > 0);
+    }
+    if (movesEl) movesEl.textContent = String(movesLeft);
+  }
+
+  function setMessage(text, isGameOver) {
+    if (!messageEl) return;
+    messageEl.textContent = text;
+    messageEl.classList.toggle("gameover", !!isGameOver);
+  }
+
+  function setProcessing(on) {
+    processing = on;
+    if (boardEl) boardEl.classList.toggle("processing", on);
+  }
+
+  function flashBoard() {
+    if (!boardEl) return;
+    boardEl.classList.remove("flash");
+    // 触发重排，确保连续闪烁也能生效
+    void boardEl.offsetWidth;
+    boardEl.classList.add("flash");
+    window.setTimeout(function () {
+      if (boardEl) boardEl.classList.remove("flash");
+    }, 260);
+  }
+
+  function clearSelection() {
+    selected = null;
+    if (!boardEl) return;
+    boardEl.querySelectorAll(".cell.selected").forEach(function (el) {
+      el.classList.remove("selected");
+    });
+  }
+
+  function clearSwipePathUi() {
+    if (!boardEl) return;
+    boardEl.querySelectorAll(".cell.path").forEach(function (el) {
+      el.classList.remove("path");
+    });
+  }
+
+  function resetSwipeState() {
+    swiping = false;
+    swipePath = [];
+    swipeType = null;
+    swipePointerId = null;
+    didDirectionalSwap = false;
+    clearSwipePathUi();
+  }
+
+  function selectCell(r, c) {
+    clearSelection();
+    selected = { r: r, c: c };
+    const el = boardEl && boardEl.querySelector('.cell[data-r="' + r + '"][data-c="' + c + '"]');
+    if (el) el.classList.add("selected");
+  }
+
+  function setPathUi(path) {
+    if (!boardEl) return;
+    clearSwipePathUi();
+    path.forEach(function (p) {
+      const el = boardEl.querySelector('.cell[data-r="' + p.r + '"][data-c="' + p.c + '"]');
+      if (el) el.classList.add("path");
+    });
+  }
+
+  function refreshCellTypes() {
+    if (!boardEl) return;
+    for (let r = 0; r < ROWS; r++) {
+      for (let c = 0; c < COLS; c++) {
+        const el = boardEl.querySelector('.cell[data-r="' + r + '"][data-c="' + c + '"]');
+        if (el) {
+          const t = board[r][c];
+          el.dataset.type = String(t);
+          if (t >= 0) el.setAttribute("aria-label", PLANT_NAMES[t] || "植物");
+        }
+      }
+    }
+  }
+
+  function markMatchedCells(matched) {
+    matched.forEach(function (k) {
+      const parts = k.split(",");
+      const r = parts[0];
+      const c = parts[1];
+      const el = boardEl && boardEl.querySelector('.cell[data-r="' + r + '"][data-c="' + c + '"]');
+      if (el) el.classList.add("matched");
+    });
+  }
+
+  /**
+   * 消除连锁：直到盘面无匹配。
+   * @returns {number} 本回合消除的格子总数
+   */
+  async function resolveAllMatches() {
+    let totalCleared = 0;
+    while (true) {
+      const info = findMatchInfo(board);
+      const matched = info.cells;
+      if (matched.size === 0) break;
+
+      totalCleared += matched.size;
+      const add = Math.min(info.points, Math.max(0, movePointsLeft));
+      movePointsLeft -= add;
+      score += add;
+      updateHud();
+
+      soundMatch(matched.size);
+      flashBoard();
+      markMatchedCells(matched);
+      await sleep(MATCH_ANIM_MS);
+
+      if (boardEl) {
+        boardEl.querySelectorAll(".cell.matched").forEach(function (el) {
+          el.classList.remove("matched");
+        });
+      }
+
+      matched.forEach(function (k) {
+        const parts = k.split(",");
+        const rr = Number(parts[0]);
+        const cc = Number(parts[1]);
+        board[rr][cc] = -1;
+      });
+
+      gravityAndRefill(board);
+      refreshCellTypes();
+      await sleep(CASCADE_PAUSE_MS);
+    }
+    return totalCleared;
+  }
+
+  function applyClear(keysToClear) {
+    keysToClear.forEach(function (k) {
+      const parts = k.split(",");
+      const rr = Number(parts[0]);
+      const cc = Number(parts[1]);
+      board[rr][cc] = -1;
+    });
+  }
+
+  function makeKeySetFromPath(path) {
+    const s = new Set();
+    path.forEach(function (p) {
+      s.add(key(p.r, p.c));
+    });
+    return s;
+  }
+
+  async function finalizeTurn() {
+    // 统一的“行动结束判定”：先看过关，再看失败
+    if (score >= levelTarget) {
+      gameOver = true;
+      soundLevelWin();
+      if (currentLevelIndex >= MAX_LEVEL - 1) {
+        setLevelActionButtons(false, false);
+        setMessage(
+          "恭喜通关全部 " +
+            MAX_LEVEL +
+            " 关！最终分数：" +
+            score +
+            "。点击「从第一关开始」可再挑战一遍。",
+          true
+        );
+        showModalResult(true);
+      } else {
+        setMessage(
+          "第 " +
+            (currentLevelIndex + 1) +
+            " 关完成！目标 " +
+            levelTarget +
+            " 分已达成。点击「下一关」继续。",
+          false
+        );
+        setLevelActionButtons(true, false);
+        showModalResult(true);
+      }
+      return;
+    }
+
+    if (movesLeft <= 0) {
+      gameOver = true;
+      soundGameOver();
+      setMessage(
+        "步数用尽！当前 " +
+          score +
+          " 分，未达到本关目标 " +
+          levelTarget +
+          " 分。可点「本关重试」或「从第一关开始」。",
+        true
+      );
+      setLevelActionButtons(false, true);
+      showModalResult(false);
+    }
+  }
+
+  async function trySwap(r1, c1, r2, c2) {
+    if (processing || gameOver) return;
+    if (!adjacent(r1, c1, r2, c2)) return;
+
+    if (!swapCreatesMatch(r1, c1, r2, c2)) {
+      soundInvalid();
+      setMessage("这样交换无法消除，请换一对相邻植物试试。");
+      return;
+    }
+
+    setMessage("");
+    soundSwap();
+    setProcessing(true);
+    movesLeft -= 1;
+    movePointsLeft = MAX_POINTS_PER_MOVE;
+    updateHud();
+    clearSelection();
+
+    swapCells(board, r1, c1, r2, c2);
+    refreshCellTypes();
+    await sleep(90);
+
+    await resolveAllMatches();
+
+    setProcessing(false);
+    await finalizeTurn();
+  }
+
+  async function trySwipeEliminate(path) {
+    if (processing || gameOver) return;
+    if (!path || path.length < 3) return;
+
+    setMessage("");
+    setProcessing(true);
+    movesLeft -= 1;
+    movePointsLeft = MAX_POINTS_PER_MOVE;
+    updateHud();
+    clearSelection();
+
+    const keysToClear = makeKeySetFromPath(path);
+    const swipePts = Math.min(MAX_POINTS_PER_MOVE, path.length + 2);
+    const add = Math.min(swipePts, Math.max(0, movePointsLeft));
+    movePointsLeft -= add;
+    score += add;
+    updateHud();
+    soundMatch(keysToClear.size);
+    flashBoard();
+    markMatchedCells(keysToClear);
+    await sleep(MATCH_ANIM_MS);
+
+    if (boardEl) {
+      boardEl.querySelectorAll(".cell.matched").forEach(function (el) {
+        el.classList.remove("matched");
+      });
+    }
+
+    applyClear(keysToClear);
+    gravityAndRefill(board);
+    refreshCellTypes();
+    await sleep(CASCADE_PAUSE_MS);
+
+    await resolveAllMatches();
+    setProcessing(false);
+    await finalizeTurn();
+  }
+
+  function cellFromEventTarget(target) {
+    if (!boardEl || !target) return null;
+    const t = target.closest && target.closest(".cell");
+    if (!t || !(t instanceof HTMLElement) || !boardEl.contains(t)) return null;
+    const r = Number(t.dataset.r);
+    const c = Number(t.dataset.c);
+    if (Number.isNaN(r) || Number.isNaN(c)) return null;
+    return { el: t, r: r, c: c };
+  }
+
+  function onCellPointerDown(ev) {
+    const cell = cellFromEventTarget(ev.target);
+    if (!cell || !boardEl) return;
+    if (processing || gameOver) return;
+
+    // iOS/Chrome 等需要一次用户手势后才能播放音频；这里顺便启动背景音乐（若用户打开了音乐）
+    resumeAudio();
+    if (musicEnabled && !musicTimer) startMusic();
+
+    pendingPointerDown = { r: cell.r, c: cell.c };
+
+    // 启动“滑动”：支持两种玩法
+    // 1) 经过同种植物的路径长度>=3：松开即消除该路径
+    // 2) 沿某个方向滑动超过阈值：立即与该方向相邻格交换（更稳定的上下左右滑动交换）
+    swiping = true;
+    swipePath = [{ r: cell.r, c: cell.c }];
+    swipeType = board[cell.r][cell.c];
+    setPathUi(swipePath);
+    swipePointerId = typeof ev.pointerId === "number" ? ev.pointerId : null;
+    swipeStartX = ev.clientX;
+    swipeStartY = ev.clientY;
+    didDirectionalSwap = false;
+    if (swipePointerId != null && boardEl.setPointerCapture) {
+      try {
+        boardEl.setPointerCapture(swipePointerId);
+      } catch (e) {
+        // ignore
+      }
+    }
+
+    if (!selected) {
+      soundSelect();
+      selectCell(cell.r, cell.c);
+      setMessage("");
+      return;
+    }
+
+    if (selected.r === cell.r && selected.c === cell.c) {
+      clearSelection();
+      return;
+    }
+
+    if (adjacent(selected.r, selected.c, cell.r, cell.c)) {
+      const sr = selected.r;
+      const sc = selected.c;
+      void trySwap(sr, sc, cell.r, cell.c);
+      return;
+    }
+
+    soundSelect();
+    selectCell(cell.r, cell.c);
+  }
+
+  function onBoardPointerMove(ev) {
+    if (!swiping || processing || gameOver) return;
+    // 若已经触发过方向交换，就不再处理
+    if (didDirectionalSwap) return;
+
+    // 用坐标取格子，避免快速滑动时 target 不更新导致的“不完善”
+    const el = document.elementFromPoint(ev.clientX, ev.clientY);
+    const cell = cellFromEventTarget(el);
+    if (!cell) {
+      // 仍允许方向交换检测
+    }
+    if (swipeType == null) return;
+
+    const last = swipePath[swipePath.length - 1];
+    if (!last) return;
+
+    // 方向交换：从起点滑动一定距离后，根据 dx/dy 决定交换方向
+    const dx = ev.clientX - swipeStartX;
+    const dy = ev.clientY - swipeStartY;
+    const dist = Math.hypot(dx, dy);
+    if (swipePath.length === 1 && dist >= 18) {
+      const absX = Math.abs(dx);
+      const absY = Math.abs(dy);
+      let dr = 0;
+      let dc = 0;
+      if (absX >= absY) dc = dx > 0 ? 1 : -1;
+      else dr = dy > 0 ? 1 : -1;
+
+      const nr = last.r + dr;
+      const nc = last.c + dc;
+      if (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS) {
+        didDirectionalSwap = true;
+        // 结束滑动路径 UI，交给交换逻辑处理
+        clearSwipePathUi();
+        swiping = false;
+        swipePath = [];
+        swipeType = null;
+        pendingPointerDown = null;
+        void trySwap(last.r, last.c, nr, nc);
+        return;
+      }
+    }
+
+    // 连线消除：只允许同种植物、且相邻连着走
+    if (!cell) return;
+    if (board[cell.r][cell.c] !== swipeType) return;
+    if (cell.r === last.r && cell.c === last.c) return;
+    if (!adjacent(last.r, last.c, cell.r, cell.c)) return;
+
+    // 允许回退：如果滑回到倒数第二个，就 pop
+    if (swipePath.length >= 2) {
+      const prev = swipePath[swipePath.length - 2];
+      if (prev && prev.r === cell.r && prev.c === cell.c) {
+        swipePath.pop();
+        setPathUi(swipePath);
+        return;
+      }
+    }
+
+    // 不允许重复进入同一格
+    for (let i = 0; i < swipePath.length; i++) {
+      const p = swipePath[i];
+      if (p.r === cell.r && p.c === cell.c) return;
+    }
+
+    swipePath.push({ r: cell.r, c: cell.c });
+    setPathUi(swipePath);
+  }
+
+  function onGlobalPointerUp(ev) {
+    const start = pendingPointerDown;
+    pendingPointerDown = null;
+    if (!start || processing || gameOver) return;
+
+    const endCell = cellFromEventTarget(document.elementFromPoint(ev.clientX, ev.clientY));
+    const path = swipePath.slice();
+    const usedSwiping = swiping && path.length >= 3;
+    resetSwipeState();
+
+    if (usedSwiping) {
+      void trySwipeEliminate(path);
+      return;
+    }
+
+    // 没形成 3+ 连线时，继续沿用“拖到相邻格松开 = 交换”
+    if (endCell && (endCell.r !== start.r || endCell.c !== start.c) && adjacent(start.r, start.c, endCell.r, endCell.c)) {
+      void trySwap(start.r, start.c, endCell.r, endCell.c);
+    }
+  }
+
+  /**
+   * 进入指定关卡（重置棋盘与本关分数、步数）。
+   * @param {number} levelIdx 0-based
+   * @param {boolean} [skipStartAd]
+   */
+  function startLevel(levelIdx, skipStartAd) {
+    hideModal();
+    const idx = Math.min(Math.max(levelIdx, 0), MAX_LEVEL - 1);
+    if (AD_CONFIG.enabled && !skipStartAd) {
+      showForcedAd("level_start", function () {
+        applyLevelState(idx);
+      });
+      return;
+    }
+    applyLevelState(idx);
+  }
+
+  function applyLevelState(levelIdx) {
+    currentLevelIndex = levelIdx;
+    const spec = getLevelSpec(levelIdx);
+    levelTarget = spec.target;
+    movesLeft = spec.moves;
+    score = 0;
+    board = fillNoMatches();
+    gameOver = false;
+    selected = null;
+    processing = false;
+    pendingPointerDown = null;
+    setMessage("");
+    setLevelActionButtons(false, false);
+    updateHud();
+    renderCells();
+    if (boardEl) boardEl.classList.remove("processing");
+  }
+
+  function resetCampaign() {
+    soundRestart();
+    revenueSession = 0;
+    if (adminPanelModalEl && !adminPanelModalEl.hidden) updateAdminPanel();
+    startLevel(0);
+  }
+
+  if (boardEl) {
+    boardEl.addEventListener("pointerdown", onCellPointerDown);
+    boardEl.addEventListener("pointermove", onBoardPointerMove);
+  }
+  window.addEventListener("pointerup", onGlobalPointerUp);
+  if (restartBtn) {
+    restartBtn.addEventListener("click", function () {
+      resetCampaign();
+    });
+  }
+  if (nextLevelBtn) {
+    nextLevelBtn.addEventListener("click", function () {
+      resumeAudio();
+      soundSwap();
+      startLevel(currentLevelIndex + 1);
+    });
+  }
+  if (retryLevelBtn) {
+    retryLevelBtn.addEventListener("click", function () {
+      resumeAudio();
+      startLevel(currentLevelIndex);
+    });
+  }
+  if (modalNextBtn) {
+    modalNextBtn.addEventListener("click", function () {
+      resumeAudio();
+      soundSwap();
+      startLevel(currentLevelIndex + 1);
+    });
+  }
+  if (modalPrevBtn) {
+    modalPrevBtn.addEventListener("click", function () {
+      resumeAudio();
+      soundSwap();
+      startLevel(Math.max(0, currentLevelIndex - 1));
+    });
+  }
+  if (modalRetryBtn) {
+    modalRetryBtn.addEventListener("click", function () {
+      resumeAudio();
+      soundSwap();
+      startLevel(currentLevelIndex);
+    });
+  }
+  if (modalRestartBtn) {
+    modalRestartBtn.addEventListener("click", function () {
+      resetCampaign();
+    });
+  }
+  if (modalEl) {
+    modalEl.addEventListener("click", function (ev) {
+      const t = ev.target;
+      if (t && t instanceof HTMLElement && t.dataset && t.dataset.modalClose) {
+        hideModal();
+      }
+    });
+    window.addEventListener("keydown", function (ev) {
+      if (ev.key === "Escape" && !modalEl.hidden) hideModal();
+    });
+  }
+
+  if (musicToggleBtn) {
+    musicToggleBtn.addEventListener("click", function () {
+      resumeAudio();
+      setMusicEnabled(!musicEnabled);
+    });
+  }
+  updateMusicButtons();
+
+  if (rulesOpenBtn) {
+    rulesOpenBtn.addEventListener("click", function () {
+      if (!rulesModalEl) return;
+      if (rulesContentEl) rulesContentEl.innerHTML = buildRulesHtml();
+      rulesModalEl.hidden = false;
+    });
+  }
+  if (rulesModalEl) {
+    rulesModalEl.addEventListener("click", function (ev) {
+      const t = ev.target;
+      if (t && t instanceof HTMLElement && t.dataset && t.dataset.rulesClose) {
+        rulesModalEl.hidden = true;
+      }
+    });
+    window.addEventListener("keydown", function (ev) {
+      if (ev.key === "Escape" && !rulesModalEl.hidden) rulesModalEl.hidden = true;
+    });
+  }
+
+  if (adContinueBtn) {
+    adContinueBtn.addEventListener("click", function () {
+      if (adContinueBtn.disabled) return;
+      finishAdAndContinue();
+    });
+  }
+  if (adVisitBtn) {
+    adVisitBtn.addEventListener("click", function () {
+      onAdVisitClick();
+    });
+  }
+  if (adModalEl) {
+    adModalEl.addEventListener("click", onAdBackdropClick);
+  }
+
+  if (gameTitleEl) {
+    gameTitleEl.addEventListener("click", onAdminTitleTap);
+  }
+  if (adminGateSubmitBtn) {
+    adminGateSubmitBtn.addEventListener("click", tryAdminLogin);
+  }
+  if (adminPassInputEl) {
+    adminPassInputEl.addEventListener("keydown", function (ev) {
+      if (ev.key === "Enter") tryAdminLogin();
+    });
+  }
+  if (adminGateModalEl) {
+    adminGateModalEl.addEventListener("click", function (ev) {
+      const t = ev.target;
+      if (t && t instanceof HTMLElement && t.dataset && t.dataset.adminGateClose) hideAdminGate();
+    });
+  }
+  if (adminPanelModalEl) {
+    adminPanelModalEl.addEventListener("click", function (ev) {
+      const t = ev.target;
+      if (t && t instanceof HTMLElement && t.dataset && t.dataset.adminPanelClose) hideAdminPanel();
+    });
+  }
+  if (adminWithdrawAllBtn) {
+    adminWithdrawAllBtn.addEventListener("click", function () {
+      withdrawRevenue(getRevenueBalance());
+    });
+  }
+  if (adminWithdrawSubmitBtn) {
+    adminWithdrawSubmitBtn.addEventListener("click", function () {
+      const raw = adminWithdrawInputEl ? adminWithdrawInputEl.value : "";
+      withdrawRevenue(parseFloat(raw) || 0);
+    });
+  }
+
+  loadAdStats();
+
+  startLevel(0);
+})();
