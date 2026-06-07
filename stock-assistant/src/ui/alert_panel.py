@@ -44,10 +44,12 @@ def render_alert_panel(*, watchlist: list[dict], snapshots: dict) -> list:
         st.session_state.setdefault("alert_score_high", 65.0)
         st.session_state.setdefault("push_webhook_on_alerts", False)
         st.session_state.setdefault("price_targets", {})
-        st.session_state.setdefault("stale_hours", 24.0)
         st.session_state.setdefault("quiet_hours", {})
         st.session_state.quiet_hours = normalize_quiet_hours(st.session_state.quiet_hours)
         st.session_state.price_targets = normalize_price_targets(st.session_state.price_targets)
+        st.session_state["stale_hours"] = normalize_stale_hours(
+            st.session_state.get("stale_hours", 24.0)
+        )
         st.caption("提醒模板（一键套用阈值）")
         prof_cols = st.columns(len(ALERT_PROFILES))
         for i, prof in enumerate(ALERT_PROFILES):
@@ -118,7 +120,6 @@ def render_alert_panel(*, watchlist: list[dict], snapshots: dict) -> list:
             key="stale_hours",
             help="超过此小时数未刷新摘要则显示 stale 徽章",
         )
-        st.session_state.stale_hours = normalize_stale_hours(st.session_state.stale_hours)
         alerts = compute_watch_alerts(watchlist, snapshots, **_alert_params())
         wh = get_webhook_url()
         if wh:
