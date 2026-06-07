@@ -96,8 +96,11 @@
 | **P88** | 优先级 Webhook 推送 | ✅ 已完成 | digest Top 3、`STOCK_PUSH_PRIORITY=1` |
 | **P89** | 首页作战入口 | ✅ 已完成 | 「今日先看这3只」Top 3 快捷跳转 |
 | **P90** | 文档与 v4.4 | ✅ 已完成 | EVOLUTION 871–900、v4.4.0 step 900 |
+| **P91** | 900步庆祝 | ✅ 已完成 | milestone_banner 900、公开数据能力地图 |
+| **P92** | 一键全开推送 | ✅ 已完成 | `STOCK_PUSH_ALL=1` / `--push-all` cron |
+| **P93** | 文档与 v4.5 | ✅ 已完成 | EVOLUTION 901–930、v4.5.0 step 930 |
 
-**v4.3 定位**：在公开数据边缘强化「多标的注意力分配」——按提醒/风险/板块相对排序 Top 5，一键合并导出作战资料包，**非**真实交易指令。
+**v4.5 定位**：在 v4.4 注意力聚焦基础上，用「能力地图」串联相对板块/一页纸/作战清单/优先关注，并支持 cron 一键全开推送，**非**真实交易指令。
 
 **v4.2 定位**：在公开数据边缘强化「傻瓜式运维闭环」——定时落盘作战清单、推送摘要自动附带风险旗标汇总，**非**真实风控或交易指令。
 
@@ -315,6 +318,12 @@
 - **P89 首页作战入口**：`src/ui/priority_home.py`；首页「🎯 今日先看这3只」Top 3 按钮直达工作台；`test_p89_priority_home`
 - **P90 文档与 v4.4**：EVOLUTION_100 步 871–900；v4.4.0 step 900；开盘前注意力聚焦；`evolve_verify.sh` 覆盖 P88–P90 测试
 
+## P91–P93：900步庆祝、能力地图、一键全开、v4.5（已完成）
+
+- **P91 900步庆祝 + 能力地图**：`milestone_banner` step≥900；侧边栏「公开数据能力地图」列出相对板块/一页纸/作战清单/优先关注；`test_p91_capability_map`
+- **P92 一键全开推送**：`push_digest_cron.py --push-all` / `STOCK_PUSH_ALL=1`；cron 同时附带提醒+一页纸+优先关注；`test_p92_push_all`
+- **P93 文档与 v4.5**：EVOLUTION_100 步 901–930；v4.5.0 step 930；公开数据能力串联；`evolve_verify.sh` 覆盖 P91–P93 测试
+
 ## 进化原则
 
 1. **先可读，再炫功能** — 每轮至少产出一种「能发给同事看的资料」
@@ -422,3 +431,6 @@ streamlit run app.py
 - [x] 优先级 digest 推送 --with-priority · P88
 - [x] 首页今日先看这3只 priority_home · P89
 - [x] v4.4.0 · 进化 step 900 · P90
+- [x] 900步庆祝横幅 + 能力地图 capability_map · P91
+- [x] cron 一键全开推送 STOCK_PUSH_ALL · P92
+- [x] v4.5.0 · 进化 step 930 · P93

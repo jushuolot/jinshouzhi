@@ -18,6 +18,10 @@
   python3 scripts/push_digest_cron.py --with-priority
   # 或 export STOCK_PUSH_PRIORITY=1
 
+一键全开（提醒 + 一页纸 + 优先关注）:
+  python3 scripts/push_digest_cron.py --push-all
+  # 或 export STOCK_PUSH_ALL=1
+
 多用户:
   export STOCK_USER='alice'   # 对应 secrets [passwords] 的键名
 """
@@ -65,13 +69,23 @@ def _alert_thresholds(store: dict) -> dict[str, float]:
     }
 
 
+def _push_all_enabled() -> bool:
+    if "--push-all" in sys.argv:
+        return True
+    return os.environ.get("STOCK_PUSH_ALL", "").strip().lower() in ("1", "true", "yes")
+
+
 def _onepager_enabled() -> bool:
+    if _push_all_enabled():
+        return True
     if "--with-onepager" in sys.argv:
         return True
     return os.environ.get("STOCK_PUSH_ONEPAGER", "").strip().lower() in ("1", "true", "yes")
 
 
 def _priority_enabled() -> bool:
+    if _push_all_enabled():
+        return True
     if "--with-priority" in sys.argv:
         return True
     return os.environ.get("STOCK_PUSH_PRIORITY", "").strip().lower() in ("1", "true", "yes")
@@ -102,6 +116,7 @@ def main() -> int:
     user = os.environ.get("STOCK_USER", "default").strip() or "default"
     dry = "--dry-run" in sys.argv
     alerts_only = "--alerts-only" in sys.argv
+    push_all = _push_all_enabled()
     with_onepager = _onepager_enabled()
     with_priority = _priority_enabled()
     try:
@@ -139,7 +154,7 @@ def main() -> int:
     if dry:
         print(
             f"[push_digest_cron] dry-run bytes={len(digest.encode('utf-8'))} "
-            f"alerts={len(alerts)} alerts_only={alerts_only} "
+            f"alerts={len(alerts)} alerts_only={alerts_only} push_all={push_all} "
             f"with_onepager={with_onepager} with_priority={with_priority}"
         )
         return 0

@@ -1,4 +1,4 @@
-"""600 步庆祝横幅（P61）：会话内一次性 confetti 风格提示。"""
+"""进化里程碑庆祝横幅（P61 600步 / P91 900步）：会话内一次性 confetti 风格提示。"""
 
 from __future__ import annotations
 
@@ -8,8 +8,8 @@ import streamlit as st
 
 from src.util.app_meta import EVOLUTION_STEP
 
-MILESTONE_STEP = 600
-SESSION_FLAG = "_milestone_600_banner_shown"
+MILESTONE_STEP = 900
+SESSION_FLAG = "_milestone_900_banner_shown"
 EVOLUTION_100_PATH = "docs/EVOLUTION_100.md"
 
 
@@ -18,6 +18,7 @@ def build_milestone_message(step: int = EVOLUTION_STEP) -> str:
     return (
         f"🎉🎊 **{step} 步进化达成！** "
         f"Stock Assistant 已完成 **{step}** 步持续迭代 · "
+        f"侧边栏可查看「公开数据能力地图」· "
         f"完整功能清单见 [`docs/EVOLUTION_100.md`]({EVOLUTION_100_PATH})"
     )
 
@@ -28,7 +29,7 @@ def should_show_milestone(
     step: int = EVOLUTION_STEP,
     milestone: int = MILESTONE_STEP,
 ) -> bool:
-    """step >= 600 且本会话尚未展示过庆祝条。"""
+    """step >= milestone 且本会话尚未展示过庆祝条。"""
     if step < milestone:
         return False
     if session_state.get(SESSION_FLAG):

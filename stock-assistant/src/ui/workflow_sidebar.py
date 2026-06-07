@@ -5,6 +5,7 @@ from __future__ import annotations
 import streamlit as st
 
 from src.ui.changelog_panel import render_changelog_panel
+from src.ui.capability_map import render_capability_map_sidebar
 from src.ui.health_panel import render_health_panel
 from src.ui.push_panel import render_push_panel
 from src.ui.readonly_export_panel import render_readonly_export_panel
@@ -48,6 +49,7 @@ _PHASE_OPTIONS = [
     "P82 作战cron", "P83 风险推送", "P84 文档与v4.2",
     "P85 作战优先级", "P86 合并导出", "P87 文档与v4.3",
     "P88 优先级推送", "P89 首页入口", "P90 文档与v4.4",
+    "P91 900步庆祝", "P92 一键全开推送", "P93 文档与v4.5",
 ]
 
 
@@ -55,6 +57,7 @@ def render_workflow_sidebar() -> None:
     with st.sidebar:
         collapsed_prefs = normalize_sidebar_collapsed(st.session_state.get("sidebar_collapsed"))
         workflow_collapsed = is_section_collapsed(collapsed_prefs, "workflow_phase")
+        capability_collapsed = is_section_collapsed(collapsed_prefs, "capability_map")
         fold_pref = st.checkbox(
             "折叠快速上手",
             value=workflow_collapsed,
@@ -86,10 +89,23 @@ def render_workflow_sidebar() -> None:
             phase = st.selectbox(
                 "当前进化阶段",
                 _PHASE_OPTIONS,
-                index=89,
+                index=92,
                 disabled=True,
             )
             st.caption(phase)
+
+        cap_fold_pref = st.checkbox(
+            "折叠能力地图",
+            value=capability_collapsed,
+            key="sidebar_capability_fold_pref",
+        )
+        if cap_fold_pref != capability_collapsed:
+            st.session_state.sidebar_collapsed = set_section_collapsed(
+                collapsed_prefs, "capability_map", cap_fold_pref
+            )
+            mark_dirty()
+
+        render_capability_map_sidebar(expanded=not cap_fold_pref)
 
         render_theme_toggle()
         render_locale_toggle()

@@ -15,8 +15,8 @@ from src.ui.milestone_banner import (
 
 class MilestoneBannerTests(unittest.TestCase):
     def test_build_message_contains_step_and_path(self):
-        msg = build_milestone_message(600)
-        self.assertIn("600", msg)
+        msg = build_milestone_message(900)
+        self.assertIn("900", msg)
         self.assertIn(EVOLUTION_100_PATH, msg)
         self.assertIn("🎉", msg)
 
