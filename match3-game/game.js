@@ -1935,11 +1935,21 @@
         mapPhaseBriefingEl,
         world ? world.name : "新章节",
         tier ? tier.name : "",
-        1000,
+        800,
         function () {}
       );
     }
-    runChapterBriefing(chIdx, narr);
+    if (window.CinemaWipe) {
+      window.CinemaWipe.play(
+        world ? world.name : "新章节",
+        tier ? tier.name : "探方开始",
+        function () {
+          runChapterBriefing(chIdx, narr);
+        }
+      );
+    } else {
+      runChapterBriefing(chIdx, narr);
+    }
   }
 
   function runChapterBriefing(chIdx, narr) {
@@ -1955,8 +1965,15 @@
           narr && narr.assembly ? narr.assembly : [],
           narr && narr.assemblyTitle ? narr.assemblyTitle : "小队集合",
           function () {
-            showMapPhase("route");
-            renderStoryRoute(chIdx);
+            if (window.CinemaWipe) {
+              window.CinemaWipe.play("探方路线", "发现探点 · 闯关深入", function () {
+                showMapPhase("route");
+                renderStoryRoute(chIdx);
+              });
+            } else {
+              showMapPhase("route");
+              renderStoryRoute(chIdx);
+            }
           }
         );
       }
@@ -3448,6 +3465,11 @@
   loadProgress();
 
   showHome();
-  if (window.dismissBootSplash) window.dismissBootSplash("Gen.26 就绪 · 点击「蜀地地图」");
-  if (window.showSystemToast) window.showSystemToast("古蜀秘档 Gen.26 · 2.5D立绘 + 2D地图兜底", 4500);
+  if (window.PortraitPainter && window.PortraitPainter.preloadAll) {
+    window.PortraitPainter.preloadAll(function () {
+      if (window.showSystemToast) window.showSystemToast("手绘立绘已预载 · Gen.27", 2800);
+    });
+  }
+  if (window.dismissBootSplash) window.dismissBootSplash("Gen.27 就绪 · 手绘立绘");
+  if (window.showSystemToast) window.showSystemToast("古蜀秘档 Gen.27 · Canvas手绘分层立绘", 4000);
 })();

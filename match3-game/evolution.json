@@ -1,6 +1,6 @@
 {
-  "version": "3.7.0",
-  "generation": 26,
+  "version": "3.8.0",
+  "generation": 27,
   "releasedAt": "2026-06-07",
   "autoTune": {
     "enabled": true,
@@ -9,9 +9,9 @@
     "targetWinRate": 0.52
   },
   "patchNotes": [
-    "启动屏：加载进度条，延迟时也能看见",
-    "3D 备用 CDN + 2D 蜀地地图自动兜底",
-    "地图/立绘/探点列表即时加载，不再黑屏等待",
-    "探点列表可点击闯关（无 3D 也能玩）"
+    "Canvas 手绘风 PNG 分层立绘（6 角色预载）",
+    "章节电影 wipe 过场（进章 / 进探方）",
+    "修复 style.css 缺失导致首页空白",
+    "立绘层：光晕/身体/面部/头发/配饰/侧光"
   ]
 }

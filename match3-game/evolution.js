@@ -6,10 +6,10 @@
   "use strict";
 
   var DEFAULT = {
-    version: "3.7.0",
-    generation: 26,
+    version: "3.8.0",
+    generation: 27,
     autoTune: { enabled: true, windowSize: 8, maxMoveAdjust: 3, targetWinRate: 0.52 },
-    patchNotes: ["Gen.26 启动屏 + 2D兜底", "延迟时也能看见内容"],
+    patchNotes: ["Gen.27 Canvas手绘立绘", "电影wipe过场"],
   };
 
   window.MATCH3_EVOLUTION = DEFAULT;

@@ -7,6 +7,14 @@
   var ART = window.PORTRAIT_ART;
   var instances = {};
 
+  function resolveArt(charId) {
+    if (window.PortraitPainter && window.PortraitPainter.getArt) {
+      return window.PortraitPainter.getArt(charId);
+    }
+    if (ART) return ART[charId] || ART.narrator;
+    return null;
+  }
+
   function buildStage(art, compact) {
     var side = art.side || "right";
     var align =
@@ -60,7 +68,7 @@
   }
 
   function PortraitCinema(mount, id) {
-    if (!mount || !ART) {
+    if (!mount || (!ART && !(window.PortraitPainter && window.PortraitPainter.ok))) {
       this.ok = false;
       return;
     }
@@ -84,7 +92,8 @@
   }
 
   PortraitCinema.prototype.showCharacter = function (charId, talking) {
-    var art = ART[charId] || ART.narrator;
+    var art = resolveArt(charId);
+    if (!art) return;
     this.mount.innerHTML = buildStage(art, !!this.compact);
     this.root = this.mount.querySelector(".portrait-cinema");
     this.stage = this.mount.querySelector(".pc-stage");
