@@ -1788,12 +1788,16 @@
 
   function initBriefingCinema() {
     if (!vnBriefingCinemaEl || !window.PortraitCinema) return;
-    briefingCinema = window.PortraitCinema.create(vnBriefingCinemaEl, "briefing");
+    if (!briefingCinema || !briefingCinema.ok) {
+      briefingCinema = window.PortraitCinema.create(vnBriefingCinemaEl, "briefing");
+    }
   }
 
   function initAssemblyCinema() {
     if (!vnAssemblyCinemaEl || !window.PortraitCinema) return;
-    assemblyCinema = window.PortraitCinema.create(vnAssemblyCinemaEl, "assembly");
+    if (!assemblyCinema || !assemblyCinema.ok) {
+      assemblyCinema = window.PortraitCinema.create(vnAssemblyCinemaEl, "assembly");
+    }
   }
 
   function renderWorldMap() {
@@ -3470,6 +3474,6 @@
       if (window.showSystemToast) window.showSystemToast("手绘立绘已预载 · Gen.27", 2800);
     });
   }
-  if (window.dismissBootSplash) window.dismissBootSplash("Gen.27 就绪 · 手绘立绘");
-  if (window.showSystemToast) window.showSystemToast("古蜀秘档 Gen.27 · Canvas手绘分层立绘", 4000);
+  if (window.dismissBootSplash) window.dismissBootSplash("Gen.28 就绪 · 立绘已修复");
+  if (window.showSystemToast) window.showSystemToast("Gen.28 · 立绘可见性修复，请进蜀地地图看剧情", 4000);
 })();

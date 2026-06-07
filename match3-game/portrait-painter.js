@@ -10,7 +10,7 @@
     yangxue: { accent: "#6ec6ff", skin: ["#fce8dc", "#e8c0a8"], hair: "#0a0810", coat: "#1a2840", fem: true, role: "考古学家", name: "杨雪", side: "right" },
     jinyaliu: { accent: "#ffd93d", skin: ["#e8c088", "#c08048"], hair: "#2a1810", coat: "#3a3018", gold: true, role: "顾问", name: "金牙刘", side: "left" },
     chenli: { accent: "#a8d4b8", skin: ["#ece0c8", "#c8a878"], hair: "#606060", coat: "#282420", glasses: true, role: "权威", name: "陈礼", side: "right" },
-    narrator: { accent: "#888888", skin: ["#b89878", "#887058"], hair: "#333333", coat: "#1a1815", shadow: true, role: "古蜀秘档", name: "旁白", side: "center" },
+    narrator: { accent: "#888888", skin: ["#b89878", "#887058"], hair: "#333333", coat: "#1a1815", role: "古蜀秘档", name: "旁白", side: "center" },
   };
 
   var cache = {};
@@ -69,21 +69,13 @@
 
   function paintFace(ctx, w, h, m) {
     ctx.clearRect(0, 0, w, h);
-    if (m.shadow) {
-      ctx.fillStyle = radial(ctx, w * 0.5, h * 0.42, w * 0.22, "rgba(80,80,80,0.35)", "rgba(0,0,0,0)");
-      ctx.fillRect(0, 0, w, h);
-      ctx.fillStyle = "#444";
-      ctx.beginPath();
-      ctx.ellipse(w * 0.42, h * 0.38, 12, 8, 0, 0, Math.PI * 2);
-      ctx.ellipse(w * 0.58, h * 0.38, 12, 8, 0, 0, Math.PI * 2);
-      ctx.fill();
-      return;
-    }
-
     var cx = w * 0.5;
     var cy = h * 0.38;
     var bulk = m.bulk || 1;
     var fem = m.fem;
+
+    ctx.fillStyle = radial(ctx, cx, cy - 20, 120, "rgba(255,220,180,0.15)", "rgba(0,0,0,0)");
+    ctx.fillRect(0, 0, w, h);
 
     ctx.fillStyle = radial(ctx, cx, cy, 95 * bulk, m.skin[0], m.skin[1]);
     ctx.beginPath();

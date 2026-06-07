@@ -15,6 +15,15 @@
     return null;
   }
 
+  var ROSTER_EMOJI = {
+    hutan: "🧭",
+    wangdun: "💪",
+    yangxue: "🔬",
+    jinyaliu: "💰",
+    chenli: "📚",
+    narrator: "🌫",
+  };
+
   function buildStage(art, compact) {
     var side = art.side || "right";
     var align =
@@ -34,6 +43,9 @@
       '<div class="pc-dust"></div>' +
       "</div>" +
       '<div class="pc-flare"></div>' +
+      '<div class="pc-safe-badge" aria-hidden="true">' +
+      (ROSTER_EMOJI[art.charId] || "🎭") +
+      "</div>" +
       '<div class="pc-stage">' +
       '<div class="pc-layer pc-layer-back" data-z="1">' +
       art.layers.back +
@@ -75,7 +87,6 @@
     this.ok = true;
     this.mount = mount;
     this.id = id || "main";
-    if (window.setMountLoading) window.setMountLoading(mount, "立绘载入…");
     this.talking = false;
     this.enterT = 0;
     this.t = 0;
@@ -94,6 +105,8 @@
   PortraitCinema.prototype.showCharacter = function (charId, talking) {
     var art = resolveArt(charId);
     if (!art) return;
+    art.charId = charId;
+    if (!this.mount) return;
     this.mount.innerHTML = buildStage(art, !!this.compact);
     this.root = this.mount.querySelector(".portrait-cinema");
     this.stage = this.mount.querySelector(".pc-stage");
@@ -102,6 +115,10 @@
     this.enterT = 0;
     this.charId = charId;
     if (this.root) this.root.classList.add("pc-enter");
+    var self = this;
+    window.requestAnimationFrame(function () {
+      if (self.root) self.root.classList.add("pc-ready");
+    });
   };
 
   PortraitCinema.prototype.setTalking = function (on) {

@@ -1,6 +1,6 @@
 {
-  "version": "3.8.0",
-  "generation": 27,
+  "version": "3.9.0",
+  "generation": 28,
   "releasedAt": "2026-06-07",
   "autoTune": {
     "enabled": true,
@@ -9,9 +9,8 @@
     "targetWinRate": 0.52
   },
   "patchNotes": [
-    "Canvas 手绘风 PNG 分层立绘（6 角色预载）",
-    "章节电影 wipe 过场（进章 / 进探方）",
-    "修复 style.css 缺失导致首页空白",
-    "立绘层：光晕/身体/面部/头发/配饰/侧光"
+    "修复立绘高度为 0 导致人物不可见（flex 布局 CSS）",
+    "立绘影院只初始化一次，换台词不再清空",
+    "旁白改为可见肖像，层图 min-height 兜底"
   ]
 }
