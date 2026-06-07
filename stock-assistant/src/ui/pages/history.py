@@ -22,7 +22,9 @@ from src.storage.history_store import (
     unique_stocks_from_log,
 )
 from src.analysis.trend_summary import collect_trend_points, format_trend_markdown, trend_delta
+from src.analysis.battle_plan import build_battle_plan
 from src.analysis.weekly_report import build_weekly_report
+from src.util.query_time import format_query_datetime
 
 
 def render() -> None:
@@ -81,14 +83,35 @@ def render() -> None:
             st.session_state.get("watchlist") or [],
             st.session_state.get("watch_snapshots") or {},
         )
-        st.download_button(
-            "📅 下载周报 (.md)",
-            data=weekly_md.encode("utf-8"),
-            file_name="分析周报.md",
-            mime="text/markdown",
-            key="hist_weekly_md",
-            use_container_width=True,
+        battle_md = build_battle_plan(
+            st.session_state.get("watchlist") or [],
+            st.session_state.get("watch_snapshots") or {},
+            query_label=format_query_datetime(),
+            pct_up=float(st.session_state.get("alert_pct_up", 5.0)),
+            pct_down=float(st.session_state.get("alert_pct_down", -5.0)),
+            score_low=float(st.session_state.get("alert_score_low", 40.0)),
+            score_high=float(st.session_state.get("alert_score_high", 65.0)),
+            price_targets=st.session_state.get("price_targets"),
         )
+        h1, h2 = st.columns(2)
+        with h1:
+            st.download_button(
+                "📅 下载周报 (.md)",
+                data=weekly_md.encode("utf-8"),
+                file_name="分析周报.md",
+                mime="text/markdown",
+                key="hist_weekly_md",
+                use_container_width=True,
+            )
+        with h2:
+            st.download_button(
+                "📋 今日作战清单",
+                data=battle_md.encode("utf-8"),
+                file_name="今日作战清单.md",
+                mime="text/markdown",
+                key="hist_battle_plan_dl",
+                use_container_width=True,
+            )
 
         with st.expander("📈 趋势", expanded=False):
             stock_opts_trend = unique_stocks_from_log(log)

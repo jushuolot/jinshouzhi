@@ -14,7 +14,9 @@ from src.analysis.brief_merge import (
     build_merged_briefs_markdown,
     collect_briefs_for_watchlist,
 )
+from src.analysis.battle_plan import build_battle_plan
 from src.analysis.daily_digest import build_watchlist_digest
+from src.analysis.risk_radar import compute_risk_radar, risk_radar_markdown
 from src.analysis.mover_insight import build_action_route_report
 from src.analysis.quick_analyze import batch_run_quick_analysis, refresh_watch_snapshots, run_quick_analysis
 from src.analysis.signals import score_stock
@@ -444,14 +446,35 @@ def render() -> None:
                 query_label=C._query_label("watch") or format_query_datetime(),
                 watch_notes=notes,
             )
-            st.download_button(
-                "📋 下载今日自选股速览 (.md)",
-                data=digest.encode("utf-8"),
-                file_name="自选股速览.md",
-                mime="text/markdown",
-                key="watch_digest_dl",
-                use_container_width=True,
+            battle_md = build_battle_plan(
+                display_wl,
+                snaps,
+                query_label=C._query_label("watch") or format_query_datetime(),
+                pct_up=float(st.session_state.get("alert_pct_up", 5.0)),
+                pct_down=float(st.session_state.get("alert_pct_down", -5.0)),
+                score_low=float(st.session_state.get("alert_score_low", 40.0)),
+                score_high=float(st.session_state.get("alert_score_high", 65.0)),
+                price_targets=st.session_state.get("price_targets"),
             )
+            d1, d2 = st.columns(2)
+            with d1:
+                st.download_button(
+                    "📋 下载今日自选股速览 (.md)",
+                    data=digest.encode("utf-8"),
+                    file_name="自选股速览.md",
+                    mime="text/markdown",
+                    key="watch_digest_dl",
+                    use_container_width=True,
+                )
+            with d2:
+                st.download_button(
+                    "📋 今日作战清单",
+                    data=battle_md.encode("utf-8"),
+                    file_name="今日作战清单.md",
+                    mime="text/markdown",
+                    key="watch_battle_plan_dl",
+                    use_container_width=True,
+                )
 
         def _brief_for_code(c: str) -> str | None:
             v = st.session_state.get(f"brief_md_{c}")
@@ -865,6 +888,30 @@ def render() -> None:
                 pct=snap_sel.get("pct"),
                 one_line=str(snap_sel.get("one_line") or ""),
             )
+            rel_radar = sector_relative_for_ticker(
+                compute_sector_relative(
+                    st.session_state.watchlist,
+                    st.session_state.get("watch_snapshots") or {},
+                    brief_for_code=lambda c: st.session_state.get(f"brief_md_{c}"),
+                ),
+                code,
+            )
+            radar_flags = compute_risk_radar(
+                snap_sel,
+                sector_relative=rel_radar,
+                stale_hours=float(st.session_state.get("stale_hours", 24.0)),
+            )
+            with st.expander(
+                "⚠️ 风险雷达",
+                expanded=any(f.triggered for f in radar_flags),
+            ):
+                st.markdown(
+                    risk_radar_markdown(
+                        radar_flags,
+                        name=str(item.get("名称") or code),
+                        code=code,
+                    )
+                )
         if item and code:
             _record_recent_viewed(code, str(item.get("名称") or code))
         kind = str(item.get("类型") or "A") if item else "A"

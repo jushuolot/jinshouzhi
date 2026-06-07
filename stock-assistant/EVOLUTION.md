@@ -84,8 +84,11 @@
 | **P76** | 板块龙头对标 | ✅ 已完成 | sector_leader、工作台 👑 龙头对标 |
 | **P77** | 一页纸 cron 推送 | ✅ 已完成 | push_digest `--with-onepager`、重点提醒摘要 |
 | **P78** | 文档与 v4.0 | ✅ 已完成 | EVOLUTION 751–780、v4.0.0 step 780 |
+| **P79** | 风险雷达 | ✅ 已完成 | risk_radar、工作台 ⚠️ 风险雷达 |
+| **P80** | 每日作战清单 | ✅ 已完成 | battle_plan、📋 今日作战清单 |
+| **P81** | 文档与 v4.1 | ✅ 已完成 | EVOLUTION 781–810、v4.1.0 step 810 |
 
-**v4.0 定位**：在公开数据边缘继续深化「对标决策」——自选内板块龙头差距、定时推送附带机构式一页纸摘要，让提醒直达可执行上下文，**非**真实机构持仓或 Level-2 数据。
+**v4.1 定位**：在公开数据边缘强化「开盘前决策」——单标的三维风险旗标（波动/评分/stale/板块）、组合级每日作战清单 Top 3 行动，**非**真实风控系统或交易指令。
 
 ## P1：信息架构（本次）
 
@@ -277,6 +280,12 @@
 - **P77 一页纸 cron 推送**：`build_onepager_push_summary`；`push_digest_cron.py --with-onepager` / `STOCK_PUSH_ONEPAGER=1`；重点提醒标的一页纸摘要；`test_p77_onepager_push`
 - **P78 文档与 v4.0**：EVOLUTION_100 步 751–780；v4.0.0 step 780；公开数据边缘对标；`evolve_verify.sh` 覆盖 P76–P78 测试
 
+## P79–P81：风险雷达、作战清单、v4.1（已完成）
+
+- **P79 风险雷达**：`src/analysis/risk_radar.py`；从快照评分分解或默认值输出 3 条风险旗标（波动/评分偏低/stale/跑输板块）；工作台「⚠️ 风险雷达」expander；`test_p79_risk_radar`
+- **P80 每日作战清单**：`src/analysis/battle_plan.py`；dashboard stats + alerts + Top 3 行动 Markdown；工作台/历史页「📋 今日作战清单」；`test_p80_battle_plan`
+- **P81 文档与 v4.1**：EVOLUTION_100 步 781–810；v4.1.0 step 810；开盘前决策定位；`evolve_verify.sh` 覆盖 P79–P81 测试
+
 ## 进化原则
 
 1. **先可读，再炫功能** — 每轮至少产出一种「能发给同事看的资料」
@@ -372,3 +381,6 @@ streamlit run app.py
 - [x] 板块龙头对标 sector_leader · P76
 - [x] 一页纸 cron 推送 --with-onepager · P77
 - [x] v4.0.0 · 进化 step 780 · P78
+- [x] 风险雷达 risk_radar · 工作台 ⚠️ · P79
+- [x] 每日作战清单 battle_plan · 📋 下载 · P80
+- [x] v4.1.0 · 进化 step 810 · P81
