@@ -89,6 +89,21 @@
   background: rgba(255, 255, 255, 0.04);
   font-size: 0.75rem;
   color: rgba(245, 230, 200, 0.85);
+  width: 100%;
+  text-align: left;
+  border: none;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s;
+}
+
+.route-node-item:not(:disabled):hover {
+  background: rgba(201, 162, 39, 0.12);
+  transform: translateX(2px);
+}
+
+.route-node-item:disabled {
+  cursor: not-allowed;
 }
 .route-node-item.locked { opacity: 0.4; }
 .route-node-item.current { border: 1px solid rgba(255, 217, 61, 0.4); }

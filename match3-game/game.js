@@ -1701,12 +1701,9 @@
     destroyMap3D();
     showMapPhase("world");
     showScreen("map");
+    renderWorldMap();
     if (window.BlockbusterIntro && mapPhaseWorldEl) {
-      window.BlockbusterIntro.show(mapPhaseWorldEl, "古蜀秘档", "蜀地 · 五级神墓", 2400, function () {
-        renderWorldMap();
-      });
-    } else {
-      renderWorldMap();
+      window.BlockbusterIntro.show(mapPhaseWorldEl, "古蜀秘档", "蜀地 · 五级神墓", 1200, function () {});
     }
   }
 
@@ -1785,6 +1782,7 @@
 
   function destroyMap3D() {
     if (window.WorldMap3D) window.WorldMap3D.destroy();
+    if (window.WorldMap2D) window.WorldMap2D.destroy();
     if (window.ExpeditionMap3D) window.ExpeditionMap3D.destroy();
   }
 
@@ -1804,13 +1802,43 @@
       var introLines = mapData.worldIntro.lines || [];
       worldMapIntroEl.textContent = introLines.map(function (l) { return l.text; }).join(" ");
     }
-    if (window.WorldMap3D && world3dMountEl) {
-      window.WorldMap3D.create(world3dMountEl, function (wi) {
-        if (chapterUnlocked(wi)) enterChapterExpedition(wi);
-      });
-      var wm = window.WorldMap3D.get();
-      if (wm && wm.setChapterHighlight) wm.setChapterHighlight(getChapterForLevel(maxUnlockedLevel));
-    }
+    if (!world3dMountEl) return;
+    if (window.setMountLoading) window.setMountLoading(world3dMountEl, "蜀地地图加载中…");
+
+    if (window.ThreeEngine && window.ThreeEngine.retryInit) window.ThreeEngine.retryInit();
+
+    window.requestAnimationFrame(function () {
+      var ok3d = false;
+      if (window.WorldMap3D && window.ThreeEngine && window.ThreeEngine.ok) {
+        var inst = window.WorldMap3D.create(world3dMountEl, function (wi) {
+          if (chapterUnlocked(wi)) enterChapterExpedition(wi);
+        });
+        ok3d = inst && inst.ok;
+        if (ok3d && inst.setChapterHighlight) {
+          inst.setChapterHighlight(getChapterForLevel(maxUnlockedLevel));
+        }
+      }
+      if (!ok3d && window.WorldMap2D) {
+        if (window.WorldMap3D) window.WorldMap3D.destroy();
+        var m2 = window.WorldMap2D.create(
+          world3dMountEl,
+          function (wi) {
+            if (chapterUnlocked(wi)) enterChapterExpedition(wi);
+          },
+          {
+            worlds: WORLDS,
+            currentChapter: getChapterForLevel(maxUnlockedLevel),
+            chapterUnlocked: chapterUnlocked,
+          }
+        );
+        if (m2 && m2.setChapterHighlight) m2.setChapterHighlight(getChapterForLevel(maxUnlockedLevel));
+        if (window.showSystemToast) {
+          window.showSystemToast("已启用 2D 蜀地地图（3D 延迟或未就绪时自动切换）", 4000);
+        }
+      } else if (!ok3d && window.setMountLoading) {
+        window.setMountLoading(world3dMountEl, "地图加载失败 · 请刷新或稍后再试");
+      }
+    });
   }
 
   function showDiscoveryModal(node, onGo) {
@@ -1869,18 +1897,28 @@
     if (routeChapterBlurbEl) {
       routeChapterBlurbEl.textContent = narr && narr.routeIntro ? narr.routeIntro : "点击探点 · 发现线索 · 闯关过关 · 直至大墓";
     }
-    if (window.ExpeditionMap3D && expedition3dMountEl) {
+    if (window.ExpeditionMap3D && expedition3dMountEl && window.ThreeEngine && window.ThreeEngine.ok) {
       window.ExpeditionMap3D.create(expedition3dMountEl, chIdx, expeditionState, onExpeditionNodePick);
+    } else if (expedition3dMountEl && window.setMountLoading) {
+      window.setMountLoading(expedition3dMountEl, "探宝路线（请从下方列表选探点）");
     }
     if (routeNodeListEl && expData && expData.chapters[chIdx]) {
       routeNodeListEl.innerHTML = "";
       expData.chapters[chIdx].nodes.forEach(function (node, ni) {
         var unlocked = ni === 0 || expeditionState.beatenLevels[String(expData.chapters[chIdx].nodes[ni - 1].level)];
         var beaten = expeditionState.beatenLevels[String(node.level)];
-        var row = document.createElement("div");
+        var row = document.createElement("button");
+        row.type = "button";
         row.className = "route-node-item" + (unlocked ? "" : " locked") + (beaten ? "" : "") + (node.isTomb ? " tomb" : "");
         if (node.level === maxUnlockedLevel || (!beaten && unlocked && node.level === maxUnlockedLevel)) row.classList.add("current");
         row.textContent = (beaten ? "✓ " : unlocked ? "◎ " : "🔒 ") + node.name + (node.isTomb ? " 【大墓】" : "") + " · L" + (node.level + 1);
+        if (unlocked) {
+          row.addEventListener("click", function () {
+            onExpeditionNodePick(node);
+          });
+        } else {
+          row.disabled = true;
+        }
         routeNodeListEl.appendChild(row);
       });
     }
@@ -1897,14 +1935,11 @@
         mapPhaseBriefingEl,
         world ? world.name : "新章节",
         tier ? tier.name : "",
-        2200,
-        function () {
-          runChapterBriefing(chIdx, narr);
-        }
+        1000,
+        function () {}
       );
-    } else {
-      runChapterBriefing(chIdx, narr);
     }
+    runChapterBriefing(chIdx, narr);
   }
 
   function runChapterBriefing(chIdx, narr) {
@@ -3413,4 +3448,6 @@
   loadProgress();
 
   showHome();
+  if (window.dismissBootSplash) window.dismissBootSplash("Gen.26 就绪 · 点击「蜀地地图」");
+  if (window.showSystemToast) window.showSystemToast("古蜀秘档 Gen.26 · 2.5D立绘 + 2D地图兜底", 4500);
 })();

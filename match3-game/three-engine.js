@@ -4,14 +4,12 @@
 (function () {
   "use strict";
 
-  if (typeof THREE === "undefined") {
-    window.ThreeEngine = { ok: false };
-    return;
-  }
-
   var activeLoops = [];
 
-  function createRenderer(mount, opts) {
+  function buildEngine() {
+    if (typeof THREE === "undefined") return { ok: false };
+
+    function createRenderer(mount, opts) {
     opts = opts || {};
     var w = mount.clientWidth || 400;
     var h = mount.clientHeight || 300;
@@ -170,19 +168,31 @@
     });
   }
 
-  window.ThreeEngine = {
-    ok: true,
-    createRenderer: createRenderer,
-    addLights: function (s, i) { addCinematicLights(s, i); },
-    addCinematicLights: addCinematicLights,
-    createStarfield: createStarfield,
-    createDust: createDust,
-    makeGradientTexture: makeGradientTexture,
-    easeInOutCubic: easeInOutCubic,
-    resizeObserver: resizeObserver,
-    startLoop: startLoop,
-    stopLoop: stopLoop,
-    disposeObject: disposeObject,
-    disposeScene: disposeScene,
+    return {
+      ok: true,
+      createRenderer: createRenderer,
+      addLights: function (s, i) { addCinematicLights(s, i); },
+      addCinematicLights: addCinematicLights,
+      createStarfield: createStarfield,
+      createDust: createDust,
+      makeGradientTexture: makeGradientTexture,
+      easeInOutCubic: easeInOutCubic,
+      resizeObserver: resizeObserver,
+      startLoop: startLoop,
+      stopLoop: stopLoop,
+      disposeObject: disposeObject,
+      disposeScene: disposeScene,
+    };
+  }
+
+  window.ThreeEngine = buildEngine();
+  window.ThreeEngine.retryInit = function () {
+    if (window.ThreeEngine.ok) return true;
+    if (typeof THREE === "undefined") return false;
+    var built = buildEngine();
+    Object.keys(built).forEach(function (k) {
+      window.ThreeEngine[k] = built[k];
+    });
+    return window.ThreeEngine.ok;
   };
 })();

@@ -22,7 +22,7 @@
       id +
       '-aura" cx="50%" cy="35%" r="65%"><stop offset="0%" stop-color="' +
       accent +
-      '" stop-opacity="0.45"/><stop offset="100%" stop-color="#030201" stop-opacity="0"/></radialGradient>' +
+      '" stop-opacity="0.65"/><stop offset="100%" stop-color="#030201" stop-opacity="0"/></radialGradient>' +
       '<linearGradient id="' +
       id +
       '-skin" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="' +

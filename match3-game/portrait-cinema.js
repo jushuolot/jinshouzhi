@@ -67,6 +67,7 @@
     this.ok = true;
     this.mount = mount;
     this.id = id || "main";
+    if (window.setMountLoading) window.setMountLoading(mount, "立绘载入…");
     this.talking = false;
     this.enterT = 0;
     this.t = 0;

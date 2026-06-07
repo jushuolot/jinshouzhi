@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="description" content="古蜀秘档 - 三星堆考古消消乐，五章百关，文物闯关" />
   <title>古蜀秘档 · 三星堆消消</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="boot-splash.css" />
   <link rel="stylesheet" href="ultimate.css" />
   <link rel="stylesheet" href="story.css" />
   <link rel="stylesheet" href="codex.css" />
@@ -15,6 +15,13 @@
   <link rel="stylesheet" href="portrait-cinema.css" />
 </head>
 <body class="world-1">
+  <div id="boot-splash" class="boot-splash" role="status" aria-live="polite">
+    <div class="boot-logo" aria-hidden="true">🎭🏺🦅</div>
+    <h1>古蜀秘档</h1>
+    <p id="boot-status" class="boot-status">系统加载中…</p>
+    <div class="boot-bar"><div id="boot-bar-fill" class="boot-bar-fill"></div></div>
+    <p class="boot-ver">Gen.26 · 2.5D立绘 + 电影感</p>
+  </div>
   <div id="confetti-layer" aria-hidden="true"></div>
   <div id="mega-combo" class="mega-combo" hidden aria-live="polite"></div>
 
@@ -438,6 +445,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+  <script src="boot-loader.js"></script>
   <script src="landing/sponsors.js"></script>
   <script src="ad-config.js"></script>
   <script src="story.js"></script>
@@ -445,6 +453,7 @@
   <script src="expedition-data.js"></script>
   <script src="three-engine.js"></script>
   <script src="world-3d.js"></script>
+  <script src="world-map-2d.js"></script>
   <script src="expedition-3d.js"></script>
   <script src="portrait-art.js"></script>
   <script src="portrait-cinema.js"></script>

@@ -1,0 +1,137 @@
+/* 启动屏 · 延迟/加载时始终可见 */
+.boot-splash {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  background: radial-gradient(ellipse 80% 60% at 50% 40%, #1a1510 0%, #030201 70%);
+  color: #f5e6c8;
+  transition: opacity 0.55s ease, visibility 0.55s ease;
+}
+
+.boot-splash.boot-done {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.boot-logo {
+  font-size: 2.5rem;
+  letter-spacing: 0.35em;
+  animation: bootPulse 2s ease-in-out infinite;
+}
+
+@keyframes bootPulse {
+  50% { transform: scale(1.06); opacity: 0.85; }
+}
+
+.boot-splash h1 {
+  margin: 0;
+  font-family: "Noto Serif SC", "PingFang SC", serif;
+  font-size: 1.65rem;
+  letter-spacing: 0.28em;
+  font-weight: 700;
+  text-shadow: 0 0 24px rgba(201, 162, 39, 0.45);
+}
+
+.boot-status {
+  margin: 0.25rem 0 0;
+  font-size: 0.82rem;
+  color: rgba(245, 230, 200, 0.75);
+  letter-spacing: 0.08em;
+}
+
+.boot-bar {
+  width: min(240px, 70vw);
+  height: 4px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+  margin-top: 0.35rem;
+}
+
+.boot-bar-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #9a7010, #ffd93d);
+  border-radius: 4px;
+  transition: width 0.25s ease;
+}
+
+.boot-ver {
+  margin: 0.5rem 0 0;
+  font-size: 0.65rem;
+  letter-spacing: 0.2em;
+  color: rgba(201, 162, 39, 0.7);
+}
+
+.mount-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 240px;
+  height: 100%;
+  gap: 0.65rem;
+  color: rgba(245, 230, 200, 0.85);
+  font-size: 0.85rem;
+  letter-spacing: 0.06em;
+  background: radial-gradient(ellipse at center, rgba(201, 162, 39, 0.08), #0a0806);
+}
+
+.mount-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid rgba(201, 162, 39, 0.2);
+  border-top-color: #ffd93d;
+  border-radius: 50%;
+  animation: mountSpin 0.85s linear infinite;
+}
+
+@keyframes mountSpin {
+  to { transform: rotate(360deg); }
+}
+
+.system-toast {
+  position: fixed;
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 99998;
+  padding: 0.55rem 1rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  color: #fff8e8;
+  background: rgba(20, 16, 10, 0.92);
+  border: 1px solid rgba(201, 162, 39, 0.35);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  animation: toastIn 0.35s ease;
+  pointer-events: none;
+}
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(12px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+.world-3d-mount .world-map-canvas,
+.world-3d-mount .world-map-2d {
+  min-height: min(48vh, 420px);
+  height: 100%;
+}
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  z-index: 5;
+  font-size: 0.62rem;
+  padding: 0.2rem 0.45rem;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.55);
+  color: rgba(255, 232, 180, 0.9);
+  border: 1px solid rgba(201, 162, 39, 0.3);
+}
