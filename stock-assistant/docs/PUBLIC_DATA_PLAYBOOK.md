@@ -117,10 +117,10 @@ streamlit run app.py
 
 | 文档 | 内容 |
 |------|------|
-| [EVOLUTION.md](../EVOLUTION.md) | P1–P96 进化路线 |
-| [docs/EVOLUTION_100.md](EVOLUTION_100.md) | 960 步功能清单 |
+| [EVOLUTION.md](../EVOLUTION.md) | P1–P99 进化路线 |
+| [docs/EVOLUTION_100.md](EVOLUTION_100.md) | 1000 步功能清单 |
 | [docs/USER_GUIDE.md](USER_GUIDE.md) | 本地启动与登录 |
 | [docs/PUSH.md](PUSH.md) | Webhook / 邮件 / cron |
 | [docs/PRODUCT.md](PRODUCT.md) | 产品定位与数据来源 |
 
-*公开数据作战手册 · Stock Assistant v4.6.0 · 非投资建议*
+*公开数据作战手册 · Stock Assistant v5.0.0 · 非投资建议*

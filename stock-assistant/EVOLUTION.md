@@ -102,6 +102,11 @@
 | **P94** | 能力地图跳转 | ✅ 已完成 | ?tab=watch&expand=、watch_expander_nav |
 | **P95** | 公开数据手册 | ✅ 已完成 | docs/PUBLIC_DATA_PLAYBOOK.md、侧边栏链接 |
 | **P96** | 文档与 v4.6 | ✅ 已完成 | EVOLUTION 931–960、v4.6.0 step 960 |
+| **P97** | 手册内置预览 | ✅ 已完成 | 侧边栏作战手册前 80 行 expander |
+| **P98** | 千步预热 | ✅ 已完成 | milestone 1000 预热横幅、页脚千步提示 |
+| **P99** | 文档与 v5.0 | ✅ 已完成 | EVOLUTION 961–1000、v5.0.0 step 1000 |
+
+**v5.0 定位**：在 v4.6 作战手册基础上，侧边栏内置手册关键章节预览，并以 **1000 步**里程碑收束百步进化周期；强调公开数据流程可读性，**非**真实交易指令。
 
 **v4.6 定位**：在 v4.5 能力地图基础上，深链接直达工作台 expander，并发布「公开数据作战手册」，帮助散户用固定流程对齐机构看板习惯，**非**真实交易指令。
 
@@ -335,6 +340,12 @@
 - **P95 公开数据作战手册**：`docs/PUBLIC_DATA_PLAYBOOK.md`；散户用公开数据建立每日流程；功能对照能力地图；侧边栏链接
 - **P96 文档与 v4.6**：EVOLUTION_100 步 931–960；v4.6.0 step 960；深链接 + 作战手册；`evolve_verify.sh` 覆盖 P94–P96 测试
 
+## P97–P99：手册预览、千步预热、v5.0（已完成）
+
+- **P97 作战手册内置预览**：`src/ui/playbook_preview.py`；侧边栏 expander 展示 `PUBLIC_DATA_PLAYBOOK.md` 前 80 行关键章节；`test_p97_playbook_preview`
+- **P98 千步预热**：`milestone_banner` step 960–999 预热条；页脚 `build_footer_warmup_note` 千步倒计时；`test_p98_milestone_warmup`
+- **P99 文档与 v5.0**：EVOLUTION_100 步 961–1000；v5.0.0 step 1000；千步里程碑庆祝；`evolve_verify.sh` 覆盖 P97–P99 测试
+
 ## 进化原则
 
 1. **先可读，再炫功能** — 每轮至少产出一种「能发给同事看的资料」
@@ -448,3 +459,6 @@ streamlit run app.py
 - [x] 能力地图深链接 watch_expander_nav · ?tab=watch&expand= · P94
 - [x] 公开数据作战手册 PUBLIC_DATA_PLAYBOOK · P95
 - [x] v4.6.0 · 进化 step 960 · P96
+- [x] 作战手册内置预览 playbook_preview · P97
+- [x] 千步预热横幅 + 页脚提示 · P98
+- [x] v5.0.0 · 进化 step 1000 · P99

@@ -1,4 +1,4 @@
-"""P61 600 步庆祝横幅单元测试。"""
+"""P61/P99 千步庆祝横幅单元测试。"""
 
 from __future__ import annotations
 
@@ -15,8 +15,8 @@ from src.ui.milestone_banner import (
 
 class MilestoneBannerTests(unittest.TestCase):
     def test_build_message_contains_step_and_path(self):
-        msg = build_milestone_message(900)
-        self.assertIn("900", msg)
+        msg = build_milestone_message(1000)
+        self.assertIn("1000", msg)
         self.assertIn(EVOLUTION_100_PATH, msg)
         self.assertIn("🎉", msg)
 
@@ -26,7 +26,7 @@ class MilestoneBannerTests(unittest.TestCase):
 
     def test_should_not_show_below_milestone(self):
         ss: dict = {}
-        self.assertFalse(should_show_milestone(ss, step=599))
+        self.assertFalse(should_show_milestone(ss, step=999))
 
     def test_should_not_show_twice(self):
         ss = {SESSION_FLAG: True}

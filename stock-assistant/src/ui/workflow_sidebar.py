@@ -6,6 +6,7 @@ import streamlit as st
 
 from src.ui.changelog_panel import render_changelog_panel
 from src.ui.capability_map import render_capability_map_sidebar
+from src.ui.playbook_preview import render_playbook_preview_sidebar
 from src.ui.health_panel import render_health_panel
 from src.ui.push_panel import render_push_panel
 from src.ui.readonly_export_panel import render_readonly_export_panel
@@ -51,6 +52,7 @@ _PHASE_OPTIONS = [
     "P88 优先级推送", "P89 首页入口", "P90 文档与v4.4",
     "P91 900步庆祝", "P92 一键全开推送", "P93 文档与v4.5",
     "P94 能力地图跳转", "P95 公开数据手册", "P96 文档与v4.6",
+    "P97 手册内置预览", "P98 千步预热", "P99 文档与v5.0",
 ]
 
 
@@ -90,7 +92,7 @@ def render_workflow_sidebar() -> None:
             phase = st.selectbox(
                 "当前进化阶段",
                 _PHASE_OPTIONS,
-                index=95,
+                index=98,
                 disabled=True,
             )
             st.caption(phase)
@@ -107,6 +109,20 @@ def render_workflow_sidebar() -> None:
             mark_dirty()
 
         render_capability_map_sidebar(expanded=not cap_fold_pref)
+
+        playbook_collapsed = is_section_collapsed(collapsed_prefs, "playbook_preview")
+        pb_fold_pref = st.checkbox(
+            "折叠作战手册预览",
+            value=playbook_collapsed,
+            key="sidebar_playbook_fold_pref",
+        )
+        if pb_fold_pref != playbook_collapsed:
+            st.session_state.sidebar_collapsed = set_section_collapsed(
+                collapsed_prefs, "playbook_preview", pb_fold_pref
+            )
+            mark_dirty()
+
+        render_playbook_preview_sidebar(expanded=not pb_fold_pref)
 
         render_theme_toggle()
         render_locale_toggle()

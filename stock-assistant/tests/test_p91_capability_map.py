@@ -24,35 +24,35 @@ class CapabilityMapTests(unittest.TestCase):
         self.assertEqual(len(CAPABILITY_ITEMS), 4)
 
     def test_capability_map_markdown_modules(self):
-        md = capability_map_markdown(step=900)
+        md = capability_map_markdown(step=1000)
         self.assertIn("sector_relative", md)
         self.assertIn("institutional_onepager", md)
         self.assertIn("battle_plan", md)
         self.assertIn("priority_queue", md)
-        self.assertIn("900", md)
+        self.assertIn("1000", md)
 
     def test_section_key(self):
         self.assertEqual(SECTION_KEY, "capability_map")
 
 
-class Milestone900Tests(unittest.TestCase):
-    def test_build_message_900(self):
-        msg = build_milestone_message(900)
-        self.assertIn("900", msg)
+class Milestone1000Tests(unittest.TestCase):
+    def test_build_message_1000(self):
+        msg = build_milestone_message(1000)
+        self.assertIn("1000", msg)
         self.assertIn(EVOLUTION_100_PATH, msg)
-        self.assertIn("能力地图", msg)
+        self.assertIn("作战手册", msg)
         self.assertIn("🎉", msg)
 
-    def test_milestone_step_is_900(self):
-        self.assertEqual(MILESTONE_STEP, 900)
+    def test_milestone_step_is_1000(self):
+        self.assertEqual(MILESTONE_STEP, 1000)
 
-    def test_should_show_at_900(self):
+    def test_should_show_at_1000(self):
         ss: dict = {}
         self.assertTrue(should_show_milestone(ss, step=MILESTONE_STEP))
 
-    def test_should_not_show_below_900(self):
+    def test_should_not_show_below_1000(self):
         ss: dict = {}
-        self.assertFalse(should_show_milestone(ss, step=899))
+        self.assertFalse(should_show_milestone(ss, step=999))
 
     def test_should_not_show_twice(self):
         ss = {SESSION_FLAG: True}

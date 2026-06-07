@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-KNOWN_SECTIONS = frozenset({"workflow_phase", "capability_map"})
+KNOWN_SECTIONS = frozenset({"workflow_phase", "capability_map", "playbook_preview"})
 
 
 def normalize_sidebar_collapsed(raw: Any) -> dict[str, bool]:
