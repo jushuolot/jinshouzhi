@@ -8,6 +8,7 @@ from src.storage.history_store import load_into_session, persist_session
 from src.ui import app_core as C
 from src.ui.pages import history, insight, movers, panorama, plates, search, watch
 from src.ui.tab_router import apply_tab_from_query, render_main_tabs
+from src.util.watch_expander_nav import apply_watch_expand_from_query
 from src.util.i18n_strings import tab_label
 from src.ui.workflow_sidebar import render_workflow_sidebar
 from src.ui.mobile_style import inject_mobile_styles
@@ -41,9 +42,12 @@ render_onboarding_banner()
 if is_readonly_mode():
     st.info("👁 **只读模式**：链接带 `?readonly=1`，已隐藏编辑与写入操作。")
 _resolved_tab = apply_tab_from_query()
+_resolved_expand = apply_watch_expand_from_query(st.session_state, st.query_params)
 if _resolved_tab:
     _label = tab_label(_resolved_tab)
     st.caption(f"🔗 已根据链接打开：**{_label}**")
+if _resolved_expand:
+    st.caption(f"📂 已展开工作台区块：**{_resolved_expand}**")
 if st.session_state.get("query_at_latest"):
     st.info(f"📅 最近查询时间：{format_query_datetime(st.session_state['query_at_latest'])}")
 

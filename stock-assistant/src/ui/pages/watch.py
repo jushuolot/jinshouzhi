@@ -129,6 +129,7 @@ from src.export.priority_bundle import (
     build_priority_export_bundle_md,
     build_priority_export_bundle_zip,
 )
+from src.util.watch_expander_nav import watch_section_expanded
 
 
 def _watchlist_display_rows(watchlist: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -552,7 +553,22 @@ def render() -> None:
                     f"合并包含作战清单 + 速览 + 优先标的 **{top_priority.name}（{top_priority.code}）** 一页纸。"
                 )
 
-            with st.expander("🎯 今日优先关注", expanded=bool(priority_ranks and priority_ranks[0].score > 0)):
+            with st.expander(
+                "📋 作战清单",
+                expanded=watch_section_expanded(st.session_state, "battle_plan", default=False),
+            ):
+                preview = battle_md if len(battle_md) <= 2400 else battle_md[:2400] + "\n\n…"
+                st.markdown(preview)
+                st.caption("完整版请点上方「📋 今日作战清单」下载。")
+
+            with st.expander(
+                "🎯 今日优先关注",
+                expanded=watch_section_expanded(
+                    st.session_state,
+                    "priority_queue",
+                    default=bool(priority_ranks and priority_ranks[0].score > 0),
+                ),
+            ):
                 if priority_ranks:
                     st.markdown(format_priority_section(priority_ranks))
                     st.dataframe(
@@ -709,7 +725,10 @@ def render() -> None:
                     st.caption("暂无板块分布数据。")
 
         if display_wl and snaps:
-            with st.expander("🏆 相对板块", expanded=False):
+            with st.expander(
+                "🏆 相对板块",
+                expanded=watch_section_expanded(st.session_state, "sector_relative", default=False),
+            ):
                 rel_rows = compute_sector_relative(
                     display_wl,
                     snaps,
@@ -1105,14 +1124,26 @@ def render() -> None:
                 alerts=alerts_one,
                 query_label=C._query_label("watch") or format_query_datetime(),
             )
-            st.download_button(
-                "📄 下载机构式一页纸",
-                data=one_pager_md.encode("utf-8"),
-                file_name=f"一页纸_{code}.md",
-                mime="text/markdown",
-                key=f"watch_onepager_{code}",
-                use_container_width=True,
-            )
+            with st.expander(
+                "📄 机构一页纸",
+                expanded=watch_section_expanded(
+                    st.session_state, "institutional_onepager", default=False
+                ),
+            ):
+                op_preview = (
+                    one_pager_md
+                    if len(one_pager_md) <= 3200
+                    else one_pager_md[:3200] + "\n\n…"
+                )
+                st.markdown(op_preview)
+                st.download_button(
+                    "📄 下载机构式一页纸",
+                    data=one_pager_md.encode("utf-8"),
+                    file_name=f"一页纸_{code}.md",
+                    mime="text/markdown",
+                    key=f"watch_onepager_{code}",
+                    use_container_width=True,
+                )
             one_line = str(snap_one.get("one_line") or "").strip()
             if one_line and one_line not in ("—", "暂无评分。"):
                 render_speech_button(text=one_line, key=f"speech_{code}")
