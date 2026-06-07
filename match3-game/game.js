@@ -41,6 +41,7 @@
   ];
   const BOOSTER_HAMMER_START = 3;
   const BOOSTER_SHUFFLE_START = 2;
+  const EVOLUTION_STATE_KEY = "match3_evolution_state";
 
   const DEFAULT_AD_CONFIG = {
     enabled: true,
@@ -186,6 +187,16 @@
   let hintTimer = null;
   /** @type {Record<number, number>} */
   let levelStarsMap = {};
+  /** @type {{ difficultyOffset: number, recent: string[], failByLevel: Record<string, number>, streakDays: number, lastPlayDate: string, seenVersion: string }} */
+  let evolutionState = {
+    difficultyOffset: 0,
+    recent: [],
+    failByLevel: {},
+    streakDays: 0,
+    lastPlayDate: "",
+    seenVersion: "",
+  };
+  let dailyChallengeBonus = { moves: 0, hammer: 0, label: "" };
   let score = 0;
   let movesLeft = 0;
   /** 当前关卡目标分数（本关内累计当前分数达到即过关） */
@@ -253,6 +264,9 @@
   const shuffleCountEl = document.getElementById("shuffle-count");
   const confettiLayerEl = document.getElementById("confetti-layer");
   const megaComboEl = document.getElementById("mega-combo");
+  const evolutionBadgeEl = document.getElementById("evolution-badge");
+  const dailyChallengeEl = document.getElementById("daily-challenge");
+  const homeStreakEl = document.getElementById("home-streak");
   const messageEl = document.getElementById("message");
   const restartBtn = document.getElementById("restart");
   const nextLevelBtn = document.getElementById("next-level");
@@ -869,13 +883,13 @@
 
   function getLevelSpec(idx) {
     const clamped = Math.min(Math.max(idx, 0), MAX_LEVEL - 1);
-    // 目标分：第 1 关 100 分，后续每关 +20 分
     const target = 100 + clamped * 20;
     const baseMoves = solveMovesForPassRate(clamped, target, targetPassRateForLevel(clamped));
     const minMoves = clamped < 8 ? 18 : 12;
     const maxMoves = 60;
-    const moves = Math.min(maxMoves, Math.max(minMoves, baseMoves));
-    return { moves: moves, target: target };
+    const evoBonus = getEvolutionMoveBonus(clamped);
+    const moves = Math.min(maxMoves, Math.max(minMoves, baseMoves + evoBonus.total));
+    return { moves: moves, target: target, evoBonus: evoBonus };
   }
 
   // --- 自动难度：用正态近似反推步数，使过关成功率接近目标值 ---
@@ -1079,6 +1093,158 @@
     }
   }
 
+  function getEvolutionConfig() {
+    return typeof window !== "undefined" && window.MATCH3_EVOLUTION
+      ? window.MATCH3_EVOLUTION
+      : { version: "2.2.0", generation: 18, autoTune: { enabled: true, windowSize: 8, maxMoveAdjust: 3, targetWinRate: 0.52 }, patchNotes: [] };
+  }
+
+  function loadEvolutionState() {
+    try {
+      const raw = window.localStorage.getItem(EVOLUTION_STATE_KEY);
+      if (raw) evolutionState = Object.assign(evolutionState, JSON.parse(raw));
+    } catch (e) {
+      evolutionState = { difficultyOffset: 0, recent: [], failByLevel: {}, streakDays: 0, lastPlayDate: "", seenVersion: "" };
+    }
+  }
+
+  function saveEvolutionState() {
+    try {
+      window.localStorage.setItem(EVOLUTION_STATE_KEY, JSON.stringify(evolutionState));
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  function todayKey() {
+    const d = new Date();
+    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+  }
+
+  function updateLoginStreak() {
+    const today = todayKey();
+    if (evolutionState.lastPlayDate === today) return;
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yKey =
+      yesterday.getFullYear() +
+      "-" +
+      String(yesterday.getMonth() + 1).padStart(2, "0") +
+      "-" +
+      String(yesterday.getDate()).padStart(2, "0");
+    if (evolutionState.lastPlayDate === yKey) evolutionState.streakDays += 1;
+    else evolutionState.streakDays = 1;
+    evolutionState.lastPlayDate = today;
+    saveEvolutionState();
+  }
+
+  function rollDailyChallenge() {
+    const seed = todayKey().split("-").join("");
+    let h = 0;
+    for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
+    const types = [
+      { moves: 2, hammer: 0, label: "今日祝福：每关 +2 步" },
+      { moves: 0, hammer: 1, label: "今日祝福：额外 +1 锤子" },
+      { moves: 1, hammer: 1, label: "今日祝福：+1 步 & +1 锤" },
+      { moves: 3, hammer: 0, label: "今日福利：每关 +3 步" },
+    ];
+    dailyChallengeBonus = types[h % types.length];
+  }
+
+  function autoTuneDifficulty() {
+    const cfg = getEvolutionConfig().autoTune || {};
+    if (cfg.enabled === false) return;
+    const windowSize = cfg.windowSize || 8;
+    const maxAdj = cfg.maxMoveAdjust || 3;
+    const target = cfg.targetWinRate != null ? cfg.targetWinRate : 0.52;
+    const recent = evolutionState.recent.slice(-windowSize);
+    if (recent.length < 4) return;
+    let wins = 0;
+    recent.forEach(function (r) {
+      if (r === "w") wins++;
+    });
+    const rate = wins / recent.length;
+    if (rate > target + 0.15 && evolutionState.difficultyOffset > -maxAdj) {
+      evolutionState.difficultyOffset -= 1;
+    } else if (rate < target - 0.15 && evolutionState.difficultyOffset < maxAdj) {
+      evolutionState.difficultyOffset += 1;
+    }
+    saveEvolutionState();
+  }
+
+  function getEvolutionMoveBonus(levelIdx) {
+    const lvlKey = String(levelIdx);
+    const failCount = evolutionState.failByLevel[lvlKey] || 0;
+    const frustration = failCount >= 3 ? 2 : failCount >= 2 ? 1 : 0;
+    const streakBonus = Math.min(2, Math.floor(evolutionState.streakDays / 3));
+    return {
+      global: evolutionState.difficultyOffset,
+      daily: dailyChallengeBonus.moves,
+      frustration: frustration,
+      streak: streakBonus,
+      total: evolutionState.difficultyOffset + dailyChallengeBonus.moves + frustration + streakBonus,
+    };
+  }
+
+  function recordEvolutionResult(win) {
+    evolutionState.recent.push(win ? "w" : "l");
+    if (evolutionState.recent.length > 20) evolutionState.recent.shift();
+    const lvlKey = String(currentLevelIndex);
+    if (!win) {
+      evolutionState.failByLevel[lvlKey] = (evolutionState.failByLevel[lvlKey] || 0) + 1;
+    } else {
+      evolutionState.failByLevel[lvlKey] = 0;
+    }
+    autoTuneDifficulty();
+    saveEvolutionState();
+  }
+
+  function showEvolutionToast(text) {
+    let el = document.getElementById("evo-toast");
+    if (!el) {
+      el = document.createElement("div");
+      el.id = "evo-toast";
+      el.className = "evo-toast";
+      document.body.appendChild(el);
+    }
+    el.textContent = text;
+    el.classList.add("show");
+    window.setTimeout(function () {
+      el.classList.remove("show");
+    }, 4200);
+  }
+
+  function initEvolution() {
+    loadEvolutionState();
+    updateLoginStreak();
+    rollDailyChallenge();
+    const cfg = getEvolutionConfig();
+    if (cfg.version && evolutionState.seenVersion !== cfg.version) {
+      const notes = (cfg.patchNotes || []).slice(0, 2).join(" · ");
+      showEvolutionToast("🧬 进化 Gen." + (cfg.generation || "?") + "：" + (notes || "体验已自动优化"));
+      evolutionState.seenVersion = cfg.version;
+      saveEvolutionState();
+    }
+  }
+
+  function renderEvolutionHome() {
+    const cfg = getEvolutionConfig();
+    if (evolutionBadgeEl) {
+      evolutionBadgeEl.textContent =
+        "🧬 自主进化 Gen." +
+        (cfg.generation || 1) +
+        " · 难度微调 " +
+        (evolutionState.difficultyOffset > 0 ? "+" : "") +
+        evolutionState.difficultyOffset +
+        " 步";
+    }
+    if (homeStreakEl) homeStreakEl.textContent = String(evolutionState.streakDays);
+    if (dailyChallengeEl) {
+      dailyChallengeEl.hidden = false;
+      dailyChallengeEl.innerHTML = "📅 <strong>每日挑战</strong> · " + dailyChallengeBonus.label;
+    }
+  }
+
   function loadProgress() {
     try {
       const raw = window.localStorage.getItem(UNLOCK_KEY);
@@ -1130,6 +1296,7 @@
 
   function showHome() {
     updateHomeStats();
+    renderEvolutionHome();
     showScreen("home");
   }
 
@@ -1215,7 +1382,7 @@
   }
 
   function resetBoosters() {
-    hammerLeft = BOOSTER_HAMMER_START;
+    hammerLeft = BOOSTER_HAMMER_START + dailyChallengeBonus.hammer;
     shuffleLeft = BOOSTER_SHUFFLE_START;
     hammerMode = false;
     updateBoosterUi();
@@ -1856,7 +2023,10 @@
       });
 
       totalCleared += matched.size;
-      const add = Math.min(info.points, Math.max(0, movePointsLeft));
+      let add = Math.min(info.points, Math.max(0, movePointsLeft));
+      if (cascadeStep > 2) {
+        add = Math.min(movePointsLeft, Math.round(add * (1 + (cascadeStep - 2) * 0.08)));
+      }
       movePointsLeft -= add;
       score += add;
       updateHud();
@@ -1916,6 +2086,7 @@
     // 统一的“行动结束判定”：先看过关，再看失败
     if (score >= levelTarget) {
       gameOver = true;
+      recordEvolutionResult(true);
       soundLevelWin();
       if (currentLevelIndex >= MAX_LEVEL - 1) {
         setLevelActionButtons(false, false);
@@ -1945,6 +2116,7 @@
 
     if (movesLeft <= 0) {
       gameOver = true;
+      recordEvolutionResult(false);
       soundGameOver();
       setMessage(
         "步数用尽！当前 " +
@@ -2440,6 +2612,7 @@
 
   loadAdStats();
   loadLevelStars();
+  initEvolution();
   loadProgress();
 
   showHome();

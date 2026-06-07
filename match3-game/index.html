@@ -17,7 +17,9 @@
     <section id="screen-home" class="screen screen-home">
       <div class="home-logo" aria-hidden="true">🌸✨🍀</div>
       <h1 id="game-title" class="title">萌植消消乐</h1>
-      <p class="home-tagline">100 关 · 五大世界 · 特殊糖果 · 三星挑战</p>
+      <p class="home-tagline">100 关 · 五大世界 · 自主进化 · 越玩越懂你</p>
+      <p id="evolution-badge" class="evolution-badge" aria-live="polite"></p>
+      <div id="daily-challenge" class="daily-challenge" hidden></div>
       <div class="home-stats">
         <div class="home-stat">
           <strong id="home-total-stars">0</strong>
@@ -26,6 +28,10 @@
         <div class="home-stat">
           <strong id="home-max-level">1</strong>
           最高关卡
+        </div>
+        <div class="home-stat">
+          <strong id="home-streak">0</strong>
+          连续天数
         </div>
       </div>
       <div class="home-actions">
@@ -301,6 +307,7 @@
 
   <script src="landing/sponsors.js"></script>
   <script src="ad-config.js"></script>
+  <script src="evolution.js"></script>
   <script src="game.js"></script>
 </body>
 </html>

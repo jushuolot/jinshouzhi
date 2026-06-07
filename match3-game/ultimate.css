@@ -366,3 +366,48 @@ body.world-5 {
   color: #ffe08a;
   font-size: 0.88rem;
 }
+
+.evolution-badge {
+  margin: 0.35rem 0 0.65rem;
+  font-size: 0.72rem;
+  color: rgba(200, 247, 168, 0.85);
+  letter-spacing: 0.04em;
+}
+
+.daily-challenge {
+  margin: 0 0 0.85rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(255, 217, 61, 0.15), rgba(110, 198, 255, 0.12));
+  border: 1px solid rgba(255, 217, 61, 0.25);
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.daily-challenge strong {
+  color: #ffe08a;
+}
+
+.evo-toast {
+  position: fixed;
+  bottom: 1.25rem;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  z-index: 90;
+  max-width: min(420px, calc(100vw - 2rem));
+  padding: 0.65rem 1rem;
+  border-radius: 12px;
+  background: rgba(18, 34, 22, 0.94);
+  border: 1px solid rgba(200, 247, 168, 0.3);
+  font-size: 0.82rem;
+  color: #c8f7a8;
+  opacity: 0;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  pointer-events: none;
+}
+
+.evo-toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}

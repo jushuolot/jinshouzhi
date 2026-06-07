@@ -1,0 +1,17 @@
+{
+  "version": "2.2.0",
+  "generation": 18,
+  "releasedAt": "2026-06-07",
+  "autoTune": {
+    "enabled": true,
+    "windowSize": 8,
+    "maxMoveAdjust": 3,
+    "targetWinRate": 0.52
+  },
+  "patchNotes": [
+    "自主进化引擎：根据你的胜负自动调节步数",
+    "每日挑战与连续登录奖励",
+    "连击得分加成（3 连击起 +8%/级）",
+    "同关多次失败自动补偿步数"
+  ]
+}
