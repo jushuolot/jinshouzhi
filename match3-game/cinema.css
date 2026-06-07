@@ -1,0 +1,95 @@
+.cinema-mount {
+  width: 100%;
+  height: min(42vh, 320px);
+  min-height: 220px;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #0a0806;
+  border: 1px solid rgba(201, 162, 39, 0.25);
+  margin-bottom: 0.5rem;
+}
+
+.world-3d-mount {
+  width: 100%;
+  height: min(48vh, 420px);
+  min-height: 280px;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #0a0806;
+  border: 1px solid rgba(201, 162, 39, 0.3);
+}
+
+.expedition-3d-mount {
+  width: 100%;
+  height: min(44vh, 360px);
+  min-height: 240px;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #060504;
+  border: 1px solid rgba(201, 162, 39, 0.28);
+}
+
+.vn-screen.cinema-mode .vn-stage-chars { display: none; }
+.vn-screen.cinema-mode { min-height: auto; }
+
+.artifact-3d-mount {
+  width: 100%;
+  height: 180px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: radial-gradient(ellipse at center, rgba(201, 162, 39, 0.12), #0a0806);
+  margin-bottom: 0.65rem;
+}
+
+.discovery-modal .modal-panel { max-width: min(540px, calc(100vw - 1.5rem)); }
+.discovery-scene { padding: 0.85rem 1rem; }
+.discovery-tag {
+  display: inline-block;
+  font-size: 0.68rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+  background: rgba(255, 217, 61, 0.15);
+  color: #ffd93d;
+  margin-bottom: 0.5rem;
+}
+.discovery-tag.tomb { background: rgba(155, 89, 182, 0.2); color: #c77dff; }
+.discovery-title { margin: 0 0 0.5rem; font-size: 1.15rem; color: #f5e6c8; }
+.discovery-text { margin: 0 0 0.75rem; font-size: 0.88rem; line-height: 1.6; color: rgba(245, 230, 200, 0.92); }
+.discovery-hint {
+  font-size: 0.75rem;
+  color: rgba(200, 180, 140, 0.8);
+  padding: 0.5rem 0.65rem;
+  border-radius: 8px;
+  background: rgba(201, 162, 39, 0.08);
+  border-left: 3px solid #c9a227;
+}
+
+.codex-detail-block { margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid rgba(201, 162, 39, 0.15); }
+.codex-detail-row { font-size: 0.68rem; color: rgba(200, 180, 140, 0.85); margin-bottom: 0.25rem; }
+.codex-detail-long { margin: 0.5rem 0 0; font-size: 0.72rem; line-height: 1.55; color: rgba(245, 230, 200, 0.88); }
+.codex-modal .modal-panel { max-width: min(580px, calc(100vw - 1rem)); }
+
+.tomb-tier-banner {
+  margin: 0.5rem 0;
+  padding: 0.55rem 0.75rem;
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(155, 89, 182, 0.15), rgba(201, 162, 39, 0.1));
+  border: 1px solid rgba(255, 217, 61, 0.25);
+  font-size: 0.8rem;
+  color: #f5e6c8;
+}
+
+.route-node-list { margin-top: 0.65rem; display: flex; flex-direction: column; gap: 0.35rem; }
+.route-node-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.55rem;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 0.75rem;
+  color: rgba(245, 230, 200, 0.85);
+}
+.route-node-item.locked { opacity: 0.4; }
+.route-node-item.current { border: 1px solid rgba(255, 217, 61, 0.4); }
+.route-node-item.tomb { color: #ffe08a; }

@@ -45,6 +45,7 @@
   const BOOSTER_SHUFFLE_START = 2;
   const EVOLUTION_STATE_KEY = "match3_evolution_state";
   const CODEX_STATE_KEY = "match3_codex_state";
+  const EXPEDITION_STATE_KEY = "match3_expedition_state";
   const COMBO_LORE = ["", "层位共鸣", "通脉 · 2连", "祭仪 · 3连", "神树 · 4连", "天书 · 5连", "纵目开眼"];
 
   const DEFAULT_AD_CONFIG = {
@@ -212,6 +213,11 @@
   let vnTypingTimer = null;
   let vnOnComplete = null;
   let vnMode = "";
+  /** @type {{ beatenLevels: Record<string, boolean> }} */
+  let expeditionState = { beatenLevels: {} };
+  let briefingCinema = null;
+  let assemblyCinema = null;
+  let pendingDiscoveryLevel = null;
   let score = 0;
   let movesLeft = 0;
   /** 当前关卡目标分数（本关内累计当前分数达到即过关） */
@@ -272,7 +278,20 @@
   const mapPhaseAssemblyEl = document.getElementById("map-phase-assembly");
   const mapPhaseRouteEl = document.getElementById("map-phase-route");
   const worldMapIntroEl = document.getElementById("world-map-intro");
-  const worldChapterNodesEl = document.getElementById("world-chapter-nodes");
+  const world3dMountEl = document.getElementById("world-3d-mount");
+  const expedition3dMountEl = document.getElementById("expedition-3d-mount");
+  const routeNodeListEl = document.getElementById("route-node-list");
+  const tombTierBannerEl = document.getElementById("tomb-tier-banner");
+  const vnBriefingCinemaEl = document.getElementById("vn-briefing-cinema");
+  const vnAssemblyCinemaEl = document.getElementById("vn-assembly-cinema");
+  const discoveryModalEl = document.getElementById("discovery-modal");
+  const discoveryTitleEl = document.getElementById("discovery-title");
+  const discoveryTextEl = document.getElementById("discovery-text");
+  const discoveryTagEl = document.getElementById("discovery-tag");
+  const discoveryCinemaEl = document.getElementById("discovery-cinema");
+  const discoveryGoBtn = document.getElementById("discovery-go");
+  const discoveryCancelBtn = document.getElementById("discovery-cancel");
+  const artifact3dMountEl = document.getElementById("artifact-3d-mount");
   const vnBriefingCharsEl = document.getElementById("vn-briefing-chars");
   const vnAssemblyCharsEl = document.getElementById("vn-assembly-chars");
   const vnBriefingTitleEl = document.getElementById("vn-briefing-title");
@@ -1068,6 +1087,7 @@
       const prev = levelStarsMap[currentLevelIndex] || 0;
       if (stars > prev) levelStarsMap[currentLevelIndex] = stars;
       saveLevelStars();
+      markLevelBeaten(currentLevelIndex);
       if (currentLevelIndex >= maxUnlockedLevel && currentLevelIndex < MAX_LEVEL - 1) {
         maxUnlockedLevel = currentLevelIndex + 1;
         saveProgress();
@@ -1544,11 +1564,27 @@
     if (!codexGridEl) return;
     codexGridEl.innerHTML = "";
     const catalog = getCodexCatalog();
+    var firstUnlocked = 0;
     catalog.forEach(function (entry, i) {
       const card = document.createElement("div");
       const unlocked = codexState.unlocked[i];
+      if (unlocked && firstUnlocked === 0 && i > 0) firstUnlocked = i;
+      if (unlocked && i === 0) firstUnlocked = 0;
       card.className = "codex-card" + (unlocked ? " unlocked" : " locked");
       const count = codexState.counts[i] || 0;
+      var detailHtml = "";
+      if (unlocked && entry.detail) {
+        detailHtml =
+          '<div class="codex-detail-block">' +
+          (entry.discovered ? '<div class="codex-detail-row">📅 ' + entry.discovered + "</div>" : "") +
+          (entry.dimensions ? '<div class="codex-detail-row">📐 ' + entry.dimensions + "</div>" : "") +
+          (entry.material ? '<div class="codex-detail-row">🧪 ' + entry.material + "</div>" : "") +
+          (entry.museum ? '<div class="codex-detail-row">🏛 ' + entry.museum + "</div>" : "") +
+          (entry.significance ? '<div class="codex-detail-row">✦ ' + entry.significance + "</div>" : "") +
+          '<p class="codex-detail-long">' +
+          entry.detail +
+          "</p></div>";
+      }
       card.innerHTML =
         '<div class="codex-card-head"><span class="codex-card-icon">' +
         (entry.icon || "📜") +
@@ -1561,9 +1597,27 @@
         '<p class="codex-card-lore">' +
         (unlocked ? entry.lore : "消除该文物即可解锁条目") +
         "</p>" +
-        (unlocked ? '<div class="codex-card-count">已消除 ' + count + " 次</div>" : "");
+        detailHtml +
+        (unlocked ? '<div class="codex-card-count">已消除 ' + count + " 次 · 点击查看3D</div>" : "");
+      if (unlocked) {
+        card.style.cursor = "pointer";
+        card.addEventListener("click", function () {
+          if (window.ArtifactViewer3D && artifact3dMountEl) {
+            var v = window.ArtifactViewer3D.get();
+            if (v && v.ok) v.setType(i);
+            else window.ArtifactViewer3D.create(artifact3dMountEl, i);
+          }
+        });
+      }
       codexGridEl.appendChild(card);
     });
+    if (window.ArtifactViewer3D && artifact3dMountEl) {
+      var showId = codexState.unlocked[firstUnlocked] ? firstUnlocked : 0;
+      for (var j = 0; j < NUM_TYPES; j++) {
+        if (codexState.unlocked[j]) { showId = j; break; }
+      }
+      window.ArtifactViewer3D.create(artifact3dMountEl, showId);
+    }
   }
 
   function openCodexModal() {
@@ -1637,6 +1691,7 @@
   function showMap() {
     updateHomeStats();
     mapActiveChapter = getChapterForLevel(maxUnlockedLevel);
+    destroyMap3D();
     showMapPhase("world");
     renderWorldMap();
     showScreen("map");
@@ -1681,37 +1736,141 @@
     }
   }
 
+  function loadExpeditionState() {
+    try {
+      const raw = window.localStorage.getItem(EXPEDITION_STATE_KEY);
+      if (raw) expeditionState = Object.assign({ beatenLevels: {} }, JSON.parse(raw));
+    } catch (e) {
+      expeditionState = { beatenLevels: {} };
+    }
+  }
+
+  function saveExpeditionState() {
+    try {
+      window.localStorage.setItem(EXPEDITION_STATE_KEY, JSON.stringify(expeditionState));
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  function markLevelBeaten(levelIdx) {
+    expeditionState.beatenLevels[String(levelIdx)] = true;
+    saveExpeditionState();
+  }
+
+  function syncBeatenFromProgress() {
+    for (let i = 0; i <= maxUnlockedLevel; i++) {
+      if (i > 0 || levelStarsMap[0]) expeditionState.beatenLevels[String(i)] = true;
+    }
+    if (maxUnlockedLevel > 0) {
+      for (let i = 0; i < maxUnlockedLevel; i++) {
+        expeditionState.beatenLevels[String(i)] = true;
+      }
+    }
+    saveExpeditionState();
+  }
+
+  function destroyMap3D() {
+    if (window.WorldMap3D) window.WorldMap3D.destroy();
+    if (window.ExpeditionMap3D) window.ExpeditionMap3D.destroy();
+  }
+
+  function initBriefingCinema() {
+    if (!vnBriefingCinemaEl || !window.CharacterCinema) return;
+    if (!briefingCinema || !briefingCinema.ok) briefingCinema = window.CharacterCinema.create(vnBriefingCinemaEl);
+  }
+
+  function initAssemblyCinema() {
+    if (!vnAssemblyCinemaEl || !window.CharacterCinema) return;
+    if (!assemblyCinema || !assemblyCinema.ok) assemblyCinema = window.CharacterCinema.create(vnAssemblyCinemaEl);
+  }
+
   function renderWorldMap() {
-    if (!worldChapterNodesEl) return;
-    worldChapterNodesEl.innerHTML = "";
     const mapData = getMapNarrative();
     if (worldMapIntroEl && mapData && mapData.worldIntro) {
-      worldMapIntroEl.textContent =
-        mapData.worldIntro.lines && mapData.worldIntro.lines[0] ? mapData.worldIntro.lines[0].text : "";
+      var introLines = mapData.worldIntro.lines || [];
+      worldMapIntroEl.textContent = introLines.map(function (l) { return l.text; }).join(" ");
     }
-    WORLDS.forEach(function (world, wi) {
-      const narr = getMapChapterNarrative(wi);
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "world-chapter-node";
-      if (!chapterUnlocked(wi)) btn.disabled = true;
-      if (wi === getChapterForLevel(maxUnlockedLevel)) btn.classList.add("current");
-      const x = narr && narr.mapX != null ? narr.mapX : 20 + wi * 16;
-      const y = narr && narr.mapY != null ? narr.mapY : 70 - wi * 10;
-      btn.style.left = x + "%";
-      btn.style.top = y + "%";
-      btn.innerHTML =
-        '<span class="world-node-pin">' +
-        world.icon +
-        '</span><span class="world-node-label">' +
-        world.name +
-        "</span>";
-      btn.title = narr && narr.mapBlurb ? narr.mapBlurb : world.subtitle || "";
-      btn.addEventListener("click", function () {
-        enterChapterExpedition(wi);
+    if (window.WorldMap3D && world3dMountEl) {
+      window.WorldMap3D.create(world3dMountEl, function (wi) {
+        if (chapterUnlocked(wi)) enterChapterExpedition(wi);
       });
-      worldChapterNodesEl.appendChild(btn);
+      var wm = window.WorldMap3D.get();
+      if (wm && wm.setChapterHighlight) wm.setChapterHighlight(getChapterForLevel(maxUnlockedLevel));
+    }
+  }
+
+  function showDiscoveryModal(node, onGo) {
+    if (!discoveryModalEl) {
+      if (onGo) onGo();
+      return;
+    }
+    var speakerId = node.discover ? node.discover[0] : "narrator";
+    var text = node.discover ? node.discover[1] : "发现新探点。";
+    var roster = { hutan: "胡探", wangdun: "王墩", yangxue: "杨雪", jinyaliu: "金牙刘", chenli: "陈礼", narrator: "旁白" };
+    if (discoveryTagEl) {
+      discoveryTagEl.textContent = node.isTomb ? "⚱ 终极大墓" : "📍 发现探点";
+      discoveryTagEl.className = "discovery-tag" + (node.isTomb ? " tomb" : "");
+    }
+    if (discoveryTitleEl) discoveryTitleEl.textContent = node.name;
+    if (discoveryTextEl) discoveryTextEl.textContent = (roster[speakerId] || "旁白") + "：「" + text + "」";
+    if (discoveryCinemaEl && window.CharacterCinema) {
+      var dc = window.CharacterCinema.create(discoveryCinemaEl);
+      if (dc && dc.ok) dc.showCharacter(speakerId, true);
+    }
+    if (window.ArtifactViewer3D && discoveryCinemaEl && node.artifactHint != null) {
+      /* artifact shown in cinema mount alternates - character takes priority */
+    }
+    discoveryModalEl.hidden = false;
+    if (discoveryGoBtn) {
+      discoveryGoBtn.onclick = function () {
+        discoveryModalEl.hidden = true;
+        if (onGo) onGo();
+      };
+    }
+    if (discoveryCancelBtn) {
+      discoveryCancelBtn.onclick = function () {
+        discoveryModalEl.hidden = true;
+      };
+    }
+  }
+
+  function onExpeditionNodePick(node) {
+    showDiscoveryModal(node, function () {
+      pendingDiscoveryLevel = node.level;
+      startLevel(node.level);
     });
+  }
+
+  function renderStoryRoute(chIdx) {
+    const world = WORLDS[chIdx];
+    const narr = getMapChapterNarrative(chIdx);
+    const expData = window.MATCH3_EXPEDITION;
+    const tier = expData && expData.tombTiers ? expData.tombTiers[chIdx] : null;
+    if (tombTierBannerEl && tier) {
+      tombTierBannerEl.textContent = tier.icon + " " + tier.name + " · " + tier.desc;
+    }
+    if (routeChapterTitleEl) {
+      routeChapterTitleEl.textContent = (world ? world.icon + " " + world.name : "") + " · 三维探宝";
+    }
+    if (routeChapterBlurbEl) {
+      routeChapterBlurbEl.textContent = narr && narr.routeIntro ? narr.routeIntro : "点击探点 · 发现线索 · 闯关过关 · 直至大墓";
+    }
+    if (window.ExpeditionMap3D && expedition3dMountEl) {
+      window.ExpeditionMap3D.create(expedition3dMountEl, chIdx, expeditionState, onExpeditionNodePick);
+    }
+    if (routeNodeListEl && expData && expData.chapters[chIdx]) {
+      routeNodeListEl.innerHTML = "";
+      expData.chapters[chIdx].nodes.forEach(function (node, ni) {
+        var unlocked = ni === 0 || expeditionState.beatenLevels[String(expData.chapters[chIdx].nodes[ni - 1].level)];
+        var beaten = expeditionState.beatenLevels[String(node.level)];
+        var row = document.createElement("div");
+        row.className = "route-node-item" + (unlocked ? "" : " locked") + (beaten ? "" : "") + (node.isTomb ? " tomb" : "");
+        if (node.level === maxUnlockedLevel || (!beaten && unlocked && node.level === maxUnlockedLevel)) row.classList.add("current");
+        row.textContent = (beaten ? "✓ " : unlocked ? "◎ " : "🔒 ") + node.name + (node.isTomb ? " 【大墓】" : "") + " · L" + (node.level + 1);
+        routeNodeListEl.appendChild(row);
+      });
+    }
   }
 
   function enterChapterExpedition(chIdx) {
@@ -1811,7 +1970,7 @@
   function getVnElements(mode) {
     if (mode === "briefing") {
       return {
-        stage: vnBriefingCharsEl,
+        cinema: vnBriefingCinemaEl,
         title: vnBriefingTitleEl,
         speaker: vnBriefingSpeakerEl,
         text: vnBriefingTextEl,
@@ -1820,7 +1979,7 @@
       };
     }
     return {
-      stage: vnAssemblyCharsEl,
+      cinema: vnAssemblyCinemaEl,
       title: vnAssemblyTitleEl,
       speaker: vnAssemblySpeakerEl,
       text: vnAssemblyTextEl,
@@ -1838,14 +1997,18 @@
       return;
     }
     const line = vnLines[vnLineIndex];
-    if (ui.title && vnLineIndex === 0) {
-      /* title set in startVnSequence */
-    }
+    const charId = line.id || "narrator";
     if (ui.speaker) {
       ui.speaker.textContent = line.speaker || "旁白";
       ui.speaker.style.color = line.color || "#c9a227";
     }
-    highlightVnSpeaker(ui.stage, line.id || "narrator");
+    if (vnMode === "briefing") {
+      initBriefingCinema();
+      if (briefingCinema && briefingCinema.ok) briefingCinema.showCharacter(charId, true);
+    } else {
+      initAssemblyCinema();
+      if (assemblyCinema && assemblyCinema.ok) assemblyCinema.showCharacter(charId, true);
+    }
     typewriteLine(ui.text, line.text || "", function () {});
   }
 
@@ -1868,8 +2031,9 @@
     vnLineIndex = 0;
     vnOnComplete = onComplete;
     const ui = getVnElements(mode);
-    ensureVnStage(ui.stage);
     if (ui.title) ui.title.textContent = title || "";
+    if (mode === "briefing") initBriefingCinema();
+    else initAssemblyCinema();
     showVnLine();
   }
 
@@ -1878,56 +2042,6 @@
     vnLines = [];
     vnLineIndex = 0;
     if (onSkipTo) onSkipTo();
-  }
-
-  function renderStoryRoute(chIdx) {
-    if (!routePathEl) return;
-    routePathEl.innerHTML = "";
-    const world = WORLDS[chIdx];
-    const narr = getMapChapterNarrative(chIdx);
-    if (routeChapterTitleEl) {
-      routeChapterTitleEl.textContent = (world ? world.icon + " " + world.name : "") + " · 探方路线";
-    }
-    if (routeChapterBlurbEl) {
-      routeChapterBlurbEl.textContent = narr && narr.routeIntro ? narr.routeIntro : world ? world.subtitle : "";
-    }
-    const milestones = narr && narr.milestones ? narr.milestones : {};
-    for (let i = 0; i < 20; i++) {
-      const levelIdx = chIdx * 20 + i;
-      if (levelIdx >= MAX_LEVEL) break;
-      const lvl = levelIdx + 1;
-      const wrap = document.createElement("div");
-      wrap.className = "route-node-wrap";
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "route-node-card";
-      if (milestones[lvl]) btn.classList.add("route-milestone");
-      if (isBossLevel(levelIdx)) btn.classList.add("boss");
-      const locked = levelIdx > maxUnlockedLevel;
-      if (locked) btn.disabled = true;
-      if (levelIdx === maxUnlockedLevel) btn.classList.add("current");
-      const label = milestones[lvl] || "第 " + lvl + " 层";
-      const stars = levelStarsMap[levelIdx] || 0;
-      btn.innerHTML =
-        '<div class="route-node-num">L' +
-        lvl +
-        (isBossLevel(levelIdx) ? " · 守关" : "") +
-        '</div><div class="route-node-name">' +
-        label +
-        "</div>" +
-        (stars > 0 ? '<div class="route-node-stars">' + "★".repeat(stars) + "☆".repeat(3 - stars) + "</div>" : "");
-      btn.addEventListener("click", function () {
-        startLevel(levelIdx);
-      });
-      wrap.appendChild(btn);
-      routePathEl.appendChild(wrap);
-    }
-    const currentNode = routePathEl.querySelector(".route-node-card.current");
-    if (currentNode && currentNode.scrollIntoView) {
-      window.setTimeout(function () {
-        currentNode.scrollIntoView({ block: "center", behavior: "smooth" });
-      }, 200);
-    }
   }
 
   function emptyIceGrid() {
@@ -3262,6 +3376,8 @@
   syncStoryTheme();
   loadStorySeen();
   loadCodexState();
+  loadExpeditionState();
+  syncBeatenFromProgress();
   initEvolution();
   loadProgress();
 

@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="story.css" />
   <link rel="stylesheet" href="codex.css" />
   <link rel="stylesheet" href="map-narrative.css" />
+  <link rel="stylesheet" href="cinema.css" />
 </head>
 <body class="world-1">
   <div id="confetti-layer" aria-hidden="true"></div>
@@ -20,7 +21,7 @@
     <section id="screen-home" class="screen screen-home">
       <div class="home-logo" aria-hidden="true">🎭🏺🦅</div>
       <h1 id="game-title" class="title">古蜀秘档</h1>
-      <p class="home-tagline">三星堆考古 · 五章百关 · 文物消消 · 自主进化</p>
+      <p class="home-tagline">鬼吹灯式探墓 · 三维地图 · 探点闯关 · 五级大墓</p>
       <div class="home-team" aria-label="考古小队">
         <span>🧭 胡探</span>
         <span>💪 王墩</span>
@@ -78,22 +79,15 @@
       <!-- ① 蜀地总览 -->
       <div id="map-phase-world" class="map-phase">
         <p id="world-map-intro" class="world-map-intro"></p>
-        <div id="world-map-canvas" class="world-map-canvas">
-          <div class="world-map-bg" aria-hidden="true"></div>
-          <div class="world-map-river" aria-hidden="true"></div>
-          <svg class="world-map-path-svg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-            <path id="world-map-path" d="M18,72 Q25,60 32,48 T52,32 T68,55 T82,22" />
-          </svg>
-          <div id="world-chapter-nodes"></div>
-        </div>
-        <p class="world-map-intro">点击章节地标 · 进入策划与集合 · 再选探方层位</p>
+        <div id="world-3d-mount" class="world-3d-mount" aria-label="蜀地三维探宝地图"></div>
+        <p class="world-map-intro">点击三维墓冢 · 进入策划 → 集合 → 探点闯关 · 直至大墓</p>
       </div>
 
       <!-- ② 策划 -->
       <div id="map-phase-briefing" class="map-phase" hidden>
-        <div class="vn-screen">
+        <div class="vn-screen cinema-mode">
+          <div id="vn-briefing-cinema" class="cinema-mount" aria-label="人物三维演绎"></div>
           <div class="vn-bg briefing" aria-hidden="true"></div>
-          <div id="vn-briefing-chars" class="vn-stage-chars"></div>
           <div class="vn-dialogue-box">
             <p id="vn-briefing-title" class="vn-phase-title">作战策划</p>
             <div id="vn-briefing-speaker" class="vn-speaker"></div>
@@ -108,9 +102,9 @@
 
       <!-- ③ 集合 -->
       <div id="map-phase-assembly" class="map-phase" hidden>
-        <div class="vn-screen">
+        <div class="vn-screen cinema-mode">
+          <div id="vn-assembly-cinema" class="cinema-mount" aria-label="小队三维集合"></div>
           <div class="vn-bg assembly" aria-hidden="true"></div>
-          <div id="vn-assembly-chars" class="vn-stage-chars"></div>
           <div class="vn-dialogue-box">
             <p id="vn-assembly-title" class="vn-phase-title">小队集合</p>
             <div id="vn-assembly-speaker" class="vn-speaker"></div>
@@ -125,13 +119,14 @@
 
       <!-- ④ 探方路线 -->
       <div id="map-phase-route" class="map-phase" hidden>
+        <div id="tomb-tier-banner" class="tomb-tier-banner"></div>
         <div class="route-header">
           <h3 id="route-chapter-title" class="route-chapter-title"></h3>
           <p id="route-chapter-blurb" class="route-chapter-blurb"></p>
         </div>
-        <div id="route-scroll" class="route-scroll">
-          <div id="route-path" class="route-path"></div>
-        </div>
+        <div id="expedition-3d-mount" class="expedition-3d-mount" aria-label="三维探宝路线"></div>
+        <p class="discovery-hint" style="margin-top:0.5rem">点击发光探点 · 发现线索后需完成层位消除才能前进 · 终点点亮大墓</p>
+        <div id="route-node-list" class="route-node-list"></div>
         <button type="button" id="map-replay-story" class="btn btn-secondary" style="margin-top:0.5rem;width:100%">📖 重看策划与集合</button>
         <button type="button" id="map-back-world" class="btn btn-secondary" style="margin-top:0.35rem;width:100%">← 返回蜀地总览</button>
       </div>
@@ -394,13 +389,31 @@
     </div>
   </div>
 
+  <div id="discovery-modal" class="modal discovery-modal" role="dialog" aria-modal="true" hidden>
+    <div class="modal-backdrop"></div>
+    <div class="modal-panel">
+      <div class="discovery-scene">
+        <span id="discovery-tag" class="discovery-tag">发现探点</span>
+        <h2 id="discovery-title" class="discovery-title"></h2>
+        <div id="discovery-cinema" class="cinema-mount" style="height:200px;min-height:160px"></div>
+        <p id="discovery-text" class="discovery-text"></p>
+        <p id="discovery-hint" class="discovery-hint">完成本层消除挑战，方可深入下一探点。</p>
+      </div>
+      <div class="modal-actions actions-row">
+        <button type="button" id="discovery-cancel" class="btn btn-secondary">稍后</button>
+        <button type="button" id="discovery-go" class="btn">开始闯关</button>
+      </div>
+    </div>
+  </div>
+
   <div id="codex-modal" class="modal codex-modal" role="dialog" aria-modal="true" aria-labelledby="codex-title" hidden>
     <div class="modal-backdrop" data-codex-close="1"></div>
     <div class="modal-panel">
       <div class="modal-head">
-        <h2 id="codex-title" class="modal-title">文物图鉴</h2>
+        <h2 id="codex-title" class="modal-title">文物图鉴 · 3D</h2>
         <button type="button" class="modal-close" aria-label="关闭" data-codex-close="1">×</button>
       </div>
+      <div id="artifact-3d-mount" class="artifact-3d-mount"></div>
       <div id="codex-grid" class="codex-grid"></div>
       <div class="modal-actions actions-row">
         <button type="button" class="btn" data-codex-close="1">关闭</button>
@@ -422,10 +435,17 @@
     </div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
   <script src="landing/sponsors.js"></script>
   <script src="ad-config.js"></script>
   <script src="story.js"></script>
   <script src="map-narrative.js"></script>
+  <script src="expedition-data.js"></script>
+  <script src="three-engine.js"></script>
+  <script src="world-3d.js"></script>
+  <script src="expedition-3d.js"></script>
+  <script src="characters-cinema.js"></script>
+  <script src="artifacts-3d.js"></script>
   <script src="codex.js"></script>
   <script src="evolution.js"></script>
   <script src="game.js"></script>
