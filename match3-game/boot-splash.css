@@ -124,6 +124,8 @@
   min-height: min(48vh, 420px);
   height: 100%;
 }
+
+.world-map-2d-badge {
   position: absolute;
   top: 0.5rem;
   right: 0.5rem;
