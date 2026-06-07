@@ -3,10 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="description" content="萌植消消乐 - 100关三星挑战，特殊糖果，五大世界" />
-  <title>萌植消消乐 · 终极版</title>
+  <meta name="description" content="古蜀秘档 - 三星堆考古消消乐，五章百关，文物闯关" />
+  <title>古蜀秘档 · 三星堆消消</title>
   <link rel="stylesheet" href="style.css" />
   <link rel="stylesheet" href="ultimate.css" />
+  <link rel="stylesheet" href="story.css" />
 </head>
 <body class="world-1">
   <div id="confetti-layer" aria-hidden="true"></div>
@@ -15,9 +16,16 @@
   <div class="wrap">
     <!-- 首页 -->
     <section id="screen-home" class="screen screen-home">
-      <div class="home-logo" aria-hidden="true">🌸✨🍀</div>
-      <h1 id="game-title" class="title">萌植消消乐</h1>
-      <p class="home-tagline">100 关 · 五大世界 · 自主进化 · 越玩越懂你</p>
+      <div class="home-logo" aria-hidden="true">🎭🏺🦅</div>
+      <h1 id="game-title" class="title">古蜀秘档</h1>
+      <p class="home-tagline">三星堆考古 · 五章百关 · 文物消消 · 自主进化</p>
+      <div class="home-team" aria-label="考古小队">
+        <span>🧭 胡探</span>
+        <span>💪 王墩</span>
+        <span>🔬 杨雪</span>
+        <span>💰 金牙刘</span>
+        <span>📚 陈礼</span>
+      </div>
       <p id="evolution-badge" class="evolution-badge" aria-live="polite"></p>
       <div id="daily-challenge" class="daily-challenge" hidden></div>
       <div class="home-stats">
@@ -35,8 +43,8 @@
         </div>
       </div>
       <div class="home-actions">
-        <button type="button" id="home-continue" class="btn btn-hero">继续冒险</button>
-        <button type="button" id="home-map" class="btn btn-secondary">世界地图</button>
+        <button type="button" id="home-continue" class="btn btn-hero">继续探方</button>
+        <button type="button" id="home-map" class="btn btn-secondary">章节地图</button>
       </div>
     </section>
 
@@ -44,7 +52,7 @@
     <section id="screen-map" class="screen screen-map" hidden>
       <div class="map-head">
         <button type="button" id="map-back-home" class="btn btn-secondary btn-back">← 首页</button>
-        <h2 class="map-title">世界地图</h2>
+        <h2 class="map-title">章节地图</h2>
         <span id="map-star-total" class="chip">★ 0</span>
       </div>
       <div id="map-scroll" class="map-scroll"></div>
@@ -57,7 +65,7 @@
       </div>
 
       <header class="header header-compact">
-        <p id="world-banner" class="world-banner"><span id="world-icon">🌱</span> <strong id="world-name">萌绿初醒</strong></p>
+        <p id="world-banner" class="world-banner"><span id="world-icon">🚪</span> <strong id="world-name">青铜门启</strong></p>
       </header>
 
       <div class="game-shell">
@@ -110,11 +118,11 @@
       </div>
 
       <div class="booster-bar" aria-label="道具栏">
-        <button type="button" id="booster-hammer" class="booster-btn" title="敲碎一格">
-          <span class="booster-icon">🔨</span>
+        <button type="button" id="booster-hammer" class="booster-btn" title="清理一格封土/文物">
+          <span class="booster-icon">⛏</span>
           <span class="booster-count" id="hammer-count">3</span>
         </button>
-        <button type="button" id="booster-shuffle" class="booster-btn" title="重排棋盘">
+        <button type="button" id="booster-shuffle" class="booster-btn" title="扰层后重整棋盘">
           <span class="booster-icon">🔀</span>
           <span class="booster-count" id="shuffle-count">2</span>
         </button>
@@ -147,12 +155,13 @@
       </div>
       <div class="modal-body goals-body">
         <p id="goals-world" class="goals-world"></p>
+        <p id="goals-story" class="goals-story" hidden></p>
         <ul class="goals-list">
-          <li>🎯 达到 <strong id="goals-target">100</strong> 分</li>
+          <li>🎯 层位得分 <strong id="goals-target">100</strong></li>
           <li>👣 步数 <strong id="goals-moves">20</strong></li>
-          <li id="goals-ice-line" hidden>🧊 消除冰块障碍</li>
+          <li id="goals-ice-line" hidden>🧱 消除封土层障碍</li>
           <li>⭐ 三星：高分或剩余步数多</li>
-          <li>✨ 4连条纹糖 · 5连炸弹糖</li>
+          <li>✨ 4连条纹圣物 · 5连爆破符印</li>
         </ul>
       </div>
       <div class="modal-actions actions-row">
@@ -305,8 +314,23 @@
     </div>
   </div>
 
+  <div id="story-modal" class="modal story-modal" role="dialog" aria-modal="true" aria-labelledby="story-title" hidden>
+    <div class="modal-backdrop"></div>
+    <div class="modal-panel">
+      <div class="story-modal-head">
+        <p class="story-chapter-tag">章节演绎</p>
+        <h2 id="story-title" class="story-modal-title">古蜀秘档</h2>
+      </div>
+      <div id="story-scroll" class="story-scroll"></div>
+      <div class="modal-actions actions-row">
+        <button type="button" id="story-continue" class="btn">继续</button>
+      </div>
+    </div>
+  </div>
+
   <script src="landing/sponsors.js"></script>
   <script src="ad-config.js"></script>
+  <script src="story.js"></script>
   <script src="evolution.js"></script>
   <script src="game.js"></script>
 </body>

@@ -6,10 +6,10 @@
   "use strict";
 
   var DEFAULT = {
-    version: "2.2.0",
-    generation: 18,
+    version: "3.0.0",
+    generation: 19,
     autoTune: { enabled: true, windowSize: 8, maxMoveAdjust: 3, targetWinRate: 0.52 },
-    patchNotes: ["自主进化已启用"],
+    patchNotes: ["三星堆考古主题上线", "五章秘史演绎"],
   };
 
   window.MATCH3_EVOLUTION = DEFAULT;

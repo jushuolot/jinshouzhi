@@ -1,9 +1,9 @@
 :root {
-  --bg: linear-gradient(165deg, #142414 0%, #1a3d2e 38%, #0a1f14 100%);
-  --panel: rgba(255, 255, 255, 0.08);
-  --text: #f2fff4;
-  --muted: #a8d4b8;
-  --accent: #5cb85c;
+  --bg: linear-gradient(165deg, #1a1408 0%, #2a2010 38%, #0f0a06 100%);
+  --panel: rgba(255, 248, 230, 0.07);
+  --text: #f5f0e6;
+  --muted: #c4b896;
+  --accent: #c9a227;
   --gold: #ffd93d;
   --cell: 46px;
   --gap: 5px;
@@ -674,28 +674,28 @@ body {
   transition: transform 0.14s ease;
 }
 .cell[data-type="0"]::after {
-  content: "🌸";
-  background: radial-gradient(circle at 35% 30%, rgba(255, 220, 235, 0.35), rgba(180, 90, 120, 0.25));
+  content: "🎭";
+  background: radial-gradient(circle at 35% 30%, rgba(180, 140, 90, 0.45), rgba(80, 55, 30, 0.35));
 }
 .cell[data-type="1"]::after {
-  content: "🌿";
-  background: radial-gradient(circle at 35% 30%, rgba(180, 240, 190, 0.4), rgba(60, 120, 70, 0.28));
+  content: "🪄";
+  background: radial-gradient(circle at 35% 30%, rgba(255, 220, 120, 0.5), rgba(140, 100, 30, 0.35));
 }
 .cell[data-type="2"]::after {
-  content: "🍀";
-  background: radial-gradient(circle at 35% 30%, rgba(170, 230, 160, 0.45), rgba(50, 110, 60, 0.3));
+  content: "📜";
+  background: radial-gradient(circle at 35% 30%, rgba(160, 220, 200, 0.4), rgba(40, 90, 80, 0.32));
 }
 .cell[data-type="3"]::after {
-  content: "🌻";
-  background: radial-gradient(circle at 35% 30%, rgba(255, 230, 140, 0.45), rgba(160, 120, 40, 0.28));
+  content: "🏺";
+  background: radial-gradient(circle at 35% 30%, rgba(200, 160, 120, 0.45), rgba(90, 60, 40, 0.32));
 }
 .cell[data-type="4"]::after {
-  content: "🌵";
-  background: radial-gradient(circle at 35% 30%, rgba(160, 210, 150, 0.35), rgba(40, 90, 55, 0.3));
+  content: "🦷";
+  background: radial-gradient(circle at 35% 30%, rgba(240, 235, 220, 0.4), rgba(120, 110, 95, 0.28));
 }
 .cell[data-type="5"]::after {
-  content: "🍄";
-  background: radial-gradient(circle at 35% 30%, rgba(255, 200, 210, 0.35), rgba(140, 70, 90, 0.25));
+  content: "🦅";
+  background: radial-gradient(circle at 35% 30%, rgba(255, 200, 80, 0.45), rgba(120, 80, 20, 0.32));
 }
 
 .cell:hover::after {
@@ -705,7 +705,7 @@ body {
 .cell.selected {
   z-index: 2;
   transform: scale(1.06);
-  box-shadow: 0 0 0 3px #fff, 0 0 18px rgba(92, 184, 92, 0.55);
+  box-shadow: 0 0 0 3px #fff, 0 0 18px rgba(201, 162, 39, 0.55);
 }
 
 .cell.selected::after {
@@ -715,7 +715,7 @@ body {
 .cell.path {
   z-index: 2;
   transform: scale(1.04);
-  box-shadow: 0 0 0 2px rgba(200, 247, 168, 0.95), 0 0 16px rgba(200, 247, 168, 0.25);
+  box-shadow: 0 0 0 2px rgba(255, 217, 61, 0.95), 0 0 16px rgba(201, 162, 39, 0.3);
 }
 
 .cell.path::after {

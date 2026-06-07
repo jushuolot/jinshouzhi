@@ -5,28 +5,28 @@ body {
 }
 
 body.world-1 {
-  --world-accent: #5cb85c;
-  --world-glow: rgba(92, 184, 92, 0.35);
+  --world-accent: #c9a227;
+  --world-glow: rgba(201, 162, 39, 0.35);
 }
 
 body.world-2 {
-  --world-accent: #ff7eb3;
-  --world-glow: rgba(255, 126, 179, 0.35);
+  --world-accent: #8b5a2b;
+  --world-glow: rgba(139, 90, 43, 0.4);
 }
 
 body.world-3 {
-  --world-accent: #6ec6ff;
-  --world-glow: rgba(110, 198, 255, 0.35);
+  --world-accent: #4a7c59;
+  --world-glow: rgba(74, 124, 89, 0.35);
 }
 
 body.world-4 {
-  --world-accent: #c77dff;
-  --world-glow: rgba(199, 125, 255, 0.35);
+  --world-accent: #e8a317;
+  --world-glow: rgba(232, 163, 23, 0.4);
 }
 
 body.world-5 {
-  --world-accent: #ffd93d;
-  --world-glow: rgba(255, 217, 61, 0.4);
+  --world-accent: #9b59b6;
+  --world-glow: rgba(155, 89, 182, 0.35);
 }
 
 .screen[hidden] {
@@ -370,7 +370,7 @@ body.world-5 {
 .evolution-badge {
   margin: 0.35rem 0 0.65rem;
   font-size: 0.72rem;
-  color: rgba(200, 247, 168, 0.85);
+  color: rgba(245, 230, 200, 0.85);
   letter-spacing: 0.04em;
 }
 

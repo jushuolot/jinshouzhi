@@ -13,8 +13,8 @@
   const ROWS = 8;
   const COLS = 8;
   const NUM_TYPES = 6;
-  /** 与 CSS .cell[data-type] 中植物顺序一致 */
-  const PLANT_NAMES = ["樱花", "香草叶", "四叶草", "向日葵", "仙人掌", "蘑菇"];
+  /** 与 CSS .cell[data-type] 中文物顺序一致 */
+  let RELIC_NAMES = ["纵目面具", "金杖", "玉璋", "陶盉", "象牙饰", "神鸟"];
   /** 共 100 关，关卡索引 0～99 */
   const MAX_LEVEL = 100;
   /** 每步最多可得分（包含连锁），超出的连消只计到上限 */
@@ -32,13 +32,15 @@
   const SPECIAL_COL = 2;
   const SPECIAL_BOMB = 3;
   const UNLOCK_KEY = "match3_max_unlocked";
-  const WORLDS = [
-    { name: "萌绿初醒", icon: "🌱", theme: "world-1", iceFrom: 999 },
-    { name: "花语秘境", icon: "🌸", theme: "world-2", iceFrom: 20 },
-    { name: "森灵之森", icon: "🌲", theme: "world-3", iceFrom: 40 },
-    { name: "星辉花园", icon: "✨", theme: "world-4", iceFrom: 60 },
-    { name: "极光圣域", icon: "🌈", theme: "world-5", iceFrom: 80 },
+  const WORLDS_DEFAULT = [
+    { name: "青铜门启", icon: "🚪", theme: "world-1", iceFrom: 999, subtitle: "祭祀坑外围" },
+    { name: "纵目之神", icon: "👁", theme: "world-2", iceFrom: 20, subtitle: "青铜面具层" },
+    { name: "神树通天", icon: "🌳", theme: "world-3", iceFrom: 40, subtitle: "青铜神树" },
+    { name: "金沙秘径", icon: "☀", theme: "world-4", iceFrom: 60, subtitle: "太阳神鸟" },
+    { name: "天书终章", icon: "📜", theme: "world-5", iceFrom: 80, subtitle: "未解符号" },
   ];
+  let WORLDS = WORLDS_DEFAULT.slice();
+  const STORY_SEEN_KEY = "match3_story_seen";
   const BOOSTER_HAMMER_START = 3;
   const BOOSTER_SHUFFLE_START = 2;
   const EVOLUTION_STATE_KEY = "match3_evolution_state";
@@ -197,6 +199,8 @@
     seenVersion: "",
   };
   let dailyChallengeBonus = { moves: 0, hammer: 0, label: "" };
+  /** @type {{ prologues: Record<string, boolean>, epilogues: Record<string, boolean>, beats: Record<string, boolean> }} */
+  let storySeen = { prologues: {}, epilogues: {}, beats: {} };
   let score = 0;
   let movesLeft = 0;
   /** 当前关卡目标分数（本关内累计当前分数达到即过关） */
@@ -209,7 +213,7 @@
   let processing = false;
   /** @type {{ r: number, c: number } | null} */
   let pendingPointerDown = null;
-  /** 滑动连线消除：当前路径（按住并滑过同种植物） */
+  /** 滑动连线消除：当前路径（按住并滑过同类文物） */
   /** @type {{ r: number, c: number }[]} */
   let swipePath = [];
   /** @type {number | null} */
@@ -256,7 +260,12 @@
   const worldIconEl = document.getElementById("world-icon");
   const worldNameEl = document.getElementById("world-name");
   const goalsWorldEl = document.getElementById("goals-world");
+  const goalsStoryEl = document.getElementById("goals-story");
   const goalsIceLineEl = document.getElementById("goals-ice-line");
+  const storyModalEl = document.getElementById("story-modal");
+  const storyTitleEl = document.getElementById("story-title");
+  const storyScrollEl = document.getElementById("story-scroll");
+  const storyContinueBtn = document.getElementById("story-continue");
   const boosterHammerBtn = document.getElementById("booster-hammer");
   const boosterShuffleBtn = document.getElementById("booster-shuffle");
   const boosterHintBtn = document.getElementById("booster-hint");
@@ -796,10 +805,10 @@
       " 分，步数 " +
       moveSpec.moves +
       "。</p>" +
-      "<p><strong>操作</strong>：相邻滑动交换，或按住连线 ≥3 同色消除。</p>" +
-      "<p><strong>特殊糖果</strong>：4 连生成条纹糖（整行/列），5 连生成炸弹糖（3×3）。</p>" +
-      "<p><strong>五大世界</strong>：每 20 关一个主题，后期出现冰块障碍。</p>" +
-      "<p><strong>道具</strong>：🔨敲碎 · 🔀重排 · 💡提示。</p>" +
+      "<p><strong>操作</strong>：相邻滑动交换，或按住连线 ≥3 同类文物消除。</p>" +
+      "<p><strong>特殊圣物</strong>：4 连生成条纹圣物（整行/列），5 连生成爆破符印（3×3）。</p>" +
+      "<p><strong>五章秘史</strong>：每 20 关一章三星堆考古剧情，后期出现封土层障碍。</p>" +
+      "<p><strong>道具</strong>：⛏清理 · 🔀扰层重排 · 💡提示。</p>" +
       "<p><strong>星级</strong>：达标 1 星；高分或剩余步数多可获 2～3 星，地图可回看。</p>" +
       "<p><strong>难度</strong>：第 1 关约 " +
       pass1 +
@@ -1025,9 +1034,18 @@
     if (modalLeftEl) modalLeftEl.textContent = String(movesLeft);
     if (modalEggIconEl) modalEggIconEl.textContent = isWin ? (stars >= 3 ? "👑" : "🏆") : "💪";
     if (modalEggTextEl) {
-      if (!isWin) modalEggTextEl.textContent = "差一点点！调整策略再试，特殊糖果能帮你爆发得分。";
-      else if (stars >= 3) modalEggTextEl.textContent = "完美！三星通关，节奏与连锁都很棒。";
-      else if (stars === 2) modalEggTextEl.textContent = "不错！再剩些步数或刷更高分可冲击三星。";
+      const storyCfg = getStoryConfig();
+      if (!isWin) {
+        const fq = pickStoryQuote(storyCfg && storyCfg.failQuotes);
+        modalEggTextEl.textContent = fq
+          ? fq.who + "：" + fq.text
+          : "差一点点！调整策略再试，条纹圣物能帮你爆发得分。";
+      } else if (stars >= 3) {
+        const wq = pickStoryQuote(storyCfg && storyCfg.winQuotes);
+        modalEggTextEl.textContent = wq
+          ? wq.who + "：" + wq.text + "（三星完美！）"
+          : "完美！三星通关，层位与连锁都很棒。";
+      } else if (stars === 2) modalEggTextEl.textContent = "不错！再剩些步数或刷更高分可冲击三星。";
       else modalEggTextEl.textContent = "过关啦！试试更少步数通关拿更高星级。";
     }
 
@@ -1039,7 +1057,11 @@
     if (modalNextBtn) modalNextBtn.hidden = !isWin || isLast;
     if (modalRestartBtn) modalRestartBtn.hidden = isWin ? !isLast : false;
 
-    modalEl.hidden = false;
+    function revealModal() {
+      modalEl.hidden = false;
+    }
+    if (isWin) runStoryAfterChapterWin(currentLevelIndex, revealModal);
+    else revealModal();
   }
 
   function hideModal() {
@@ -1245,6 +1267,162 @@
     }
   }
 
+  function getStoryConfig() {
+    return typeof window !== "undefined" && window.MATCH3_STORY ? window.MATCH3_STORY : null;
+  }
+
+  function syncStoryTheme() {
+    const s = getStoryConfig();
+    if (!s) return;
+    if (s.relics && s.relics.length >= NUM_TYPES) RELIC_NAMES = s.relics.slice(0, NUM_TYPES);
+    if (s.chapters && s.chapters.length) {
+      WORLDS = s.chapters.map(function (ch) {
+        return {
+          name: ch.name,
+          icon: ch.icon,
+          theme: ch.theme,
+          iceFrom: ch.iceFrom,
+          subtitle: ch.subtitle || "",
+        };
+      });
+    }
+    const taglineEl = document.querySelector(".home-tagline");
+    if (taglineEl && s.tagline) taglineEl.textContent = s.tagline;
+    const titleEl = document.getElementById("game-title");
+    if (titleEl && s.title) titleEl.textContent = s.title;
+  }
+
+  function loadStorySeen() {
+    try {
+      const raw = window.localStorage.getItem(STORY_SEEN_KEY);
+      if (raw) storySeen = Object.assign({ prologues: {}, epilogues: {}, beats: {} }, JSON.parse(raw));
+    } catch (e) {
+      storySeen = { prologues: {}, epilogues: {}, beats: {} };
+    }
+  }
+
+  function saveStorySeenState() {
+    try {
+      window.localStorage.setItem(STORY_SEEN_KEY, JSON.stringify(storySeen));
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  function getChapterForLevel(levelIdx) {
+    return Math.min(WORLDS.length - 1, Math.floor(levelIdx / 20));
+  }
+
+  function getChapterData(chIdx) {
+    const s = getStoryConfig();
+    return s && s.chapters ? s.chapters[chIdx] : null;
+  }
+
+  function showStoryScene(scene, onDone) {
+    if (!storyModalEl || !scene || !scene.lines || !scene.lines.length) {
+      if (onDone) onDone();
+      return;
+    }
+    if (storyTitleEl) storyTitleEl.textContent = scene.title || "古蜀秘档";
+    if (storyScrollEl) {
+      storyScrollEl.innerHTML = "";
+      scene.lines.forEach(function (ln) {
+        const row = document.createElement("div");
+        row.className = "story-line";
+        const bubble = document.createElement("div");
+        bubble.className = "story-bubble";
+        const speaker = document.createElement("div");
+        speaker.className = "story-speaker";
+        speaker.style.color = ln.color || "#c9a227";
+        speaker.textContent = ln.speaker || "旁白";
+        const text = document.createElement("p");
+        text.className = "story-text";
+        text.textContent = ln.text || "";
+        bubble.appendChild(speaker);
+        bubble.appendChild(text);
+        const avatar = document.createElement("div");
+        avatar.className = "story-avatar";
+        avatar.textContent = ln.avatar || "📜";
+        row.appendChild(avatar);
+        row.appendChild(bubble);
+        storyScrollEl.appendChild(row);
+      });
+    }
+    storyModalEl.hidden = false;
+    if (storyContinueBtn) {
+      storyContinueBtn.onclick = function () {
+        storyModalEl.hidden = true;
+        storyContinueBtn.onclick = null;
+        if (onDone) onDone();
+      };
+    }
+  }
+
+  function runStoryBeforeLevel(levelIdx, onDone) {
+    const chIdx = getChapterForLevel(levelIdx);
+    const ch = getChapterData(chIdx);
+    const lvl = levelIdx + 1;
+    const chKey = String(chIdx);
+
+    function afterPrologue() {
+      if (ch && ch.beats && ch.beats[lvl] && !storySeen.beats[String(lvl)]) {
+        storySeen.beats[String(lvl)] = true;
+        saveStorySeenState();
+        showStoryScene({ title: ch.name + " · 第 " + lvl + " 层", lines: ch.beats[lvl] }, onDone);
+        return;
+      }
+      if (onDone) onDone();
+    }
+
+    if (levelIdx % 20 === 0 && ch && ch.prologue && !storySeen.prologues[chKey]) {
+      storySeen.prologues[chKey] = true;
+      saveStorySeenState();
+      showStoryScene(ch.prologue, afterPrologue);
+      return;
+    }
+    afterPrologue();
+  }
+
+  function runStoryAfterChapterWin(levelIdx, onDone) {
+    const lvl = levelIdx + 1;
+    if (lvl % 20 !== 0) {
+      if (onDone) onDone();
+      return;
+    }
+    const chIdx = getChapterForLevel(levelIdx);
+    const ch = getChapterData(chIdx);
+    const chKey = String(chIdx);
+    if (ch && ch.epilogue && !storySeen.epilogues[chKey]) {
+      storySeen.epilogues[chKey] = true;
+      saveStorySeenState();
+      showStoryScene(ch.epilogue, onDone);
+      return;
+    }
+    if (onDone) onDone();
+  }
+
+  function pickStoryQuote(list) {
+    if (!list || !list.length) return null;
+    return list[randomInt(list.length)];
+  }
+
+  function renderGoalsStory() {
+    if (!goalsStoryEl) return;
+    const ch = getChapterData(getChapterForLevel(currentLevelIndex));
+    const lvl = currentLevelIndex + 1;
+    if (ch && ch.beats && ch.beats[lvl] && ch.beats[lvl][0]) {
+      const ln = ch.beats[lvl][0];
+      goalsStoryEl.innerHTML =
+        (ln.avatar || "📜") + " <strong>" + ln.speaker + "：</strong>" + ln.text;
+      goalsStoryEl.hidden = false;
+    } else if (ch && ch.subtitle) {
+      goalsStoryEl.textContent = ch.icon + " " + ch.subtitle;
+      goalsStoryEl.hidden = false;
+    } else {
+      goalsStoryEl.hidden = true;
+    }
+  }
+
   function loadProgress() {
     try {
       const raw = window.localStorage.getItem(UNLOCK_KEY);
@@ -1279,7 +1457,10 @@
     document.body.className = w.theme;
     if (worldIconEl) worldIconEl.textContent = w.icon;
     if (worldNameEl) worldNameEl.textContent = w.name;
-    if (goalsWorldEl) goalsWorldEl.textContent = w.icon + " " + w.name + " · 第 " + (levelIdx + 1) + " 关";
+    if (goalsWorldEl) {
+      goalsWorldEl.textContent =
+        w.icon + " " + w.name + (w.subtitle ? " · " + w.subtitle : "") + " · 第 " + (levelIdx + 1) + " 层";
+    }
   }
 
   function showScreen(name) {
@@ -1319,12 +1500,24 @@
         world.icon +
         '</span><span class="world-head-name">' +
         world.name +
+        (world.subtitle ? " · " + world.subtitle : "") +
         " · L" +
         (wi * 20 + 1) +
         "-" +
         (wi * 20 + 20) +
         "</span>";
       section.appendChild(head);
+      const chData = getChapterData(wi);
+      if (chData && chData.prologue) {
+        const replayBtn = document.createElement("button");
+        replayBtn.type = "button";
+        replayBtn.className = "map-chapter-btn";
+        replayBtn.textContent = "📖 重温 " + world.name;
+        replayBtn.addEventListener("click", function () {
+          showStoryScene(chData.prologue);
+        });
+        section.appendChild(replayBtn);
+      }
       const grid = document.createElement("div");
       grid.className = "map-grid";
       for (let i = 0; i < 20; i++) {
@@ -1507,7 +1700,7 @@
     renderCells();
     soundMatch(1);
     spawnMatchParticles(1);
-    setMessage("🔨 已敲碎一格");
+      setMessage("⛏ 已清理一格");
   }
 
   function processIceBeforeClear(matched) {
@@ -1751,6 +1944,7 @@
     if (goalsLevelNumEl) goalsLevelNumEl.textContent = String(currentLevelIndex + 1);
     if (goalsTargetEl) goalsTargetEl.textContent = String(levelTarget);
     if (goalsMovesEl) goalsMovesEl.textContent = String(movesLeft);
+    renderGoalsStory();
     goalsModalEl.hidden = false;
     if (goalsStartBtn) {
       goalsStartBtn.onclick = function () {
@@ -1887,7 +2081,7 @@
           cell.appendChild(ice);
         }
         cell.setAttribute("role", "gridcell");
-        cell.setAttribute("aria-label", PLANT_NAMES[t] || "植物");
+        cell.setAttribute("aria-label", RELIC_NAMES[t] || "文物");
         cell.tabIndex = 0;
         boardEl.appendChild(cell);
       }
@@ -1980,7 +2174,7 @@
           const t = board[r][c];
           el.dataset.type = String(t);
           applySpecialClasses(el, r, c);
-          if (t >= 0) el.setAttribute("aria-label", PLANT_NAMES[t] || "植物");
+          if (t >= 0) el.setAttribute("aria-label", RELIC_NAMES[t] || "文物");
         }
       }
     }
@@ -2137,7 +2331,7 @@
 
     if (!swapCreatesMatch(r1, c1, r2, c2)) {
       soundInvalid();
-      setMessage("这样交换无法消除，请换一对相邻植物试试。");
+      setMessage("这样交换无法消除，请换一对相邻文物试试。");
       return;
     }
 
@@ -2384,8 +2578,10 @@
   }
 
   function beginLevelPlay() {
-    showLevelGoals(function () {
-      if (!hasAnyValidMove()) shuffleBoard();
+    runStoryBeforeLevel(currentLevelIndex, function () {
+      showLevelGoals(function () {
+        if (!hasAnyValidMove()) shuffleBoard();
+      });
     });
   }
 
@@ -2595,7 +2791,7 @@
       if (hammerLeft <= 0 || processing || gameOver) return;
       hammerMode = !hammerMode;
       updateBoosterUi();
-      setMessage(hammerMode ? "🔨 点选一格敲碎" : "");
+      setMessage(hammerMode ? "⛏ 点选一格清理" : "");
     });
   }
   if (boosterShuffleBtn) {
@@ -2612,6 +2808,8 @@
 
   loadAdStats();
   loadLevelStars();
+  syncStoryTheme();
+  loadStorySeen();
   initEvolution();
   loadProgress();
 
