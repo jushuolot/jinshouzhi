@@ -8,6 +8,7 @@ import streamlit as st
 
 from src.analysis.dashboard_stats import DashboardStats, compute_dashboard_stats
 from src.util.i18n_strings import get_locale, t
+from src.ui.simple_result import render_dashboard_verdict
 
 
 def render_dashboard_panel(
@@ -65,4 +66,5 @@ def render_dashboard_panel(
         )
     elif stats.flat_count:
         st.caption(t("dash_flat", locale=loc, n=stats.flat_count))
+    render_dashboard_verdict(stats)
     return stats

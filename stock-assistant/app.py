@@ -15,6 +15,7 @@ from src.ui.theme_style import inject_theme_styles
 from src.ui.onboarding import render_onboarding_banner
 from src.ui.welcome_banner import render_welcome_banner
 from src.ui.milestone_banner import render_milestone_banner
+from src.ui.simple_result import render_home_steps
 from src.ui.footer import render_app_footer
 from src.util.query_time import format_query_datetime
 from src.util.readonly_mode import apply_readonly_from_query, is_readonly_mode
@@ -29,10 +30,9 @@ inject_mobile_styles()
 inject_theme_styles()
 render_workflow_sidebar()
 
-st.title("Stock Assistant · 快速分析")
-st.caption(
-    "三步：**发现标的 → 工作台分析 → 导出可读简报**。数据来自东财 / Yahoo 等公开源（规则推演，非投资建议）。"
-)
+st.title("Stock Assistant · 股票快速看懂")
+st.caption("不用懂术语：搜股票 → 看红绿结论框 → 下载简报发给同事。（公开数据推演，非投资建议）")
+render_home_steps()
 render_welcome_banner()
 render_milestone_banner()
 render_onboarding_banner()

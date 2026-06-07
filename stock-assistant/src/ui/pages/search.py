@@ -10,6 +10,7 @@ import streamlit as st
 from src.storage.history_store import mark_dirty
 from src.ui import app_core as C
 from src.ui.quick_actions import render_search_quick_actions
+from src.ui.simple_result import render_search_result_banner
 from src.providers import eastmoney, symbol_search, yahoo
 from src.util.readonly_mode import is_readonly_mode
 from src.util.search_history import normalize_search_history, push_search
@@ -29,8 +30,8 @@ def _run_global_search(keyword: str) -> None:
 
 
 def render() -> None:
-    st.subheader("全球证券搜索")
-    st.caption("并行查询：A 股/北交所（东财）+ 港股/美股/英文名（Yahoo）。支持 XSHE:300755、SNX、synnex、茅台、0700.HK 等。")
+    st.subheader("② 找股票，加入自选")
+    st.caption("输入中文名、代码或英文名（如 茅台、0700、SNX）→ 点「开始搜索」→ 每行点「加入自选」。")
     render_search_quick_actions()
     C._show_query_banner("search")
 
@@ -54,22 +55,38 @@ def render() -> None:
     )
     col1, col2 = st.columns([1, 1])
     with col1:
-        if st.button("全球搜索", type="primary", use_container_width=True):
+        if st.button("开始搜索", type="primary", use_container_width=True):
             with st.spinner("正在并行搜索 A 股 / 港股 / 美股…"):
                 _run_global_search(kw)
     with col2:
-        st.caption("每次同时查东财与 Yahoo，不是只搜 A 股。")
+        st.caption("同时查 A 股、港股、美股，不用切换市场。")
 
     hits: list[eastmoney.SearchHit] = st.session_state.last_hits or []
     if hits:
         cnt = symbol_search.count_by_kind(hits)
-        st.success(
-            f"共 {len(hits)} 条 · A股 {cnt['A']} · 港股 {cnt['HK']} · 美股 {cnt['US']}"
-            + (f" · 其他 {cnt['OTHER']}" if cnt["OTHER"] else "")
+        render_search_result_banner(
+            total=len(hits),
+            a=cnt["A"],
+            hk=cnt["HK"],
+            us=cnt["US"],
+            other=cnt["OTHER"],
         )
         readonly = is_readonly_mode()
-        st.caption("搜索结果 · 每行可一键加入自选")
         wl = list(st.session_state.get("watchlist") or [])
+        preview = []
+        for h in hits:
+            code = effective_code(h)
+            status = "已加入" if is_in_watchlist(wl, code) else "可加入"
+            preview.append(
+                {
+                    "名称": h.name,
+                    "代码": code,
+                    "市场": h.kind,
+                    "状态": status,
+                }
+            )
+        st.dataframe(pd.DataFrame(preview), use_container_width=True, hide_index=True)
+        st.caption("👇 点右侧按钮加入自选")
         for i, h in enumerate(hits):
             code = effective_code(h)
             in_wl = is_in_watchlist(wl, code)
@@ -91,32 +108,34 @@ def render() -> None:
                         st.rerun()
 
         labels = [C._hit_label(h) for h in hits]
-        idx = st.selectbox("选择证券查看详情", range(len(labels)), format_func=lambda i: labels[i])
+        idx = st.selectbox("选一只看详细介绍", range(len(labels)), format_func=lambda i: labels[i])
         h = hits[int(idx)]
+        st.markdown(f"#### {h.name}（{effective_code(h)}）")
         if h.kind in ("US", "HK") and h.yahoo:
             try:
                 prof = yahoo.fetch_profile(h.yahoo)
-                st.write(
-                    {
-                        "名称": prof.name,
-                        "代码": prof.ticker,
-                        "交易所": prof.exchange,
-                        "行业": prof.industry,
-                        "板块": prof.sector,
-                    }
+                st.markdown(
+                    f"- **交易所：** {prof.exchange or '—'}\n"
+                    f"- **行业：** {prof.industry or '—'}\n"
+                    f"- **板块：** {prof.sector or '—'}"
                 )
                 if prof.long_business_summary:
                     st.caption(prof.long_business_summary[:500] + ("…" if len(prof.long_business_summary) > 500 else ""))
             except Exception as e:
                 st.warning(f"简介拉取失败：{e}")
         else:
-            st.write(eastmoney.fetch_company_profile_stub(h))
+            stub = eastmoney.fetch_company_profile_stub(h)
+            if isinstance(stub, dict):
+                for k, v in stub.items():
+                    st.markdown(f"- **{k}：** {v}")
+            else:
+                st.write(stub)
         if readonly:
             st.caption("只读模式：无法加入自选股。")
         elif is_in_watchlist(st.session_state.watchlist, effective_code(h)):
             st.caption("已在自选股中。")
-        elif st.button("加入自选股", use_container_width=True):
+        elif st.button("加入这只到自选", use_container_width=True):
             if C._add_to_watchlist(h):
-                st.success("已加入自选股。")
+                st.success(f"✅ 已加入自选：{h.name}。请到 **① 分析工作台** 查看。")
     else:
-        st.info("输入关键词后点「全球搜索」。纯英文公司名（如 synnex）请直接搜，会走 Yahoo。")
+        st.info("👆 输入关键词后点 **「开始搜索」**。例如：茅台、0700、苹果、SNX。")

@@ -27,6 +27,7 @@ from src.analysis.compare_stocks import compare_table_rows, compare_to_markdown,
 from src.analysis.sector_heatmap import aggregate_sector_distribution, sector_bar_values, sector_distribution_rows
 from src.analysis.similar_pick import similar_pick_rows, suggest_similar_picks
 from src.ui.alert_panel import render_alert_panel
+from src.ui.simple_result import plain_score_label, render_analysis_done, render_stock_verdict_card
 from src.ui.auto_refresh import auto_refresh_fragment, render_auto_refresh_controls
 from src.ui.currency_tool import render_floating_currency_tool
 from src.ui.dashboard_panel import render_dashboard_panel
@@ -118,10 +119,12 @@ def _watchlist_display_rows(watchlist: list[dict[str, Any]]) -> list[dict[str, A
         pct = snap.get("pct")
         score = snap.get("score")
         stale = freshness_badge(snap.get("updated_at"), stale_hours=stale_h)
+        verdict = plain_score_label(score)
         rows.append(
             {
                 "名称": item.get("名称"),
                 "代码": code,
+                "结论": verdict,
                 "涨跌幅%": pct_badge(pct) if pct is not None else "—",
                 "评分": score_badge(score) if score is not None else "—",
                 "新鲜度": stale or "✓",
@@ -143,8 +146,8 @@ def _record_recent_viewed(code: str, name: str = "") -> None:
 
 
 def render() -> None:
-    st.subheader("分析工作台")
-    st.caption("选标的 → **一键分析** 或看 K 线 / 财务 / 板块 → 导出简报。")
+    st.subheader("① 分析工作台")
+    st.caption("先看下面表格（**结论**列：偏强/中性/偏弱）→ 选一只 → 点 **一键分析** 看大框结论。")
     recent = normalize_recent_viewed(st.session_state.get("recent_viewed"))
     if recent:
         st.caption("最近查看（点击切换标的）")
@@ -160,7 +163,7 @@ def render() -> None:
     if st.session_state.watchlist:
         st.session_state.watchlist = normalize_watchlist(st.session_state.watchlist)
     if not st.session_state.watchlist:
-        st.info("还没有自选股：到「② 搜索添加」里搜到后加入。")
+        st.info("还没有自选股：请打开上方 **② 搜索添加**，搜到后点 **加入自选**。")
     else:
         snaps_early = st.session_state.get("watch_snapshots") or {}
         render_dashboard_panel(
@@ -719,12 +722,18 @@ def render() -> None:
                         st.rerun()
 
         wl = pd.DataFrame(_watchlist_display_rows(display_wl))
-        show_cols = [c for c in ["名称", "代码", "涨跌幅%", "评分", "一句话", "货币", "类型", "市场"] if c in wl.columns]
+        show_cols = [
+            c
+            for c in ["名称", "代码", "结论", "涨跌幅%", "评分", "一句话", "新鲜度", "货币", "类型", "市场"]
+            if c in wl.columns
+        ]
+        st.markdown("**你的自选股一览**（绿=偏强 · 红=偏弱 · 黄=中性）")
         st.dataframe(
             wl[show_cols] if show_cols else wl,
             use_container_width=True,
             hide_index=True,
             column_config={
+                "结论": st.column_config.TextColumn("结论", help="偏强/中性/偏弱/待分析"),
                 "货币": st.column_config.TextColumn("货币", help="报价货币：A股 CNY / 港股 HKD / 美股 USD"),
                 "一句话": st.column_config.TextColumn("一句话", width="large"),
             },
@@ -790,9 +799,18 @@ def render() -> None:
         render_sector_linkage_panel(watchlist=display_wl)
 
         st.divider()
-        st.subheader("行情与分析")
-        code = st.selectbox("选择标的（按代码）", options=wl["代码"].tolist(), key="watch_code")
+        st.subheader("② 深入分析单只股票")
+        code = st.selectbox("选择要分析的标的", options=wl["代码"].tolist(), key="watch_code")
         item = next((x for x in st.session_state.watchlist if x.get("代码") == code), None)
+        snap_sel = (st.session_state.get("watch_snapshots") or {}).get(code) or {}
+        if item and code:
+            render_stock_verdict_card(
+                name=str(item.get("名称") or code),
+                code=code,
+                score=snap_sel.get("score"),
+                pct=snap_sel.get("pct"),
+                one_line=str(snap_sel.get("one_line") or ""),
+            )
         if item and code:
             _record_recent_viewed(code, str(item.get("名称") or code))
         kind = str(item.get("类型") or "A") if item else "A"
@@ -968,11 +986,22 @@ def render() -> None:
                     s = score_stock(df)
                     watch_stats = stats
                     watch_score = s
-                    st.metric("综合评分", f"{s.total:.1f}")
-                    st.caption("评分拆分：趋势/动量/风险/流动性")
-                    st.write({"趋势": s.trend, "动量": s.momentum, "风险": s.risk, "流动性": s.liquidity})
-                    for n in s.notes:
-                        st.write(f"- {n}")
+                    st.markdown("**技术面拆分**（数字越大通常越好，除风险外）")
+                    st.dataframe(
+                        pd.DataFrame(
+                            [
+                                {"项目": "综合评分", "数值": f"{s.total:.1f}", "说明": plain_score_label(s.total)},
+                                {"项目": "趋势", "数值": f"{s.trend:.1f}", "说明": "走势方向"},
+                                {"项目": "动量", "数值": f"{s.momentum:.1f}", "说明": "近期力度"},
+                                {"项目": "风险", "数值": f"{s.risk:.1f}", "说明": "波动风险（越低越好）"},
+                                {"项目": "流动性", "数值": f"{s.liquidity:.1f}", "说明": "成交活跃度"},
+                            ]
+                        ),
+                        use_container_width=True,
+                        hide_index=True,
+                    )
+                    if s.notes:
+                        st.caption("补充说明：" + "；".join(s.notes[:3]))
                     st.data_editor(
                         df.sort_values("日期", ascending=False).head(200),
                         use_container_width=True,
@@ -998,7 +1027,7 @@ def render() -> None:
                     )
 
             st.divider()
-            st.subheader("分析与导出")
+            st.subheader("③ 一键出报告")
             code6 = code if kind == "A" and code.isdigit() else None
             yh = str(item.get("Yahoo") or code)
             news_watch = fetch_aggregated_news(code6=code6, yahoo_ticker=yh, limit=15)
@@ -1037,7 +1066,13 @@ def render() -> None:
                             log_label=f"一键分析 {item.get('名称')}",
                             conclusions_summary=result.snapshot.one_line[:120],
                         )
-                        st.success("一键分析完成：摘要、行动路线、可读简报已就绪。")
+                        render_analysis_done(
+                            name=str(item.get("名称") or code),
+                            code=code,
+                            score=result.score.total if result.score else result.snapshot.score,
+                            pct=result.snapshot.pct,
+                            one_line=result.snapshot.one_line,
+                        )
                     except Exception as e:
                         st.error(f"一键分析失败：{e}")
 
@@ -1114,10 +1149,13 @@ def render() -> None:
 
             brief_md = st.session_state.get(f"brief_md_{code}")
             if brief_md:
+                snap_b = (st.session_state.get("watch_snapshots") or {}).get(code) or {}
                 render_readable_brief_panel(
                     brief_md=brief_md,
                     file_stem=f"{item.get('名称', '')}_{code}",
                     key_prefix=f"watch_brief_{code}",
+                    one_line=str(snap_b.get("one_line") or ""),
+                    score=snap_b.get("score"),
                 )
 
             with st.expander("重大新闻（多源）", expanded=False):
