@@ -2,80 +2,135 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>萌植消消乐</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="description" content="萌植消消乐 - 100关三星挑战，特殊糖果，五大世界" />
+  <title>萌植消消乐 · 终极版</title>
   <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="ultimate.css" />
 </head>
-<body>
+<body class="world-1">
+  <div id="confetti-layer" aria-hidden="true"></div>
+  <div id="mega-combo" class="mega-combo" hidden aria-live="polite"></div>
+
   <div class="wrap">
-    <header class="header">
+    <!-- 首页 -->
+    <section id="screen-home" class="screen screen-home">
+      <div class="home-logo" aria-hidden="true">🌸✨🍀</div>
       <h1 id="game-title" class="title">萌植消消乐</h1>
-      <p class="subtitle">滑动交换 · 连线消除 · 合成特殊糖果</p>
-    </header>
+      <p class="home-tagline">100 关 · 五大世界 · 特殊糖果 · 三星挑战</p>
+      <div class="home-stats">
+        <div class="home-stat">
+          <strong id="home-total-stars">0</strong>
+          总星数
+        </div>
+        <div class="home-stat">
+          <strong id="home-max-level">1</strong>
+          最高关卡
+        </div>
+      </div>
+      <div class="home-actions">
+        <button type="button" id="home-continue" class="btn btn-hero">继续冒险</button>
+        <button type="button" id="home-map" class="btn btn-secondary">世界地图</button>
+      </div>
+    </section>
 
-    <div class="game-shell">
-      <div class="level-bar">
-        <div class="level-badge">
-          <span class="level-badge-label">关卡</span>
-          <strong id="level-num" class="level-badge-num">1</strong>
+    <!-- 关卡地图 -->
+    <section id="screen-map" class="screen screen-map" hidden>
+      <div class="map-head">
+        <button type="button" id="map-back-home" class="btn btn-secondary btn-back">← 首页</button>
+        <h2 class="map-title">世界地图</h2>
+        <span id="map-star-total" class="chip">★ 0</span>
+      </div>
+      <div id="map-scroll" class="map-scroll"></div>
+    </section>
+
+    <!-- 游戏主界面 -->
+    <section id="screen-play" class="screen screen-play" hidden>
+      <div class="play-topbar">
+        <button type="button" id="play-back-map" class="btn btn-secondary btn-back">← 地图</button>
+      </div>
+
+      <header class="header header-compact">
+        <p id="world-banner" class="world-banner"><span id="world-icon">🌱</span> <strong id="world-name">萌绿初醒</strong></p>
+      </header>
+
+      <div class="game-shell">
+        <div class="level-bar">
+          <div class="level-badge">
+            <span class="level-badge-label">关卡</span>
+            <strong id="level-num" class="level-badge-num">1</strong>
+          </div>
+          <div id="live-stars" class="live-stars" aria-label="本关实时星级">
+            <span class="star" data-star="1">★</span>
+            <span class="star" data-star="2">★</span>
+            <span class="star" data-star="3">★</span>
+          </div>
+          <div class="moves-pill">
+            <span class="moves-pill-label">步数</span>
+            <strong id="moves" class="moves-pill-value">0</strong>
+          </div>
         </div>
-        <div id="live-stars" class="live-stars" aria-label="本关实时星级">
-          <span class="star" data-star="1">★</span>
-          <span class="star" data-star="2">★</span>
-          <span class="star" data-star="3">★</span>
+
+        <div class="progress-block">
+          <div class="progress-meta">
+            <span class="progress-label">目标进度</span>
+            <span id="progress-text" class="progress-text">0 / 100</span>
+          </div>
+          <div class="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100">
+            <div id="score-progress" class="progress-fill"></div>
+          </div>
         </div>
-        <div class="moves-pill">
-          <span class="moves-pill-label">步数</span>
-          <strong id="moves" class="moves-pill-value">0</strong>
+
+        <div class="score-row">
+          <div class="score-chip">
+            <span>得分</span>
+            <strong id="score" class="hud-value">0</strong>
+          </div>
+          <div class="score-chip score-chip-muted">
+            <span>目标</span>
+            <strong id="target-score" class="hud-value">0</strong>
+          </div>
+          <div class="score-chip score-chip-muted">
+            <span>总关</span>
+            <strong id="level" class="hud-value">1/100</strong>
+          </div>
         </div>
       </div>
 
-      <div class="progress-block">
-        <div class="progress-meta">
-          <span class="progress-label">目标进度</span>
-          <span id="progress-text" class="progress-text">0 / 100</span>
-        </div>
-        <div class="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100">
-          <div id="score-progress" class="progress-fill"></div>
-        </div>
+      <div class="board-wrap">
+        <div id="combo-banner" class="combo-banner" hidden aria-live="polite"></div>
+        <div id="fx-layer" class="fx-layer" aria-hidden="true"></div>
+        <div id="board" class="board" role="grid" aria-label="游戏棋盘"></div>
       </div>
 
-      <div class="score-row">
-        <div class="score-chip">
-          <span>得分</span>
-          <strong id="score" class="hud-value">0</strong>
-        </div>
-        <div class="score-chip score-chip-muted">
-          <span>目标</span>
-          <strong id="target-score" class="hud-value">0</strong>
-        </div>
-        <div class="score-chip score-chip-muted">
-          <span>总关</span>
-          <strong id="level" class="hud-value">1/100</strong>
-        </div>
+      <div class="booster-bar" aria-label="道具栏">
+        <button type="button" id="booster-hammer" class="booster-btn" title="敲碎一格">
+          <span class="booster-icon">🔨</span>
+          <span class="booster-count" id="hammer-count">3</span>
+        </button>
+        <button type="button" id="booster-shuffle" class="booster-btn" title="重排棋盘">
+          <span class="booster-icon">🔀</span>
+          <span class="booster-count" id="shuffle-count">2</span>
+        </button>
+        <button type="button" id="booster-hint" class="booster-btn" title="提示一步">
+          <span class="booster-icon">💡</span>
+          <span class="booster-count">∞</span>
+        </button>
       </div>
-    </div>
 
-    <div class="board-wrap">
-      <div id="combo-banner" class="combo-banner" hidden aria-live="polite"></div>
-      <div id="fx-layer" class="fx-layer" aria-hidden="true"></div>
-      <div id="board" class="board" role="grid" aria-label="游戏棋盘"></div>
-    </div>
+      <div class="audio-bar" aria-label="音频控制">
+        <button type="button" id="music-toggle" class="chip" aria-pressed="false">音乐：关</button>
+        <button type="button" id="rules-open" class="chip chip-secondary">规则</button>
+      </div>
 
-    <div class="audio-bar" aria-label="音频控制">
-      <button type="button" id="music-toggle" class="chip" aria-pressed="false">音乐：关</button>
-      <button type="button" id="rules-open" class="chip chip-secondary">游戏规则</button>
-    </div>
+      <p id="message" class="message" aria-live="polite"></p>
 
-    <div id="board" class="board" role="grid" aria-label="游戏棋盘"></div>
-
-    <p id="message" class="message" aria-live="polite"></p>
-
-    <div class="actions actions-row">
-      <button type="button" id="next-level" class="btn btn-secondary" hidden>下一关</button>
-      <button type="button" id="retry-level" class="btn btn-secondary" hidden>本关重试</button>
-      <button type="button" id="restart" class="btn">从第一关开始</button>
-    </div>
+      <div class="actions actions-row">
+        <button type="button" id="next-level" class="btn btn-secondary" hidden>下一关</button>
+        <button type="button" id="retry-level" class="btn btn-secondary" hidden>重试</button>
+        <button type="button" id="restart" class="btn btn-secondary" hidden>第一关</button>
+      </div>
+    </section>
   </div>
 
   <div id="goals-modal" class="modal goals-modal" role="dialog" aria-modal="true" aria-labelledby="goals-title" hidden>
@@ -85,11 +140,13 @@
         <h2 id="goals-title" class="modal-title">第 <span id="goals-level-num">1</span> 关</h2>
       </div>
       <div class="modal-body goals-body">
+        <p id="goals-world" class="goals-world"></p>
         <ul class="goals-list">
           <li>🎯 达到 <strong id="goals-target">100</strong> 分</li>
-          <li>👣 剩余步数 <strong id="goals-moves">20</strong></li>
-          <li>⭐ 三星：高分或剩较多步数</li>
-          <li>✨ 4 连 → 条纹糖 · 5 连 → 炸弹糖</li>
+          <li>👣 步数 <strong id="goals-moves">20</strong></li>
+          <li id="goals-ice-line" hidden>🧊 消除冰块障碍</li>
+          <li>⭐ 三星：高分或剩余步数多</li>
+          <li>✨ 4连条纹糖 · 5连炸弹糖</li>
         </ul>
       </div>
       <div class="modal-actions actions-row">
@@ -105,14 +162,12 @@
         <h2 id="modal-title" class="modal-title">本关结算</h2>
         <button type="button" class="modal-close" aria-label="关闭" data-modal-close="1">×</button>
       </div>
-
       <div class="modal-body">
         <div class="modal-stars" id="modal-stars" aria-label="本关星级">
           <span class="star star-lg" data-star="1">★</span>
           <span class="star star-lg" data-star="2">★</span>
           <span class="star star-lg" data-star="3">★</span>
         </div>
-
         <div class="modal-score">
           <div class="modal-score-item">
             <span class="modal-label">关卡</span>
@@ -131,21 +186,20 @@
             <strong id="modal-left" class="modal-value">0</strong>
           </div>
         </div>
-
         <div class="easter-egg">
           <div id="modal-egg-icon" class="egg-icon">🏆</div>
           <div class="egg-text">
             <div class="egg-title">本关评价</div>
-            <div id="modal-egg-text" class="egg-desc">继续加油，收集更多三星！</div>
+            <div id="modal-egg-text" class="egg-desc">继续加油！</div>
           </div>
         </div>
       </div>
-
       <div class="modal-actions actions-row">
-        <button type="button" id="modal-prev" class="btn btn-secondary" hidden>返回上一关</button>
-        <button type="button" id="modal-retry" class="btn btn-secondary" hidden>重玩本关</button>
+        <button type="button" id="modal-map" class="btn btn-secondary">返回地图</button>
+        <button type="button" id="modal-prev" class="btn btn-secondary" hidden>上一关</button>
+        <button type="button" id="modal-retry" class="btn btn-secondary" hidden>重玩</button>
         <button type="button" id="modal-next" class="btn">下一关</button>
-        <button type="button" id="modal-restart" class="btn btn-secondary">从第一关开始</button>
+        <button type="button" id="modal-restart" class="btn btn-secondary" hidden>从头开始</button>
       </div>
     </div>
   </div>
@@ -154,14 +208,14 @@
     <div class="modal-backdrop" data-rules-close="1"></div>
     <div class="modal-panel">
       <div class="modal-head">
-        <h2 id="rules-title" class="modal-title">游戏规则说明</h2>
+        <h2 id="rules-title" class="modal-title">游戏规则</h2>
         <button type="button" class="modal-close" aria-label="关闭" data-rules-close="1">×</button>
       </div>
       <div class="modal-body rules-body">
         <div id="rules-content" class="rules-content" aria-live="polite"></div>
       </div>
       <div class="modal-actions actions-row">
-        <button type="button" class="btn" data-rules-close="1">我知道了</button>
+        <button type="button" class="btn" data-rules-close="1">知道了</button>
       </div>
     </div>
   </div>
@@ -175,7 +229,7 @@
       </div>
       <div class="modal-body ad-body">
         <p id="ad-slot-label" class="ad-slot-label">关头广告</p>
-        <p id="ad-sponsor" class="ad-sponsor">示例广告主</p>
+        <p id="ad-sponsor" class="ad-sponsor">赞助商</p>
         <div class="ad-frame" id="ad-frame">
           <div class="ad-preview-card">
             <span id="ad-preview-icon" class="ad-preview-icon" aria-hidden="true">🧃</span>
@@ -184,7 +238,6 @@
               <p id="ad-preview-teaser" class="ad-preview-teaser">点击查看详情</p>
             </div>
           </div>
-          <p id="ad-link-preview" class="ad-link-preview" hidden></p>
         </div>
       </div>
       <div class="modal-actions actions-row ad-actions">
@@ -202,12 +255,12 @@
         <button type="button" class="modal-close" aria-label="关闭" data-admin-gate-close="1">×</button>
       </div>
       <div class="modal-body">
-        <p class="admin-hint">请输入管理口令以查看收益与提取记录。</p>
+        <p class="admin-hint">请输入管理口令。</p>
         <label class="admin-field">
           <span class="admin-field-label">口令</span>
-          <input id="admin-pass-input" class="admin-input" type="password" autocomplete="off" placeholder="输入口令" />
+          <input id="admin-pass-input" class="admin-input" type="password" autocomplete="off" />
         </label>
-        <p id="admin-gate-error" class="admin-error" hidden>口令错误，请重试</p>
+        <p id="admin-gate-error" class="admin-error" hidden>口令错误</p>
       </div>
       <div class="modal-actions actions-row">
         <button type="button" id="admin-gate-cancel" class="btn btn-secondary" data-admin-gate-close="1">取消</button>
@@ -225,43 +278,20 @@
       </div>
       <div class="modal-body">
         <div class="admin-stats">
-          <div class="admin-stat">
-            <span class="admin-stat-label">本局收益</span>
-            <strong id="admin-session" class="admin-stat-value">¥0.000</strong>
-          </div>
-          <div class="admin-stat">
-            <span class="admin-stat-label">累计收入</span>
-            <strong id="admin-total" class="admin-stat-value">¥0.000</strong>
-          </div>
-          <div class="admin-stat">
-            <span class="admin-stat-label">已提取</span>
-            <strong id="admin-withdrawn" class="admin-stat-value">¥0.000</strong>
-          </div>
-          <div class="admin-stat admin-stat-highlight">
-            <span class="admin-stat-label">可提取余额</span>
-            <strong id="admin-balance" class="admin-stat-value">¥0.000</strong>
-          </div>
+          <div class="admin-stat"><span class="admin-stat-label">本局</span><strong id="admin-session" class="admin-stat-value">¥0</strong></div>
+          <div class="admin-stat"><span class="admin-stat-label">累计</span><strong id="admin-total" class="admin-stat-value">¥0</strong></div>
+          <div class="admin-stat"><span class="admin-stat-label">已提取</span><strong id="admin-withdrawn" class="admin-stat-value">¥0</strong></div>
+          <div class="admin-stat admin-stat-highlight"><span class="admin-stat-label">余额</span><strong id="admin-balance" class="admin-stat-value">¥0</strong></div>
         </div>
-
         <div class="admin-withdraw">
-          <h3 class="admin-section-title">提取费用</h3>
-          <label class="admin-field">
-            <span class="admin-field-label">提取金额（元）</span>
-            <input id="admin-withdraw-input" class="admin-input" type="number" min="0" step="0.001" placeholder="0.000" />
-          </label>
+          <label class="admin-field"><span class="admin-field-label">提取金额</span><input id="admin-withdraw-input" class="admin-input" type="number" min="0" step="0.001" /></label>
           <div class="admin-withdraw-actions">
-            <button type="button" id="admin-withdraw-all" class="btn btn-secondary">全部提取</button>
-            <button type="button" id="admin-withdraw-submit" class="btn">确认提取</button>
+            <button type="button" id="admin-withdraw-all" class="btn btn-secondary">全部</button>
+            <button type="button" id="admin-withdraw-submit" class="btn">提取</button>
           </div>
-          <p id="admin-withdraw-msg" class="admin-msg" aria-live="polite"></p>
+          <p id="admin-withdraw-msg" class="admin-msg"></p>
         </div>
-
-        <div class="admin-history">
-          <h3 class="admin-section-title">提取记录</h3>
-          <ul id="admin-withdraw-list" class="admin-withdraw-list">
-            <li class="admin-withdraw-empty">暂无提取记录</li>
-          </ul>
-        </div>
+        <ul id="admin-withdraw-list" class="admin-withdraw-list"></ul>
       </div>
       <div class="modal-actions actions-row">
         <button type="button" id="admin-panel-close" class="btn" data-admin-panel-close="1">关闭</button>

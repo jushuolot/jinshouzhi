@@ -31,6 +31,16 @@
   const SPECIAL_ROW = 1;
   const SPECIAL_COL = 2;
   const SPECIAL_BOMB = 3;
+  const UNLOCK_KEY = "match3_max_unlocked";
+  const WORLDS = [
+    { name: "萌绿初醒", icon: "🌱", theme: "world-1", iceFrom: 999 },
+    { name: "花语秘境", icon: "🌸", theme: "world-2", iceFrom: 20 },
+    { name: "森灵之森", icon: "🌲", theme: "world-3", iceFrom: 40 },
+    { name: "星辉花园", icon: "✨", theme: "world-4", iceFrom: 60 },
+    { name: "极光圣域", icon: "🌈", theme: "world-5", iceFrom: 80 },
+  ];
+  const BOOSTER_HAMMER_START = 3;
+  const BOOSTER_SHUFFLE_START = 2;
 
   const DEFAULT_AD_CONFIG = {
     enabled: true,
@@ -167,6 +177,13 @@
   let specialGrid = [];
   let levelMovesTotal = 0;
   let cascadeStep = 0;
+  /** @type {number[][]} */
+  let iceGrid = [];
+  let maxUnlockedLevel = 0;
+  let hammerLeft = BOOSTER_HAMMER_START;
+  let shuffleLeft = BOOSTER_SHUFFLE_START;
+  let hammerMode = false;
+  let hintTimer = null;
   /** @type {Record<number, number>} */
   let levelStarsMap = {};
   let score = 0;
@@ -212,6 +229,30 @@
   const goalsMovesEl = document.getElementById("goals-moves");
   const goalsStartBtn = document.getElementById("goals-start");
   const modalStarsEl = document.getElementById("modal-stars");
+  const modalMapBtn = document.getElementById("modal-map");
+  const screenHomeEl = document.getElementById("screen-home");
+  const screenMapEl = document.getElementById("screen-map");
+  const screenPlayEl = document.getElementById("screen-play");
+  const homeContinueBtn = document.getElementById("home-continue");
+  const homeMapBtn = document.getElementById("home-map");
+  const homeTotalStarsEl = document.getElementById("home-total-stars");
+  const homeMaxLevelEl = document.getElementById("home-max-level");
+  const mapScrollEl = document.getElementById("map-scroll");
+  const mapBackHomeBtn = document.getElementById("map-back-home");
+  const mapStarTotalEl = document.getElementById("map-star-total");
+  const playBackMapBtn = document.getElementById("play-back-map");
+  const worldBannerEl = document.getElementById("world-banner");
+  const worldIconEl = document.getElementById("world-icon");
+  const worldNameEl = document.getElementById("world-name");
+  const goalsWorldEl = document.getElementById("goals-world");
+  const goalsIceLineEl = document.getElementById("goals-ice-line");
+  const boosterHammerBtn = document.getElementById("booster-hammer");
+  const boosterShuffleBtn = document.getElementById("booster-shuffle");
+  const boosterHintBtn = document.getElementById("booster-hint");
+  const hammerCountEl = document.getElementById("hammer-count");
+  const shuffleCountEl = document.getElementById("shuffle-count");
+  const confettiLayerEl = document.getElementById("confetti-layer");
+  const megaComboEl = document.getElementById("mega-combo");
   const messageEl = document.getElementById("message");
   const restartBtn = document.getElementById("restart");
   const nextLevelBtn = document.getElementById("next-level");
@@ -743,7 +784,9 @@
       "。</p>" +
       "<p><strong>操作</strong>：相邻滑动交换，或按住连线 ≥3 同色消除。</p>" +
       "<p><strong>特殊糖果</strong>：4 连生成条纹糖（整行/列），5 连生成炸弹糖（3×3）。</p>" +
-      "<p><strong>星级</strong>：达标 1 星；高分或剩余步数多可获 2～3 星。</p>" +
+      "<p><strong>五大世界</strong>：每 20 关一个主题，后期出现冰块障碍。</p>" +
+      "<p><strong>道具</strong>：🔨敲碎 · 🔀重排 · 💡提示。</p>" +
+      "<p><strong>星级</strong>：达标 1 星；高分或剩余步数多可获 2～3 星，地图可回看。</p>" +
       "<p><strong>难度</strong>：第 1 关约 " +
       pass1 +
       "% 通过率，后续关卡逐步提升挑战。</p>" +
@@ -954,6 +997,11 @@
       const prev = levelStarsMap[currentLevelIndex] || 0;
       if (stars > prev) levelStarsMap[currentLevelIndex] = stars;
       saveLevelStars();
+      if (currentLevelIndex >= maxUnlockedLevel && currentLevelIndex < MAX_LEVEL - 1) {
+        maxUnlockedLevel = currentLevelIndex + 1;
+        saveProgress();
+      }
+      spawnConfetti();
     }
     renderStarRow(modalStarsEl, stars);
 
@@ -1031,6 +1079,287 @@
     }
   }
 
+  function loadProgress() {
+    try {
+      const raw = window.localStorage.getItem(UNLOCK_KEY);
+      maxUnlockedLevel = raw ? Math.min(MAX_LEVEL - 1, Math.max(0, parseInt(raw, 10) || 0)) : 0;
+    } catch (e) {
+      maxUnlockedLevel = 0;
+    }
+  }
+
+  function saveProgress() {
+    try {
+      window.localStorage.setItem(UNLOCK_KEY, String(maxUnlockedLevel));
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  function totalStarsEarned() {
+    let n = 0;
+    Object.keys(levelStarsMap).forEach(function (k) {
+      n += levelStarsMap[k] || 0;
+    });
+    return n;
+  }
+
+  function worldForLevel(levelIdx) {
+    return WORLDS[Math.min(WORLDS.length - 1, Math.floor(levelIdx / 20))];
+  }
+
+  function applyWorldTheme(levelIdx) {
+    const w = worldForLevel(levelIdx);
+    document.body.className = w.theme;
+    if (worldIconEl) worldIconEl.textContent = w.icon;
+    if (worldNameEl) worldNameEl.textContent = w.name;
+    if (goalsWorldEl) goalsWorldEl.textContent = w.icon + " " + w.name + " · 第 " + (levelIdx + 1) + " 关";
+  }
+
+  function showScreen(name) {
+    if (screenHomeEl) screenHomeEl.hidden = name !== "home";
+    if (screenMapEl) screenMapEl.hidden = name !== "map";
+    if (screenPlayEl) screenPlayEl.hidden = name !== "play";
+  }
+
+  function updateHomeStats() {
+    if (homeTotalStarsEl) homeTotalStarsEl.textContent = String(totalStarsEarned());
+    if (homeMaxLevelEl) homeMaxLevelEl.textContent = String(maxUnlockedLevel + 1);
+    if (mapStarTotalEl) mapStarTotalEl.textContent = "★ " + totalStarsEarned();
+  }
+
+  function showHome() {
+    updateHomeStats();
+    showScreen("home");
+  }
+
+  function showMap() {
+    renderLevelMap();
+    updateHomeStats();
+    showScreen("map");
+  }
+
+  function renderLevelMap() {
+    if (!mapScrollEl) return;
+    mapScrollEl.innerHTML = "";
+    WORLDS.forEach(function (world, wi) {
+      const section = document.createElement("div");
+      section.className = "world-section";
+      const head = document.createElement("div");
+      head.className = "world-head";
+      head.innerHTML =
+        '<span class="world-head-icon">' +
+        world.icon +
+        '</span><span class="world-head-name">' +
+        world.name +
+        " · L" +
+        (wi * 20 + 1) +
+        "-" +
+        (wi * 20 + 20) +
+        "</span>";
+      section.appendChild(head);
+      const grid = document.createElement("div");
+      grid.className = "map-grid";
+      for (let i = 0; i < 20; i++) {
+        const levelIdx = wi * 20 + i;
+        if (levelIdx >= MAX_LEVEL) break;
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "map-node";
+        btn.textContent = String(levelIdx + 1);
+        const locked = levelIdx > maxUnlockedLevel;
+        if (locked) btn.classList.add("locked");
+        if (levelIdx === maxUnlockedLevel) btn.classList.add("current");
+        btn.disabled = locked;
+        const stars = levelStarsMap[levelIdx] || 0;
+        if (stars > 0) {
+          const starEl = document.createElement("span");
+          starEl.className = "map-node-stars";
+          starEl.textContent = "★".repeat(stars) + "☆".repeat(3 - stars);
+          btn.appendChild(starEl);
+        }
+        btn.addEventListener("click", function () {
+          startLevel(levelIdx);
+        });
+        grid.appendChild(btn);
+      }
+      section.appendChild(grid);
+      mapScrollEl.appendChild(section);
+    });
+  }
+
+  function emptyIceGrid() {
+    const g = [];
+    for (let r = 0; r < ROWS; r++) {
+      g[r] = [];
+      for (let c = 0; c < COLS; c++) g[r][c] = 0;
+    }
+    return g;
+  }
+
+  function initIceForLevel(levelIdx) {
+    iceGrid = emptyIceGrid();
+    const world = worldForLevel(levelIdx);
+    if (levelIdx + 1 < world.iceFrom) return;
+    const count = Math.min(24, 6 + Math.floor(levelIdx / 8));
+    let placed = 0;
+    let guard = 0;
+    while (placed < count && guard < 200) {
+      guard++;
+      const r = randomInt(ROWS);
+      const c = randomInt(COLS);
+      if (iceGrid[r][c] > 0) continue;
+      iceGrid[r][c] = levelIdx >= 50 ? (Math.random() < 0.35 ? 2 : 1) : 1;
+      placed++;
+    }
+  }
+
+  function resetBoosters() {
+    hammerLeft = BOOSTER_HAMMER_START;
+    shuffleLeft = BOOSTER_SHUFFLE_START;
+    hammerMode = false;
+    updateBoosterUi();
+  }
+
+  function updateBoosterUi() {
+    if (hammerCountEl) hammerCountEl.textContent = String(hammerLeft);
+    if (shuffleCountEl) shuffleCountEl.textContent = String(shuffleLeft);
+    if (boosterHammerBtn) {
+      boosterHammerBtn.disabled = hammerLeft <= 0 || processing || gameOver;
+      boosterHammerBtn.classList.toggle("active", hammerMode);
+    }
+    if (boosterShuffleBtn) boosterShuffleBtn.disabled = shuffleLeft <= 0 || processing || gameOver;
+  }
+
+  function spawnConfetti() {
+    if (!confettiLayerEl) return;
+    confettiLayerEl.innerHTML = "";
+    const colors = ["#ffd93d", "#6fcf6f", "#ff7eb3", "#6ec6ff", "#c77dff", "#fff"];
+    for (let i = 0; i < 80; i++) {
+      const p = document.createElement("div");
+      p.className = "confetti-piece";
+      p.style.left = Math.random() * 100 + "%";
+      p.style.top = "-5%";
+      p.style.background = colors[randomInt(colors.length)];
+      p.style.animationDuration = 1.8 + Math.random() * 1.2 + "s";
+      p.style.animationDelay = Math.random() * 0.4 + "s";
+      confettiLayerEl.appendChild(p);
+    }
+    window.setTimeout(function () {
+      if (confettiLayerEl) confettiLayerEl.innerHTML = "";
+    }, 3500);
+  }
+
+  function showMegaCombo(text) {
+    if (!megaComboEl) return;
+    megaComboEl.textContent = text;
+    megaComboEl.hidden = false;
+    megaComboEl.classList.add("show");
+    window.setTimeout(function () {
+      megaComboEl.classList.remove("show");
+      megaComboEl.hidden = true;
+    }, 1200);
+  }
+
+  function spawnMatchParticles(cellCount) {
+    if (!fxLayerEl || !boardEl) return;
+    const n = Math.min(16, cellCount * 2);
+    const rect = boardEl.getBoundingClientRect();
+    const wrap = boardEl.parentElement && boardEl.parentElement.getBoundingClientRect();
+    if (!wrap) return;
+    for (let i = 0; i < n; i++) {
+      const p = document.createElement("span");
+      p.className = "particle";
+      const x = rect.left - wrap.left + Math.random() * rect.width;
+      const y = rect.top - wrap.top + Math.random() * rect.height;
+      p.style.left = x + "px";
+      p.style.top = y + "px";
+      p.style.background = ["#ffd93d", "#6fcf6f", "#ff7eb3", "#fff"][randomInt(4)];
+      const ang = Math.random() * Math.PI * 2;
+      const dist = 20 + Math.random() * 40;
+      p.style.setProperty("--px", Math.cos(ang) * dist + "px");
+      p.style.setProperty("--py", Math.sin(ang) * dist + "px");
+      fxLayerEl.appendChild(p);
+      window.setTimeout(function () {
+        p.remove();
+      }, 600);
+    }
+  }
+
+  function clearHintPulse() {
+    if (!boardEl) return;
+    boardEl.querySelectorAll(".hint-pulse").forEach(function (el) {
+      el.classList.remove("hint-pulse");
+    });
+  }
+
+  function findHintSwap() {
+    for (let r = 0; r < ROWS; r++) {
+      for (let c = 0; c < COLS; c++) {
+        if (c + 1 < COLS && swapCreatesMatch(r, c, r, c + 1))
+          return [
+            { r: r, c: c },
+            { r: r, c: c + 1 },
+          ];
+        if (r + 1 < ROWS && swapCreatesMatch(r, c, r + 1, c))
+          return [
+            { r: r, c: c },
+            { r: r + 1, c: c },
+          ];
+      }
+    }
+    return null;
+  }
+
+  function showHint() {
+    if (processing || gameOver) return;
+    clearHintPulse();
+    const pair = findHintSwap();
+    if (!pair) {
+      setMessage("暂无可用步数，试试重排道具！");
+      return;
+    }
+    pair.forEach(function (p) {
+      const el = boardEl && boardEl.querySelector('.cell[data-r="' + p.r + '"][data-c="' + p.c + '"]');
+      if (el) el.classList.add("hint-pulse");
+    });
+    if (hintTimer) window.clearTimeout(hintTimer);
+    hintTimer = window.setTimeout(clearHintPulse, 2500);
+    setMessage("💡 高亮格子可交换消除");
+  }
+
+  function useHammerOn(r, c) {
+    if (hammerLeft <= 0 || processing || gameOver) return;
+    hammerLeft -= 1;
+    hammerMode = false;
+    updateBoosterUi();
+    board[r][c] = -1;
+    specialGrid[r][c] = SPECIAL_NONE;
+    iceGrid[r][c] = 0;
+    gravityAndRefillWithSpecials(board, specialGrid);
+    renderCells();
+    soundMatch(1);
+    spawnMatchParticles(1);
+    setMessage("🔨 已敲碎一格");
+  }
+
+  function processIceBeforeClear(matched) {
+    const toClear = new Set();
+    const iceDamaged = new Set();
+    matched.forEach(function (k) {
+      const parts = k.split(",");
+      const r = Number(parts[0]);
+      const c = Number(parts[1]);
+      if (iceGrid[r][c] > 0) {
+        iceGrid[r][c] -= 1;
+        iceDamaged.add(k);
+      } else {
+        toClear.add(k);
+      }
+    });
+    return { toClear: toClear, iceDamaged: iceDamaged };
+  }
+
   function calcStars(scoreVal, target, movesLeftVal, movesTotal) {
     if (scoreVal < target) return 0;
     const scoreRatio = scoreVal / target;
@@ -1056,6 +1385,8 @@
   }
 
   function showComboBanner(step) {
+    if (step >= 5) showMegaCombo(step + " 连击!!");
+    else if (step >= 3) showMegaCombo("超棒 " + step + " 连击!");
     if (!comboBannerEl || step < 2) return;
     comboBannerEl.textContent = step + " 连击！";
     comboBannerEl.hidden = false;
@@ -1242,6 +1573,10 @@
   }
 
   function showLevelGoals(onStart) {
+    if (goalsIceLineEl) {
+      const hasIce = worldForLevel(currentLevelIndex).iceFrom <= currentLevelIndex + 1;
+      goalsIceLineEl.hidden = !hasIce;
+    }
     if (!goalsModalEl) {
       if (onStart) onStart();
       return;
@@ -1378,6 +1713,12 @@
         const t = board[r][c];
         cell.dataset.type = String(t);
         applySpecialClasses(cell, r, c);
+        if (iceGrid[r] && iceGrid[r][c] > 0) {
+          cell.classList.add("has-ice");
+          const ice = document.createElement("span");
+          ice.className = "ice-overlay" + (iceGrid[r][c] >= 2 ? " ice-2" : "");
+          cell.appendChild(ice);
+        }
         cell.setAttribute("role", "gridcell");
         cell.setAttribute("aria-label", PLANT_NAMES[t] || "植物");
         cell.tabIndex = 0;
@@ -1503,6 +1844,10 @@
       if (cascadeStep > 1) showComboBanner(cascadeStep);
 
       let matched = expandClearsWithSpecials(info.cells);
+      const iceResult = processIceBeforeClear(matched);
+      matched = iceResult.toClear;
+      if (iceResult.iceDamaged.size > 0) renderCells();
+
       const creations = planSpecialCreations(info.segments || []);
       creations.forEach(function (cr) {
         const k = key(cr.r, cr.c);
@@ -1519,6 +1864,7 @@
 
       soundMatch(matched.size);
       flashBoard();
+      spawnMatchParticles(matched.size);
       markMatchedCells(matched);
       await sleep(MATCH_ANIM_MS);
 
@@ -1706,7 +2052,11 @@
     if (!cell || !boardEl) return;
     if (processing || gameOver) return;
 
-    // iOS/Chrome 等需要一次用户手势后才能播放音频；这里顺便启动背景音乐（若用户打开了音乐）
+    if (hammerMode) {
+      useHammerOn(cell.r, cell.c);
+      return;
+    }
+
     resumeAudio();
     if (musicEnabled && !musicTimer) startMusic();
 
@@ -1869,6 +2219,8 @@
 
   function applyLevelState(levelIdx) {
     currentLevelIndex = levelIdx;
+    applyWorldTheme(levelIdx);
+    showScreen("play");
     const spec = getLevelSpec(levelIdx);
     levelTarget = spec.target;
     movesLeft = spec.moves;
@@ -1876,6 +2228,8 @@
     score = 0;
     board = fillNoMatches();
     specialGrid = emptySpecialGrid();
+    initIceForLevel(levelIdx);
+    resetBoosters();
     gameOver = false;
     selected = null;
     processing = false;
@@ -1893,7 +2247,9 @@
     soundRestart();
     revenueSession = 0;
     if (adminPanelModalEl && !adminPanelModalEl.hidden) updateAdminPanel();
-    startLevel(0);
+    maxUnlockedLevel = 0;
+    saveProgress();
+    showHome();
   }
 
   if (boardEl) {
@@ -2034,8 +2390,57 @@
     });
   }
 
+  function shuffleBoardFree() {
+    shuffleBoard();
+    setMessage("🔀 棋盘已重排");
+  }
+
+  if (homeContinueBtn) {
+    homeContinueBtn.addEventListener("click", function () {
+      startLevel(maxUnlockedLevel);
+    });
+  }
+  if (homeMapBtn) {
+    homeMapBtn.addEventListener("click", showMap);
+  }
+  if (mapBackHomeBtn) {
+    mapBackHomeBtn.addEventListener("click", showHome);
+  }
+  if (playBackMapBtn) {
+    playBackMapBtn.addEventListener("click", function () {
+      if (processing) return;
+      showMap();
+    });
+  }
+  if (modalMapBtn) {
+    modalMapBtn.addEventListener("click", function () {
+      hideModal();
+      showMap();
+    });
+  }
+  if (boosterHammerBtn) {
+    boosterHammerBtn.addEventListener("click", function () {
+      if (hammerLeft <= 0 || processing || gameOver) return;
+      hammerMode = !hammerMode;
+      updateBoosterUi();
+      setMessage(hammerMode ? "🔨 点选一格敲碎" : "");
+    });
+  }
+  if (boosterShuffleBtn) {
+    boosterShuffleBtn.addEventListener("click", function () {
+      if (shuffleLeft <= 0 || processing || gameOver) return;
+      shuffleLeft -= 1;
+      updateBoosterUi();
+      shuffleBoardFree();
+    });
+  }
+  if (boosterHintBtn) {
+    boosterHintBtn.addEventListener("click", showHint);
+  }
+
   loadAdStats();
   loadLevelStars();
+  loadProgress();
 
-  startLevel(0);
+  showHome();
 })();
