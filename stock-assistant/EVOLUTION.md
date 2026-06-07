@@ -87,8 +87,11 @@
 | **P79** | 风险雷达 | ✅ 已完成 | risk_radar、工作台 ⚠️ 风险雷达 |
 | **P80** | 每日作战清单 | ✅ 已完成 | battle_plan、📋 今日作战清单 |
 | **P81** | 文档与 v4.1 | ✅ 已完成 | EVOLUTION 781–810、v4.1.0 step 810 |
+| **P82** | 作战清单 cron | ✅ 已完成 | battle_plan_cron.py、STOCK_USER、--stdout |
+| **P83** | 风险汇总推送 | ✅ 已完成 | digest 含 risk_radar 摘要（提醒时） |
+| **P84** | 文档与 v4.2 | ✅ 已完成 | EVOLUTION 811–840、v4.2.0 step 840 |
 
-**v4.1 定位**：在公开数据边缘强化「开盘前决策」——单标的三维风险旗标（波动/评分/stale/板块）、组合级每日作战清单 Top 3 行动，**非**真实风控系统或交易指令。
+**v4.2 定位**：在公开数据边缘强化「傻瓜式运维闭环」——定时落盘作战清单、推送摘要自动附带风险旗标汇总，**非**真实风控或交易指令。
 
 ## P1：信息架构（本次）
 
@@ -286,6 +289,12 @@
 - **P80 每日作战清单**：`src/analysis/battle_plan.py`；dashboard stats + alerts + Top 3 行动 Markdown；工作台/历史页「📋 今日作战清单」；`test_p80_battle_plan`
 - **P81 文档与 v4.1**：EVOLUTION_100 步 781–810；v4.1.0 step 810；开盘前决策定位；`evolve_verify.sh` 覆盖 P79–P81 测试
 
+## P82–P84：作战 cron、风险推送、v4.2（已完成）
+
+- **P82 作战清单 cron**：`scripts/battle_plan_cron.py`；`STOCK_USER` 读 history；写入 `data/battle_plan_YYYYMMDD.md` 或 `--stdout`；`test_p82_battle_cron`
+- **P83 风险汇总推送**：`format_risk_digest_section`；提醒存在时在 digest 附带 risk_radar 计数与 Top 旗标；`test_p83_risk_digest`
+- **P84 文档与 v4.2**：EVOLUTION_100 步 811–840；v4.2.0 step 840；傻瓜式运维闭环；`evolve_verify.sh` 覆盖 P82–P84 测试
+
 ## 进化原则
 
 1. **先可读，再炫功能** — 每轮至少产出一种「能发给同事看的资料」
@@ -384,3 +393,6 @@ streamlit run app.py
 - [x] 风险雷达 risk_radar · 工作台 ⚠️ · P79
 - [x] 每日作战清单 battle_plan · 📋 下载 · P80
 - [x] v4.1.0 · 进化 step 810 · P81
+- [x] 作战清单 cron battle_plan_cron · P82
+- [x] 风险汇总推送 risk_digest · P83
+- [x] v4.2.0 · 进化 step 840 · P84

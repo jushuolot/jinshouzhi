@@ -5,6 +5,8 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any
 
+from src.analysis.risk_radar import RiskFlag, compute_risk_radar
+from src.analysis.sector_relative import compute_sector_relative, sector_relative_for_ticker
 from src.analysis.watch_alerts import WatchAlert
 from src.util.query_time import format_query_datetime
 from src.util.watch_notes import get_note, normalize_watch_notes
@@ -38,6 +40,42 @@ def format_notes_digest_section(
         lines.append(f"- **{name}（{code}）** — {safe}")
     if len(lines) <= 2:
         return ""
+    lines.append("")
+    return "\n".join(lines)
+
+
+def format_risk_digest_section(
+    watchlist: list[dict[str, Any]],
+    snapshots: dict[str, Any],
+    alerts: list[WatchAlert],
+    *,
+    stale_hours: float = 24.0,
+) -> str:
+    """将提醒标的的风险雷达汇总为速览 Markdown 段落（P83）。"""
+    if not alerts:
+        return ""
+    rel_rows = compute_sector_relative(watchlist, snapshots)
+    triggered: list[tuple[str, str, RiskFlag]] = []
+    for alert in alerts:
+        snap = snapshots.get(alert.code) or {}
+        rel = sector_relative_for_ticker(rel_rows, alert.code)
+        for flag in compute_risk_radar(
+            snap,
+            sector_relative=rel,
+            stale_hours=stale_hours,
+        ):
+            if flag.triggered:
+                triggered.append((alert.name, alert.code, flag))
+    lines = ["## 风险雷达摘要", ""]
+    if not triggered:
+        lines.extend(["提醒标的暂无额外风险旗标触发。", ""])
+        return "\n".join(lines)
+    lines.append(f"共 **{len(triggered)}** 条风险旗标（提醒标的）：")
+    lines.append("")
+    for name, code, flag in triggered[:5]:
+        lines.append(f"- ⚠️ **{name}（{code}）** · {flag.kind} — {flag.message}")
+    if len(triggered) > 5:
+        lines.append(f"- … 另有 {len(triggered) - 5} 条")
     lines.append("")
     return "\n".join(lines)
 
@@ -92,6 +130,13 @@ def build_watchlist_digest(
 
     if alerts:
         lines.append(format_alerts_digest_section(alerts))
+        lines.append(
+            format_risk_digest_section(
+                watchlist,
+                snapshots,
+                alerts,
+            )
+        )
 
     section = str(onepager_section or "").strip()
     if section:
