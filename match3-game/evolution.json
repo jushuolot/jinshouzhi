@@ -1,6 +1,6 @@
 {
-  "version": "3.5.0",
-  "generation": 24,
+  "version": "3.6.0",
+  "generation": 25,
   "releasedAt": "2026-06-07",
   "autoTune": {
     "enabled": true,
@@ -9,8 +9,9 @@
     "targetWinRate": 0.52
   },
   "patchNotes": [
-    "真人模拟级肖像：次表面皮肤、虹膜、发束、眨眼",
-    "Sims/恋与式工作室打光 + 角色职阶铭牌",
-    "口型与眉动微表情，男女体型差异化"
+    "2.5D 分层立绘取代 3D 几何人物",
+    "宽银幕遮幅、镜头光晕、颗粒暗角、Ken Burns 缓推",
+    "六角色独立 SVG 半身 + 视差发层/配饰层",
+    "说话弹跳、眨眼、侧光 rim 电影对话感"
   ]
 }

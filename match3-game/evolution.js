@@ -6,10 +6,10 @@
   "use strict";
 
   var DEFAULT = {
-    version: "3.5.0",
-    generation: 24,
+    version: "3.6.0",
+    generation: 25,
     autoTune: { enabled: true, windowSize: 8, maxMoveAdjust: 3, targetWinRate: 0.52 },
-    patchNotes: ["真人模拟级肖像 Gen.24", "皮肤/虹膜/发束/眨眼"],
+    patchNotes: ["2.5D 立绘 + 电影感 Gen.25", "分层视差肖像影院"],
   };
 
   window.MATCH3_EVOLUTION = DEFAULT;

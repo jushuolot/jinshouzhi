@@ -1789,13 +1789,13 @@
   }
 
   function initBriefingCinema() {
-    if (!vnBriefingCinemaEl || !window.CharacterCinema) return;
-    briefingCinema = window.CharacterCinema.create(vnBriefingCinemaEl, "briefing");
+    if (!vnBriefingCinemaEl || !window.PortraitCinema) return;
+    briefingCinema = window.PortraitCinema.create(vnBriefingCinemaEl, "briefing");
   }
 
   function initAssemblyCinema() {
-    if (!vnAssemblyCinemaEl || !window.CharacterCinema) return;
-    assemblyCinema = window.CharacterCinema.create(vnAssemblyCinemaEl, "assembly");
+    if (!vnAssemblyCinemaEl || !window.PortraitCinema) return;
+    assemblyCinema = window.PortraitCinema.create(vnAssemblyCinemaEl, "assembly");
   }
 
   function renderWorldMap() {
@@ -1827,8 +1827,8 @@
     }
     if (discoveryTitleEl) discoveryTitleEl.textContent = node.name;
     if (discoveryTextEl) discoveryTextEl.textContent = (roster[speakerId] || "旁白") + "：「" + text + "」";
-    if (discoveryCinemaEl && window.CharacterCinema) {
-      var dc = window.CharacterCinema.create(discoveryCinemaEl, "discovery");
+    if (discoveryCinemaEl && window.PortraitCinema) {
+      var dc = window.PortraitCinema.create(discoveryCinemaEl, "discovery");
       if (dc && dc.ok) dc.showCharacter(speakerId, true);
     }
     if (window.ArtifactViewer3D && discoveryCinemaEl && node.artifactHint != null) {

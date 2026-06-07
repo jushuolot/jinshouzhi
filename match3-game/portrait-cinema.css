@@ -1,0 +1,337 @@
+/* ═══ 2.5D 立绘影院 · 电影感 ═══ */
+
+.portrait-cinema {
+  --pc-accent: #c9a227;
+  --pc-enter: 0;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #030201;
+}
+
+.portrait-cinema.compact {
+  min-height: 160px;
+}
+
+.portrait-cinema.compact .pc-hud {
+  left: 0.65rem;
+  bottom: 0.55rem;
+}
+
+.portrait-cinema.compact .pc-name {
+  font-size: 0.82rem;
+}
+
+/* 宽银幕遮幅 */
+.pc-letterbox {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 12;
+  pointer-events: none;
+  background: #000;
+}
+
+.pc-letterbox-top {
+  top: 0;
+  height: clamp(28px, 8vh, 52px);
+  background: linear-gradient(180deg, #000 70%, transparent);
+}
+
+.pc-letterbox-bottom {
+  bottom: 0;
+  height: clamp(36px, 10vh, 64px);
+  background: linear-gradient(0deg, #000 75%, transparent);
+}
+
+/* 背景氛围 */
+.pc-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.pc-bg-gradient {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 90% 70% at 70% 30%, color-mix(in srgb, var(--pc-accent) 22%, transparent), transparent 55%),
+    radial-gradient(ellipse 60% 50% at 20% 80%, rgba(80, 40, 20, 0.35), transparent),
+    linear-gradient(165deg, #0a0806 0%, #030201 45%, #080604 100%);
+}
+
+.pc-bokeh {
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(circle at 15% 25%, rgba(255, 220, 150, 0.08) 0, transparent 8%),
+    radial-gradient(circle at 85% 15%, rgba(255, 180, 100, 0.06) 0, transparent 6%),
+    radial-gradient(circle at 72% 68%, rgba(201, 162, 39, 0.07) 0, transparent 10%),
+    radial-gradient(circle at 28% 72%, rgba(100, 140, 180, 0.05) 0, transparent 7%);
+  animation: pcBokehDrift 18s ease-in-out infinite alternate;
+}
+
+@keyframes pcBokehDrift {
+  from { transform: scale(1) translate(0, 0); }
+  to { transform: scale(1.08) translate(-2%, 1%); }
+}
+
+.pc-dust {
+  position: absolute;
+  inset: 0;
+  opacity: 0.35;
+  background-image: radial-gradient(rgba(255, 230, 180, 0.5) 1px, transparent 1px);
+  background-size: 48px 48px;
+  animation: pcDustFloat 24s linear infinite;
+}
+
+@keyframes pcDustFloat {
+  from { background-position: 0 0; }
+  to { background-position: 120px 80px; }
+}
+
+.pc-flare {
+  position: absolute;
+  top: 12%;
+  right: 8%;
+  width: 45%;
+  height: 18%;
+  z-index: 4;
+  pointer-events: none;
+  background: linear-gradient(105deg, transparent 30%, rgba(255, 240, 200, 0.12) 48%, transparent 65%);
+  filter: blur(8px);
+  animation: pcFlarePulse 6s ease-in-out infinite;
+}
+
+@keyframes pcFlarePulse {
+  0%, 100% { opacity: 0.4; transform: translateX(0); }
+  50% { opacity: 0.85; transform: translateX(-3%); }
+}
+
+/* 立绘舞台 */
+.pc-stage {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  transform-origin: 50% 85%;
+  will-change: transform;
+}
+
+.pc-align-right {
+  justify-content: flex-end;
+  padding-right: 2%;
+}
+
+.pc-align-left {
+  justify-content: flex-start;
+  padding-left: 2%;
+}
+
+.pc-align-center {
+  justify-content: center;
+}
+
+.pc-layer {
+  position: absolute;
+  bottom: -2%;
+  width: min(92%, 520px);
+  height: 108%;
+  will-change: transform;
+  transition: transform 0.08s linear;
+}
+
+.pc-align-right .pc-layer {
+  right: -4%;
+}
+
+.pc-align-left .pc-layer {
+  left: -4%;
+}
+
+.pc-align-center .pc-layer {
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.pc-layer svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  filter: drop-shadow(0 12px 32px rgba(0, 0, 0, 0.65));
+}
+
+.pc-layer-rim {
+  mix-blend-mode: screen;
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.pc-layer-rim svg {
+  filter: none;
+}
+
+/* 入场 · 由 JS 驱动 stage transform */
+.portrait-cinema.pc-enter .pc-stage {
+  will-change: transform, opacity, filter;
+}
+
+/* 说话 · 面部层叠加弹跳（不与 stage transform 冲突） */
+.portrait-cinema.pc-talking .pc-layer-face svg {
+  animation: pcTalkBounce 0.35s ease-in-out infinite alternate;
+}
+
+.portrait-cinema.pc-talking .pc-flare {
+  opacity: calc(0.5 + var(--pc-pulse, 0.5) * 0.4);
+}
+
+.portrait-cinema.pc-talking .pc-mouth-open {
+  opacity: 1 !important;
+}
+
+.portrait-cinema.pc-talking .pc-layer-rim {
+  opacity: calc(0.55 + var(--pc-pulse, 0.5) * 0.35);
+}
+
+@keyframes pcTalkBounce {
+  from { transform: translateY(0); }
+  to { transform: translateY(-3px); }
+}
+
+/* 眨眼 */
+.portrait-cinema.pc-blink .pc-eyelid {
+  transform: scaleY(1);
+  animation: pcBlink 0.14s ease-in forwards;
+}
+
+@keyframes pcBlink {
+  0% { transform: scaleY(0.15); }
+  45% { transform: scaleY(1); }
+  100% { transform: scaleY(0.15); }
+}
+
+.pc-eyelid {
+  transform-origin: center;
+  transform: scaleY(0.12);
+}
+
+/* 调色 · 颗粒 · 暗角 */
+.pc-grade {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(20, 10, 5, 0.25) 0%, transparent 35%, rgba(0, 0, 0, 0.45) 100%);
+  mix-blend-mode: multiply;
+}
+
+.pc-vignette {
+  position: absolute;
+  inset: 0;
+  z-index: 9;
+  pointer-events: none;
+  background: radial-gradient(ellipse 72% 68% at 50% 42%, transparent 32%, rgba(0, 0, 0, 0.72) 100%);
+}
+
+.pc-grain {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+  opacity: 0.07;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation: pcGrainShift 0.5s steps(4) infinite;
+}
+
+@keyframes pcGrainShift {
+  0% { transform: translate(0, 0); }
+  25% { transform: translate(-2%, 1%); }
+  50% { transform: translate(1%, -2%); }
+  75% { transform: translate(-1%, 2%); }
+}
+
+.pc-hud {
+  position: absolute;
+  left: 1.25rem;
+  bottom: clamp(48px, 12vh, 72px);
+  z-index: 11;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  pointer-events: none;
+}
+
+.pc-role {
+  display: inline-block;
+  width: fit-content;
+  padding: 0.2rem 0.55rem;
+  font-size: 0.6rem;
+  letter-spacing: 0.22em;
+  color: rgba(255, 232, 180, 0.95);
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid color-mix(in srgb, var(--pc-accent) 50%, transparent);
+  border-radius: 3px;
+  font-family: "Cinzel", "Noto Serif SC", serif;
+  backdrop-filter: blur(4px);
+}
+
+.pc-name {
+  font-family: "Noto Serif SC", serif;
+  font-size: clamp(1rem, 3.5vw, 1.35rem);
+  letter-spacing: 0.16em;
+  color: #fff8e8;
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.95), 0 0 28px color-mix(in srgb, var(--pc-accent) 40%, transparent);
+}
+
+/* VN 全屏立绘模式 */
+body.blockbuster-mode .cinema-mount {
+  flex: 1;
+  min-height: min(58vh, 480px);
+  height: auto;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+body.blockbuster-mode .vn-screen.cinema-mode {
+  flex: 1;
+  min-height: min(78vh, 640px);
+  display: flex;
+  flex-direction: column;
+}
+
+body.blockbuster-mode .vn-screen.cinema-mode .cinema-mount {
+  flex: 1;
+}
+
+body.blockbuster-mode .vn-bg.briefing,
+body.blockbuster-mode .vn-bg.assembly {
+  opacity: 0;
+}
+
+body.blockbuster-mode .vn-dialogue-box {
+  position: relative;
+  z-index: 15;
+  margin-top: auto;
+  background: linear-gradient(0deg, rgba(0, 0, 0, 0.98) 0%, rgba(0, 0, 0, 0.82) 55%, transparent);
+  padding: 1.5rem 1.75rem 1.75rem;
+}
+
+.discovery-modal .cinema-mount {
+  height: min(36vh, 240px) !important;
+  min-height: 180px !important;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(201, 162, 39, 0.2);
+}
+
+.discovery-modal .portrait-cinema.compact .pc-letterbox-top {
+  height: 16px;
+}
+
+.discovery-modal .portrait-cinema.compact .pc-letterbox-bottom {
+  height: 20px;
+}
