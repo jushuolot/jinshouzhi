@@ -6,10 +6,10 @@
   "use strict";
 
   var DEFAULT = {
-    version: "3.0.0",
-    generation: 19,
+    version: "3.1.0",
+    generation: 20,
     autoTune: { enabled: true, windowSize: 8, maxMoveAdjust: 3, targetWinRate: 0.52 },
-    patchNotes: ["三星堆考古主题上线", "五章秘史演绎"],
+    patchNotes: ["文物图鉴上线", "守关层挑战"],
   };
 
   window.MATCH3_EVOLUTION = DEFAULT;

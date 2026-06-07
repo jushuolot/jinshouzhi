@@ -44,6 +44,8 @@
   const BOOSTER_HAMMER_START = 3;
   const BOOSTER_SHUFFLE_START = 2;
   const EVOLUTION_STATE_KEY = "match3_evolution_state";
+  const CODEX_STATE_KEY = "match3_codex_state";
+  const COMBO_LORE = ["", "层位共鸣", "通脉 · 2连", "祭仪 · 3连", "神树 · 4连", "天书 · 5连", "纵目开眼"];
 
   const DEFAULT_AD_CONFIG = {
     enabled: true,
@@ -201,6 +203,8 @@
   let dailyChallengeBonus = { moves: 0, hammer: 0, label: "" };
   /** @type {{ prologues: Record<string, boolean>, epilogues: Record<string, boolean>, beats: Record<string, boolean> }} */
   let storySeen = { prologues: {}, epilogues: {}, beats: {} };
+  /** @type {{ counts: number[], unlocked: boolean[] }} */
+  let codexState = { counts: [0, 0, 0, 0, 0, 0], unlocked: [false, false, false, false, false, false] };
   let score = 0;
   let movesLeft = 0;
   /** 当前关卡目标分数（本关内累计当前分数达到即过关） */
@@ -261,7 +265,14 @@
   const worldNameEl = document.getElementById("world-name");
   const goalsWorldEl = document.getElementById("goals-world");
   const goalsStoryEl = document.getElementById("goals-story");
+  const goalsBossBadgeEl = document.getElementById("goals-boss-badge");
   const goalsIceLineEl = document.getElementById("goals-ice-line");
+  const homeChapterLabelEl = document.getElementById("home-chapter-label");
+  const homeChapterFillEl = document.getElementById("home-chapter-fill");
+  const homeCodexHintEl = document.getElementById("home-codex-hint");
+  const homeCodexBtn = document.getElementById("home-codex");
+  const codexModalEl = document.getElementById("codex-modal");
+  const codexGridEl = document.getElementById("codex-grid");
   const storyModalEl = document.getElementById("story-modal");
   const storyTitleEl = document.getElementById("story-title");
   const storyScrollEl = document.getElementById("story-scroll");
@@ -890,15 +901,21 @@
     return PASS_RATE_LEVEL_1 - t * (PASS_RATE_LEVEL_1 - PASS_RATE_LEVEL_MAX);
   }
 
+  function isBossLevel(levelIdx) {
+    return (levelIdx + 1) % 20 === 0;
+  }
+
   function getLevelSpec(idx) {
     const clamped = Math.min(Math.max(idx, 0), MAX_LEVEL - 1);
-    const target = 100 + clamped * 20;
+    let target = 100 + clamped * 20;
+    if (isBossLevel(clamped)) target = Math.round(target * 1.12);
     const baseMoves = solveMovesForPassRate(clamped, target, targetPassRateForLevel(clamped));
     const minMoves = clamped < 8 ? 18 : 12;
     const maxMoves = 60;
     const evoBonus = getEvolutionMoveBonus(clamped);
-    const moves = Math.min(maxMoves, Math.max(minMoves, baseMoves + evoBonus.total));
-    return { moves: moves, target: target, evoBonus: evoBonus };
+    let moves = Math.min(maxMoves, Math.max(minMoves, baseMoves + evoBonus.total));
+    if (isBossLevel(clamped)) moves = Math.max(minMoves, moves - 1);
+    return { moves: moves, target: target, evoBonus: evoBonus, isBoss: isBossLevel(clamped) };
   }
 
   // --- 自动难度：用正态近似反推步数，使过关成功率接近目标值 ---
@@ -1423,6 +1440,110 @@
     }
   }
 
+  function getCodexCatalog() {
+    return typeof window !== "undefined" && window.MATCH3_CODEX ? window.MATCH3_CODEX : [];
+  }
+
+  function loadCodexState() {
+    try {
+      const raw = window.localStorage.getItem(CODEX_STATE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed.counts) codexState.counts = parsed.counts.slice(0, NUM_TYPES);
+        if (parsed.unlocked) codexState.unlocked = parsed.unlocked.slice(0, NUM_TYPES);
+      }
+    } catch (e) {
+      codexState = { counts: [0, 0, 0, 0, 0, 0], unlocked: [false, false, false, false, false, false] };
+    }
+    while (codexState.counts.length < NUM_TYPES) codexState.counts.push(0);
+    while (codexState.unlocked.length < NUM_TYPES) codexState.unlocked.push(false);
+  }
+
+  function saveCodexState() {
+    try {
+      window.localStorage.setItem(CODEX_STATE_KEY, JSON.stringify(codexState));
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  function recordRelicClears(matched) {
+    if (!matched || !matched.size) return;
+    let changed = false;
+    matched.forEach(function (k) {
+      const parts = k.split(",");
+      const r = Number(parts[0]);
+      const c = Number(parts[1]);
+      const t = board[r] && board[r][c];
+      if (t == null || t < 0 || t >= NUM_TYPES) return;
+      codexState.counts[t] = (codexState.counts[t] || 0) + 1;
+      if (!codexState.unlocked[t]) {
+        codexState.unlocked[t] = true;
+        showEvolutionToast("📖 图鉴收录：" + (RELIC_NAMES[t] || "文物"));
+      }
+      changed = true;
+    });
+    if (changed) saveCodexState();
+  }
+
+  function codexUnlockedCount() {
+    let n = 0;
+    for (let i = 0; i < NUM_TYPES; i++) {
+      if (codexState.unlocked[i]) n++;
+    }
+    return n;
+  }
+
+  function renderChapterProgress() {
+    const chIdx = getChapterForLevel(maxUnlockedLevel);
+    const w = worldForLevel(maxUnlockedLevel);
+    const inChapter = maxUnlockedLevel % 20;
+    const pct = Math.min(100, (inChapter / 20) * 100);
+    if (homeChapterLabelEl) {
+      homeChapterLabelEl.textContent =
+        "第" + (chIdx + 1) + "章 · " + w.name + " · 已探 " + inChapter + "/20 层";
+    }
+    if (homeChapterFillEl) homeChapterFillEl.style.width = pct.toFixed(1) + "%";
+    if (homeCodexHintEl) {
+      homeCodexHintEl.textContent = "图鉴收录 " + codexUnlockedCount() + "/" + NUM_TYPES;
+    }
+  }
+
+  function renderCodexModal() {
+    if (!codexGridEl) return;
+    codexGridEl.innerHTML = "";
+    const catalog = getCodexCatalog();
+    catalog.forEach(function (entry, i) {
+      const card = document.createElement("div");
+      const unlocked = codexState.unlocked[i];
+      card.className = "codex-card" + (unlocked ? " unlocked" : " locked");
+      const count = codexState.counts[i] || 0;
+      card.innerHTML =
+        '<div class="codex-card-head"><span class="codex-card-icon">' +
+        (entry.icon || "📜") +
+        '</span><span class="codex-card-name">' +
+        (entry.name || RELIC_NAMES[i] || "文物") +
+        "</span></div>" +
+        '<div class="codex-card-meta">' +
+        (unlocked ? entry.era + " · " + entry.rarity : "尚未收录") +
+        "</div>" +
+        '<p class="codex-card-lore">' +
+        (unlocked ? entry.lore : "消除该文物即可解锁条目") +
+        "</p>" +
+        (unlocked ? '<div class="codex-card-count">已消除 ' + count + " 次</div>" : "");
+      codexGridEl.appendChild(card);
+    });
+  }
+
+  function openCodexModal() {
+    renderCodexModal();
+    if (codexModalEl) codexModalEl.hidden = false;
+  }
+
+  function closeCodexModal() {
+    if (codexModalEl) codexModalEl.hidden = true;
+  }
+
   function loadProgress() {
     try {
       const raw = window.localStorage.getItem(UNLOCK_KEY);
@@ -1478,6 +1599,7 @@
   function showHome() {
     updateHomeStats();
     renderEvolutionHome();
+    renderChapterProgress();
     showScreen("home");
   }
 
@@ -1527,6 +1649,7 @@
         btn.type = "button";
         btn.className = "map-node";
         btn.textContent = String(levelIdx + 1);
+        if (isBossLevel(levelIdx)) btn.classList.add("map-boss");
         const locked = levelIdx > maxUnlockedLevel;
         if (locked) btn.classList.add("locked");
         if (levelIdx === maxUnlockedLevel) btn.classList.add("current");
@@ -1561,7 +1684,7 @@
     iceGrid = emptyIceGrid();
     const world = worldForLevel(levelIdx);
     if (levelIdx + 1 < world.iceFrom) return;
-    const count = Math.min(24, 6 + Math.floor(levelIdx / 8));
+    const count = Math.min(24, 6 + Math.floor(levelIdx / 8) + (isBossLevel(levelIdx) ? 4 : 0));
     let placed = 0;
     let guard = 0;
     while (placed < count && guard < 200) {
@@ -1693,6 +1816,7 @@
     hammerLeft -= 1;
     hammerMode = false;
     updateBoosterUi();
+    recordRelicClears(new Set([key(r, c)]));
     board[r][c] = -1;
     specialGrid[r][c] = SPECIAL_NONE;
     iceGrid[r][c] = 0;
@@ -1745,10 +1869,12 @@
   }
 
   function showComboBanner(step) {
-    if (step >= 5) showMegaCombo(step + " 连击!!");
-    else if (step >= 3) showMegaCombo("超棒 " + step + " 连击!");
+    const loreIdx = Math.min(COMBO_LORE.length - 1, Math.max(0, step));
+    const loreText = COMBO_LORE[loreIdx] || step + " 连击";
+    if (step >= 5) showMegaCombo(loreText + " !!");
+    else if (step >= 3) showMegaCombo(loreText + " !");
     if (!comboBannerEl || step < 2) return;
-    comboBannerEl.textContent = step + " 连击！";
+    comboBannerEl.textContent = loreText;
     comboBannerEl.hidden = false;
     comboBannerEl.classList.add("show");
     window.setTimeout(function () {
@@ -1945,6 +2071,7 @@
     if (goalsTargetEl) goalsTargetEl.textContent = String(levelTarget);
     if (goalsMovesEl) goalsMovesEl.textContent = String(movesLeft);
     renderGoalsStory();
+    if (goalsBossBadgeEl) goalsBossBadgeEl.hidden = !isBossLevel(currentLevelIndex);
     goalsModalEl.hidden = false;
     if (goalsStartBtn) {
       goalsStartBtn.onclick = function () {
@@ -2205,6 +2332,7 @@
       if (cascadeStep > 1) showComboBanner(cascadeStep);
 
       let matched = expandClearsWithSpecials(info.cells);
+      recordRelicClears(matched);
       const iceResult = processIceBeforeClear(matched);
       matched = iceResult.toClear;
       if (iceResult.iceDamaged.size > 0) renderCells();
@@ -2771,6 +2899,15 @@
   if (homeMapBtn) {
     homeMapBtn.addEventListener("click", showMap);
   }
+  if (homeCodexBtn) {
+    homeCodexBtn.addEventListener("click", openCodexModal);
+  }
+  if (codexModalEl) {
+    codexModalEl.addEventListener("click", function (ev) {
+      const t = ev.target;
+      if (t && t.getAttribute && t.getAttribute("data-codex-close")) closeCodexModal();
+    });
+  }
   if (mapBackHomeBtn) {
     mapBackHomeBtn.addEventListener("click", showHome);
   }
@@ -2810,6 +2947,7 @@
   loadLevelStars();
   syncStoryTheme();
   loadStorySeen();
+  loadCodexState();
   initEvolution();
   loadProgress();
 
