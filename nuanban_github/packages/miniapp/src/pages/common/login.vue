@@ -19,8 +19,11 @@
       <text @tap="goRegister('student')">学生注册</text>
     </view>
     <view class="links secondary">
+      <text @tap="goDemoTour">动画演示</text>
       <text @tap="goGodView">上帝视角</text>
       <text @tap="goAgreement">用户协议</text>
+    </view>
+    <view class="links tertiary">
       <text @tap="goAdminHub">运营演示</text>
     </view>
   </view>
@@ -157,6 +160,10 @@ function goAdminHub() {
 function goGodView() {
   uni.navigateTo({ url: '/pages/common/god-view' });
 }
+
+function goDemoTour() {
+  uni.navigateTo({ url: '/pages/common/demo-tour' });
+}
 </script>
 
 <style scoped>
@@ -203,6 +210,13 @@ function goGodView() {
 .links.secondary {
   margin-top: 24rpx;
   justify-content: center;
-  gap: 48rpx;
+  gap: 32rpx;
+  flex-wrap: wrap;
+}
+.links.tertiary {
+  margin-top: 16rpx;
+  justify-content: center;
+  color: #c45c26;
+  font-size: 28rpx;
 }
 </style>

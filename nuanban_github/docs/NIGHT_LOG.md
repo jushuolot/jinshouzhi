@@ -2,7 +2,14 @@
 
 > 您休息期间已推送 GitHub，Actions 会自动更新公网演示。
 
-## 本轮（进化 R2 · 审计自动化）
+## 本轮（Phase 13 · 动画演示 · 明日验收）
+
+1. **demo-tour** 五幕 CSS 动画：撮合总览 → 老人找同学 → 学生接单 → 家属代付 → 收入闭环
+2. 自动播放 4.5s/幕 · 暂停/切幕 · 桌面全屏
+3. 登录页 / 上帝视角入口 · [DEMO_ANIMATION.md](./DEMO_ANIMATION.md)
+4. 公网：`#/pages/common/demo-tour`
+
+## 上一轮（进化 R2 · 审计自动化）
 
 1. **audit.sh** — 一键全量复查
 2. **check-data.mjs** / **check-api-parity.mjs**

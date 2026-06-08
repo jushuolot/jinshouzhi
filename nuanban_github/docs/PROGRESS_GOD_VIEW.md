@@ -39,13 +39,13 @@
 
 ## 交互看板（H5）
 
-无需登录即可从登录页进入：
+| 入口 | URL |
+|------|-----|
+| **动画演示**（明日验收） | [#/pages/common/demo-tour](https://jushuolot.github.io/jinshouzhi/nuanban/#/pages/common/demo-tour) |
+| **上帝视角 KPI** | [#/pages/common/god-view](https://jushuolot.github.io/jinshouzhi/nuanban/#/pages/common/god-view) |
+| 登录页 | [#/pages/common/login](https://jushuolot.github.io/jinshouzhi/nuanban/#/pages/common/login) |
 
-**登录页 →「上帝视角」** → `pages/common/god-view`
-
-或直接打开（部署后）：
-
-`https://jushuolot.github.io/jinshouzhi/nuanban/#/pages/common/god-view`
+详见 [DEMO_ANIMATION.md](./DEMO_ANIMATION.md)
 
 ## 自动化审计（我刚跑的）
 

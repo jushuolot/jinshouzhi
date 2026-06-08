@@ -47,7 +47,8 @@
       <text>④ 家属代付 → mock 微信支付</text>
     </view>
 
-    <button class="btn" @tap="goLogin">进入演示登录</button>
+    <button class="btn" @tap="goTour">观看动画演示</button>
+    <button class="btn-outline" @tap="goLogin">进入演示登录</button>
     <button class="btn-outline" @tap="reload">刷新数据</button>
     <text v-if="errorMsg" class="err">{{ errorMsg }}</text>
     <text v-if="updatedAt" class="ts">更新 {{ formatTime(updatedAt) }}</text>
@@ -139,6 +140,10 @@ onShow(reload);
 
 function goLogin() {
   uni.navigateTo({ url: '/pages/common/login' });
+}
+
+function goTour() {
+  uni.navigateTo({ url: '/pages/common/demo-tour' });
 }
 </script>
 

@@ -21,7 +21,8 @@ page.elder-mode {
   font-size: 18px;
 }
 /* god-view 桌面全屏，避免手机框内白屏/滚不动 */
-page[data-page='pages/common/god-view'] {
+page[data-page='pages/common/god-view'],
+page[data-page='pages/common/demo-tour'] {
   background-color: #1a1a2e;
 }
 </style>

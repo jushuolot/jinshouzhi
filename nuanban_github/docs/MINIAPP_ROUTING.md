@@ -16,6 +16,7 @@
   school-coop      学校合作配置（只读）
   student-pending  学生资质审核中拦截页
   god-view         平台上帝视角（撮合 KPI · 无需登录）
+  demo-tour        动画演示（5 幕自动轮播 · 明日验收）
 
 分包 package-elder/
   home

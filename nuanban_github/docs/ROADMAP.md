@@ -9,6 +9,7 @@
 | **Phase 0** | **Agent 自我进化 R1**：`AGENTS.md`、`agent-ship.sh`、`check-routes.mjs`、Cursor 规则 |
 | **Phase 0 R2** | **审计自动化**：`audit.sh`、`check-data`、`check-api-parity`、`smoke --bundle`、`AUDIT_LOG.md` |
 | **Phase 12** | **上帝视角**：`god-view` 页、`PROGRESS_GOD_VIEW.md`、`platform/overview` API、核心文案对齐 |
+| **Phase 13** | **动画演示**：`demo-tour` 五幕自动轮播、`DEMO_ANIMATION.md`、全屏展示 |
 | Phase 1–2 | 公网 demo、卡片化 UI、接单/外出审批 |
 | Phase 2.5–4 | 时间轴、SOS、收入、签到、绑定码、家属订单详情 |
 | Phase 3 | PB hooks parity、排班/绑定/无障碍 |

@@ -9,7 +9,8 @@
     { "path": "pages/common/admin-hub", "style": { "navigationBarTitleText": "运营演示" } },
     { "path": "pages/common/school-coop", "style": { "navigationBarTitleText": "学校合作" } },
     { "path": "pages/common/student-pending", "style": { "navigationBarTitleText": "审核中" } },
-    { "path": "pages/common/god-view", "style": { "navigationBarTitleText": "平台进度", "navigationBarBackgroundColor": "#1a1a2e", "navigationBarTextStyle": "white" } }
+    { "path": "pages/common/god-view", "style": { "navigationBarTitleText": "平台进度", "navigationBarBackgroundColor": "#1a1a2e", "navigationBarTextStyle": "white" } },
+    { "path": "pages/common/demo-tour", "style": { "navigationBarTitleText": "动画演示", "navigationBarBackgroundColor": "#1a1a2e", "navigationBarTextStyle": "white" } }
   ],
   "subPackages": [
     {
