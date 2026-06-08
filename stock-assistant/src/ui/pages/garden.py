@@ -23,6 +23,8 @@ from src.providers import market_data
 from src.storage.history_store import mark_dirty
 from src.ui import app_core as C
 from src.util.app_meta import APP_VERSION, EVOLUTION_STEP
+from src.util.cloud_picks_loader import load_cloud_picks
+from src.util.cloud_runtime import cloud_mode_label, is_streamlit_cloud
 from src.util.readonly_mode import is_readonly_mode
 
 
@@ -54,9 +56,24 @@ def _pct_map_from_ranking(df: pd.DataFrame) -> dict[str, float | None]:
 def render() -> None:
     st.markdown("## 🌱 私人选股花园")
     st.caption(
-        f"只有你知道密码 · 自动扫 A 股公开榜单 · 今晚看一眼成长就好 · "
+        f"只有你知道密码 · {cloud_mode_label()} · "
         f"v{APP_VERSION} · 已进化 {EVOLUTION_STEP} 步"
     )
+    if is_streamlit_cloud():
+        st.success("☁️ **公网云端模式**：扫盘算力在 Streamlit 服务器，你的电脑只负责看。")
+    else:
+        st.caption("💡 不想占本地配置？请看 [零本地公网指南](docs/CLOUD_ONLY.md) 部署 Streamlit Cloud。")
+
+    cloud = load_cloud_picks()
+    if cloud and cloud.get("picks") and not st.session_state.get("today_picks"):
+        st.session_state.today_picks = list(cloud["picks"])
+        st.session_state.last_pick_at = str(cloud.get("generated_at") or "")[:10]
+        st.session_state["last_pick_source"] = f"GitHub 云端 · {cloud.get('source', '')}"
+        st.info(
+            f"🌙 **云端已扫盘**（{st.session_state.last_pick_at}）— "
+            f"GitHub 每晚自动运行，打开即可看。也可手动点刷新更新。"
+        )
+
     st.info(
         "**就一件事：** 点下面大按钮，我会从全网 A 股涨幅榜里筛出今天值得关注的（最多 5 只）。"
         "基金可先搜 **ETF 代码**（如 510300）加入自选；股票为主、基金为辅。"

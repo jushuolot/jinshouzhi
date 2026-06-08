@@ -66,7 +66,8 @@ def render_workflow_sidebar(*, simple: bool = False) -> None:
                 st.session_state.ui_mode = "pro"
                 st.rerun()
             st.markdown(
-                "[📖 如何部署你的私密空间](docs/PRIVATE_GARDEN.md)"
+                "[📖 如何部署你的私密空间](docs/PRIVATE_GARDEN.md) · "
+                "[☁️ 零本地·全公网进化](docs/CLOUD_ONLY.md)"
             )
             render_theme_toggle()
             return

@@ -36,9 +36,11 @@ STOCK_APP_PUBLIC_URL = "https://你的应用名.streamlit.app"
 
 ---
 
-## 3. 部署前本地自检（推荐）
+## 3. 部署前自检（可选 · 低配置电脑可跳过）
 
-在 `stock-assistant` 目录：
+> **零本地方案：** 直接 Deploy，改由 [GitHub Actions](https://github.com/jushuolot/jinshouzhi/actions) 跑测试、每晚 `garden-daily-cloud` 扫盘。详见 [docs/CLOUD_ONLY.md](docs/CLOUD_ONLY.md)。
+
+若仍想在本地验证（需要 Python 环境）：
 
 ```bash
 source .venv/bin/activate

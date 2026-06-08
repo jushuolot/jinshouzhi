@@ -9,6 +9,7 @@
 
 | 文档 | 说明 | 适合谁 |
 |------|------|--------|
+| [docs/CLOUD_ONLY.md](docs/CLOUD_ONLY.md) | **零本地**：全靠 GitHub + Streamlit Cloud，电脑只打开浏览器 | 机器配置低、不想本地跑 |
 | [docs/PRIVATE_GARDEN.md](docs/PRIVATE_GARDEN.md) | **私人花园**：免费密码门、每晚查岗、A 股自动推荐 | 只想简单选股的人 |
 | [docs/PUBLIC_DATA_PLAYBOOK.md](docs/PUBLIC_DATA_PLAYBOOK.md) | 散户公开数据作战手册（能力地图功能对照） | 想用免费数据建立每日流程 |
 | [docs/PRODUCT.md](docs/PRODUCT.md) | 产品定位、功能地图、使用场景、数据来源、局限、公网访问 | 想先了解「这是什么」 |
