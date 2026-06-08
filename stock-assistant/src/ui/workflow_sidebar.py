@@ -57,7 +57,8 @@ _PHASE_OPTIONS = [
 ]
 
 
-def render_workflow_sidebar(*, simple: bool = False) -> None:
+def render_workflow_sidebar() -> None:
+    simple = str(st.session_state.get("ui_mode", "garden")) != "pro"
     with st.sidebar:
         if simple:
             st.markdown("### 🌱 私人花园")

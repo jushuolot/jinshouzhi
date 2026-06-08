@@ -37,7 +37,7 @@ if st.query_params.get("garden") == "1":
 st.session_state.setdefault("ui_mode", "garden")
 
 expert = st.session_state.ui_mode == "pro"
-render_workflow_sidebar(simple=not expert)
+render_workflow_sidebar()
 
 if expert:
     st.title("Stock Assistant · 专家模式")
@@ -63,4 +63,4 @@ else:
 if st.session_state.get("_history_dirty"):
     persist_session()
 
-render_app_footer(simple=not expert)
+render_app_footer()

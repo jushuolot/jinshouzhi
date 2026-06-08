@@ -24,7 +24,8 @@ def build_footer_warmup_note(step: int = EVOLUTION_STEP) -> str | None:
     )
 
 
-def render_app_footer(*, simple: bool = False) -> None:
+def render_app_footer() -> None:
+    simple = str(st.session_state.get("ui_mode", "garden")) != "pro"
     st.divider()
     if not simple:
         render_keyboard_hints()
