@@ -228,6 +228,10 @@
     typeof window !== "undefined" && window.MATCH3_VIRTUAL_ACCOUNT
       ? window.MATCH3_VIRTUAL_ACCOUNT
       : null;
+  const networkEarnings =
+    typeof window !== "undefined" && window.MATCH3_NETWORK_EARNINGS
+      ? window.MATCH3_NETWORK_EARNINGS
+      : null;
   /** @type {number | null} */
   let adCountdownTimer = null;
   /** @type {(() => void) | null} */
@@ -438,6 +442,7 @@
   const adminBalanceEl = document.getElementById("admin-balance");
   const adminCreditListEl = document.getElementById("admin-credit-list");
   const adminSlotStatsEl = document.getElementById("admin-slot-stats");
+  const adminChannelStatsEl = document.getElementById("admin-channel-stats");
   const adminStatusLineEl = document.getElementById("admin-status-line");
   const adminExportBtn = document.getElementById("admin-export-btn");
   const adminExportMsgEl = document.getElementById("admin-export-msg");
@@ -668,7 +673,25 @@
     if (source === "reward") return "奖励";
     if (source === "affiliate") return "联盟";
     if (source === "network_settlement") return "网络结算";
+    if (source === "sponsor_visit") return "落地访问";
+    if (source === "passive_yield") return "驻场收益";
+    if (source === "bounty") return "任务赏金";
+    if (source === "faucet_demo") return "水龙头演示";
     return source || "入账";
+  }
+
+  function channelLabelFromMeta(item) {
+    if (item && item.meta && item.meta.channelLabel) return item.meta.channelLabel;
+    if (item && item.meta && item.meta.channel) {
+      if (networkEarnings && networkEarnings.listChannels) {
+        const list = networkEarnings.listChannels();
+        for (let i = 0; i < list.length; i += 1) {
+          if (list[i].id === item.meta.channel) return list[i].label;
+        }
+      }
+      return item.meta.channel;
+    }
+    return creditSourceLabel(item ? item.source : "");
   }
 
   function updateAdminPanel() {
@@ -705,6 +728,30 @@
           .join("");
       }
     }
+    if (adminChannelStatsEl && virtualAccount && virtualAccount.getByChannel) {
+      const byChannel = virtualAccount.getByChannel();
+      const chKeys = Object.keys(byChannel).sort(function (a, b) {
+        return (byChannel[b].amount || 0) - (byChannel[a].amount || 0);
+      });
+      if (!chKeys.length) {
+        adminChannelStatsEl.textContent = "各寻金渠道暂无入账";
+      } else {
+        adminChannelStatsEl.innerHTML = chKeys
+          .map(function (k) {
+            const s = byChannel[k];
+            return (
+              "<div class=\"admin-slot-row\"><span>" +
+              (s.label || k) +
+              "</span><span>" +
+              (s.count || 0) +
+              " 笔 · " +
+              formatMoney(s.amount || 0) +
+              "</span></div>"
+            );
+          })
+          .join("");
+      }
+    }
     if (!adminCreditListEl) return;
     adminCreditListEl.innerHTML = "";
     const credits = virtualAccount ? virtualAccount.getCreditHistory() : [];
@@ -726,7 +773,7 @@
         li.textContent =
           when.toLocaleString() +
           " · " +
-          creditSourceLabel(item.source) +
+          channelLabelFromMeta(item) +
           (slotLabel ? " · " + slotLabel : "") +
           " +" +
           formatMoney(item.amount) +
@@ -783,11 +830,17 @@
     updateAdminPanel();
     if (adminStatusLineEl) {
       const slotCount = Object.keys(AD_CONFIG.slots || {}).length;
+      const channelCount =
+        networkEarnings && networkEarnings.listChannels
+          ? networkEarnings.listChannels().length
+          : 2;
       adminStatusLineEl.textContent =
         (AD_CONFIG.enabled ? "✓ 赞助已开启" : "赞助已关闭") +
         " · " +
         slotCount +
-        " 个广告位自动入账 · 虚拟账户只增不减";
+        " 个广告位 · " +
+        channelCount +
+        " 条寻金渠道 · 虚拟账户只增不减";
     }
     if (adminPanelModalEl) adminPanelModalEl.hidden = false;
   }
@@ -865,7 +918,12 @@
         amount: amount,
         source: type,
         slot: slotKey,
-        meta: { level: currentLevelIndex + 1 },
+        meta: {
+          level: currentLevelIndex + 1,
+          channel: type === "impression" ? "ad_impression" : type === "click" ? "ad_click" : type,
+          channelLabel:
+            type === "impression" ? "广告展示 CPM" : type === "click" ? "广告点击 CPC" : creditSourceLabel(type),
+        },
       });
     }
     if (adminPanelModalEl && !adminPanelModalEl.hidden) updateAdminPanel();
@@ -1019,6 +1077,10 @@
     const slot = AD_CONFIG.slots[adCurrentSlot];
     if (!slot) return;
     settleAdEvent(adCurrentSlot, "click", slot.cpc);
+    if (networkEarnings && networkEarnings.onSponsorVisit) {
+      networkEarnings.onSponsorVisit(adCurrentSlot);
+      if (adminPanelModalEl && !adminPanelModalEl.hidden) updateAdminPanel();
+    }
     try {
       window.open(slot.landingUrl, "_blank", "noopener,noreferrer");
     } catch (e) {
@@ -3870,6 +3932,12 @@
   }
 
   if (virtualAccount) virtualAccount.load();
+  if (networkEarnings) {
+    networkEarnings.setOnCredit(function () {
+      if (adminPanelModalEl && !adminPanelModalEl.hidden) updateAdminPanel();
+    });
+    networkEarnings.onSessionStart();
+  }
   loadLevelStars();
   syncStoryTheme();
   loadStorySeen();
@@ -3883,9 +3951,9 @@
   if (window.PortraitPainter && window.PortraitPainter.preloadAll) {
     window.PortraitPainter.preloadAll(
       function () {
-        if (window.dismissBootSplash) window.dismissBootSplash("Gen.47 · 发现一刻就绪");
+        if (window.dismissBootSplash) window.dismissBootSplash("Gen.48 · 第1日 · 全网寻金");
         if (window.showSystemToast)
-          window.showSystemToast("Gen.47 · 探点发现弹窗 · 三星盛典", 4200);
+          window.showSystemToast("Gen.48 · 全网寻金渠道已上线", 4200);
       },
       function (done, total) {
         if (window.setProgress) window.setProgress(72 + Math.round((done / total) * 24));
@@ -3893,6 +3961,6 @@
       }
     );
   } else {
-    if (window.dismissBootSplash) window.dismissBootSplash("Gen.47 · 就绪");
+    if (window.dismissBootSplash) window.dismissBootSplash("Gen.48 · 第1日 · 就绪");
   }
 })();

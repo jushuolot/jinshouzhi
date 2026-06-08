@@ -6,10 +6,11 @@
   "use strict";
 
   var DEFAULT = {
-    version: "5.5.0",
-    generation: 47,
+    version: "5.6.0",
+    generation: 48,
+    universeDay: 1,
     autoTune: { enabled: true, windowSize: 8, maxMoveAdjust: 3, targetWinRate: 0.52 },
-    patchNotes: ["Gen.47 发现一刻", "探点弹窗+三星盛典"],
+    patchNotes: ["Gen.48 全网寻金", "多渠道入账+管理面板渠道拆分"],
   };
 
   window.MATCH3_EVOLUTION = DEFAULT;

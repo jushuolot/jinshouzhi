@@ -21,6 +21,10 @@
       "affiliate",
       "reward",
       "network_settlement",
+      "sponsor_visit",
+      "passive_yield",
+      "bounty",
+      "faucet_demo",
     ],
   };
 
@@ -156,6 +160,36 @@
     save();
   }
 
+  function getBySource() {
+    var out = {};
+    state.credits.forEach(function (c) {
+      var key = c.source || "unknown";
+      if (!out[key]) out[key] = { count: 0, amount: 0 };
+      out[key].count += 1;
+      out[key].amount = roundMoney(out[key].amount + (c.amount || 0));
+    });
+    return out;
+  }
+
+  function getByChannel() {
+    var out = {};
+    state.credits.forEach(function (c) {
+      var key =
+        c.meta && c.meta.channel
+          ? c.meta.channel
+          : c.source === "impression"
+            ? "ad_impression"
+            : c.source === "click"
+              ? "ad_click"
+              : c.source || "unknown";
+      if (!out[key]) out[key] = { count: 0, amount: 0, label: (c.meta && c.meta.channelLabel) || key };
+      out[key].count += 1;
+      out[key].amount = roundMoney(out[key].amount + (c.amount || 0));
+      if (c.meta && c.meta.channelLabel) out[key].label = c.meta.channelLabel;
+    });
+    return out;
+  }
+
   function exportSnapshot() {
     return {
       account: "match3_virtual_account",
@@ -164,6 +198,8 @@
       balance: state.balance,
       sessionCredits: state.sessionCredits,
       bySlot: state.bySlot,
+      bySource: getBySource(),
+      byChannel: getByChannel(),
       recentCredits: state.credits.slice(-20),
       migratedFromLegacy: state.migratedFromLegacy,
       updatedAt: state.updatedAt,
@@ -185,6 +221,8 @@
     getBySlot: function () {
       return state.bySlot;
     },
+    getBySource: getBySource,
+    getByChannel: getByChannel,
     getCreditHistory: function () {
       return state.credits.slice();
     },

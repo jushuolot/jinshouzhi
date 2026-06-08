@@ -1,8 +1,8 @@
 {
-  "version": "5.5.0",
-  "generation": 47,
-  "universeDay": 0,
-  "dailyChronicle": "平行宇宙锚点：摸金天团待命，等待第一日苏醒。",
+  "version": "5.6.0",
+  "generation": 48,
+  "universeDay": 1,
+  "dailyChronicle": "第 1 日，陈礼在营地嘀咕：网上各种钱都能汇进账簿了，摸金天团只管攒着不花。",
   "releasedAt": "2026-06-08",
   "autoTune": {
     "enabled": true,
@@ -11,12 +11,13 @@
     "targetWinRate": 0.52
   },
   "patchNotes": [
-    "探点发现弹窗影院化 · 立绘+打字机台词",
-    "桌面宽屏发现分栏 · 回车开战 Esc 稍后",
-    "三星通关金冠特效+三声和鸣"
+    "全网寻金：多渠道入账注册表 network-earnings.js",
+    "联盟推荐 · 赞助落地 · 驻场收益 · 赏金/水龙头演示",
+    "管理面板按渠道拆分收益（口令 Mz168）"
   ],
   "virtualAccount": {
     "module": "virtual-account.js",
+    "networkEarnings": "network-earnings.js",
     "storage": "localStorage:match3_virtual_account",
     "policy": "credit-only-external-sources",
     "spendForbidden": true,

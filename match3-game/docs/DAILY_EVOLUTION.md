@@ -48,8 +48,9 @@ git push game match3-pages-deploy:main --force
 3. 选 **今日主轴**（下表轮换，可与剧情合并）
 4. **至少动一处「活人」内容**：剧情台词 / 发现语 / 集结对白 / 过关吐槽 / 首页一句旁白 任选
 5. 视需要改视觉、音效、UX（不必每天都大改 UI）
-6. 更新 `evolution.json`（含 `patchNotes` + `dailyChronicle`）、`evolution.js`、启动屏 `Gen.N · 第?日`
-7. 仅改 `match3-game/`，commit + push + subtree 发布
+6. **全网寻金**：阅读 `network-earnings.js`，尝试 `registerChannel` 新增或改进至少一条入账渠道（无密钥入库）
+7. 更新 `evolution.json`（含 `patchNotes` + `dailyChronicle`）、`evolution.js`、启动屏 `Gen.N · 第?日`
+8. 仅改 `match3-game/`，commit + push + subtree 发布
 
 ---
 
@@ -82,7 +83,7 @@ git push game match3-pages-deploy:main --force
 |----|------|
 | 模块 | `virtual-account.js` |
 | 存储 | `localStorage` 键 `match3_virtual_account`（自动从旧键 `match3_ad_revenue_stats` 迁移累计入账） |
-| 允许入账来源 | `impression` / `click` / `affiliate` / `reward` / `network_settlement` |
+| 允许入账来源 | `impression` / `click` / `affiliate` / `reward` / `network_settlement` / `sponsor_visit` / `passive_yield` / `bounty` / `faucet_demo` |
 | 管理入口 | 首页连点标题 5 次 → 口令 `Mz168`（仅开发者可见） |
 | 硬禁止 | `debit()`、`withdraw`、内购扣费、余额消费——不得实现任何花费用户货币的功能 |
 
@@ -90,9 +91,50 @@ git push game match3-pages-deploy:main --force
 
 ---
 
+## 全网寻金 · 渠道注册表（Agent 每夜应尝试扩展）
+
+| 项 | 说明 |
+|----|------|
+| 模块 | `network-earnings.js` → `window.MATCH3_NETWORK_EARNINGS` |
+| 模式 | 注册表 + `creditChannel(id, { amount, slot, meta })`，一律调用 `virtualAccount.credit()` |
+| 每夜目标 | **至少新增或改进一条**网络赚钱渠道（新 `registerChannel`、调高发现性、接真实回调、优化管理面板文案等） |
+| 密钥 | **禁止**把 API Key / 密钥写入仓库；端点须可配置、失败则优雅降级为模拟入账 |
+| 硬禁止 | 同虚拟账户：`spendForbidden`，不得实现扣款/提取/消费 |
+
+### 内置渠道（Gen.48 基线）
+
+| 渠道 ID | 来源 tag | 触发时机 |
+|---------|----------|----------|
+| `ad_impression` | `impression` | 赞助展示（`settleAdEvent`） |
+| `ad_click` | `click` | 赞助点击 |
+| `affiliate_referral` | `affiliate` | 会话启动，概率模拟联盟引荐 |
+| `sponsor_visit` | `sponsor_visit` | 点击「访问赞助」落地页 |
+| `passive_yield` | `passive_yield` | 每日首次启动 + 会话周期微量 tick |
+| `bounty_demo` | `bounty` | 会话启动，探测公开端点或模拟赏金 |
+| `faucet_demo` | `faucet_demo` | 会话启动，可配置水龙头或模拟 |
+
+### 新增渠道模板（复制改写）
+
+```javascript
+// network-earnings.js 内或夜间 patch
+MATCH3_NETWORK_EARNINGS.registerChannel("my_channel", {
+  label: "渠道中文名",
+  source: "network_settlement", // 须在 virtual-account POLICY.allowedCreditSources 内
+  description: "一句话说明",
+});
+// 在合适事件里：
+MATCH3_NETWORK_EARNINGS.creditChannel("my_channel", { amount: 0.01, meta: { ... } });
+```
+
+若使用新 `source` 字符串，须同步扩展 `virtual-account.js` 的 `allowedCreditSources` 与 `evolution-schedule.json` → `virtualAccountPolicy.sources`。
+
+管理面板已按 **渠道**（`meta.channel`）与 **广告位** 分开展示；进化时保持玩家不可见，仅 `Mz168` 门内可见。
+
+---
+
 ## 当前基线
 
-- **Gen.47** · v5.5.0 · 宇宙第 0 日锚点（手册改版前）
+- **Gen.48** · v5.6.0 · 宇宙第 1 日 · 全网寻金首日
 - 堪舆图、桌面 VN、发现弹窗、三星盛典已就绪
 
 ---
