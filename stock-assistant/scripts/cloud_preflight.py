@@ -21,7 +21,10 @@ def main() -> int:
         for e in errors:
             print(f"  - {e}")
         return 1
-    print("[cloud_preflight] 通过 ✓  可 push 后在 Streamlit Cloud 点 Reboot app")
+    print(
+        "[cloud_preflight] 通过 ✓  git push → Streamlit 自动部署；"
+        "晚间扫盘 GitHub raw 热更新，一般无需手动 Reboot"
+    )
     return 0
 
 

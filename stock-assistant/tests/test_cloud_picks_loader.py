@@ -19,7 +19,7 @@ class TestCloudPicksLoader(unittest.TestCase):
                 ),
                 encoding="utf-8",
             )
-            data = load_cloud_picks(p)
+            data = load_cloud_picks(p, prefer_remote=False)
             self.assertIsNotNone(data)
             self.assertEqual(len(data["picks"]), 1)
 
@@ -27,7 +27,7 @@ class TestCloudPicksLoader(unittest.TestCase):
         with tempfile.TemporaryDirectory() as td:
             p = Path(td) / "latest_picks.json"
             p.write_text('{"picks": [], "generated_at": ""}', encoding="utf-8")
-            self.assertIsNone(load_cloud_picks(p))
+            self.assertIsNone(load_cloud_picks(p, prefer_remote=False))
 
 
 if __name__ == "__main__":

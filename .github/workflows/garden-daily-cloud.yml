@@ -49,3 +49,12 @@ jobs:
           git add cloud_state/
           git diff --staged --quiet || git commit -m "cloud: daily garden A-share picks"
           git push
+
+      - name: Buddha self-check
+        run: python3 scripts/buddha_self_check.py --strict
+
+      - name: Restart Streamlit Cloud (optional)
+        env:
+          STREAMLIT_API_TOKEN: ${{ secrets.STREAMLIT_API_TOKEN }}
+          STREAMLIT_APP_ID: ${{ secrets.STREAMLIT_APP_ID }}
+        run: python3 scripts/streamlit_cloud_restart.py

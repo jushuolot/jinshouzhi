@@ -261,7 +261,10 @@ def render() -> None:
         f"v{APP_VERSION} · 已进化 {EVOLUTION_STEP} 步"
     )
     if is_streamlit_cloud():
-        st.success("☁️ **公网云端模式**：扫盘算力在 Streamlit 服务器，你的电脑只负责看。")
+        st.success(
+            "☁️ **公网云端模式**：算力在 Streamlit 服务器；"
+            "**每晚扫盘结果自动从 GitHub 拉取，不用你点 Reboot。**"
+        )
     else:
         st.caption("💡 不想占本地配置？请看 [零本地公网指南](docs/CLOUD_ONLY.md) 部署 Streamlit Cloud。")
 
