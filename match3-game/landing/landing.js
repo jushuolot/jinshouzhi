@@ -6,7 +6,8 @@
   function getSlot() {
     const params = new URLSearchParams(window.location.search);
     const slot = params.get("slot");
-    if (slot === "level_end") return "level_end";
+    const catalog = window.MATCH3_SPONSORS || {};
+    if (slot && catalog[slot]) return slot;
     return "level_start";
   }
 

@@ -938,6 +938,7 @@ body {
 
 .ad-modal .modal-backdrop {
   z-index: 0;
+  background: rgba(0, 0, 0, 0.88);
 }
 
 .ad-modal .modal-panel {
@@ -945,7 +946,102 @@ body {
 }
 
 .ad-panel {
-  border-color: rgba(255, 217, 61, 0.28);
+  position: relative;
+  border-color: rgba(201, 162, 39, 0.35);
+  background: linear-gradient(165deg, #14100a 0%, #0a0806 55%, #120e08 100%);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(201, 162, 39, 0.12);
+  overflow: hidden;
+}
+
+.ad-letterbox {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 10px;
+  background: #000;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.ad-letterbox-top {
+  top: 0;
+}
+
+.ad-letterbox-bottom {
+  bottom: 0;
+}
+
+.ad-head {
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.ad-sponsored-tag {
+  width: 100%;
+  margin: 0;
+  font-size: 0.62rem;
+  letter-spacing: 0.28em;
+  color: rgba(201, 162, 39, 0.75);
+  text-transform: uppercase;
+}
+
+.ad-price-badge {
+  display: inline-block;
+  width: fit-content;
+  margin: 0 0 0.65rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: 999px;
+  background: rgba(201, 162, 39, 0.14);
+  border: 1px solid rgba(201, 162, 39, 0.35);
+  color: #ffe8b0;
+  font-size: 0.82rem;
+}
+
+.ad-modal.ad-rewarded .ad-panel {
+  border-color: rgba(110, 198, 255, 0.35);
+}
+
+.ad-modal.ad-rewarded .ad-price-badge {
+  background: rgba(110, 198, 255, 0.12);
+  border-color: rgba(110, 198, 255, 0.35);
+  color: #d8f0ff;
+}
+
+.booster-reward {
+  animation: boosterRewardPulse 1.6s ease-in-out infinite;
+  box-shadow: 0 0 0 1px rgba(201, 162, 39, 0.45);
+}
+
+@keyframes boosterRewardPulse {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.15); }
+}
+
+.admin-slot-block {
+  margin: 1rem 0;
+}
+
+.admin-slot-stats {
+  margin-top: 0.45rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 0.78rem;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.admin-slot-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.2rem 0;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.06);
+}
+
+.admin-slot-row:last-child {
+  border-bottom: none;
 }
 
 .ad-countdown {

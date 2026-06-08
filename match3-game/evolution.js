@@ -6,10 +6,10 @@
   "use strict";
 
   var DEFAULT = {
-    version: "4.3.0",
-    generation: 32,
+    version: "4.4.0",
+    generation: 33,
     autoTune: { enabled: true, windowSize: 8, maxMoveAdjust: 3, targetWinRate: 0.52 },
-    patchNotes: ["Gen.32 活照片影院", "景深双层+换角淡化+打字微动"],
+    patchNotes: ["Gen.33 赞助变现", "六广告位+激励补给+开发者统计"],
   };
 
   window.MATCH3_EVOLUTION = DEFAULT;

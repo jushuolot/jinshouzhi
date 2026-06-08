@@ -51,18 +51,24 @@
   const DEFAULT_AD_CONFIG = {
     enabled: true,
     minWatchSec: 5,
+    rewardedWatchSec: 5,
+    continueAdEvery: 3,
     currencySymbol: "¥",
     settlementWebhook: "",
     useBuiltinLanding: true,
     advertiser: {
-      name: "内置赞助位",
+      name: "古蜀赞助位",
       landingUrl: "",
-      cpm: 20,
-      cpc: 1.5,
+      cpm: 24,
+      cpc: 1.8,
     },
     slots: {
-      level_start: { label: "关头广告" },
-      level_end: { label: "关尾广告" },
+      level_start: { label: "探方启程赞助" },
+      level_end: { label: "过关庆祝赞助" },
+      expedition_go: { label: "探点进发赞助" },
+      continue_play: { label: "继续探方赞助" },
+      reward_hammer: { label: "补给赞助 · ⛏", rewarded: true },
+      reward_shuffle: { label: "补给赞助 · 🔀", rewarded: true },
     },
     admin: {
       passphrase: "Mz168",
@@ -76,22 +82,74 @@
     }
     return {
       level_start: {
-        sponsor: "萌植能量饮",
-        headline: "玩前一杯，连线更顺",
-        teaser: "维生素气泡饮 · 0 糖 · 便携小瓶装",
-        icon: "🧃",
-        cpm: 20,
-        cpc: 1.2,
+        sponsor: "蜀光头灯",
+        headline: "入墓之前，先亮一手",
+        teaser: "考古级头灯 · 长续航 · 探方必备",
+        icon: "🔦",
+        cpm: 24,
+        cpc: 1.8,
       },
       level_end: {
-        sponsor: "绿野轻骑",
-        headline: "过关庆祝，骑行更酷",
-        teaser: "头盔 / 风镜 / 手套 · 通关用户专享",
-        icon: "🚴",
+        sponsor: "青铜文创社",
+        headline: "过关留念，带走一段古蜀",
+        teaser: "纵目面具书签 · 神树徽章 · 通关纪念",
+        icon: "🏺",
+        cpm: 26,
+        cpc: 2.0,
+      },
+      expedition_go: {
+        sponsor: "墓冢安全险",
+        headline: "深入探点，多一份保障",
+        teaser: "户外意外 · 24h 救援 · 小队专享",
+        icon: "🛡",
+        cpm: 28,
+        cpc: 2.2,
+      },
+      continue_play: {
+        sponsor: "蜀地文旅",
+        headline: "三星堆 · 金沙 · 一条线玩透",
+        teaser: "联票优惠 · 导览讲解 · 周末出发",
+        icon: "🗺",
         cpm: 22,
-        cpc: 1.5,
+        cpc: 1.6,
+      },
+      reward_hammer: {
+        sponsor: "洛阳铲工坊",
+        headline: "观看赞助 · 获赠 ⛏",
+        teaser: "清除单格封土/障碍 · 本局可用",
+        icon: "⛏",
+        cpm: 32,
+        cpc: 0.8,
+        rewarded: true,
+      },
+      reward_shuffle: {
+        sponsor: "扰层罗盘",
+        headline: "观看赞助 · 获赠 🔀",
+        teaser: "无步数消耗重排棋盘 · 本局可用",
+        icon: "🔀",
+        cpm: 30,
+        cpc: 0.8,
+        rewarded: true,
       },
     };
+  }
+
+  function collectAdSlotKeys(ext, catalog) {
+    const keys = new Set();
+    Object.keys(DEFAULT_AD_CONFIG.slots).forEach(function (k) {
+      keys.add(k);
+    });
+    if (ext.slots) {
+      Object.keys(ext.slots).forEach(function (k) {
+        keys.add(k);
+      });
+    }
+    if (catalog) {
+      Object.keys(catalog).forEach(function (k) {
+        keys.add(k);
+      });
+    }
+    return Array.from(keys);
   }
 
   function gameBasePath() {
@@ -128,10 +186,10 @@
     const catalog = getBuiltinSponsorCatalog();
     const useBuiltin = base.useBuiltinLanding !== false;
     const slots = {};
-    ["level_start", "level_end"].forEach(function (key) {
+    collectAdSlotKeys(ext, catalog).forEach(function (key) {
       const slotExt = (ext.slots && ext.slots[key]) || {};
       const slotDefault = DEFAULT_AD_CONFIG.slots[key] || {};
-      const builtin = catalog[key] || catalog.level_start;
+      const builtin = catalog[key] || catalog.level_start || {};
       let landingUrl = slotExt.landingUrl || adv.landingUrl;
       if (useBuiltin && isUnsetLandingUrl(landingUrl)) {
         landingUrl = builtinLandingUrl(key);
@@ -142,9 +200,12 @@
         headline: slotExt.headline || builtin.headline || "",
         teaser: slotExt.teaser || builtin.teaser || "",
         icon: slotExt.icon || builtin.icon || "📣",
+        price: slotExt.price || builtin.price || "",
+        priceNote: slotExt.priceNote || builtin.priceNote || "",
         landingUrl: landingUrl,
         cpm: slotExt.cpm != null ? slotExt.cpm : builtin.cpm != null ? builtin.cpm : adv.cpm,
         cpc: slotExt.cpc != null ? slotExt.cpc : builtin.cpc != null ? builtin.cpc : adv.cpc,
+        rewarded: !!(slotExt.rewarded || slotDefault.rewarded || builtin.rewarded),
       };
     });
     base.advertiser = adv;
@@ -167,6 +228,8 @@
   let revenueSession = 0;
   let revenueTotal = 0;
   let revenueWithdrawn = 0;
+  /** @type {Record<string, {impressions: number, clicks: number, amount: number}>} */
+  let adSlotStats = {};
   /** @type {{ amount: number, ts: number, balanceAfter: number }[]} */
   let withdrawalHistory = [];
   /** @type {number | null} */
@@ -364,6 +427,7 @@
   const adPreviewIconEl = document.getElementById("ad-preview-icon");
   const adPreviewHeadlineEl = document.getElementById("ad-preview-headline");
   const adPreviewTeaserEl = document.getElementById("ad-preview-teaser");
+  const adPriceBadgeEl = document.getElementById("ad-price-badge");
   const adLinkPreviewEl = document.getElementById("ad-link-preview");
   const adVisitBtn = document.getElementById("ad-visit");
   const adContinueBtn = document.getElementById("ad-continue");
@@ -379,6 +443,7 @@
   const adminWithdrawInputEl = document.getElementById("admin-withdraw-input");
   const adminWithdrawMsgEl = document.getElementById("admin-withdraw-msg");
   const adminWithdrawListEl = document.getElementById("admin-withdraw-list");
+  const adminSlotStatsEl = document.getElementById("admin-slot-stats");
   const adminWithdrawAllBtn = document.getElementById("admin-withdraw-all");
   const adminWithdrawSubmitBtn = document.getElementById("admin-withdraw-submit");
 
@@ -560,10 +625,12 @@
       if (data && typeof data.total === "number") revenueTotal = data.total;
       if (data && typeof data.withdrawn === "number") revenueWithdrawn = data.withdrawn;
       if (data && Array.isArray(data.withdrawals)) withdrawalHistory = data.withdrawals;
+      if (data && data.bySlot && typeof data.bySlot === "object") adSlotStats = data.bySlot;
     } catch (e) {
       revenueTotal = 0;
       revenueWithdrawn = 0;
       withdrawalHistory = [];
+      adSlotStats = {};
     }
   }
 
@@ -575,6 +642,7 @@
           total: revenueTotal,
           withdrawn: revenueWithdrawn,
           withdrawals: withdrawalHistory,
+          bySlot: adSlotStats,
           updatedAt: Date.now(),
         })
       );
@@ -591,6 +659,33 @@
     if (adminBalanceEl) adminBalanceEl.textContent = formatMoney(balance);
     if (adminWithdrawInputEl && document.activeElement !== adminWithdrawInputEl) {
       adminWithdrawInputEl.placeholder = balance.toFixed(3);
+    }
+    if (adminSlotStatsEl) {
+      const keys = Object.keys(adSlotStats).sort(function (a, b) {
+        return (adSlotStats[b].amount || 0) - (adSlotStats[a].amount || 0);
+      });
+      if (!keys.length) {
+        adminSlotStatsEl.textContent = "各广告位暂无结算记录";
+      } else {
+        adminSlotStatsEl.innerHTML = keys
+          .map(function (k) {
+            const s = adSlotStats[k];
+            const slot = AD_CONFIG.slots[k];
+            const label = slot ? slot.label : k;
+            return (
+              "<div class=\"admin-slot-row\"><span>" +
+              label +
+              "</span><span>展 " +
+              (s.impressions || 0) +
+              " · 点 " +
+              (s.clicks || 0) +
+              " · " +
+              formatMoney(s.amount || 0) +
+              "</span></div>"
+            );
+          })
+          .join("");
+      }
     }
     if (!adminWithdrawListEl) return;
     adminWithdrawListEl.innerHTML = "";
@@ -740,6 +835,10 @@
   function settleAdEvent(slotKey, type, amount) {
     revenueSession += amount;
     revenueTotal += amount;
+    if (!adSlotStats[slotKey]) adSlotStats[slotKey] = { impressions: 0, clicks: 0, amount: 0 };
+    if (type === "impression") adSlotStats[slotKey].impressions += 1;
+    else if (type === "click") adSlotStats[slotKey].clicks += 1;
+    adSlotStats[slotKey].amount = Math.round((adSlotStats[slotKey].amount + amount) * 1000) / 1000;
     if (adminPanelModalEl && !adminPanelModalEl.hidden) updateAdminPanel();
     saveAdStats();
     postSettlementEvent({
@@ -786,10 +885,12 @@
   }
 
   /**
-   * @param {"level_start"|"level_end"} slotKey
+   * @param {string} slotKey
    * @param {() => void} onComplete
+   * @param {{rewarded?: boolean}} [options]
    */
-  function showForcedAd(slotKey, onComplete) {
+  function showForcedAd(slotKey, onComplete, options) {
+    options = options || {};
     if (!AD_CONFIG.enabled || !adModalEl) {
       onComplete();
       return;
@@ -800,29 +901,46 @@
       return;
     }
 
+    const isRewarded = !!options.rewarded || !!slot.rewarded;
+    const watchSec = isRewarded
+      ? AD_CONFIG.rewardedWatchSec || AD_CONFIG.minWatchSec
+      : AD_CONFIG.minWatchSec;
+
     adOnComplete = onComplete;
     adCurrentSlot = slotKey;
     adFinishing = false;
     clearAdCountdown();
 
-    if (adTitleEl) adTitleEl.textContent = "赞助内容";
+    if (adModalEl) adModalEl.classList.toggle("ad-rewarded", isRewarded);
+
+    if (adTitleEl) adTitleEl.textContent = isRewarded ? "观看赞助 · 领取补给" : "赞助内容";
     if (adSlotLabelEl) adSlotLabelEl.textContent = slot.label;
     if (adSponsorEl) adSponsorEl.textContent = slot.sponsor;
     if (adPreviewIconEl) adPreviewIconEl.textContent = slot.icon || "📣";
     if (adPreviewHeadlineEl) adPreviewHeadlineEl.textContent = slot.headline || slot.sponsor;
     if (adPreviewTeaserEl) adPreviewTeaserEl.textContent = slot.teaser || "免费游戏由赞助支持";
-    if (adLinkPreviewEl) adLinkPreviewEl.textContent = slot.landingUrl;
+    if (adPriceBadgeEl) {
+      if (slot.price) {
+        adPriceBadgeEl.hidden = false;
+        adPriceBadgeEl.textContent = slot.price + (slot.priceNote ? " · " + slot.priceNote : "");
+      } else {
+        adPriceBadgeEl.hidden = true;
+      }
+    }
+    if (adLinkPreviewEl) adLinkPreviewEl.textContent = "";
 
     settleAdEvent(slotKey, "impression", slot.cpm / 1000);
 
     if (adContinueBtn) {
       adContinueBtn.disabled = true;
-      adContinueBtn.textContent = "继续游戏（" + AD_CONFIG.minWatchSec + "s）";
+      adContinueBtn.textContent = isRewarded
+        ? "领取补给（" + watchSec + "s）"
+        : "继续游戏（" + watchSec + "s）";
     }
 
     adModalEl.hidden = false;
 
-    let left = AD_CONFIG.minWatchSec;
+    let left = watchSec;
     if (adCountdownEl) adCountdownEl.textContent = String(left);
     clearAdCountdown();
     adCountdownTimer = window.setInterval(function () {
@@ -832,10 +950,40 @@
         clearAdCountdown();
         if (adContinueBtn) {
           adContinueBtn.disabled = false;
-          adContinueBtn.textContent = "继续游戏";
+          adContinueBtn.textContent = isRewarded ? "领取补给" : "继续游戏";
         }
       }
     }, 1000);
+  }
+
+  function showRewardedAd(slotKey, onReward) {
+    showForcedAd(
+      slotKey,
+      function () {
+        if (onReward) onReward();
+      },
+      { rewarded: true }
+    );
+  }
+
+  function maybeShowContinueAd(onDone) {
+    if (!AD_CONFIG.enabled) {
+      onDone();
+      return;
+    }
+    const every = AD_CONFIG.continueAdEvery || 3;
+    let count = 0;
+    try {
+      count = parseInt(window.sessionStorage.getItem("match3_continue_count") || "0", 10) + 1;
+      window.sessionStorage.setItem("match3_continue_count", String(count));
+    } catch (e) {
+      count = 1;
+    }
+    if (count % every === 0) {
+      showForcedAd("continue_play", onDone);
+    } else {
+      onDone();
+    }
   }
 
   function onAdVisitClick() {
@@ -874,9 +1022,9 @@
       "<p><strong>难度</strong>：第 1 关约 " +
       pass1 +
       "% 通过率，后续关卡逐步提升挑战。</p>" +
-      "<p><strong>赞助</strong>：每关开始/结束展示赞助内容（约 " +
-      AD_CONFIG.minWatchSec +
-      " 秒）。</p>"
+      "<p><strong>赞助</strong>：探点/关头/关尾展示赞助；道具用尽可观看赞助领取补给（约 " +
+      AD_CONFIG.rewardedWatchSec +
+      " 秒）。收益仅开发者后台可见。</p>"
     );
   }
 
@@ -1870,7 +2018,9 @@
     if (discoveryGoBtn) {
       discoveryGoBtn.onclick = function () {
         discoveryModalEl.hidden = true;
-        if (onGo) onGo();
+        showForcedAd("expedition_go", function () {
+          if (onGo) onGo();
+        });
       };
     }
     if (discoveryCancelBtn) {
@@ -1883,7 +2033,7 @@
   function onExpeditionNodePick(node) {
     showDiscoveryModal(node, function () {
       pendingDiscoveryLevel = node.level;
-      startLevel(node.level);
+      startLevel(node.level, true);
     });
   }
 
@@ -2178,10 +2328,18 @@
     if (hammerCountEl) hammerCountEl.textContent = String(hammerLeft);
     if (shuffleCountEl) shuffleCountEl.textContent = String(shuffleLeft);
     if (boosterHammerBtn) {
-      boosterHammerBtn.disabled = hammerLeft <= 0 || processing || gameOver;
+      const rewardHammer = AD_CONFIG.enabled && hammerLeft <= 0;
+      boosterHammerBtn.disabled = processing || gameOver || (hammerLeft <= 0 && !AD_CONFIG.enabled);
       boosterHammerBtn.classList.toggle("active", hammerMode);
+      boosterHammerBtn.classList.toggle("booster-reward", rewardHammer);
+      boosterHammerBtn.title = rewardHammer ? "观看赞助领取 ⛏" : "";
     }
-    if (boosterShuffleBtn) boosterShuffleBtn.disabled = shuffleLeft <= 0 || processing || gameOver;
+    if (boosterShuffleBtn) {
+      const rewardShuffle = AD_CONFIG.enabled && shuffleLeft <= 0;
+      boosterShuffleBtn.disabled = processing || gameOver || (shuffleLeft <= 0 && !AD_CONFIG.enabled);
+      boosterShuffleBtn.classList.toggle("booster-reward", rewardShuffle);
+      boosterShuffleBtn.title = rewardShuffle ? "观看赞助领取 🔀" : "";
+    }
   }
 
   function spawnConfetti() {
@@ -3363,11 +3521,13 @@
 
   if (homeContinueBtn) {
     homeContinueBtn.addEventListener("click", function () {
-      mapActiveChapter = getChapterForLevel(maxUnlockedLevel);
-      updateHomeStats();
-      showMapPhase("route");
-      renderStoryRoute(mapActiveChapter);
-      showScreen("map");
+      maybeShowContinueAd(function () {
+        mapActiveChapter = getChapterForLevel(maxUnlockedLevel);
+        updateHomeStats();
+        showMapPhase("route");
+        renderStoryRoute(mapActiveChapter);
+        showScreen("map");
+      });
     });
   }
   if (homeMapBtn) {
@@ -3450,7 +3610,16 @@
   }
   if (boosterHammerBtn) {
     boosterHammerBtn.addEventListener("click", function () {
-      if (hammerLeft <= 0 || processing || gameOver) return;
+      if (processing || gameOver) return;
+      if (hammerLeft <= 0) {
+        showRewardedAd("reward_hammer", function () {
+          hammerLeft += 1;
+          updateBoosterUi();
+          hammerMode = true;
+          setMessage("⛏ 赞助补给已到账 · 点选一格清理");
+        });
+        return;
+      }
       hammerMode = !hammerMode;
       updateBoosterUi();
       setMessage(hammerMode ? "⛏ 点选一格清理" : "");
@@ -3458,7 +3627,17 @@
   }
   if (boosterShuffleBtn) {
     boosterShuffleBtn.addEventListener("click", function () {
-      if (shuffleLeft <= 0 || processing || gameOver) return;
+      if (processing || gameOver) return;
+      if (shuffleLeft <= 0) {
+        showRewardedAd("reward_shuffle", function () {
+          shuffleLeft += 1;
+          updateBoosterUi();
+          shuffleLeft -= 1;
+          updateBoosterUi();
+          shuffleBoardFree();
+        });
+        return;
+      }
       shuffleLeft -= 1;
       updateBoosterUi();
       shuffleBoardFree();
@@ -3482,8 +3661,8 @@
   if (window.PortraitPainter && window.PortraitPainter.preloadAll) {
     window.PortraitPainter.preloadAll(
       function () {
-        if (window.dismissBootSplash) window.dismissBootSplash("Gen.32 · 活照片影院就绪");
-        if (window.showSystemToast) window.showSystemToast("Gen.32 · 景深双层 · 换角交叉淡化 · 打字微动", 4200);
+        if (window.dismissBootSplash) window.dismissBootSplash("Gen.33 · 赞助变现就绪");
+        if (window.showSystemToast) window.showSystemToast("Gen.33 · 六广告位 · 道具可看赞助领取补给", 4200);
       },
       function (done, total) {
         if (window.setProgress) window.setProgress(72 + Math.round((done / total) * 24));
@@ -3491,6 +3670,6 @@
       }
     );
   } else {
-    if (window.dismissBootSplash) window.dismissBootSplash("Gen.32 · 就绪");
+    if (window.dismissBootSplash) window.dismissBootSplash("Gen.33 · 就绪");
   }
 })();
