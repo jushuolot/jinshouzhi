@@ -1888,6 +1888,11 @@
     if (screenHomeEl) screenHomeEl.hidden = name !== "home";
     if (screenMapEl) screenMapEl.hidden = name !== "map";
     if (screenPlayEl) screenPlayEl.hidden = name !== "play";
+    if (name === "home") {
+      if (window.HomeCinema) window.HomeCinema.start();
+    } else if (window.HomeCinema) {
+      window.HomeCinema.stop();
+    }
   }
 
   function updateHomeStats() {
@@ -2436,16 +2441,23 @@
 
   function showMegaCombo(text) {
     if (!megaComboEl) return;
+    var isBronze = text && text.indexOf("5连") >= 0;
     megaComboEl.textContent = text;
     megaComboEl.hidden = false;
+    megaComboEl.classList.toggle("mega-bronze", isBronze);
     megaComboEl.classList.add("show");
     window.setTimeout(function () {
-      megaComboEl.classList.remove("show");
+      megaComboEl.classList.remove("show", "mega-bronze");
       megaComboEl.hidden = true;
-    }, 1200);
+    }, isBronze ? 1100 : 1200);
   }
 
-  function spawnMatchParticles(cellCount) {
+  function spawnMatchParticles(matched) {
+    if (window.MatchFX && window.MatchFX.burst && matched && typeof matched.forEach === "function") {
+      window.MatchFX.burst(matched, boardEl, fxLayerEl, board);
+      return;
+    }
+    var cellCount = typeof matched === "number" ? matched : matched && matched.size ? matched.size : 1;
     if (!fxLayerEl || !boardEl) return;
     const n = Math.min(16, cellCount * 2);
     const rect = boardEl.getBoundingClientRect();
@@ -2524,7 +2536,7 @@
     gravityAndRefillWithSpecials(board, specialGrid);
     renderCells();
     soundMatch(1);
-    spawnMatchParticles(1);
+    spawnMatchParticles(new Set([key(r, c)]));
       setMessage("⛏ 已清理一格");
   }
 
@@ -3081,7 +3093,7 @@
 
       soundMatch(matched.size);
       flashBoard();
-      spawnMatchParticles(matched.size);
+      spawnMatchParticles(matched);
       markMatchedCells(matched);
       await sleep(MATCH_ANIM_MS);
 
@@ -3103,6 +3115,9 @@
         refreshCellTypes();
         const el = boardEl && boardEl.querySelector('.cell[data-r="' + cr.r + '"][data-c="' + cr.c + '"]');
         if (el) applySpecialClasses(el, cr.r, cr.c);
+        if (window.MatchFX && window.MatchFX.specialBirth) {
+          window.MatchFX.specialBirth(cr.r, cr.c, cr.kind, boardEl, fxLayerEl);
+        }
       });
 
       gravityAndRefillWithSpecials(board, specialGrid);
@@ -3763,9 +3778,9 @@
   if (window.PortraitPainter && window.PortraitPainter.preloadAll) {
     window.PortraitPainter.preloadAll(
       function () {
-        if (window.dismissBootSplash) window.dismissBootSplash("Gen.35 · 探墓大片感就绪");
+        if (window.dismissBootSplash) window.dismissBootSplash("Gen.37 · 消除大片就绪");
         if (window.showSystemToast)
-          window.showSystemToast("Gen.35 · 探点影院 · 文物收录大片 · BOSS 标题卡", 4200);
+          window.showSystemToast("Gen.37 · 文物色消除 · 圣物诞生 · 首页浮尘", 4200);
       },
       function (done, total) {
         if (window.setProgress) window.setProgress(72 + Math.round((done / total) * 24));
@@ -3773,6 +3788,6 @@
       }
     );
   } else {
-    if (window.dismissBootSplash) window.dismissBootSplash("Gen.35 · 就绪");
+    if (window.dismissBootSplash) window.dismissBootSplash("Gen.37 · 就绪");
   }
 })();
