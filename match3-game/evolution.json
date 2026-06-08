@@ -1,6 +1,6 @@
 {
-  "version": "5.0.0",
-  "generation": 39,
+  "version": "5.1.0",
+  "generation": 40,
   "releasedAt": "2026-06-08",
   "autoTune": {
     "enabled": true,
@@ -9,9 +9,8 @@
     "targetWinRate": 0.52
   },
   "patchNotes": [
-    "五章古蜀 procedural BGM · 随章节自动切换",
-    "闯关火把氛围 · 棋盘暗角随章节变色",
-    "VN 打字机轻音 · 墓冢对话更有临场感",
-    "修复换章时 feidudu-mode 样式丢失"
+    "六人写实俊男美女立绘 · 替换肥嘟嘟圆润风",
+    "考古天团 UI · stars-mode 大片质感",
+    "王墩力士外形俊朗 · 剧情台词保持原样"
   ]
 }

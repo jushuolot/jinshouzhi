@@ -1907,7 +1907,7 @@
   function applyWorldTheme(levelIdx) {
     const w = worldForLevel(levelIdx);
     const keepBlockbuster = document.body.classList.contains("blockbuster-mode");
-    document.body.className = w.theme + " feidudu-mode";
+    document.body.className = w.theme + " stars-mode";
     if (keepBlockbuster) document.body.classList.add("blockbuster-mode");
     if (worldIconEl) worldIconEl.textContent = w.icon;
     if (worldNameEl) worldNameEl.textContent = w.name;
@@ -2573,7 +2573,7 @@
     renderCells();
     soundMatch(1);
     spawnMatchParticles(new Set([key(r, c)]));
-    if (window.showSystemToast) window.showSystemToast("💪 胖爷之力 · 一格封土碎！", 2200);
+    if (window.showSystemToast) window.showSystemToast("💪 力士一击 · 一格封土碎！", 2200);
       setMessage("⛏ 已清理一格");
   }
 
@@ -3815,9 +3815,9 @@
   if (window.PortraitPainter && window.PortraitPainter.preloadAll) {
     window.PortraitPainter.preloadAll(
       function () {
-        if (window.dismissBootSplash) window.dismissBootSplash("Gen.39 · 墓冢音画就绪");
+        if (window.dismissBootSplash) window.dismissBootSplash("Gen.40 · 俊男美女就绪");
         if (window.showSystemToast)
-          window.showSystemToast("Gen.39 · 五章古蜀BGM · 火把氛围 · VN打字音", 4200);
+          window.showSystemToast("Gen.40 · 写实俊男美女立绘 · 考古天团出征", 4200);
       },
       function (done, total) {
         if (window.setProgress) window.setProgress(72 + Math.round((done / total) * 24));
@@ -3825,6 +3825,6 @@
       }
     );
   } else {
-    if (window.dismissBootSplash) window.dismissBootSplash("Gen.39 · 就绪");
+    if (window.dismissBootSplash) window.dismissBootSplash("Gen.40 · 就绪");
   }
 })();

@@ -1,10 +1,10 @@
 /**
- * 写实人像立绘 Gen.38 · 肥嘟嘟暖调
+ * 写实人像立绘 Gen.40 · 俊男美女
  */
 (function () {
   "use strict";
 
-  var VER = 38;
+  var VER = 40;
   var BASE = "assets/portraits/";
   var cache = {};
   var loaded = {};
@@ -41,8 +41,7 @@
       composite: true,
       photo: true,
       depth: true,
-      feidudu: true,
-      chubby: charId === "wangdun",
+      idol: true,
       layers: {
         back: layerImg(url, "", "pc-photo-bg"),
         body: "",
