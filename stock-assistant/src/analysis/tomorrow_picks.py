@@ -344,6 +344,32 @@ def rank_tomorrow_a_picks(
 
     scored.sort(key=lambda x: -x[1])
     picks = [p for p, _ in scored[:max_picks]]
+
+    if not picks and candidates:
+        for item, list_pct, turn in candidates[:max_picks]:
+            base = 52.0
+            if list_pct is not None:
+                if 0.5 <= list_pct <= 6:
+                    base += 8
+                elif -3 <= list_pct <= 0:
+                    base += 6
+            if turn is not None:
+                base += min(10.0, turn * 0.8)
+            picks.append(
+                DailyPick(
+                    code=item["代码"],
+                    name=item["名称"],
+                    score=round(base, 1),
+                    pct=list_pct,
+                    signal=SIGNAL_WATCH,
+                    hold_days="1–2天",
+                    reason="[轻量模式] 按多榜动能列入明日观察（K线评分未全完成）",
+                    price=None,
+                    market="A股",
+                )
+            )
+        stats["fallback_light"] = len(picks)
+
     stats["target_date"] = target
     return picks, stats
 

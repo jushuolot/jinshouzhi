@@ -83,12 +83,7 @@ def _render_market_outlook(readonly: bool, fetch_ranking) -> None:
                 mark_dirty()
             st.rerun()
     with col_o2:
-        if not outlook and not readonly:
-            if st.button("自动分析", use_container_width=True):
-                with st.spinner("分析中…"):
-                    mo = compute_market_outlook(fetch_ranking=fetch_ranking)
-                    st.session_state.market_outlook = mo.as_dict()
-                st.rerun()
+        pass
 
     outlook = st.session_state.get("market_outlook")
     if not outlook:
@@ -154,6 +149,63 @@ def _render_market_outlook(readonly: bool, fetch_ranking) -> None:
         )
 
 
+def _try_auto_fill_garden(
+    *,
+    readonly: bool,
+    pick_log: list,
+    tgt_date: str,
+) -> list:
+    """打开页面时若无推荐，自动跑一轮（每天最多一次）。"""
+    if readonly:
+        return pick_log
+    if st.session_state.get("today_picks") or st.session_state.get("global_picks"):
+        return pick_log
+    if st.session_state.get("_auto_fill_date") == date.today().isoformat():
+        return pick_log
+
+    st.session_state._auto_fill_date = date.today().isoformat()
+    with st.spinner("正在自动预测明日 A 股 + 全球（首次约 1–3 分钟）…"):
+        try:
+            a_picks, global_picks, src, stats = fetch_garden_picks_bundle(
+                _fetch_ranking,
+                C._fetch_one,
+                max_a=5,
+                max_global_per_market=2,
+            )
+            st.session_state.today_picks = [p.as_dict() for p in a_picks]
+            st.session_state.global_picks = [p.as_dict() for p in global_picks]
+            st.session_state.last_pick_scan = stats
+            st.session_state["last_pick_source"] = src
+            st.session_state["last_pick_at"] = date.today().isoformat()
+            st.session_state["predict_for"] = stats.get("predict_for") or tgt_date
+            if a_picks:
+                pick_log = append_today_picks(pick_log, a_picks)
+                st.session_state.pick_log = pick_log
+            try:
+                mo = compute_market_outlook(fetch_ranking=_fetch_ranking)
+                st.session_state.market_outlook = mo.as_dict()
+            except Exception:
+                pass
+            mark_dirty()
+        except Exception as exc:
+            st.session_state["_auto_fill_error"] = str(exc)[:200]
+    st.rerun()
+    return pick_log
+
+
+def _try_auto_market_outlook(readonly: bool) -> None:
+    if readonly or st.session_state.get("market_outlook"):
+        return
+    if st.session_state.get("_outlook_auto_date") == date.today().isoformat():
+        return
+    st.session_state._outlook_auto_date = date.today().isoformat()
+    try:
+        mo = compute_market_outlook(fetch_ranking=_fetch_ranking)
+        st.session_state.market_outlook = mo.as_dict()
+    except Exception:
+        pass
+
+
 def render() -> None:
     st.markdown("## 🌱 私人选股花园")
     st.caption(
@@ -168,16 +220,19 @@ def render() -> None:
     cloud = load_cloud_picks()
     if cloud and cloud.get("generated_at"):
         cloud_day = str(cloud.get("generated_at") or "")[:10]
+        cloud_picks = list(cloud.get("picks") or [])
+        cloud_global = list(cloud.get("global_picks") or [])
         if st.session_state.get("_cloud_picks_date") != cloud_day:
-            st.session_state.today_picks = list(cloud.get("picks") or [])
-            st.session_state.global_picks = list(cloud.get("global_picks") or [])
-            st.session_state.last_pick_at = cloud_day
-            st.session_state["last_pick_source"] = f"GitHub 云端 · {cloud.get('source', '')}"
-            st.session_state["predict_for"] = (
-                cloud.get("predict_for")
-                or (cloud.get("stats") or {}).get("predict_for")
-                or tomorrow_trading_date()
-            )
+            if cloud_picks or cloud_global:
+                st.session_state.today_picks = cloud_picks
+                st.session_state.global_picks = cloud_global
+                st.session_state.last_pick_at = cloud_day
+                st.session_state["last_pick_source"] = f"GitHub 云端 · {cloud.get('source', '')}"
+                st.session_state["predict_for"] = (
+                    cloud.get("predict_for")
+                    or (cloud.get("stats") or {}).get("predict_for")
+                    or tomorrow_trading_date()
+                )
             st.session_state["_cloud_picks_date"] = cloud_day
         if cloud.get("market_outlook"):
             st.session_state.market_outlook = cloud["market_outlook"]
@@ -189,9 +244,12 @@ def render() -> None:
                 f"🌙 **云端已预测明日**（目标 **{tgt}**）— "
                 f"A股 {ap} 只 · 全球 {gp} 只 · 基于今日收盘+历史K线。"
             )
+        elif cloud_picks is not None and not cloud_picks and not cloud_global:
+            st.caption("☁️ 云端上次扫盘暂无标的，正在为你自动重试…")
 
     readonly = is_readonly_mode()
     tgt_date = tomorrow_trading_date()
+    _try_auto_market_outlook(readonly)
     _render_market_outlook(readonly=readonly, fetch_ranking=_fetch_ranking)
 
     st.info(
@@ -202,6 +260,7 @@ def render() -> None:
 
     pick_log = normalize_pick_log(st.session_state.get("pick_log"))
     st.session_state.pick_log = pick_log
+    pick_log = _try_auto_fill_garden(readonly=readonly, pick_log=pick_log, tgt_date=tgt_date)
     today_picks: list = list(st.session_state.get("today_picks") or [])
     scan_stats = dict(st.session_state.get("last_pick_scan") or {})
 
@@ -296,7 +355,11 @@ def render() -> None:
         return rows
 
     if not today_picks and not global_picks:
-        st.warning(f"还没有明日预测。收盘后点 **「预测明日 A 股 + 全球」**（目标 {predict_for}）。")
+        err = st.session_state.get("_auto_fill_error")
+        if err:
+            st.error(f"自动预测失败：{err} · 请点上方红色按钮重试。")
+        else:
+            st.warning(f"还没有明日预测。点 **「预测明日 A 股 + 全球」**（目标 {predict_for}）。")
     else:
         if today_picks:
             st.markdown(f"### 🇨🇳 A股 · 明日偏强（{predict_for}）")
