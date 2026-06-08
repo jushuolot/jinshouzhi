@@ -31,6 +31,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
+import { onLoad } from '@dcloudio/uni-app';
 import { loginDev, loginWithWxCode } from '../../api/auth';
 import { ROLE_HOME, type RoleKey } from '../../config/tabs';
 import { useRoleStore } from '../../store/role';
@@ -38,11 +39,20 @@ import { pbErrorMessage } from '../../utils/request';
 import { isDemoMockEnabled } from '../../utils/demo-mock';
 
 const loading = ref(false);
-const loginHint = computed(() =>
-  isDemoMockEnabled()
+const fromTour = ref(false);
+
+onLoad((query) => {
+  fromTour.value = query?.from === 'tour' || query?.hint === 'student1';
+});
+
+const loginHint = computed(() => {
+  if (fromTour.value) {
+    return '动画演示结束 · 请点「开发登录（学生）」用 student1 体验待接单 → 完成 → 收入';
+  }
+  return isDemoMockEnabled()
     ? '公网演示 · 微信登录可走演示流程 · 富数据集零成本 Mock'
-    : '本地联调：先 seed-demo；富数据支持列表与压力场景测试'
-);
+    : '本地联调：先 seed-demo；富数据支持列表与压力场景测试';
+});
 const roleStore = useRoleStore();
 
 const DEV_ACCOUNTS = [

@@ -1,95 +1,105 @@
 <template>
   <view class="tour">
     <view class="top-bar">
-      <text class="tag">动画演示 · 自动播放</text>
+      <view class="top-left">
+        <text class="tag">动画演示 · 自动播放</text>
+        <text class="scene-counter">{{ scene + 1 }}/{{ SCENE_COUNT }}</text>
+      </view>
       <view class="controls">
         <text class="ctrl" @tap="togglePlay">{{ playing ? '⏸' : '▶' }}</text>
         <text class="ctrl" @tap="prevScene">‹</text>
-        <text class="ctrl" @tap="nextScene">›</text>
+        <text class="ctrl" @tap="nextSceneManual">›</text>
       </view>
     </view>
 
+    <view class="progress-wrap">
+      <view class="progress-bar" :style="{ width: progressPct + '%' }" />
+    </view>
+
     <view class="stage" :class="'scene-' + scene">
-      <!-- 场景 0：总览 -->
-      <view v-if="scene === 0" class="slide fade-in">
-        <text class="slide-title">暖伴勤工</text>
-        <text class="slide-sub">附近中老年 ↔ 在校女大学生</text>
-        <view class="orbit">
-          <view class="node elder pulse">👵 张奶奶</view>
-          <view class="link-line draw" />
-          <view class="node platform">🏢 平台撮合</view>
-          <view class="link-line draw delay" />
-          <view class="node student pulse">👩‍🎓 林同学</view>
+      <view :key="scene" class="slide-wrap">
+        <!-- 场景 0：总览 -->
+        <view v-if="scene === 0" class="slide fade-in">
+          <text class="slide-title">暖伴勤工</text>
+          <text class="slide-sub">附近中老年 ↔ 在校女大学生</text>
+          <view class="orbit">
+            <view class="node elder pulse">👵 张奶奶</view>
+            <view class="link-line draw" />
+            <view class="node platform">🏢 平台撮合</view>
+            <view class="link-line draw delay" />
+            <view class="node student pulse">👩‍🎓 林同学</view>
+          </view>
+          <text class="caption">有偿陪护 · 明码标价 · 平台管理匹配</text>
         </view>
-        <text class="caption">有偿陪护 · 明码标价 · 平台管理匹配</text>
-      </view>
 
-      <!-- 场景 1：老人找同学 -->
-      <view v-else-if="scene === 1" class="slide fade-in">
-        <text class="scene-label">路径 ② 老人找同学</text>
-        <view class="card anim-up">
-          <text class="card-title">找陪护 · 5km 内</text>
-          <view class="row">
-            <text class="avatar">林</text>
-            <view class="info">
-              <text class="name">林同学 · 示范大学</text>
-              <text class="meta">距您 1.2km · 服务 28 次 · ¥50/小时</text>
+        <!-- 场景 1：老人找同学 -->
+        <view v-else-if="scene === 1" class="slide fade-in">
+          <text class="scene-label">路径 ② 老人找同学</text>
+          <view class="card anim-up">
+            <text class="card-title">找陪护 · 5km 内</text>
+            <view class="row">
+              <text class="avatar">林</text>
+              <view class="info">
+                <text class="name">林同学 · 示范大学</text>
+                <text class="meta">距您 1.2km · 服务 28 次 · ¥50/小时</text>
+              </view>
+              <text class="cta blink">预约</text>
             </view>
-            <text class="cta blink">预约</text>
           </view>
-        </view>
-        <view class="map-dots">
-          <view v-for="i in 5" :key="i" class="dot" :class="'d' + i" />
-        </view>
-        <text class="caption">老人按距离浏览女大学生志愿者并下单</text>
-      </view>
-
-      <!-- 场景 2：学生接单 -->
-      <view v-else-if="scene === 2" class="slide fade-in">
-        <text class="scene-label">路径 ③ 同学找需求</text>
-        <view class="card anim-up">
-          <text class="badge-new">新订单</text>
-          <text class="card-title">聊天陪伴 · 张奶奶</text>
-          <text class="meta">明天 14:00 · 60 分钟 · ¥50</text>
-          <view class="btn-row">
-            <text class="btn-ghost">拒绝</text>
-            <text class="btn-primary glow">立即接单</text>
+          <view class="map-dots">
+            <view v-for="i in 5" :key="i" class="dot" :class="'d' + i" />
           </view>
+          <text class="caption">老人按距离浏览女大学生志愿者并下单</text>
         </view>
-        <view class="pool-hint">
-          <text>待接单池</text>
-          <text class="count-up">10</text>
-          <text>单滚动可接</text>
-        </view>
-        <text class="caption">学生看待接单池或附近 8 位老人</text>
-      </view>
 
-      <!-- 场景 3：家属代付 -->
-      <view v-else-if="scene === 3" class="slide fade-in">
-        <text class="scene-label">有偿闭环 · 家属代付</text>
-        <view class="pay-card anim-up">
-          <text class="pay-logo">微信支付</text>
-          <text class="pay-amt">¥50.00</text>
-          <view class="spinner" />
-          <text class="pay-ok check-pop">✓ 支付成功</text>
-        </view>
-        <text class="caption">演示 mock 支付 · 订单进入待服务</text>
-      </view>
-
-      <!-- 场景 4：完成撮合 -->
-      <view v-else-if="scene === 4" class="slide fade-in">
-        <text class="scene-label">服务完成 · 收入到账</text>
-        <view class="timeline">
-          <view v-for="(s, i) in timeline" :key="s" class="tl-item" :class="'tl-' + i">
-            <text class="tl-dot" />
-            <text class="tl-text">{{ s }}</text>
+        <!-- 场景 2：学生接单 -->
+        <view v-else-if="scene === 2" class="slide fade-in">
+          <text class="scene-label">路径 ③ 同学找需求</text>
+          <view class="card anim-up">
+            <text class="badge-new">新订单</text>
+            <text class="card-title">聊天陪伴 · 张奶奶</text>
+            <text class="meta">明天 14:00 · 60 分钟 · ¥50</text>
+            <view class="btn-row">
+              <text class="btn-ghost">拒绝</text>
+              <text class="btn-primary glow">立即接单</text>
+            </view>
           </view>
+          <view class="pool-hint">
+            <text>待接单池</text>
+            <text class="count-up">10</text>
+            <text>单滚动可接</text>
+          </view>
+          <text class="caption">学生看待接单池或附近 8 位老人</text>
         </view>
-        <view class="income-card pop">
-          <text class="income-label">林同学本月收入</text>
-          <text class="income-num">¥285.00</text>
+
+        <!-- 场景 3：家属代付 -->
+        <view v-else-if="scene === 3" class="slide fade-in">
+          <text class="scene-label">有偿闭环 · 家属代付</text>
+          <view class="pay-card anim-up">
+            <text class="pay-logo">微信支付</text>
+            <text class="pay-amt">¥50.00</text>
+            <view class="spinner" />
+            <text class="pay-ok check-pop">✓ 支付成功</text>
+          </view>
+          <text class="caption">演示 mock 支付 · 订单进入待服务</text>
         </view>
-        <text class="caption">平台记录结算 · 三端可追溯</text>
+
+        <!-- 场景 4：完成撮合 -->
+        <view v-else-if="scene === 4" class="slide fade-in">
+          <text class="scene-label">服务完成 · 收入到账</text>
+          <view class="timeline">
+            <view v-for="(s, i) in timeline" :key="s" class="tl-item" :class="'tl-' + i">
+              <text class="tl-dot" />
+              <text class="tl-text">{{ s }}</text>
+            </view>
+          </view>
+          <view class="income-card pop">
+            <text class="income-label">林同学本月收入</text>
+            <text class="income-num">¥285.00</text>
+          </view>
+          <text class="caption">平台记录结算 · 三端可追溯</text>
+          <text class="last-hint">即将进入演示登录 · 建议 student1 接单体验</text>
+        </view>
       </view>
     </view>
 
@@ -112,7 +122,7 @@
 
 <script setup lang="ts">
 import { onHide, onShow, onUnload } from '@dcloudio/uni-app';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 
 const SCENE_COUNT = 5;
 const INTERVAL_MS = 4500;
@@ -123,22 +133,32 @@ let timer: ReturnType<typeof setInterval> | null = null;
 
 const timeline = ['接单', '到场签到', '服务中', '完成确认', '收入结算'];
 
+const progressPct = computed(() => ((scene.value + 1) / SCENE_COUNT) * 100);
+
 function goScene(i: number) {
-  scene.value = i % SCENE_COUNT;
+  scene.value = ((i % SCENE_COUNT) + SCENE_COUNT) % SCENE_COUNT;
 }
 
-function nextScene() {
+function nextSceneManual() {
   goScene(scene.value + 1);
 }
 
 function prevScene() {
-  goScene(scene.value + SCENE_COUNT - 1);
+  goScene(scene.value - 1);
+}
+
+function autoAdvance() {
+  if (scene.value >= SCENE_COUNT - 1) {
+    goLoginFromTour();
+    return;
+  }
+  goScene(scene.value + 1);
 }
 
 function startAuto() {
   stopAuto();
   if (!playing.value) return;
-  timer = setInterval(() => nextScene(), INTERVAL_MS);
+  timer = setInterval(autoAdvance, INTERVAL_MS);
 }
 
 function stopAuto() {
@@ -162,8 +182,13 @@ onShow(() => {
 onHide(stopAuto);
 onUnload(stopAuto);
 
+function goLoginFromTour() {
+  stopAuto();
+  uni.navigateTo({ url: '/pages/common/login?from=tour&hint=student1' });
+}
+
 function goLogin() {
-  uni.navigateTo({ url: '/pages/common/login' });
+  goLoginFromTour();
 }
 
 function goGodView() {
@@ -184,11 +209,21 @@ function goGodView() {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24rpx;
+  margin-bottom: 16rpx;
+}
+.top-left {
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
 }
 .tag {
   font-size: 22rpx;
   color: #e88b4a;
+}
+.scene-counter {
+  font-size: 20rpx;
+  color: #888;
+  letter-spacing: 2rpx;
 }
 .controls {
   display: flex;
@@ -198,23 +233,51 @@ function goGodView() {
 .ctrl {
   padding: 8rpx 16rpx;
 }
+.progress-wrap {
+  height: 6rpx;
+  background: #2a2a4a;
+  border-radius: 6rpx;
+  margin-bottom: 24rpx;
+  overflow: hidden;
+}
+.progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #c45c26, #e88b4a);
+  border-radius: 6rpx;
+  transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
 .stage {
   min-height: 720rpx;
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
+}
+.slide-wrap {
+  width: 100%;
+  animation: sceneIn 0.85s cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes sceneIn {
+  from {
+    opacity: 0;
+    transform: translateX(48rpx) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
 }
 .slide {
   width: 100%;
   text-align: center;
 }
 .fade-in {
-  animation: fadeIn 0.6s ease;
+  animation: fadeIn 0.7s cubic-bezier(0.22, 1, 0.36, 1);
 }
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(24rpx);
+    transform: translateY(32rpx);
   }
   to {
     opacity: 1;
@@ -294,6 +357,13 @@ function goGodView() {
   font-size: 24rpx;
   color: #888;
 }
+.last-hint {
+  display: block;
+  margin-top: 20rpx;
+  font-size: 22rpx;
+  color: #e88b4a;
+  animation: fadeIn 1s ease 2s both;
+}
 .card {
   background: #fff;
   color: #333;
@@ -303,7 +373,7 @@ function goGodView() {
   text-align: left;
 }
 .anim-up {
-  animation: slideUp 0.5s ease;
+  animation: slideUp 0.6s cubic-bezier(0.22, 1, 0.36, 1);
 }
 @keyframes slideUp {
   from {
@@ -598,6 +668,7 @@ function goGodView() {
   height: 16rpx;
   border-radius: 50%;
   background: #444;
+  transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
 .dot-item.on {
   background: #e88b4a;

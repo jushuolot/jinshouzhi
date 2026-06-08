@@ -5,6 +5,7 @@
         <view>
           <text class="greeting">你好，{{ profileName }}</text>
           <text class="school">{{ schoolName }}</text>
+          <text class="mission">附近老人有偿陪护 · 平台撮合匹配</text>
         </view>
         <view v-if="pendingCount > 0" class="badge" @tap="goPending">
           <text>{{ pendingCount }} 单待接</text>
@@ -238,6 +239,12 @@ function openElder(e: ElderPreview) {
   margin-top: 8rpx;
   font-size: 24rpx;
   color: #888;
+}
+.mission {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 22rpx;
+  color: #c45c26;
 }
 .badge {
   padding: 8rpx 20rpx;

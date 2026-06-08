@@ -30,3 +30,23 @@
 5. admin-hub → 派单 + 学校合作  
 
 自动化复跑：`./scripts/audit.sh`
+
+## 2026-06-09 · Phase 14
+
+**结论：通过**（演示抛光 + 公网零成本栈）
+
+| 检查项 | 结果 |
+|--------|------|
+| 路由 39 条 | OK |
+| 富数据（10 待接单 / 8 老人 / 27 订单） | OK |
+| API parity（api ↔ mock ↔ hooks） | OK |
+| `build:h5` | OK |
+| 公网 HTTP 200 | OK |
+| 公网 bundle 含 `demo-tour` | OK |
+
+**Phase 14 交付**
+
+- demo-tour：进度条、幕计数 1/5、平滑切幕、末幕自动链登录 + student1 提示
+- god-view：动画演示横幅、最后更新（构建时间）
+- 学生/老人首页撮合文案强化
+- launch `?tour=1` 深链动画演示

@@ -12,6 +12,11 @@ import { useRoleStore } from '../../store/role';
 const roleStore = useRoleStore();
 
 onLoad((query) => {
+  if (query?.tour === '1') {
+    uni.reLaunch({ url: '/pages/common/demo-tour' });
+    return;
+  }
+
   const role = query?.role as RoleKey | undefined;
   const target = query?.target as string | undefined;
   const id = query?.id as string | undefined;

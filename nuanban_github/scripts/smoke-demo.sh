@@ -25,16 +25,19 @@ smoke_bundle() {
   fi
   local body
   body="$(curl -sf "${BASE}assets/${login_js}" || true)"
-  local ok=0
-  for token in 'demo-tour' '动画演示' '上帝视角' '有偿陪护'; do
+  if ! echo "$body" | grep -q 'demo-tour'; then
+    echo "FAIL: bundle missing required «demo-tour» (Pages may be stale — wait for Actions)"
+    return 1
+  fi
+  echo "PASS: bundle contains required «demo-tour»"
+  for token in '动画演示' '上帝视角' '有偿陪护'; do
     if echo "$body" | grep -q "$token"; then
       echo "PASS: bundle contains «$token»"
-      ok=1
     else
-      echo "WARN: bundle missing «$token» (Pages may be stale — wait for Actions)"
+      echo "WARN: bundle missing «$token»"
     fi
   done
-  [ "$ok" -eq 1 ]
+  return 0
 }
 
 case "${1:-}" in

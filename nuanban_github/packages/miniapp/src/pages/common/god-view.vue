@@ -4,6 +4,15 @@
     <text class="title">暖伴勤工</text>
     <text class="mission">{{ missionText }}</text>
 
+    <view class="tour-banner" @tap="goTour">
+      <text class="tour-icon">🎬</text>
+      <view class="tour-body">
+        <text class="tour-title">动画演示 · 22 秒看懂撮合</text>
+        <text class="tour-sub">五幕自动轮播 · 进度条 · 无需登录</text>
+      </view>
+      <text class="tour-cta">观看 →</text>
+    </view>
+
     <view class="completion-card">
       <text class="pct">{{ pct }}%</text>
       <text class="pct-label">核心撮合能力（演示评估）</text>
@@ -47,11 +56,10 @@
       <text>④ 家属代付 → mock 微信支付</text>
     </view>
 
-    <button class="btn" @tap="goTour">观看动画演示</button>
     <button class="btn-outline" @tap="goLogin">进入演示登录</button>
     <button class="btn-outline" @tap="reload">刷新数据</button>
     <text v-if="errorMsg" class="err">{{ errorMsg }}</text>
-    <text v-if="updatedAt" class="ts">更新 {{ formatTime(updatedAt) }}</text>
+    <text v-if="lastUpdated" class="ts">最后更新 {{ formatTime(lastUpdated) }}</text>
   </view>
 </template>
 
@@ -59,6 +67,7 @@
 import { computed, ref } from 'vue';
 import { onShow } from '@dcloudio/uni-app';
 import { fetchPlatformOverview, type MatchingPathStatus } from '../../api/platform';
+import { BUILD_TIME } from '../../utils/build-info';
 import { pbErrorMessage } from '../../utils/request';
 
 const DEFAULT_PATHS: MatchingPathStatus[] = [
@@ -99,6 +108,8 @@ const paths = ref<MatchingPathStatus[]>([...DEFAULT_PATHS]);
 const updatedAt = ref('');
 const errorMsg = ref('');
 const loading = ref(false);
+
+const lastUpdated = computed(() => BUILD_TIME || updatedAt.value);
 
 function statusLabel(s: string) {
   if (s === 'live') return '已接通';
@@ -170,10 +181,43 @@ function goTour() {
 }
 .mission {
   display: block;
-  margin: 16rpx 0 28rpx;
+  margin: 16rpx 0 20rpx;
   font-size: 26rpx;
   color: #aaa;
   line-height: 1.5;
+}
+.tour-banner {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  background: linear-gradient(135deg, #2d1f3d, #1a2744);
+  border: 2rpx solid #e88b4a;
+  border-radius: 16rpx;
+  padding: 28rpx 24rpx;
+  margin-bottom: 24rpx;
+}
+.tour-icon {
+  font-size: 44rpx;
+}
+.tour-body {
+  flex: 1;
+}
+.tour-title {
+  display: block;
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #fff;
+}
+.tour-sub {
+  display: block;
+  margin-top: 6rpx;
+  font-size: 22rpx;
+  color: #e88b4a;
+}
+.tour-cta {
+  font-size: 28rpx;
+  color: #e88b4a;
+  font-weight: 600;
 }
 .completion-card {
   background: linear-gradient(135deg, #c45c26, #e88b4a);
