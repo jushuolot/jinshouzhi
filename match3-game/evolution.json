@@ -1,7 +1,7 @@
 {
-  "version": "4.1.0",
-  "generation": 30,
-  "releasedAt": "2026-06-07",
+  "version": "4.2.0",
+  "generation": 31,
+  "releasedAt": "2026-06-08",
   "autoTune": {
     "enabled": true,
     "windowSize": 8,
@@ -9,9 +9,8 @@
     "targetWinRate": 0.52
   },
   "patchNotes": [
-    "修复「像鬼」：去掉脸上竖条发束遮面",
-    "眼白+小虹膜+高光，不再黑洞眼",
-    "刘海只在两侧与额头，不挡五官",
-    "鼻影/唇线/暖色肤调"
+    "六角色写实摄影立绘 · PNG 全屏影院",
+    "电影调色/暗角/颗粒叠加 · 保留 2.5D 镜头",
+    "Canvas 程序化人像作离线回退"
   ]
 }

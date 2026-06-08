@@ -32,6 +32,7 @@
       '<div class="portrait-cinema ' +
       align +
       (compact ? " compact" : "") +
+      (art.photo ? " pc-photo" : "") +
       '" style="--pc-accent:' +
       art.accent +
       '">' +

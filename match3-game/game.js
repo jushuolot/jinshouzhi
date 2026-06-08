@@ -3474,6 +3474,6 @@
       if (window.showSystemToast) window.showSystemToast("手绘立绘已预载 · Gen.27", 2800);
     });
   }
-  if (window.dismissBootSplash) window.dismissBootSplash("Gen.29 · 高清立绘");
-  if (window.showSystemToast) window.showSystemToast("Gen.30 · 人像修复：不再遮脸/黑洞眼", 4000);
+  if (window.dismissBootSplash) window.dismissBootSplash("Gen.31 · 写实人像就绪");
+  if (window.showSystemToast) window.showSystemToast("Gen.31 · 六角色写实摄影立绘 · 电影感 VN", 4200);
 })();

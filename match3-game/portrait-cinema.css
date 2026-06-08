@@ -197,6 +197,39 @@
   filter: drop-shadow(0 20px 48px rgba(0, 0, 0, 0.75)) saturate(1.08) brightness(1.06) contrast(1.02);
 }
 
+/* Gen.31 写实摄影立绘 */
+.portrait-cinema.pc-photo .pc-layer {
+  width: min(98%, 640px);
+  height: 100%;
+}
+
+.portrait-cinema.pc-photo .pc-layer-main img.pc-photo {
+  object-fit: cover;
+  object-position: center 12%;
+  width: 108%;
+  height: 108%;
+  margin-left: -4%;
+  filter: drop-shadow(0 24px 56px rgba(0, 0, 0, 0.82)) saturate(1.05) brightness(1.04) contrast(1.06);
+}
+
+.portrait-cinema.pc-photo.pc-talking .pc-layer-main img.pc-photo {
+  animation: pcTalkBounce 0.35s ease-in-out infinite alternate;
+}
+
+.portrait-cinema.pc-photo .pc-bg-gradient {
+  background:
+    radial-gradient(ellipse 85% 65% at 65% 28%, color-mix(in srgb, var(--pc-accent) 14%, transparent), transparent 58%),
+    linear-gradient(180deg, #060504 0%, #020100 55%, #0a0806 100%);
+}
+
+.portrait-cinema.pc-photo .pc-grade {
+  background: linear-gradient(180deg, rgba(8, 4, 2, 0.35) 0%, transparent 28%, rgba(0, 0, 0, 0.55) 100%);
+}
+
+.portrait-cinema.pc-photo .pc-vignette {
+  background: radial-gradient(ellipse 78% 72% at 50% 38%, transparent 28%, rgba(0, 0, 0, 0.78) 100%);
+}
+
 .pc-layer-rim {
   mix-blend-mode: screen;
   opacity: 0.5;
