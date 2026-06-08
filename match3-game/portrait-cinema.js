@@ -48,22 +48,21 @@
       "</div>" +
       '<div class="pc-stage">' +
       '<div class="pc-layer pc-layer-back" data-z="1">' +
-      art.layers.back +
+      (art.layers.back || "") +
       "</div>" +
-      '<div class="pc-layer pc-layer-body" data-z="2">' +
-      art.layers.body +
-      "</div>" +
-      '<div class="pc-layer pc-layer-face" data-z="3">' +
-      art.layers.face +
-      "</div>" +
-      '<div class="pc-layer pc-layer-hair" data-z="4">' +
-      art.layers.hair +
-      "</div>" +
-      '<div class="pc-layer pc-layer-acc" data-z="5">' +
-      art.layers.acc +
-      "</div>" +
+      (art.composite
+        ? '<div class="pc-layer pc-layer-main" data-z="3">' + (art.layers.face || "") + "</div>"
+        : '<div class="pc-layer pc-layer-body" data-z="2">' +
+          (art.layers.body || "") +
+          '</div><div class="pc-layer pc-layer-face" data-z="3">' +
+          (art.layers.face || "") +
+          '</div><div class="pc-layer pc-layer-hair" data-z="4">' +
+          (art.layers.hair || "") +
+          '</div><div class="pc-layer pc-layer-acc" data-z="5">' +
+          (art.layers.acc || "") +
+          "</div>") +
       '<div class="pc-layer pc-layer-rim" data-z="6">' +
-      art.layers.rim +
+      (art.layers.rim || "") +
       "</div>" +
       "</div>" +
       '<div class="pc-grade"></div>' +

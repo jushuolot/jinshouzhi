@@ -3474,6 +3474,6 @@
       if (window.showSystemToast) window.showSystemToast("手绘立绘已预载 · Gen.27", 2800);
     });
   }
-  if (window.dismissBootSplash) window.dismissBootSplash("Gen.28 就绪 · 立绘已修复");
-  if (window.showSystemToast) window.showSystemToast("Gen.28 · 立绘可见性修复，请进蜀地地图看剧情", 4000);
+  if (window.dismissBootSplash) window.dismissBootSplash("Gen.29 · 高清立绘");
+  if (window.showSystemToast) window.showSystemToast("Gen.29 · 立绘画质升级，请刷新看陈礼/胡探", 4000);
 })();

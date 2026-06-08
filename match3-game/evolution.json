@@ -1,6 +1,6 @@
 {
-  "version": "3.9.0",
-  "generation": 28,
+  "version": "4.0.0",
+  "generation": 29,
   "releasedAt": "2026-06-07",
   "autoTune": {
     "enabled": true,
@@ -9,8 +9,9 @@
     "targetWinRate": 0.52
   },
   "patchNotes": [
-    "修复立绘高度为 0 导致人物不可见（flex 布局 CSS）",
-    "立绘影院只初始化一次，换台词不再清空",
-    "旁白改为可见肖像，层图 min-height 兜底"
+    "立绘 Gen.29：560px 高清合成绘制",
+    "渐变皮肤/虹膜/发束/服饰褶皱",
+    "陈礼眼镜、胡探帽、杨雪长发等角色差异化",
+    "侧光 rim + 柔和腮红阴影"
   ]
 }
