@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""GitHub Actions / 公网定时：自动扫 A 股并写入 cloud_state（零本地）。
+"""GitHub Actions / 公网定时：预测明日 A 股并写入 cloud_state（零本地）。
 
 用法:
   cd stock-assistant
@@ -22,7 +22,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from src.analysis.daily_picks import fetch_garden_picks_bundle, picks_to_markdown  # noqa: E402
+from src.analysis.tomorrow_picks import fetch_garden_picks_bundle, picks_to_markdown, tomorrow_trading_date  # noqa: E402
 from src.providers import market_data  # noqa: E402
 from src.ui import app_core as C  # noqa: E402
 
@@ -42,13 +42,17 @@ def run_scan(*, max_picks: int = 5) -> dict:
         max_global_per_market=2,
     )
     now = datetime.now(timezone.utc).astimezone().isoformat(timespec="seconds")
+    tgt = stats.get("predict_for") or tomorrow_trading_date()
     payload = {
         "generated_at": now,
         "source": src,
         "stats": stats,
+        "predict_for": tgt,
         "picks": [p.as_dict() for p in a_picks],
         "global_picks": [p.as_dict() for p in global_picks],
-        "markdown": picks_to_markdown(a_picks, day=now[:10], global_picks=global_picks),
+        "markdown": picks_to_markdown(
+            a_picks, day=now[:10], global_picks=global_picks, target_date=tgt
+        ),
     }
     return payload
 

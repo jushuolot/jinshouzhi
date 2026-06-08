@@ -384,12 +384,15 @@ def fetch_garden_picks_bundle(
     max_a: int = 5,
     max_global_per_market: int = 2,
 ) -> tuple[list[DailyPick], list[DailyPick], str, dict[str, Any]]:
-    """花园一键扫盘：A 股为主 + 港美全球关注。"""
-    a_picks, src, stats = fetch_and_rank_a_picks(fetch_ranking, fetch_fn, max_picks=max_a)
-    global_picks, gstats = fetch_global_watch_picks(max_per_market=max_global_per_market)
-    stats["global"] = gstats
-    stats["global_count"] = len(global_picks)
-    return a_picks, global_picks, src, stats
+    """已迁移至 tomorrow_picks（明日预测引擎）。"""
+    from src.analysis.tomorrow_picks import fetch_garden_picks_bundle as _bundle
+
+    return _bundle(
+        fetch_ranking,
+        fetch_fn,
+        max_a=max_a,
+        max_global_per_market=max_global_per_market,
+    )
 
 
 def picks_to_markdown(
