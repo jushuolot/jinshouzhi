@@ -6,10 +6,10 @@
   "use strict";
 
   var DEFAULT = {
-    version: "5.4.0",
-    generation: 46,
+    version: "5.5.0",
+    generation: 47,
     autoTune: { enabled: true, windowSize: 8, maxMoveAdjust: 3, targetWinRate: 0.52 },
-    patchNotes: ["Gen.46 桌面影院", "宽屏分栏+键盘快捷键"],
+    patchNotes: ["Gen.47 发现一刻", "探点弹窗+三星盛典"],
   };
 
   window.MATCH3_EVOLUTION = DEFAULT;

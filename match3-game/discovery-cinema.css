@@ -1,0 +1,129 @@
+/* Gen.47 · 发现探点 · 摸金一刻 */
+
+.discovery-modal .modal-panel {
+  max-width: min(560px, calc(100vw - 1.25rem));
+  border: 2px solid rgba(201, 162, 39, 0.4);
+  background:
+    radial-gradient(ellipse 90% 50% at 50% 0%, rgba(255, 220, 160, 0.08), transparent 55%),
+    linear-gradient(165deg, #1e1810 0%, #0c0a08 55%, #16120c 100%);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.85), 0 0 48px rgba(201, 162, 39, 0.12);
+  transform: scale(0.92) translateY(16px);
+  opacity: 0;
+  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.4s ease;
+}
+
+.discovery-modal.discovery-visible .modal-panel {
+  transform: scale(1) translateY(0);
+  opacity: 1;
+}
+
+.discovery-modal .discovery-scene {
+  position: relative;
+}
+
+.discovery-modal .discovery-tag {
+  animation: discTagIn 0.5s ease both;
+}
+
+@keyframes discTagIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.discovery-modal .discovery-title {
+  font-family: "Noto Serif SC", serif;
+  letter-spacing: 0.12em;
+  animation: discTitleIn 0.55s ease 0.08s both;
+}
+
+@keyframes discTitleIn {
+  from { opacity: 0; letter-spacing: 0.28em; }
+  to { opacity: 1; letter-spacing: 0.12em; }
+}
+
+.discovery-modal .discovery-cinema-mount {
+  height: min(40vh, 300px) !important;
+  min-height: 200px !important;
+  border-radius: 12px;
+  box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.5);
+}
+
+.discovery-modal.discovery-tomb .discovery-cinema-mount {
+  height: min(44vh, 340px) !important;
+  box-shadow: 0 0 32px rgba(255, 217, 61, 0.2), inset 0 0 50px rgba(0, 0, 0, 0.55);
+}
+
+.discovery-modal .discovery-text {
+  font-family: "Noto Serif SC", serif;
+  font-size: 0.95rem;
+  line-height: 1.7;
+  min-height: 3.2em;
+  color: rgba(245, 230, 200, 0.95);
+}
+
+.discovery-modal .discovery-text.typing::after {
+  content: "▌";
+  animation: cursorBlink 0.8s step-end infinite;
+  color: #ffd93d;
+}
+
+.discovery-modal .discovery-hint {
+  border-left-color: rgba(201, 162, 39, 0.55);
+}
+
+.discovery-modal.discovery-tomb .discovery-hint {
+  background: rgba(155, 89, 182, 0.1);
+  border-left-color: #c77dff;
+  color: rgba(255, 220, 255, 0.85);
+}
+
+.discovery-modal .modal-actions .btn:last-child {
+  background: linear-gradient(135deg, #e8c547, #9a7010);
+  font-weight: 700;
+  box-shadow: 0 4px 20px rgba(201, 162, 39, 0.4);
+}
+
+.discovery-modal.discovery-tomb .modal-actions .btn:last-child {
+  box-shadow: 0 4px 24px rgba(255, 217, 61, 0.45);
+}
+
+.discovery-kbd-hint {
+  margin: 0.35rem 0 0;
+  font-size: 0.62rem;
+  color: rgba(200, 180, 140, 0.55);
+  text-align: center;
+  letter-spacing: 0.04em;
+}
+
+@media (min-width: 960px) {
+  .discovery-modal .modal-panel {
+    max-width: min(680px, 90vw);
+  }
+
+  .discovery-modal .discovery-scene {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.85rem 1rem;
+    align-items: start;
+  }
+
+  .discovery-modal .discovery-tag,
+  .discovery-modal .discovery-title {
+    grid-column: 1 / -1;
+  }
+
+  .discovery-modal .discovery-cinema-mount {
+    grid-column: 1;
+    grid-row: 3 / 6;
+    height: min(36vh, 320px) !important;
+  }
+
+  .discovery-modal .discovery-text,
+  .discovery-modal .discovery-hint {
+    grid-column: 2;
+  }
+
+  .discovery-kbd-hint {
+    grid-column: 1 / -1;
+  }
+}

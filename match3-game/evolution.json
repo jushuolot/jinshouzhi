@@ -1,6 +1,6 @@
 {
-  "version": "5.4.0",
-  "generation": 46,
+  "version": "5.5.0",
+  "generation": 47,
   "releasedAt": "2026-06-08",
   "autoTune": {
     "enabled": true,
@@ -9,8 +9,8 @@
     "targetWinRate": 0.52
   },
   "patchNotes": [
-    "桌面宽屏剧情分栏 · 左立绘右台词",
-    "空格/回车继续 · Esc 跳过剧情",
-    "堪舆图悬停提示墓级说明"
+    "探点发现弹窗影院化 · 立绘+打字机台词",
+    "桌面宽屏发现分栏 · 回车开战 Esc 稍后",
+    "三星通关金冠特效+三声和鸣"
   ]
 }

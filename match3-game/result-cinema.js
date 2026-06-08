@@ -1,5 +1,5 @@
 /**
- * 过关结算影院 Gen.36
+ * 过关结算影院 Gen.47
  */
 (function () {
   "use strict";
@@ -16,9 +16,10 @@
       if (!modal) return;
       opts = opts || {};
       modal.classList.add("result-cinema");
-      modal.classList.remove("result-win", "result-lose", "result-boss", "result-visible");
+      modal.classList.remove("result-win", "result-lose", "result-boss", "result-triple", "result-visible");
       modal.classList.add(opts.isWin ? "result-win" : "result-lose");
       if (opts.isBoss) modal.classList.add("result-boss");
+      if (opts.isWin && opts.stars >= 3) modal.classList.add("result-triple");
 
       var tagEl = modal.querySelector("#modal-result-tag");
       var relicEl = modal.querySelector("#modal-result-relic");

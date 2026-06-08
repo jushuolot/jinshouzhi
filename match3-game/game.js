@@ -566,6 +566,25 @@
     beep(420 + randomInt(80), 0.028, 0.12, "sine");
   }
 
+  function soundDiscovery(isTomb) {
+    resumeAudio();
+    beep(isTomb ? 196 : 294, 0.12, 0.1, "sine");
+    window.setTimeout(function () {
+      beep(isTomb ? 262 : 392, 0.18, 0.08, "triangle");
+    }, 90);
+  }
+
+  function soundTripleStar() {
+    resumeAudio();
+    beep(523, 0.1, 0.1, "sine");
+    window.setTimeout(function () {
+      beep(659, 0.1, 0.09, "sine");
+    }, 100);
+    window.setTimeout(function () {
+      beep(784, 0.22, 0.1, "triangle");
+    }, 200);
+  }
+
   function stopMusic() {
     if (musicTimer) {
       window.clearInterval(musicTimer);
@@ -1312,7 +1331,9 @@
         maxUnlockedLevel = currentLevelIndex + 1;
         saveProgress();
       }
-      spawnConfetti();
+      spawnConfetti(stars);
+      if (stars >= 3) soundTripleStar();
+      if (window.ResultCinema && window.ResultCinema.bronzePulse) window.ResultCinema.bronzePulse();
     }
     renderStarRow(modalStarsEl, 0);
     if (window.ResultCinema) {
@@ -1374,7 +1395,7 @@
   function hideModal() {
     if (!modalEl) return;
     modalEl.hidden = true;
-    modalEl.classList.remove("result-cinema", "result-win", "result-lose", "result-boss", "result-visible");
+    modalEl.classList.remove("result-cinema", "result-win", "result-lose", "result-boss", "result-triple", "result-visible");
   }
 
   function key(r, c) {
@@ -2121,6 +2142,20 @@
     });
   }
 
+  let discoveryQuoteFull = "";
+
+  function closeDiscoveryModal() {
+    if (window.DiscoveryCinema) window.DiscoveryCinema.hide(discoveryModalEl);
+    if (discoveryModalEl) discoveryModalEl.hidden = true;
+  }
+
+  function confirmDiscoveryGo(onGo) {
+    closeDiscoveryModal();
+    showForcedAd("expedition_go", function () {
+      if (onGo) onGo();
+    });
+  }
+
   function showDiscoveryModal(node, onGo) {
     if (!discoveryModalEl) {
       if (onGo) onGo();
@@ -2129,12 +2164,12 @@
     var speakerId = node.discover ? node.discover[0] : "narrator";
     var text = node.discover ? node.discover[1] : "发现新探点。";
     var roster = { hutan: "胡探", wangdun: "王墩", yangxue: "杨雪", jinyaliu: "金牙刘", chenli: "陈礼", narrator: "旁白" };
+    discoveryQuoteFull = (roster[speakerId] || "旁白") + "：「" + text + "」";
     if (discoveryTagEl) {
       discoveryTagEl.textContent = node.isTomb ? "⚱ 终极大墓" : "📍 发现探点";
       discoveryTagEl.className = "discovery-tag" + (node.isTomb ? " tomb" : "");
     }
     if (discoveryTitleEl) discoveryTitleEl.textContent = node.name;
-    if (discoveryTextEl) discoveryTextEl.textContent = (roster[speakerId] || "旁白") + "：「" + text + "」";
     if (discoveryHintEl) {
       discoveryHintEl.textContent = node.isTomb
         ? "终极大墓在前 · 完成本层挑战方可深入核心"
@@ -2145,23 +2180,26 @@
       var dc = window.PortraitCinema.create(discoveryCinemaEl, "discovery");
       if (dc && dc.ok) dc.showCharacter(speakerId, false);
     }
-    if (window.ArtifactViewer3D && discoveryCinemaEl && node.artifactHint != null) {
-      /* artifact shown in cinema mount alternates - character takes priority */
-    }
+    soundDiscovery(!!node.isTomb);
     discoveryModalEl.hidden = false;
+    if (window.DiscoveryCinema) {
+      window.DiscoveryCinema.reveal(discoveryModalEl);
+      window.DiscoveryCinema.typeQuote(discoveryTextEl, discoveryQuoteFull, soundTypeTick);
+    } else if (discoveryTextEl) {
+      discoveryTextEl.textContent = discoveryQuoteFull;
+    }
     if (discoveryGoBtn) {
       discoveryGoBtn.onclick = function () {
-        discoveryModalEl.hidden = true;
-        showForcedAd("expedition_go", function () {
-          if (onGo) onGo();
-        });
+        confirmDiscoveryGo(onGo);
       };
     }
     if (discoveryCancelBtn) {
-      discoveryCancelBtn.onclick = function () {
-        discoveryModalEl.hidden = true;
-      };
+      discoveryCancelBtn.onclick = closeDiscoveryModal;
     }
+  }
+
+  function isDiscoveryOpen() {
+    return discoveryModalEl && !discoveryModalEl.hidden;
   }
 
   function onExpeditionNodePick(node) {
@@ -2534,11 +2572,12 @@
     }
   }
 
-  function spawnConfetti() {
+  function spawnConfetti(stars) {
     if (!confettiLayerEl) return;
     confettiLayerEl.innerHTML = "";
-    const colors = ["#ffd93d", "#6fcf6f", "#ff7eb3", "#6ec6ff", "#c77dff", "#fff"];
-    for (let i = 0; i < 80; i++) {
+    const colors = ["#ffd93d", "#e8c547", "#c9a227", "#6fcf6f", "#ff7eb3", "#fff"];
+    const count = stars >= 3 ? 120 : stars >= 2 ? 90 : 70;
+    for (let i = 0; i < count; i++) {
       const p = document.createElement("div");
       p.className = "confetti-piece";
       p.style.left = Math.random() * 100 + "%";
@@ -3841,9 +3880,23 @@
     });
   }
   window.addEventListener("keydown", function (ev) {
-    if (!isVnActive()) return;
     const tag = ev.target && ev.target.tagName ? ev.target.tagName.toLowerCase() : "";
     if (tag === "input" || tag === "textarea" || tag === "select") return;
+    if (isDiscoveryOpen()) {
+      if (ev.key === "Enter") {
+        ev.preventDefault();
+        if (discoveryTextEl && discoveryTextEl.classList.contains("typing") && window.DiscoveryCinema) {
+          window.DiscoveryCinema.skipTyping(discoveryTextEl, discoveryQuoteFull);
+          return;
+        }
+        if (discoveryGoBtn) discoveryGoBtn.click();
+      } else if (ev.key === "Escape") {
+        ev.preventDefault();
+        closeDiscoveryModal();
+      }
+      return;
+    }
+    if (!isVnActive()) return;
     if (ev.key === " " || ev.key === "Enter") {
       ev.preventDefault();
       advanceVnLine();
@@ -3905,9 +3958,9 @@
   if (window.PortraitPainter && window.PortraitPainter.preloadAll) {
     window.PortraitPainter.preloadAll(
       function () {
-        if (window.dismissBootSplash) window.dismissBootSplash("Gen.46 · 桌面影院就绪");
+        if (window.dismissBootSplash) window.dismissBootSplash("Gen.47 · 发现一刻就绪");
         if (window.showSystemToast)
-          window.showSystemToast("Gen.46 · 宽屏分栏剧情 · 空格继续", 4200);
+          window.showSystemToast("Gen.47 · 探点发现弹窗 · 三星盛典", 4200);
       },
       function (done, total) {
         if (window.setProgress) window.setProgress(72 + Math.round((done / total) * 24));
@@ -3915,6 +3968,6 @@
       }
     );
   } else {
-    if (window.dismissBootSplash) window.dismissBootSplash("Gen.46 · 就绪");
+    if (window.dismissBootSplash) window.dismissBootSplash("Gen.47 · 就绪");
   }
 })();
