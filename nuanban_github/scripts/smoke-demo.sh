@@ -16,22 +16,34 @@ smoke_index() {
 }
 
 smoke_bundle() {
-  local html login_js
+  local html login_js index_js chunk body
   html="$(curl -sf "$BASE" || true)"
-  login_js="$(echo "$html" | grep -o 'pages-common-login[^"]*\.js' | head -1)"
-  if [ -z "$login_js" ]; then
-    echo "WARN: cannot find login chunk in index.html"
+  login_js="$(echo "$html" | grep -o 'pages-common-login[^"]*\.js' | head -1 || true)"
+  index_js="$(echo "$html" | grep -o 'index-[^"]*\.js' | head -1 || true)"
+  if [ -n "$login_js" ]; then
+    chunk="$login_js"
+  elif [ -n "$index_js" ]; then
+    chunk="$index_js"
+  else
+    echo "FAIL: cannot find login or index chunk in index.html"
     return 1
   fi
-  local body
-  body="$(curl -sf "${BASE}assets/${login_js}" || true)"
-  if ! echo "$body" | grep -q 'demo-tour'; then
+  body="$(curl -sf "${BASE}assets/${chunk}" || true)"
+  local tour_js tour_body combined
+  tour_js="$(echo "$body" | grep -o 'pages-common-demo-tour[^"]*\.js' | head -1 || true)"
+  if [ -n "$tour_js" ]; then
+    tour_body="$(curl -sf "${BASE}assets/${tour_js}" || true)"
+    combined="${body}${tour_body}"
+  else
+    combined="$body"
+  fi
+  if ! echo "$combined" | grep -q 'demo-tour'; then
     echo "FAIL: bundle missing required «demo-tour» (Pages may be stale — wait for Actions)"
     return 1
   fi
   echo "PASS: bundle contains required «demo-tour»"
   for token in '动画演示' '上帝视角' '有偿陪护'; do
-    if echo "$body" | grep -q "$token"; then
+    if echo "$combined" | grep -q "$token"; then
       echo "PASS: bundle contains «$token»"
     else
       echo "WARN: bundle missing «$token»"
