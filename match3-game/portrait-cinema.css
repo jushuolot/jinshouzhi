@@ -434,12 +434,19 @@ body.blockbuster-mode .vn-dialogue-box {
   padding: 1.5rem 1.75rem 1.75rem;
 }
 
-.discovery-modal .cinema-mount {
-  height: min(36vh, 240px) !important;
-  min-height: 180px !important;
+.discovery-modal .cinema-mount,
+.discovery-modal .discovery-cinema-mount {
+  height: min(42vh, 320px) !important;
+  min-height: 220px !important;
   border-radius: 12px;
   overflow: hidden;
   border: 1px solid rgba(201, 162, 39, 0.2);
+}
+
+.discovery-modal.discovery-tomb .cinema-mount,
+.discovery-modal.discovery-tomb .discovery-cinema-mount {
+  height: min(48vh, 380px) !important;
+  min-height: 260px !important;
 }
 
 .discovery-modal .portrait-cinema.compact .pc-letterbox-top {

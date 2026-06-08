@@ -265,6 +265,31 @@ body.blockbuster-mode .expedition-3d-mount {
   margin: 0;
 }
 
+.discovery-cinema-mount {
+  height: min(42vh, 320px) !important;
+  min-height: 220px !important;
+}
+
+.discovery-modal.discovery-tomb .discovery-cinema-mount {
+  height: min(48vh, 380px) !important;
+  min-height: 260px !important;
+  box-shadow: 0 0 40px rgba(201, 162, 39, 0.2);
+}
+
+.discovery-modal.discovery-tomb .discovery-title {
+  color: #ffe8a0;
+  text-shadow: 0 0 24px rgba(201, 162, 39, 0.35);
+}
+
+.discovery-modal.discovery-tomb .discovery-tag.tomb {
+  animation: tombTagPulse 2s ease-in-out infinite;
+}
+
+@keyframes tombTagPulse {
+  0%, 100% { box-shadow: 0 0 0 rgba(201, 162, 39, 0); }
+  50% { box-shadow: 0 0 16px rgba(201, 162, 39, 0.45); }
+}
+
 .discovery-modal .modal-panel {
   background: linear-gradient(165deg, #12100a, #030201);
   border: 1px solid rgba(201, 162, 39, 0.35);

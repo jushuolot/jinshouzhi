@@ -350,6 +350,7 @@
   const discoveryModalEl = document.getElementById("discovery-modal");
   const discoveryTitleEl = document.getElementById("discovery-title");
   const discoveryTextEl = document.getElementById("discovery-text");
+  const discoveryHintEl = document.getElementById("discovery-hint");
   const discoveryTagEl = document.getElementById("discovery-tag");
   const discoveryCinemaEl = document.getElementById("discovery-cinema");
   const discoveryGoBtn = document.getElementById("discovery-go");
@@ -1718,7 +1719,13 @@
       codexState.counts[t] = (codexState.counts[t] || 0) + 1;
       if (!codexState.unlocked[t]) {
         codexState.unlocked[t] = true;
-        showEvolutionToast("📖 图鉴收录：" + (RELIC_NAMES[t] || "文物"));
+        const catalog = getCodexCatalog();
+        const entry = catalog[t] || { name: RELIC_NAMES[t], icon: "🏺" };
+        if (window.CodexUnlock && window.CodexUnlock.show) {
+          window.CodexUnlock.show(entry);
+        } else {
+          showEvolutionToast("📖 图鉴收录：" + (entry.name || RELIC_NAMES[t] || "文物"));
+        }
       }
       changed = true;
     });
@@ -2047,9 +2054,15 @@
     }
     if (discoveryTitleEl) discoveryTitleEl.textContent = node.name;
     if (discoveryTextEl) discoveryTextEl.textContent = (roster[speakerId] || "旁白") + "：「" + text + "」";
+    if (discoveryHintEl) {
+      discoveryHintEl.textContent = node.isTomb
+        ? "终极大墓在前 · 完成本层挑战方可深入核心"
+        : "完成本层消除挑战，方可深入下一探点。";
+    }
+    discoveryModalEl.classList.toggle("discovery-tomb", !!node.isTomb);
     if (discoveryCinemaEl && window.PortraitCinema) {
       var dc = window.PortraitCinema.create(discoveryCinemaEl, "discovery");
-      if (dc && dc.ok) dc.showCharacter(speakerId, true);
+      if (dc && dc.ok) dc.showCharacter(speakerId, false);
     }
     if (window.ArtifactViewer3D && discoveryCinemaEl && node.artifactHint != null) {
       /* artifact shown in cinema mount alternates - character takes priority */
@@ -2726,6 +2739,28 @@
     setMessage("棋盘已重排，继续挑战！");
   }
 
+  function playBossIntroIfNeeded(onDone) {
+    if (!isBossLevel(currentLevelIndex)) {
+      if (onDone) onDone();
+      return;
+    }
+    const ch = getChapterForLevel(currentLevelIndex);
+    const w = WORLDS[ch];
+    if (window.BlockbusterIntro && screenPlayEl) {
+      window.BlockbusterIntro.show(
+        screenPlayEl,
+        "BOSS · 第 " + (currentLevelIndex + 1) + " 层",
+        w ? w.icon + " " + w.name : "古蜀秘档",
+        2400,
+        function () {
+          if (onDone) onDone();
+        }
+      );
+    } else if (onDone) {
+      onDone();
+    }
+  }
+
   function showLevelGoals(onStart) {
     if (goalsIceLineEl) {
       const hasIce = worldForLevel(currentLevelIndex).iceFrom <= currentLevelIndex + 1;
@@ -3376,7 +3411,9 @@
   function beginLevelPlay() {
     runStoryBeforeLevel(currentLevelIndex, function () {
       showLevelGoals(function () {
-        if (!hasAnyValidMove()) shuffleBoard();
+        playBossIntroIfNeeded(function () {
+          if (!hasAnyValidMove()) shuffleBoard();
+        });
       });
     });
   }
@@ -3704,9 +3741,9 @@
   if (window.PortraitPainter && window.PortraitPainter.preloadAll) {
     window.PortraitPainter.preloadAll(
       function () {
-        if (window.dismissBootSplash) window.dismissBootSplash("Gen.34 · 赞助已就绪 · 打开即赚");
+        if (window.dismissBootSplash) window.dismissBootSplash("Gen.35 · 探墓大片感就绪");
         if (window.showSystemToast)
-          window.showSystemToast("赞助已帮你配好 · 连点标题5次+口令Mz168 看收益", 5000);
+          window.showSystemToast("Gen.35 · 探点影院 · 文物收录大片 · BOSS 标题卡", 4200);
       },
       function (done, total) {
         if (window.setProgress) window.setProgress(72 + Math.round((done / total) * 24));
@@ -3714,6 +3751,6 @@
       }
     );
   } else {
-    if (window.dismissBootSplash) window.dismissBootSplash("Gen.34 · 就绪");
+    if (window.dismissBootSplash) window.dismissBootSplash("Gen.35 · 就绪");
   }
 })();

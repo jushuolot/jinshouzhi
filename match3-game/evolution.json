@@ -1,6 +1,6 @@
 {
-  "version": "4.5.0",
-  "generation": 34,
+  "version": "4.6.0",
+  "generation": 35,
   "releasedAt": "2026-06-08",
   "autoTune": {
     "enabled": true,
@@ -9,8 +9,8 @@
     "targetWinRate": 0.52
   },
   "patchNotes": [
-    "赞助变现开箱即用 · 线上自动展示+记账",
-    "开发者后台中文说明 · 复制收益报表",
-    "一键本地脚本 scripts/start-local.sh"
+    "探点发现弹窗 · 大墓模式加高立绘影院",
+    "首次消除文物 · 电影感图鉴收录条",
+    "每章 BOSS 层（20/40/60…）标题卡引入"
   ]
 }
