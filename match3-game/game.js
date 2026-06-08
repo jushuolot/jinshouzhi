@@ -2371,12 +2371,40 @@
     };
   }
 
+  function finishVnSequence() {
+    clearVnTyping();
+    const ui = getVnElements(vnMode);
+    if (ui.next) {
+      ui.next.disabled = true;
+      ui.next.textContent = "切换中…";
+    }
+    const cb = vnOnComplete;
+    vnOnComplete = null;
+    vnLines = [];
+    vnLineIndex = 0;
+    if (!cb) return;
+    try {
+      cb();
+    } catch (err) {
+      console.error(err);
+      if (vnMode === "assembly") {
+        showMapPhase("route");
+        renderStoryRoute(mapActiveChapter);
+      }
+    }
+    window.setTimeout(function () {
+      const ui2 = getVnElements(vnMode);
+      if (ui2.next) {
+        ui2.next.disabled = false;
+        ui2.next.textContent = "继续";
+      }
+    }, 1200);
+  }
+
   function showVnLine() {
     const ui = getVnElements(vnMode);
     if (!vnLines.length || vnLineIndex >= vnLines.length) {
-      clearVnTyping();
-      if (vnOnComplete) vnOnComplete();
-      vnOnComplete = null;
+      finishVnSequence();
       return;
     }
     const line = vnLines[vnLineIndex];
@@ -2397,6 +2425,7 @@
 
   function advanceVnLine() {
     const ui = getVnElements(vnMode);
+    if (ui.next && ui.next.disabled) return;
     if (ui.text && ui.text.classList.contains("typing")) {
       clearVnTyping();
       const line = vnLines[vnLineIndex];
@@ -2404,6 +2433,10 @@
       ui.text.classList.remove("typing");
       var cinema = getActiveCinema();
       if (cinema && cinema.ok) cinema.setTalking(false);
+      if (vnLineIndex >= vnLines.length - 1) {
+        vnLineIndex = vnLines.length;
+        showVnLine();
+      }
       return;
     }
     vnLineIndex += 1;
@@ -2417,6 +2450,10 @@
     vnOnComplete = onComplete;
     const ui = getVnElements(mode);
     if (ui.title) ui.title.textContent = title || "";
+    if (ui.next) {
+      ui.next.disabled = false;
+      ui.next.textContent = "继续";
+    }
     if (mode === "briefing") initBriefingCinema();
     else initAssemblyCinema();
     showVnLine();
@@ -3839,9 +3876,9 @@
   if (window.PortraitPainter && window.PortraitPainter.preloadAll) {
     window.PortraitPainter.preloadAll(
       function () {
-        if (window.dismissBootSplash) window.dismissBootSplash("Gen.44 · 堪舆图就绪");
+        if (window.dismissBootSplash) window.dismissBootSplash("Gen.45 · 剧情继续就绪");
         if (window.showSystemToast)
-          window.showSystemToast("Gen.44 · 古风堪舆图 · 探点清晰可辨", 4200);
+          window.showSystemToast("Gen.45 · 修复剧情继续按钮 · 堪舆图", 4200);
       },
       function (done, total) {
         if (window.setProgress) window.setProgress(72 + Math.round((done / total) * 24));
@@ -3849,6 +3886,6 @@
       }
     );
   } else {
-    if (window.dismissBootSplash) window.dismissBootSplash("Gen.44 · 就绪");
+    if (window.dismissBootSplash) window.dismissBootSplash("Gen.45 · 就绪");
   }
 })();

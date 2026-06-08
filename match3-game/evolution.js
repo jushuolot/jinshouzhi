@@ -6,10 +6,10 @@
   "use strict";
 
   var DEFAULT = {
-    version: "5.3.0",
-    generation: 44,
+    version: "5.3.1",
+    generation: 45,
     autoTune: { enabled: true, windowSize: 8, maxMoveAdjust: 3, targetWinRate: 0.52 },
-    patchNotes: ["Gen.44 堪舆图", "蜀地+探方古风卷轴"],
+    patchNotes: ["Gen.45 剧情继续", "修复VN按钮点击"],
   };
 
   window.MATCH3_EVOLUTION = DEFAULT;
