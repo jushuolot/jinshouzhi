@@ -23,6 +23,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from src.analysis.tomorrow_picks import fetch_garden_picks_bundle, picks_to_markdown, tomorrow_trading_date  # noqa: E402
+from src.analysis.market_outlook import compute_market_outlook, outlook_to_markdown  # noqa: E402
 from src.providers import market_data  # noqa: E402
 from src.ui import app_core as C  # noqa: E402
 
@@ -43,16 +44,20 @@ def run_scan(*, max_picks: int = 5) -> dict:
     )
     now = datetime.now(timezone.utc).astimezone().isoformat(timespec="seconds")
     tgt = stats.get("predict_for") or tomorrow_trading_date()
+    outlook = compute_market_outlook()
     payload = {
         "generated_at": now,
         "source": src,
         "stats": stats,
         "predict_for": tgt,
+        "market_outlook": outlook.as_dict(),
         "picks": [p.as_dict() for p in a_picks],
         "global_picks": [p.as_dict() for p in global_picks],
         "markdown": picks_to_markdown(
             a_picks, day=now[:10], global_picks=global_picks, target_date=tgt
-        ),
+        )
+        + "\n\n"
+        + outlook_to_markdown(outlook),
     }
     return payload
 
@@ -106,7 +111,11 @@ def main() -> int:
         return 1
     n = len(payload.get("picks") or [])
     gn = len(payload.get("global_picks") or [])
-    print(f"[garden_cloud_cron] a_picks={n} global={gn} source={payload.get('source')}")
+    print(
+        f"[garden_cloud_cron] a_picks={n} global={gn} "
+        f"crash_prob={payload.get('market_outlook', {}).get('crash_prob_1_2w_pct')}% "
+        f"source={payload.get('source')}"
+    )
     if stdout_only:
         print(payload.get("markdown") or "")
         return 0

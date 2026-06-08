@@ -13,6 +13,11 @@ from src.analysis.tomorrow_picks import (
     picks_to_markdown,
     tomorrow_trading_date,
 )
+from src.analysis.market_outlook import (
+    compute_market_outlook,
+    enrich_picks_with_long_term,
+    outlook_to_markdown,
+)
 from src.analysis.pick_tracker import (
     append_today_picks,
     hit_rate_summary,
@@ -54,6 +59,101 @@ def _pct_map_from_ranking(df: pd.DataFrame) -> dict[str, float | None]:
     return out
 
 
+def _render_market_outlook(readonly: bool, fetch_ranking) -> None:
+    """大盘 1~2 周大跌概率 + 长线展望。"""
+    st.markdown("### 📉 大盘长线风向标")
+    st.caption("基于上证/创业板/恒指/标普 + A股涨跌广度，估计 **未来 1~2 周大跌概率**（非精确预测）。")
+
+    outlook = st.session_state.get("market_outlook")
+    outlook_day = (outlook or {}).get("as_of") if isinstance(outlook, dict) else None
+    today_s = date.today().isoformat()
+
+    cloud = load_cloud_picks()
+    if cloud and cloud.get("market_outlook") and outlook_day != today_s:
+        st.session_state.market_outlook = cloud["market_outlook"]
+        outlook = cloud["market_outlook"]
+        outlook_day = outlook.get("as_of")
+
+    col_o1, col_o2 = st.columns([2, 1])
+    with col_o1:
+        if not readonly and st.button("🔄 刷新大盘长线分析", use_container_width=False):
+            with st.spinner("拉取指数K线与市场广度…"):
+                mo = compute_market_outlook(fetch_ranking=fetch_ranking)
+                st.session_state.market_outlook = mo.as_dict()
+                mark_dirty()
+            st.rerun()
+    with col_o2:
+        if not outlook and not readonly:
+            if st.button("自动分析", use_container_width=True):
+                with st.spinner("分析中…"):
+                    mo = compute_market_outlook(fetch_ranking=fetch_ranking)
+                    st.session_state.market_outlook = mo.as_dict()
+                st.rerun()
+
+    outlook = st.session_state.get("market_outlook")
+    if not outlook:
+        st.info("点 **「刷新大盘长线分析」** 查看未来 1~2 周大跌概率与 2~8 周趋势。")
+        return
+
+    prob = float(outlook.get("crash_prob_1_2w_pct") or 0)
+    c1, c2, c3 = st.columns(3)
+    c1.metric("1~2周大跌概率", f"{prob:.0f}%", outlook.get("crash_label") or "")
+    c2.metric("2周看法", (outlook.get("outlook_2w") or "—")[:12])
+    c3.metric("4~8周看法", (outlook.get("outlook_4_8w") or "—")[:12])
+
+    if prob >= 55:
+        st.error(outlook.get("advice") or "")
+    elif prob >= 40:
+        st.warning(outlook.get("advice") or "")
+    else:
+        st.success(outlook.get("advice") or "")
+
+    drivers = outlook.get("drivers") or []
+    if drivers:
+        st.caption("依据：" + " · ".join(drivers[:5]))
+
+    with st.expander("指数快照与下载", expanded=False):
+        idx_rows = []
+        for i in outlook.get("indices") or []:
+            if not i.get("close"):
+                continue
+            idx_rows.append(
+                {
+                    "指数": i.get("name"),
+                    "趋势": i.get("trend"),
+                    "5日%": i.get("pct_5d"),
+                    "20日%": i.get("pct_20d"),
+                    "距20日高%": i.get("drawdown_20d_pct"),
+                }
+            )
+        if idx_rows:
+            st.dataframe(pd.DataFrame(idx_rows), use_container_width=True, hide_index=True)
+        if outlook.get("breadth_adv_pct") is not None:
+            st.caption(f"A股样本上涨占比：{outlook['breadth_adv_pct']:.0f}%")
+        from src.analysis.market_outlook import MarketOutlook, IndexSnapshot
+
+        mo_obj = MarketOutlook(
+            as_of=str(outlook.get("as_of") or ""),
+            crash_prob_1_2w_pct=prob,
+            crash_label=str(outlook.get("crash_label") or ""),
+            outlook_2w=str(outlook.get("outlook_2w") or ""),
+            outlook_4_8w=str(outlook.get("outlook_4_8w") or ""),
+            breadth_adv_pct=outlook.get("breadth_adv_pct"),
+            indices=[IndexSnapshot(**{k: i.get(k) for k in (
+                "ticker", "name", "region", "close", "pct_5d", "pct_20d",
+                "drawdown_20d_pct", "above_ma20", "trend", "vol_ratio",
+            )}) for i in (outlook.get("indices") or []) if i.get("close")],
+            drivers=list(drivers),
+            advice=str(outlook.get("advice") or ""),
+        )
+        st.download_button(
+            "📥 下载大盘展望 (.md)",
+            data=outlook_to_markdown(mo_obj).encode("utf-8"),
+            file_name=f"大盘展望_{outlook.get('as_of', today_s)}.md",
+            mime="text/markdown",
+        )
+
+
 def render() -> None:
     st.markdown("## 🌱 私人选股花园")
     st.caption(
@@ -79,6 +179,8 @@ def render() -> None:
                 or tomorrow_trading_date()
             )
             st.session_state["_cloud_picks_date"] = cloud_day
+        if cloud.get("market_outlook"):
+            st.session_state.market_outlook = cloud["market_outlook"]
         ap = len(st.session_state.get("today_picks") or [])
         gp = len(st.session_state.get("global_picks") or [])
         if ap or gp:
@@ -88,14 +190,16 @@ def render() -> None:
                 f"A股 {ap} 只 · 全球 {gp} 只 · 基于今日收盘+历史K线。"
             )
 
+    readonly = is_readonly_mode()
     tgt_date = tomorrow_trading_date()
+    _render_market_outlook(readonly=readonly, fetch_ranking=_fetch_ranking)
+
     st.info(
         f"**核心逻辑：** 不是今天涨最多的，而是用 **今日收盘 + 过去60日K线** "
         f"预测 **{tgt_date} 谁更可能继续走强**（趋势延续 / 强势回踩 / 突破在即）。"
         f" A股为主，港/美同步。"
     )
 
-    readonly = is_readonly_mode()
     pick_log = normalize_pick_log(st.session_state.get("pick_log"))
     st.session_state.pick_log = pick_log
     today_picks: list = list(st.session_state.get("today_picks") or [])
@@ -113,8 +217,13 @@ def render() -> None:
                     max_a=5,
                     max_global_per_market=2,
                 )
-                st.session_state.today_picks = [p.as_dict() for p in a_picks]
+                st.session_state.today_picks = enrich_picks_with_long_term(
+                    [p.as_dict() for p in a_picks],
+                    C._fetch_one,
+                )
                 st.session_state.global_picks = [p.as_dict() for p in global_picks]
+                mo = compute_market_outlook(fetch_ranking=_fetch_ranking)
+                st.session_state.market_outlook = mo.as_dict()
                 st.session_state.last_pick_scan = stats
                 st.session_state["last_pick_source"] = src
                 st.session_state["last_pick_at"] = date.today().isoformat()
@@ -166,18 +275,21 @@ def render() -> None:
     today_picks = st.session_state.get("today_picks") or []
     global_picks = st.session_state.get("global_picks") or []
 
-    def _pick_rows(items: list, *, show_market: bool = False) -> list[dict]:
+    def _pick_rows(items: list, *, show_market: bool = False, with_long: bool = False) -> list[dict]:
         rows = []
         for p in items:
             row = {
                 "信号": _signal_emoji(str(p.get("signal") or "")),
                 "名称": p.get("name"),
                 "代码": p.get("code"),
-                    "明日分": f"{float(p['score']):.1f}" if p.get("score") is not None else "—",
-                    "今日涨跌%": f"{float(p['pct']):+.2f}" if p.get("pct") is not None else "—",
+                "明日分": f"{float(p['score']):.1f}" if p.get("score") is not None else "—",
+                "今日涨跌%": f"{float(p['pct']):+.2f}" if p.get("pct") is not None else "—",
                 "建议持有": p.get("hold_days") or "—",
                 "一句话": (p.get("reason") or "")[:80],
             }
+            if with_long and p.get("long_2w"):
+                row["2周长线"] = p.get("long_2w")
+                row["4~8周"] = p.get("long_4_8w")
             if show_market:
                 row = {"市场": p.get("market") or "—", **row}
             rows.append(row)
@@ -189,7 +301,7 @@ def render() -> None:
         if today_picks:
             st.markdown(f"### 🇨🇳 A股 · 明日偏强（{predict_for}）")
             st.dataframe(
-                pd.DataFrame(_pick_rows(today_picks)),
+                pd.DataFrame(_pick_rows(today_picks, with_long=True)),
                 use_container_width=True,
                 hide_index=True,
             )
@@ -270,7 +382,7 @@ def render() -> None:
         st.markdown(
             f"""
 - **今日版本** v{APP_VERSION}，累计进化 **{EVOLUTION_STEP}** 步
-- **扫描能力**：今日收盘 + 60日K线 → **明日偏强预测**（A股+港美）
+- **扫描能力**：明日预测 + **1~2周大跌概率** + 个股2~8周长线
 - **记忆**：推荐写入本地，到期自动核对涨没涨
 - **隐私**：密码在 `.streamlit/secrets.toml`，别人打不开你的花园
 - **免费扩容**：代码在 GitHub，Streamlit Cloud 免费部署，push 即升级
