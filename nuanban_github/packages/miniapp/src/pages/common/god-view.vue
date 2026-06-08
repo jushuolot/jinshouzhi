@@ -2,35 +2,35 @@
   <view class="page">
     <text class="eyebrow">平台 · 上帝视角</text>
     <text class="title">暖伴勤工</text>
-    <text class="mission">{{ overview?.mission || '加载中…' }}</text>
+    <text class="mission">{{ missionText }}</text>
 
-    <view v-if="overview" class="completion-card">
-      <text class="pct">{{ overview.coreCompletionPct }}%</text>
+    <view class="completion-card">
+      <text class="pct">{{ pct }}%</text>
       <text class="pct-label">核心撮合能力（演示评估）</text>
-      <text class="audit">自动化审计 {{ overview.auditStatus }}</text>
+      <text class="audit">自动化审计 {{ auditStatus }}</text>
     </view>
 
-    <view v-if="overview" class="kpi-grid">
+    <view class="kpi-grid">
       <view class="kpi">
-        <text class="kpi-num">{{ overview.eldersTotal }}</text>
+        <text class="kpi-num">{{ eldersTotal }}</text>
         <text class="kpi-label">服务老人</text>
       </view>
       <view class="kpi">
-        <text class="kpi-num">{{ overview.studentsActive }}</text>
+        <text class="kpi-num">{{ studentsActive }}</text>
         <text class="kpi-label">女大学生志愿者</text>
       </view>
       <view class="kpi">
-        <text class="kpi-num accent">{{ overview.ordersPendingAccept }}</text>
+        <text class="kpi-num accent">{{ ordersPending }}</text>
         <text class="kpi-label">待接单</text>
       </view>
       <view class="kpi">
-        <text class="kpi-num">{{ overview.ordersInService }}</text>
+        <text class="kpi-num">{{ ordersInService }}</text>
         <text class="kpi-label">服务中</text>
       </view>
     </view>
 
     <text class="section">三种撮合路径</text>
-    <view v-for="p in overview?.matchingPaths || []" :key="p.id" class="path-card">
+    <view v-for="p in paths" :key="p.id" class="path-card">
       <view class="path-head">
         <text class="path-title">{{ p.label }}</text>
         <text class="badge" :class="p.status">{{ statusLabel(p.status) }}</text>
@@ -47,19 +47,57 @@
       <text>④ 家属代付 → mock 微信支付</text>
     </view>
 
-    <button class="btn" @tap="goDemo">打开公网演示</button>
+    <button class="btn" @tap="goLogin">进入演示登录</button>
     <button class="btn-outline" @tap="reload">刷新数据</button>
-    <text v-if="overview?.updatedAt" class="ts">更新 {{ formatTime(overview.updatedAt) }}</text>
+    <text v-if="errorMsg" class="err">{{ errorMsg }}</text>
+    <text v-if="updatedAt" class="ts">更新 {{ formatTime(updatedAt) }}</text>
   </view>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { onShow } from '@dcloudio/uni-app';
-import { fetchPlatformOverview, type PlatformOverview } from '../../api/platform';
+import { fetchPlatformOverview, type MatchingPathStatus } from '../../api/platform';
 import { pbErrorMessage } from '../../utils/request';
 
-const overview = ref<PlatformOverview | null>(null);
+const DEFAULT_PATHS: MatchingPathStatus[] = [
+  {
+    id: 'org_dispatch',
+    label: '机构派单',
+    description: '平台/养老院将订单指定给同学',
+    status: 'demo',
+    metric: '待派单',
+    metricValue: 10,
+  },
+  {
+    id: 'elder_find_student',
+    label: '老人找同学',
+    description: '老人按距离浏览女大学生志愿者并预约',
+    status: 'live',
+    metric: '附近同学',
+    metricValue: 6,
+  },
+  {
+    id: 'student_find_elder',
+    label: '同学找需求',
+    description: '学生看待接单池或附近老人并接单',
+    status: 'live',
+    metric: '附近老人',
+    metricValue: 8,
+  },
+];
+
+const missionText = ref('附近中老年 ↔ 在校女大学生 · 平台撮合有偿陪护');
+const pct = ref(88);
+const auditStatus = ref('PASS');
+const eldersTotal = ref(8);
+const studentsActive = ref(6);
+const ordersPending = ref(10);
+const ordersInService = ref(1);
+const paths = ref<MatchingPathStatus[]>([...DEFAULT_PATHS]);
+const updatedAt = ref('');
+const errorMsg = ref('');
+const loading = ref(false);
 
 function statusLabel(s: string) {
   if (s === 'live') return '已接通';
@@ -76,24 +114,31 @@ function formatTime(iso: string) {
 }
 
 async function reload() {
+  if (loading.value) return;
+  loading.value = true;
+  errorMsg.value = '';
   try {
-    overview.value = await fetchPlatformOverview();
+    const o = await fetchPlatformOverview();
+    missionText.value = o.mission;
+    pct.value = o.coreCompletionPct;
+    auditStatus.value = o.auditStatus;
+    eldersTotal.value = o.eldersTotal;
+    studentsActive.value = o.studentsActive;
+    ordersPending.value = o.ordersPendingAccept;
+    ordersInService.value = o.ordersInService;
+    paths.value = o.matchingPaths?.length ? o.matchingPaths : DEFAULT_PATHS;
+    updatedAt.value = o.updatedAt;
   } catch (e) {
-    uni.showToast({ title: pbErrorMessage(e), icon: 'none' });
+    errorMsg.value = `实时数据未更新：${pbErrorMessage(e)}（已显示默认演示数据）`;
+  } finally {
+    loading.value = false;
   }
 }
 
 onShow(reload);
 
-function goDemo() {
-  const url = overview.value?.demoUrl || 'https://jushuolot.github.io/jinshouzhi/nuanban/#/pages/common/login';
-  // #ifdef H5
-  window.open(url, '_blank');
-  // #endif
-  // #ifndef H5
-  uni.setClipboardData({ data: url });
-  uni.showToast({ title: '链接已复制', icon: 'none' });
-  // #endif
+function goLogin() {
+  uni.navigateTo({ url: '/pages/common/login' });
 }
 </script>
 
@@ -104,6 +149,7 @@ function goDemo() {
   color: #eee;
   padding: 32rpx;
   padding-bottom: 80rpx;
+  box-sizing: border-box;
 }
 .eyebrow {
   display: block;
@@ -244,6 +290,12 @@ function goDemo() {
   color: #e88b4a;
   border: 1rpx solid #e88b4a;
   border-radius: 12rpx;
+}
+.err {
+  display: block;
+  margin-top: 16rpx;
+  font-size: 22rpx;
+  color: #e9c46a;
 }
 .ts {
   display: block;

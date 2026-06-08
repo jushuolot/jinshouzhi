@@ -6,7 +6,8 @@ import { initDevicePreview } from './utils/device-preview';
 
 onLaunch(() => {
   // #ifdef H5
-  setTimeout(() => initDevicePreview(), 0);
+  // 等 Vue 挂载后再套手机框，避免白屏；god-view 路由全屏
+  setTimeout(() => initDevicePreview(), 300);
   // #endif
 });
 </script>
@@ -18,5 +19,9 @@ page {
 }
 page.elder-mode {
   font-size: 18px;
+}
+/* god-view 桌面全屏，避免手机框内白屏/滚不动 */
+page[data-page='pages/common/god-view'] {
+  background-color: #1a1a2e;
 }
 </style>

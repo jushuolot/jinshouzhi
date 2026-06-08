@@ -13,8 +13,14 @@ function isMobile() {
     || (window.innerWidth <= 768 && 'ontouchstart' in window);
 }
 
+/** 上帝视角 / 平台看板：桌面全屏，不进手机框 */
+function isFullPageRoute() {
+  const h = window.location.hash || '';
+  return h.includes('god-view');
+}
+
 export function initDevicePreview() {
-  if (isMobile() || document.getElementById('nb-device-stage')) return;
+  if (isMobile() || isFullPageRoute() || document.getElementById('nb-device-stage')) return;
   const app = document.getElementById('app');
   if (!app) return;
 
@@ -29,7 +35,9 @@ export function initDevicePreview() {
       #nb-device-toolbar button.on { background:#c45c26; border-color:#c45c26; }
       #nb-device-frame { position:relative; border:3px solid #444; box-shadow:0 20px 50px #0008; overflow:hidden; background:#1c1c1e; }
       #nb-device-notch { position:absolute; top:8px; left:50%; transform:translateX(-50%); width:110px; height:24px; background:#1c1c1e; border-radius:0 0 14px 14px; z-index:2; }
-      #nb-device-screen { width:100%; height:100%; overflow:auto; background:#f5f5f5; }
+      #nb-device-screen { width:100%; height:100%; overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch; background:#f5f5f5; }
+      #nb-device-screen #app { min-height:100%; }
+      #nb-device-hint { color:#888; font-size:12px; text-align:center; }
     `;
     document.head.appendChild(s);
   }
@@ -71,7 +79,10 @@ export function initDevicePreview() {
 
   screen.appendChild(app);
   frame.append(notch, screen);
-  stage.append(toolbar, frame);
+  const hint = document.createElement('div');
+  hint.id = 'nb-device-hint';
+  hint.textContent = '在手机框内滚动 · 或使用触控板/滚轮';
+  stage.append(toolbar, hint, frame);
   document.body.appendChild(stage);
   apply(cur);
 }
