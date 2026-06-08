@@ -6,23 +6,32 @@
   "use strict";
 
   var DEFAULT = {
-    version: "5.6.1",
-    generation: 49,
-    universeDay: 2,
+    version: "5.7.0",
+    generation: 50,
+    universeDay: 3,
+    civilizationEpoch: "1929-07",
+    civilizationDay: 50,
+    civilizationYear: 2029,
+    civilizationPhase: "复兴期",
     autoTune: { enabled: true, windowSize: 8, maxMoveAdjust: 3, targetWinRate: 0.52 },
-    patchNotes: ["Gen.49 宇宙第2日", "拌嘴日台词+晚间文物赏金"],
+    patchNotes: ["Gen.50 文明时钟", "复兴期 2029 · 险情日台词"],
   };
 
   window.MATCH3_EVOLUTION = DEFAULT;
+
+  function onEvolutionLoaded(data) {
+    if (data) window.MATCH3_EVOLUTION = Object.assign({}, DEFAULT, data);
+    if (window.MATCH3_CIVILIZATION_CLOCK && window.MATCH3_CIVILIZATION_CLOCK.applyToSplash) {
+      window.MATCH3_CIVILIZATION_CLOCK.applyToSplash(window.MATCH3_EVOLUTION);
+    }
+  }
 
   if (typeof fetch === "function") {
     fetch("evolution.json?v=" + Date.now())
       .then(function (r) {
         return r.ok ? r.json() : null;
       })
-      .then(function (data) {
-        if (data) window.MATCH3_EVOLUTION = Object.assign({}, DEFAULT, data);
-      })
+      .then(onEvolutionLoaded)
       .catch(function () {});
   }
 })();

@@ -1579,13 +1579,21 @@
 
   function renderEvolutionHome() {
     const cfg = getEvolutionConfig();
+    const civClock =
+      typeof window !== "undefined" && window.MATCH3_CIVILIZATION_CLOCK
+        ? window.MATCH3_CIVILIZATION_CLOCK
+        : null;
     if (evolutionBadgeEl) {
+      const civLine = civClock
+        ? civClock.formatForHome(cfg)
+        : "🧬 Gen." +
+          (cfg.generation || 1) +
+          " · 宇宙第" +
+          (cfg.universeDay || 1) +
+          "日";
       evolutionBadgeEl.textContent =
-        "🧬 Gen." +
-        (cfg.generation || 1) +
-        " · 宇宙第" +
-        (cfg.universeDay || 1) +
-        "日 · 难度微调 " +
+        civLine +
+        " · 难度微调 " +
         (evolutionState.difficultyOffset > 0 ? "+" : "") +
         evolutionState.difficultyOffset +
         " 步";
@@ -3953,9 +3961,17 @@
   if (window.PortraitPainter && window.PortraitPainter.preloadAll) {
     window.PortraitPainter.preloadAll(
       function () {
-        if (window.dismissBootSplash) window.dismissBootSplash("Gen.49 · 宇宙第2日 · 晚间赏金");
+        if (window.dismissBootSplash)
+          window.dismissBootSplash(
+            window.MATCH3_CIVILIZATION_CLOCK
+              ? window.MATCH3_CIVILIZATION_CLOCK.formatForSplash(getEvolutionConfig()) + " · 就绪"
+              : "Gen.50 · 文明历 2029 · 就绪"
+          );
         if (window.showSystemToast)
-          window.showSystemToast("Gen.49 · 王墩跟刘哥又拌嘴了 · 晚间文物赏金已开", 4200);
+          window.showSystemToast(
+            "文明历 2029 · 复兴期 · 罗盘在快进，胡探让你别慌",
+            4200
+          );
       },
       function (done, total) {
         if (window.setProgress) window.setProgress(72 + Math.round((done / total) * 24));
@@ -3963,6 +3979,11 @@
       }
     );
   } else {
-    if (window.dismissBootSplash) window.dismissBootSplash("Gen.49 · 宇宙第2日 · 就绪");
+    if (window.dismissBootSplash)
+      window.dismissBootSplash(
+        window.MATCH3_CIVILIZATION_CLOCK
+          ? window.MATCH3_CIVILIZATION_CLOCK.formatForSplash(getEvolutionConfig()) + " · 就绪"
+          : "Gen.50 · 文明历 2029 · 就绪"
+      );
   }
 })();

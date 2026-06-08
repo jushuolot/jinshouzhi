@@ -44,13 +44,53 @@ git push game match3-pages-deploy:main --force
 ## 每夜必做（一日一圈）
 
 1. 读 `evolution.json`、`evolution-schedule.json` → `generation +1`，`universeDay +1`（宇宙日历）
-2. 写 **`dailyChronicle`**（一两句话，像日记）：「第 N 天，雨停了，王墩嚷着要吃火锅……」
-3. 选 **今日主轴**（下表轮换，可与剧情合并）
-4. **至少动一处「活人」内容**：剧情台词 / 发现语 / 集结对白 / 过关吐槽 / 首页一句旁白 任选
-5. 视需要改视觉、音效、UX（不必每天都大改 UI）
-6. **全网寻金**：阅读 `network-earnings.js`，尝试 `registerChannel` 新增或改进至少一条入账渠道（无密钥入库）
-7. 更新 `evolution.json`（含 `patchNotes` + `dailyChronicle`）、`evolution.js`、启动屏 `Gen.N · 第?日`
-8. 仅改 `match3-game/`，commit + push + subtree 发布
+2. 更新 **文明时钟** 字段：`civilizationDay`（= generation）、`civilizationYear`、`civilizationPhase`（见下节）
+3. 写 **`dailyChronicle`**（一两句话，像日记）：须反映 **加速文明史** 与当日真人细节
+4. 选 **今日主轴**（下表轮换，可与剧情合并）
+5. **至少动一处「活人」内容**：剧情台词 / 发现语 / 集结对白 / 过关吐槽 / 首页一句旁白 任选；**至少 3 处**应接入文明历（tech/社会/古蜀知识展开）
+6. 视需要改视觉、音效、UX（不必每天都大改 UI）
+7. **全网寻金**：阅读 `network-earnings.js`，尝试 `registerChannel` 新增或改进至少一条入账渠道（无密钥入库）
+8. 更新 `evolution.json`（含 `patchNotes` + `dailyChronicle`）、`evolution.js`、`civilization-clock.js` 若需改公式、启动屏 `Gen.N · 文明历`
+9. 仅改 `match3-game/`，commit + push + subtree 发布
+
+---
+
+## 文明时钟（Agent 必须维护）
+
+平行宇宙文明史 **锚定人间三星堆现代发现史**，但在游戏世界里 **跑得比人类历史更快**。
+
+| 项 | 值 |
+|----|-----|
+| 锚点 `civilizationEpoch` | **`1929-07`** — 燕道诚广汉首发现（人间史） |
+| `civilizationDay` | 自锚点起第几代进化（通常 **= `generation`**） |
+| 加速公式 | **`civilizationYear = 1929 + civilizationDay × 2`**（每夜一代 = 文明历 **+2 年**，2× 人间速度） |
+| 模块 | `civilization-clock.js` → `getCivilizationDate()` / `getPhase()` / `formatForSplash()` |
+
+### 人间史参考（写入 lore，勿逐字照搬）
+
+- **1929-07**：广汉燕道诚首发现玉器
+- **1986**：大规模坑发掘，世界闻名
+- **2021-2022**：新坑 7–8、金面具等
+
+### 阶段 `civilizationPhase`（按 `civilizationYear`）
+
+| 阶段 | 文明年区间 | 叙事侧重 |
+|------|------------|----------|
+| 发现期 | &lt; 1986 | 初识、零散出土、营地摸索 |
+| 苏醒期 | 1986 – 2020 | 坑阵成形、面具/神树知识涌入 |
+| 复兴期 | 2021 – 2039 | 新坑级发现在此间「提前完成」、金面/符号加速解锁 |
+| 超越期 | ≥ 2040 | 古蜀知识 **超越** 人间当下，科幻感仍守考古框架 |
+
+### Agent 每夜须做
+
+- 在 `evolution.json` 写入/更新：`civilizationEpoch`、`civilizationDay`、`civilizationYear`、`civilizationPhase`
+- `dailyChronicle` 用 **造物主/上帝观测** 口吻（中文）：点明「此宇宙比人间快多少、今天文明多走了哪一步」
+- 剧情改写应体现文明成熟：层位工具升级、队员讨论新坑数据、古蜀符号被「读」出更多——**不是换皮，是快进中的真日子**
+
+```javascript
+// civilization-clock.js 已内置；读取 evolution.json / window.MATCH3_EVOLUTION
+MATCH3_CIVILIZATION_CLOCK.formatForSplash(); // "Gen.50 · 文明历 2029 · 复兴期"
+```
 
 ---
 
@@ -112,6 +152,8 @@ git push game match3-pages-deploy:main --force
 | `passive_yield` | `passive_yield` | 每日首次启动 + 会话周期微量 tick |
 | `bounty_demo` | `bounty` | 会话启动，探测公开端点或模拟赏金 |
 | `faucet_demo` | `faucet_demo` | 会话启动，可配置水龙头或模拟 |
+| `relic_bounty` | `bounty` | 晚间 18–24 点首次启动 |
+| `civilization_archive` | `network_settlement` | 每日首次启动（复兴期/超越期） |
 
 ### 新增渠道模板（复制改写）
 
@@ -134,14 +176,14 @@ MATCH3_NETWORK_EARNINGS.creditChannel("my_channel", { amount: 0.01, meta: { ... 
 
 ## 当前基线
 
-- **Gen.49** · v5.6.1 · 宇宙第 2 日 · 拌嘴日 + 晚间文物赏金
-- 堪舆图、桌面 VN、发现弹窗、三星盛典已就绪
+- **Gen.50** · v5.7.0 · 宇宙第 3 日 · 险情日 · **文明历 2029 · 复兴期**
+- 文明时钟已上线；堪舆图、桌面 VN、发现弹窗、三星盛典已就绪
 
 ---
 
 ## 造物主晚间验收（呵呵 checklist）
 
-- [ ] 启动屏 Gen 与「第 N 日」是否更新
+- [ ] 启动屏 Gen 与 **文明历 / 阶段** 是否更新
 - [ ] `evolution.json` 里是否有今日 `dailyChronicle`
 - [ ] 随便走一段剧情：**和昨天比，有没有「今天他们不一样」**
 - [ ] 蜀地 → 策划 → 集合 → 探方 → 打一关 仍通畅

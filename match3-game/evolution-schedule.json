@@ -5,10 +5,14 @@
   "ownerRole": "observer-god",
   "ownerNote": "用户上帝视角每晚验收；世界每日循环、每日不同，像真人过日子",
   "checkTimeLocal": "evening",
-  "universeDay": 2,
-  "lastGeneration": 49,
-  "lastVersion": "5.6.1",
-  "dailyChronicle": "第 2 日拌嘴日：王墩金牙刘为泡面吵了一早，晚间文物赏金渠道上线。",
+  "universeDay": 3,
+  "lastGeneration": 50,
+  "lastVersion": "5.7.0",
+  "civilizationEpoch": "1929-07",
+  "civilizationDay": 50,
+  "civilizationYear": 2029,
+  "civilizationPhase": "复兴期",
+  "dailyChronicle": "第 3 日险情：文明历 2029 复兴期，古蜀知识展开快于人间；罗盘快进、金面数据对齐。",
   "virtualAccountPolicy": {
     "allowEarning": true,
     "sources": [
@@ -34,6 +38,14 @@
     "registerApi": "MATCH3_NETWORK_EARNINGS.registerChannel(id, { label, source, description })",
     "spendForbidden": true,
     "noApiKeysInRepo": true
+  },
+  "civilizationClockPolicy": {
+    "module": "civilization-clock.js",
+    "anchor": "1929-07",
+    "anchorNote": "燕道诚广汉首发现",
+    "yearsPerGeneration": 2,
+    "phases": ["发现期", "苏醒期", "复兴期", "超越期"],
+    "nightlyGoal": "update civilizationDay/Year/Phase + dailyChronicle reflecting accelerated history"
   },
   "storyPolicy": {
     "allowRewrite": true,

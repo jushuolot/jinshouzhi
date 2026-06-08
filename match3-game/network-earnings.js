@@ -18,6 +18,7 @@
     sponsorVisit: { bonusAmount: 0.12 },
     passiveYield: { dailyAmount: 0.006, sessionTickAmount: 0.0008, tickMs: 900000, sessionTickCap: 0.006 },
     relicBounty: { startHour: 18, endHour: 24, amount: 0.018 },
+    civilizationArchive: { amount: 0.022, phases: ["复兴期", "超越期"] },
     bounty: {
       label: "任务赏金(演示)",
       endpoint: "https://api.coingecko.com/api/v3/ping",
@@ -82,6 +83,12 @@
       source: "bounty",
       description: "晚间上线探测古蜀档案，模拟文物赏金入账",
     },
+    civilization_archive: {
+      id: "civilization_archive",
+      label: "文明档案赏金",
+      source: "network_settlement",
+      description: "文明历复兴期/超越期每日档案同步入账",
+    },
   };
 
   var state = {
@@ -91,6 +98,7 @@
     bountyCredited: false,
     faucetCredited: false,
     lastRelicBounty: "",
+    lastCivilizationArchive: "",
   };
 
   var tickTimer = null;
@@ -110,6 +118,7 @@
       state.sessionTickTotal =
         typeof data.sessionTickTotal === "number" ? data.sessionTickTotal : 0;
       state.lastRelicBounty = data.lastRelicBounty || "";
+      state.lastCivilizationArchive = data.lastCivilizationArchive || "";
     } catch (e) {
       // ignore
     }
@@ -123,6 +132,7 @@
           lastDailyYield: state.lastDailyYield,
           sessionTickTotal: state.sessionTickTotal,
           lastRelicBounty: state.lastRelicBounty,
+          lastCivilizationArchive: state.lastCivilizationArchive,
           updatedAt: Date.now(),
         })
       );
@@ -295,6 +305,34 @@
     });
   }
 
+  function tryCivilizationArchive() {
+    var key = todayKey();
+    if (state.lastCivilizationArchive === key) return 0;
+    var clock =
+      typeof window !== "undefined" && window.MATCH3_CIVILIZATION_CLOCK
+        ? window.MATCH3_CIVILIZATION_CLOCK
+        : null;
+    if (!clock) return 0;
+    var phase = clock.getPhase();
+    var cfg = CONFIG.civilizationArchive;
+    if (cfg.phases.indexOf(phase) < 0) return 0;
+    state.lastCivilizationArchive = key;
+    saveState();
+    var credited = creditChannel("civilization_archive", {
+      amount: cfg.amount,
+      meta: {
+        kind: "civilization_sync",
+        phase: phase,
+        year: clock.getCivilizationDate().civilizationYear,
+        day: key,
+      },
+    });
+    if (credited > 0 && typeof window.showSystemToast === "function") {
+      window.showSystemToast("📜 文明档案同步 · " + phase + " · 此间比人间快", 3600);
+    }
+    return credited;
+  }
+
   function startPeriodicTick() {
     if (tickTimer) return;
     var ms = CONFIG.passiveYield.tickMs;
@@ -308,6 +346,7 @@
     loadState();
     tryDailyPassiveYield();
     tryRelicBounty();
+    tryCivilizationArchive();
     tryAffiliateReferral();
     startPeriodicTick();
     tryBountyDemo();
