@@ -1,9 +1,9 @@
 {
-  "version": "5.6.0",
-  "generation": 48,
-  "universeDay": 1,
-  "dailyChronicle": "第 1 日，陈礼在营地嘀咕：网上各种钱都能汇进账簿了，摸金天团只管攒着不花。",
-  "releasedAt": "2026-06-08",
+  "version": "5.6.1",
+  "generation": 49,
+  "universeDay": 2,
+  "dailyChronicle": "第 2 日，王墩跟金牙刘为昨晚泡面加不加蛋吵了一早上；胡探只看罗盘，杨雪说层位比嘴仗要紧。",
+  "releasedAt": "2026-06-09",
   "autoTune": {
     "enabled": true,
     "windowSize": 8,
@@ -11,9 +11,9 @@
     "targetWinRate": 0.52
   },
   "patchNotes": [
-    "全网寻金：多渠道入账注册表 network-earnings.js",
-    "联盟推荐 · 赞助落地 · 驻场收益 · 赏金/水龙头演示",
-    "管理面板按渠道拆分收益（口令 Mz168）"
+    "宇宙第2日 · 拌嘴日：王墩/金牙刘台词刷新，探点 discover 换一批",
+    "全网寻金：新增 relic_bounty 晚间文物赏金 + 驻场 tick cap 上调",
+    "启动屏 Gen.49 · 宇宙第2日 · 首页一句拌嘴旁白"
   ],
   "virtualAccount": {
     "module": "virtual-account.js",

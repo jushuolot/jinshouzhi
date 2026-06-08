@@ -69,6 +69,15 @@
   color: rgba(201, 162, 39, 0.7);
 }
 
+.boot-tip {
+  margin: 0.35rem 0 0;
+  font-size: 0.62rem;
+  color: rgba(224, 122, 74, 0.75);
+  font-style: italic;
+  max-width: 18rem;
+  line-height: 1.4;
+}
+
 .mount-loading {
   display: flex;
   flex-direction: column;

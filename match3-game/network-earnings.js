@@ -16,7 +16,8 @@
   var CONFIG = {
     affiliate: { baseAmount: 0.028, chancePerSession: 0.4 },
     sponsorVisit: { bonusAmount: 0.12 },
-    passiveYield: { dailyAmount: 0.006, sessionTickAmount: 0.0008, tickMs: 900000, sessionTickCap: 0.004 },
+    passiveYield: { dailyAmount: 0.006, sessionTickAmount: 0.0008, tickMs: 900000, sessionTickCap: 0.006 },
+    relicBounty: { startHour: 18, endHour: 24, amount: 0.018 },
     bounty: {
       label: "任务赏金(演示)",
       endpoint: "https://api.coingecko.com/api/v3/ping",
@@ -75,6 +76,12 @@
       source: "faucet_demo",
       description: "可配置水龙头端点，失败则模拟入账",
     },
+    relic_bounty: {
+      id: "relic_bounty",
+      label: "文物晚间赏金",
+      source: "bounty",
+      description: "晚间上线探测古蜀档案，模拟文物赏金入账",
+    },
   };
 
   var state = {
@@ -83,6 +90,7 @@
     affiliateCredited: false,
     bountyCredited: false,
     faucetCredited: false,
+    lastRelicBounty: "",
   };
 
   var tickTimer = null;
@@ -101,6 +109,7 @@
       state.lastDailyYield = data.lastDailyYield || "";
       state.sessionTickTotal =
         typeof data.sessionTickTotal === "number" ? data.sessionTickTotal : 0;
+      state.lastRelicBounty = data.lastRelicBounty || "";
     } catch (e) {
       // ignore
     }
@@ -113,6 +122,7 @@
         JSON.stringify({
           lastDailyYield: state.lastDailyYield,
           sessionTickTotal: state.sessionTickTotal,
+          lastRelicBounty: state.lastRelicBounty,
           updatedAt: Date.now(),
         })
       );
@@ -271,6 +281,20 @@
       });
   }
 
+  function tryRelicBounty() {
+    var key = todayKey();
+    if (state.lastRelicBounty === key) return 0;
+    var cfg = CONFIG.relicBounty;
+    var h = new Date().getHours();
+    if (h < cfg.startHour || h >= cfg.endHour) return 0;
+    state.lastRelicBounty = key;
+    saveState();
+    return creditChannel("relic_bounty", {
+      amount: cfg.amount,
+      meta: { kind: "evening", day: key, window: cfg.startHour + "-" + cfg.endHour },
+    });
+  }
+
   function startPeriodicTick() {
     if (tickTimer) return;
     var ms = CONFIG.passiveYield.tickMs;
@@ -283,6 +307,7 @@
   function onSessionStart() {
     loadState();
     tryDailyPassiveYield();
+    tryRelicBounty();
     tryAffiliateReferral();
     startPeriodicTick();
     tryBountyDemo();

@@ -1581,9 +1581,11 @@
     const cfg = getEvolutionConfig();
     if (evolutionBadgeEl) {
       evolutionBadgeEl.textContent =
-        "🧬 自主进化 Gen." +
+        "🧬 Gen." +
         (cfg.generation || 1) +
-        " · 难度微调 " +
+        " · 宇宙第" +
+        (cfg.universeDay || 1) +
+        "日 · 难度微调 " +
         (evolutionState.difficultyOffset > 0 ? "+" : "") +
         evolutionState.difficultyOffset +
         " 步";
@@ -3951,9 +3953,9 @@
   if (window.PortraitPainter && window.PortraitPainter.preloadAll) {
     window.PortraitPainter.preloadAll(
       function () {
-        if (window.dismissBootSplash) window.dismissBootSplash("Gen.48 · 第1日 · 全网寻金");
+        if (window.dismissBootSplash) window.dismissBootSplash("Gen.49 · 宇宙第2日 · 晚间赏金");
         if (window.showSystemToast)
-          window.showSystemToast("Gen.48 · 全网寻金渠道已上线", 4200);
+          window.showSystemToast("Gen.49 · 王墩跟刘哥又拌嘴了 · 晚间文物赏金已开", 4200);
       },
       function (done, total) {
         if (window.setProgress) window.setProgress(72 + Math.round((done / total) * 24));
@@ -3961,6 +3963,6 @@
       }
     );
   } else {
-    if (window.dismissBootSplash) window.dismissBootSplash("Gen.48 · 第1日 · 就绪");
+    if (window.dismissBootSplash) window.dismissBootSplash("Gen.49 · 宇宙第2日 · 就绪");
   }
 })();

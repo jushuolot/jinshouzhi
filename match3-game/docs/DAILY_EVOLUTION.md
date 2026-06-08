@@ -134,7 +134,7 @@ MATCH3_NETWORK_EARNINGS.creditChannel("my_channel", { amount: 0.01, meta: { ... 
 
 ## 当前基线
 
-- **Gen.48** · v5.6.0 · 宇宙第 1 日 · 全网寻金首日
+- **Gen.49** · v5.6.1 · 宇宙第 2 日 · 拌嘴日 + 晚间文物赏金
 - 堪舆图、桌面 VN、发现弹窗、三星盛典已就绪
 
 ---
