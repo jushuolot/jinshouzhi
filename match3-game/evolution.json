@@ -1,6 +1,6 @@
 {
-  "version": "5.2.1",
-  "generation": 42,
+  "version": "5.2.2",
+  "generation": 43,
   "releasedAt": "2026-06-08",
   "autoTune": {
     "enabled": true,
@@ -9,8 +9,8 @@
     "targetWinRate": 0.52
   },
   "patchNotes": [
-    "六人立绘统一为 900×1200（3:4 竖版画幅）",
-    "CSS 统一 object-fit / object-position · 消除角色间尺寸差异",
-    "Canvas 回退立绘比例对齐 450×600"
+    "修复宽屏下立绘被拉成横条（left+right 拉伸）",
+    "地图/VN 全宽布局 · 3D 地图等容器就绪后再初始化",
+    "立绘按高度适配 3:4 · 各角色站位一致"
   ]
 }

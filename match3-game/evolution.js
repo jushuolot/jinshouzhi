@@ -6,10 +6,10 @@
   "use strict";
 
   var DEFAULT = {
-    version: "5.2.1",
-    generation: 42,
+    version: "5.2.2",
+    generation: 43,
     autoTune: { enabled: true, windowSize: 8, maxMoveAdjust: 3, targetWinRate: 0.52 },
-    patchNotes: ["Gen.42 立绘画幅统一", "六人立绘 900×1200 · CSS 3:4 对齐"],
+    patchNotes: ["Gen.43 宽屏布局", "立绘横条修复+地图全宽"],
   };
 
   window.MATCH3_EVOLUTION = DEFAULT;

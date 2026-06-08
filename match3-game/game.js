@@ -2066,7 +2066,7 @@
 
     if (window.ThreeEngine && window.ThreeEngine.retryInit) window.ThreeEngine.retryInit();
 
-    window.requestAnimationFrame(function () {
+    function bootWorldMap() {
       var ok3d = false;
       if (window.WorldMap3D && window.ThreeEngine && window.ThreeEngine.ok) {
         var inst = window.WorldMap3D.create(world3dMountEl, function (wi) {
@@ -2075,6 +2075,19 @@
         ok3d = inst && inst.ok;
         if (ok3d && inst.setChapterHighlight) {
           inst.setChapterHighlight(getChapterForLevel(maxUnlockedLevel));
+        }
+        if (ok3d && inst.renderer && window.ThreeEngine.resizeObserver) {
+          window.requestAnimationFrame(function () {
+            var cam = inst.camera;
+            var r = inst.renderer;
+            var w = world3dMountEl.clientWidth || 400;
+            var h = world3dMountEl.clientHeight || 300;
+            if (cam && cam.aspect !== undefined) {
+              cam.aspect = w / h;
+              cam.updateProjectionMatrix();
+            }
+            r.setSize(w, h);
+          });
         }
       }
       if (!ok3d && window.WorldMap2D) {
@@ -2097,6 +2110,25 @@
       } else if (!ok3d && window.setMountLoading) {
         window.setMountLoading(world3dMountEl, "地图加载失败 · 请刷新或稍后再试");
       }
+    }
+
+    function whenMountReady(mount, cb, tries) {
+      tries = tries || 0;
+      if (mount && mount.clientWidth >= 280 && mount.clientHeight >= 240) {
+        cb();
+        return;
+      }
+      if (tries > 24) {
+        cb();
+        return;
+      }
+      window.requestAnimationFrame(function () {
+        whenMountReady(mount, cb, tries + 1);
+      });
+    }
+
+    window.requestAnimationFrame(function () {
+      whenMountReady(world3dMountEl, bootWorldMap);
     });
   }
 
@@ -3815,9 +3847,9 @@
   if (window.PortraitPainter && window.PortraitPainter.preloadAll) {
     window.PortraitPainter.preloadAll(
       function () {
-        if (window.dismissBootSplash) window.dismissBootSplash("Gen.42 · 画幅统一就绪");
+        if (window.dismissBootSplash) window.dismissBootSplash("Gen.43 · 宽屏布局就绪");
         if (window.showSystemToast)
-          window.showSystemToast("Gen.42 · 立绘画幅统一 · 摸金天团出征", 4200);
+          window.showSystemToast("Gen.43 · 立绘/地图宽屏对齐 · 摸金天团出征", 4200);
       },
       function (done, total) {
         if (window.setProgress) window.setProgress(72 + Math.round((done / total) * 24));
@@ -3825,6 +3857,6 @@
       }
     );
   } else {
-    if (window.dismissBootSplash) window.dismissBootSplash("Gen.42 · 就绪");
+    if (window.dismissBootSplash) window.dismissBootSplash("Gen.43 · 就绪");
   }
 })();

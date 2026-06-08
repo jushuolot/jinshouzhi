@@ -203,11 +203,33 @@
   --pc-photo-focus: center 14%;
 }
 
+/* Gen.43：禁止 left+right 同时拉伸，立绘按高度适配 3:4 */
 .portrait-cinema.pc-photo .pc-layer {
-  width: min(92%, 480px);
-  height: auto;
-  aspect-ratio: var(--pc-aspect);
+  left: auto;
+  right: auto;
+  top: auto;
+  margin: 0;
+  width: auto;
+  height: 100%;
   max-height: 100%;
+  max-width: min(92%, 480px);
+  aspect-ratio: var(--pc-aspect);
+}
+
+.portrait-cinema.pc-photo.pc-align-right .pc-layer {
+  right: clamp(0.25rem, 2.5vw, 1.5rem);
+  left: auto;
+}
+
+.portrait-cinema.pc-photo.pc-align-left .pc-layer {
+  left: clamp(0.25rem, 2.5vw, 1.5rem);
+  right: auto;
+}
+
+.portrait-cinema.pc-photo.pc-align-center .pc-layer {
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
 }
 
 .portrait-cinema.pc-photo .pc-layer-main img.pc-photo-main {

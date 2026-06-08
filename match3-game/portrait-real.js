@@ -4,7 +4,7 @@
 (function () {
   "use strict";
 
-  var VER = 42;
+  var VER = 43;
   var BASE = "assets/portraits/";
   var cache = {};
   var loaded = {};

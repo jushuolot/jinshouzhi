@@ -3,6 +3,8 @@
 
 body.blockbuster-mode {
   background: #030201;
+  padding: 0;
+  align-items: stretch;
 }
 
 body.blockbuster-mode .wrap {
@@ -11,7 +13,10 @@ body.blockbuster-mode .wrap {
   padding: 0;
 }
 
-body.blockbuster-mode #screen-map {
+body.blockbuster-mode #screen-map,
+body.blockbuster-mode .screen-map {
+  width: 100%;
+  max-width: none;
   min-height: 100vh;
   min-height: 100dvh;
   padding: 0;
@@ -38,11 +43,25 @@ body.blockbuster-mode .map-phase {
   padding: 3.5rem 0 0;
 }
 
+body.blockbuster-mode #map-phase-world {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  padding: 0 1rem 1rem;
+}
+
+body.blockbuster-mode #map-phase-world .world-map-intro {
+  flex-shrink: 0;
+  max-width: min(720px, 100%);
+}
+
 body.blockbuster-mode .world-3d-mount,
 body.blockbuster-mode .expedition-3d-mount {
   flex: 1;
-  min-height: min(62vh, 520px);
-  height: auto;
+  width: 100%;
+  min-height: min(58vh, 520px);
+  height: min(62vh, 560px);
   border-radius: 0;
   border: none;
 }
@@ -184,8 +203,32 @@ body.blockbuster-mode .expedition-3d-mount {
 .vn-screen.cinema-mode {
   border: none;
   border-radius: 0;
-  min-height: min(70vh, 560px);
+  min-height: min(78vh, 640px);
   background: #030201;
+  display: flex;
+  flex-direction: column;
+}
+
+body.blockbuster-mode .map-phase-briefing,
+body.blockbuster-mode .map-phase-assembly,
+body.blockbuster-mode #map-phase-briefing,
+body.blockbuster-mode #map-phase-assembly {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+body.blockbuster-mode .vn-screen.cinema-mode {
+  flex: 1;
+  min-height: calc(100vh - 3.5rem);
+  min-height: calc(100dvh - 3.5rem);
+}
+
+body.blockbuster-mode .vn-screen.cinema-mode .cinema-mount {
+  flex: 1 1 auto;
+  min-height: min(58vh, 520px);
+  height: auto;
 }
 
 .vn-dialogue-box {
