@@ -1,4 +1,4 @@
-"""主 Tab 路由与 ?tab= 深链接（P18）；标签 i18n（P40）。"""
+"""主 Tab 路由与 ?tab= 深链接（P18）；P113 精简为四页。"""
 
 from __future__ import annotations
 
@@ -9,14 +9,15 @@ import streamlit as st
 
 from src.util.i18n_strings import TAB_IDS, get_locale, tab_label, tab_order
 
+# 旧七页深链接 → 新四页（markets 子页 / watch）
+_LEGACY_MARKET_TABS = frozenset({"movers", "plates", "panorama"})
+_LEGACY_INSIGHT = "insight"
+
 TAB_ORDER: list[tuple[str, str]] = [
-    ("watch", "① 分析工作台"),
-    ("search", "② 搜索添加"),
-    ("plates", "③ 板块行情"),
-    ("movers", "④ 全球股市"),
-    ("panorama", "⑤ 异动全景"),
-    ("insight", "⑥ 行动路线"),
-    ("history", "⑦ 历史记录"),
+    ("watch", "① 自选分析"),
+    ("search", "② 发现标的"),
+    ("markets", "③ 市场一览"),
+    ("history", "④ 历史记录"),
 ]
 
 _TAB_IDS = frozenset(TAB_IDS)
@@ -36,22 +37,23 @@ def _tab_id_by_label() -> dict[str, str]:
 _TAB_ALIASES: dict[str, str] = {
     "watch": "watch",
     "search": "search",
-    "plates": "plates",
+    "markets": "markets",
+    "history": "history",
     "movers": "movers",
+    "plates": "plates",
     "panorama": "panorama",
     "insight": "insight",
-    "history": "history",
     "1": "watch",
     "2": "search",
-    "3": "plates",
-    "4": "movers",
-    "5": "panorama",
-    "6": "insight",
-    "7": "history",
+    "3": "markets",
+    "4": "history",
     "工作台": "watch",
     "分析工作台": "watch",
+    "自选分析": "watch",
     "搜索": "search",
     "搜索添加": "search",
+    "发现标的": "search",
+    "市场一览": "markets",
     "板块": "plates",
     "板块行情": "plates",
     "全球股市": "movers",
@@ -89,6 +91,18 @@ def resolve_tab_id(raw: str) -> str | None:
     return None
 
 
+def _apply_resolved_tab(resolved: str) -> None:
+    if resolved in _LEGACY_MARKET_TABS:
+        st.session_state.active_tab = "markets"
+        st.session_state.markets_subtab = resolved
+        return
+    if resolved == _LEGACY_INSIGHT:
+        st.session_state.active_tab = "watch"
+        return
+    if resolved in _TAB_IDS:
+        st.session_state.active_tab = resolved
+
+
 def apply_tab_from_query() -> str | None:
     """读取 ?tab= 并写入 session_state.active_tab。"""
     st.session_state.setdefault("active_tab", TAB_IDS[0])
@@ -96,10 +110,10 @@ def apply_tab_from_query() -> str | None:
     if not raw:
         return None
     resolved = resolve_tab_id(str(raw))
-    if resolved and resolved in _TAB_IDS:
-        st.session_state.active_tab = resolved
-        return resolved
-    return None
+    if not resolved:
+        return None
+    _apply_resolved_tab(resolved)
+    return str(st.session_state.active_tab)
 
 
 def render_main_tabs(pages: dict[str, Callable[[], None]]) -> None:

@@ -15,9 +15,10 @@ from src.ui.movers_table import render_movers_table, sync_mover_pick_from_query
 from src.util.query_time import format_query_datetime
 
 
-def render() -> None:
-    st.subheader("全球股市")
-    st.caption("A 股：东财→新浪；港股/美股：Yahoo Finance 筛选榜单（盘中/收盘数据以源站为准）。")
+def render(*, embedded: bool = False) -> None:
+    if not embedded:
+        st.subheader("全球股市")
+    st.caption("A 股：东财→新浪；港股/美股：Yahoo（盘中/收盘以源站为准）。")
     C._show_query_banner("movers")
     market = st.selectbox(
         "市场",

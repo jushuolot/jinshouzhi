@@ -6,7 +6,7 @@ import streamlit as st
 
 from src.storage.history_store import load_into_session, persist_session
 from src.ui import app_core as C
-from src.ui.pages import garden, history, insight, movers, panorama, plates, search, watch
+from src.ui.pages import garden, history, markets, search, watch
 from src.ui.tab_router import apply_tab_from_query, render_main_tabs
 from src.util.watch_expander_nav import apply_watch_expand_from_query
 from src.util.i18n_strings import tab_label
@@ -41,7 +41,10 @@ render_workflow_sidebar()
 
 if expert:
     st.title("Stock Assistant · 专家模式")
-    st.caption("七页完整功能。想简单用时点侧边栏 **回到花园**。")
+    st.caption(
+        "**四步用法：** ② 发现标的 → ① 自选分析 → ③ 市场一览 → ④ 历史记录。"
+        "想简单用时点侧边栏 **回到花园**。"
+    )
     if is_readonly_mode():
         st.info("👁 **只读模式**：链接带 `?readonly=1`。")
     apply_tab_from_query()
@@ -50,10 +53,7 @@ if expert:
         {
             "watch": watch.render,
             "search": search.render,
-            "plates": plates.render,
-            "movers": movers.render,
-            "panorama": panorama.render,
-            "insight": insight.render,
+            "markets": markets.render,
             "history": history.render,
         }
     )

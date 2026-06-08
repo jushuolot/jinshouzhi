@@ -221,15 +221,18 @@ def _render_recent_viewed_chips() -> None:
 
 
 def render() -> None:
-    st.subheader("① 分析工作台")
-    st.caption("先看下面表格（**结论**列：偏强/中性/偏弱）→ 选一只 → 点 **一键分析** 看大框结论。")
+    st.subheader("自选分析")
+    st.caption(
+        "**三步：** 表格看结论（偏强/中性/偏弱）→ 选中一只 → 点 **一键分析**。"
+        "行动路线、K 线、财务都在本页下方展开。"
+    )
     _render_recent_viewed_chips()
     C._show_query_banner("watch", extra=f"今天 {today_label_cn()}")
     readonly = is_readonly_mode()
     if st.session_state.watchlist:
         st.session_state.watchlist = normalize_watchlist(st.session_state.watchlist)
     if not st.session_state.watchlist:
-        st.info("还没有自选股：请打开上方 **② 搜索添加**，搜到后点 **加入自选**。")
+        st.info("还没有自选股：请打开 **② 发现标的**，搜到后点 **加入自选**。")
     else:
         snaps_early = st.session_state.get("watch_snapshots") or {}
         render_dashboard_panel(

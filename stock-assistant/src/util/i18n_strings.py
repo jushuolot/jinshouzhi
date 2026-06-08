@@ -11,21 +11,15 @@ SUPPORTED_LOCALES = frozenset({"zh", "en"})
 TAB_IDS: list[str] = [
     "watch",
     "search",
-    "plates",
-    "movers",
-    "panorama",
-    "insight",
+    "markets",
     "history",
 ]
 
 _STRINGS: dict[str, dict[str, str]] = {
-    "tab_watch": {"zh": "① 分析工作台", "en": "① Watchlist"},
-    "tab_search": {"zh": "② 搜索添加", "en": "② Search"},
-    "tab_plates": {"zh": "③ 板块行情", "en": "③ Sectors"},
-    "tab_movers": {"zh": "④ 全球股市", "en": "④ Global Markets"},
-    "tab_panorama": {"zh": "⑤ 异动全景", "en": "⑤ Movers Panorama"},
-    "tab_insight": {"zh": "⑥ 行动路线", "en": "⑥ Action Route"},
-    "tab_history": {"zh": "⑦ 历史记录", "en": "⑦ History"},
+    "tab_watch": {"zh": "① 自选分析", "en": "① Watchlist"},
+    "tab_search": {"zh": "② 发现标的", "en": "② Discover"},
+    "tab_markets": {"zh": "③ 市场一览", "en": "③ Markets"},
+    "tab_history": {"zh": "④ 历史记录", "en": "④ History"},
     "dash_title": {"zh": "📊 工作台概览", "en": "📊 Watchlist Overview"},
     "dash_watch": {"zh": "自选", "en": "Watchlist"},
     "dash_avg_score": {"zh": "均分", "en": "Avg Score"},
@@ -55,10 +49,7 @@ _STRINGS: dict[str, dict[str, str]] = {
 _TAB_KEY_BY_ID = {
     "watch": "tab_watch",
     "search": "tab_search",
-    "plates": "tab_plates",
-    "movers": "tab_movers",
-    "panorama": "tab_panorama",
-    "insight": "tab_insight",
+    "markets": "tab_markets",
     "history": "tab_history",
 }
 

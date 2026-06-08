@@ -139,10 +139,10 @@ def render_home_steps() -> None:
     c1, c2, c3 = st.columns(3)
     with c1:
         st.markdown("**① 找股票**")
-        st.caption("打开「② 搜索添加」→ 输入名字或代码 → 点「加入自选」")
+        st.caption("打开「② 发现标的」→ 输入名字或代码 → 点「加入自选」")
     with c2:
         st.markdown("**② 看结论**")
-        st.caption("回到「① 分析工作台」→ 刷新摘要或「一键分析」→ 看绿色/红色结论框")
+        st.caption("回到「① 自选分析」→ 刷新摘要或「一键分析」→ 看绿色/红色结论框")
     with c3:
         st.markdown("**③ 发同事**")
         st.caption("下载 `.md` 简报，或左侧「分享给同事」（需先部署公网）")
@@ -155,7 +155,7 @@ def render_search_result_banner(*, total: int, a: int, hk: int, us: int, other: 
     bits.append(f"A股 **{a}** · 港股 **{hk}** · 美股 **{us}**")
     if other:
         bits.append(f"其他 **{other}**")
-    st.success(" · ".join(bits) + "\n\n每行右侧点 **「加入自选」**，然后到 **① 分析工作台** 查看。")
+    st.success(" · ".join(bits) + "\n\n每行右侧点 **「加入自选」**，然后到 **① 自选分析** 查看。")
 
 
 def render_brief_tldr(one_line: str | None, score: Any = None) -> None:

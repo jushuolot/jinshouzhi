@@ -17,16 +17,17 @@ from src.storage.serialize import capital_mix_to_dict, panorama_detail_from_dict
 from src.util.query_time import format_query_datetime
 
 
-def render() -> None:
-    st.subheader("全球股市 · 异动全景")
+def render(*, embedded: bool = False) -> None:
+    if not embedded:
+        st.subheader("全球股市 · 异动全景")
     st.caption(
-        "**快速（推荐）**：仅用榜单快照算资金占比与行业归类，10–30 只约 1 秒内完成。"
-        "**深度**：仅对选中 1 只拉 K 线/新闻/日内线（约 10–30 秒）。资金占比为模型估计，非真实分单。"
+        "先在 **涨跌幅榜** 刷新榜单。快速模式用榜单快照（约 1 秒）；"
+        "深度模式仅对 1 只拉 K 线/新闻（约 10–30 秒）。"
     )
     C._show_query_banner("panorama")
     movers_p = st.session_state.get("movers_df")
     if movers_p is None or movers_p.empty:
-        st.info("请先在「全球股市」刷新榜单，再回到本页生成分析。")
+        st.info("请先在 **涨跌幅榜** 子页刷新榜单，再回来点「快速生成异动列表」。")
     else:
         st.write(
             f"当前榜单：{st.session_state.get('movers_market', 'A股')} · "

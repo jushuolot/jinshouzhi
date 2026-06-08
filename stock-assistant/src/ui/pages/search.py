@@ -30,8 +30,11 @@ def _run_global_search(keyword: str) -> None:
 
 
 def render() -> None:
-    st.subheader("② 找股票，加入自选")
-    st.caption("输入中文名、代码或英文名（如 茅台、0700、SNX）→ 点「开始搜索」→ 每行点「加入自选」。")
+    st.subheader("发现标的")
+    st.caption(
+        "输入中文名、代码或拼音（如 茅台、600519、0700）→ **开始搜索** → **加入自选**。"
+        "加完后去 **① 自选分析** 做一键分析。"
+    )
     render_search_quick_actions()
     C._show_query_banner("search")
 
@@ -136,6 +139,6 @@ def render() -> None:
             st.caption("已在自选股中。")
         elif st.button("加入这只到自选", use_container_width=True):
             if C._add_to_watchlist(h):
-                st.success(f"✅ 已加入自选：{h.name}。请到 **① 分析工作台** 查看。")
+                st.success(f"✅ 已加入自选：{h.name}。请到 **① 自选分析** 查看。")
     else:
         st.info("👆 输入关键词后点 **「开始搜索」**。例如：茅台、0700、苹果、SNX。")

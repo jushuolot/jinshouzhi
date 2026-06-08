@@ -7,8 +7,9 @@ import streamlit as st
 from src.util.i18n_strings import get_locale, t
 
 _HINTS: list[tuple[str, dict[str, str]]] = [
-    ("?tab=watch", {"zh": "打开分析工作台", "en": "Open watchlist tab"}),
-    ("?tab=search", {"zh": "打开搜索添加", "en": "Open search tab"}),
+    ("?tab=watch", {"zh": "打开自选分析", "en": "Open watchlist tab"}),
+    ("?tab=search", {"zh": "打开发现标的", "en": "Open discover tab"}),
+    ("?tab=markets", {"zh": "打开市场一览", "en": "Open markets tab"}),
     ("?tab=history", {"zh": "打开历史记录", "en": "Open history tab"}),
     ("?readonly=1", {"zh": "只读模式（隐藏编辑）", "en": "Read-only mode (no edits)"}),
 ]

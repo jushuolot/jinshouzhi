@@ -14,10 +14,11 @@ from src.providers.ticker_util import yahoo_ticker_a
 from src.util.query_time import format_query_datetime
 
 
-def render() -> None:
-    st.subheader("板块行情")
+def render(*, embedded: bool = False) -> None:
+    if not embedded:
+        st.subheader("板块行情")
     st.caption(
-        "行业 / 概念 / 地区板块与资金流向，字段对齐主流行情软件（东财公开接口）。"
+        "行业 / 概念 / 地区板块与资金流向（东财公开接口）。"
         "「相关链接」可打开东财板块页。"
     )
     C._show_query_banner("plates")

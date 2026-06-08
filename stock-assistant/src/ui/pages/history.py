@@ -30,7 +30,7 @@ from src.util.query_time import format_query_datetime
 def render() -> None:
     st.subheader("历史记录")
     st.caption(
-        f"数据保存在本机 `data/{history_path().name}`，刷新或重新登录后会自动恢复最近一次分析。"
+        f"自动记录榜单刷新、一键分析等操作。数据在 `data/{history_path().name}`，重登后自动恢复。"
     )
     st.caption(f"文件路径：`{history_path()}`")
     log = st.session_state.get("query_log") or []

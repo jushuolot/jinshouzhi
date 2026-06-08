@@ -22,14 +22,14 @@ class I18nStringsTests(unittest.TestCase):
         self.assertEqual(normalize_locale(None), DEFAULT_LOCALE)
 
     def test_tab_labels_zh_en(self):
-        self.assertIn("工作台", tab_label("watch", locale="zh"))
+        self.assertIn("自选", tab_label("watch", locale="zh"))
         self.assertIn("Watchlist", tab_label("watch", locale="en"))
-        self.assertIn("搜索", tab_label("search", locale="zh"))
-        self.assertIn("Search", tab_label("search", locale="en"))
+        self.assertIn("发现", tab_label("search", locale="zh"))
+        self.assertIn("Discover", tab_label("search", locale="en"))
 
     def test_tab_order_count(self):
-        self.assertEqual(len(tab_order(locale="zh")), 7)
-        self.assertEqual(len(tab_order(locale="en")), 7)
+        self.assertEqual(len(tab_order(locale="zh")), 4)
+        self.assertEqual(len(tab_order(locale="en")), 4)
 
     def test_dashboard_metrics(self):
         self.assertEqual(t("dash_watch", locale="zh"), "自选")
