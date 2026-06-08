@@ -24,13 +24,17 @@ def build_footer_warmup_note(step: int = EVOLUTION_STEP) -> str | None:
     )
 
 
-def render_app_footer() -> None:
+def render_app_footer(*, simple: bool = False) -> None:
     st.divider()
-    render_keyboard_hints()
+    if not simple:
+        render_keyboard_hints()
     st.caption(
         f"Stock Assistant v{APP_VERSION} · {BUILD_LABEL} · "
         f"已进化 {EVOLUTION_STEP} 步 · 非投资建议"
     )
+    if simple:
+        st.caption("🌱 私人花园 · 密码仅你我知道 · 详见 docs/PRIVATE_GARDEN.md")
+        return
     warmup_note = build_footer_warmup_note()
     if warmup_note:
         st.caption(warmup_note)

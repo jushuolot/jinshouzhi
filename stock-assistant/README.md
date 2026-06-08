@@ -1,7 +1,7 @@
 # Stock Assistant（Streamlit 股票助手）
 
-在浏览器里完成：**发现标的 → 分析工作台 → 导出可读简报**。  
-支持 A 股 / 港股 / 美股；**🎉 v5.1.0 · 1030 步** — v5 庆祝横幅、自选健康分（均分/提醒/新鲜度/板块分散）· 手册 [docs/PUBLIC_DATA_PLAYBOOK.md](docs/PUBLIC_DATA_PLAYBOOK.md) · 百步清单 [docs/EVOLUTION_100.md](docs/EVOLUTION_100.md)。
+在浏览器里完成：**一键筛 A 股 · 看买/观望 · 核对涨没涨**。默认 **🌱 私人选股花园**（单页极简）；侧边栏可进专家七页。  
+**v5.2.0 · 1060 步** — 自动推荐 + 命中率成绩单 · 私密部署 [docs/PRIVATE_GARDEN.md](docs/PRIVATE_GARDEN.md)
 
 ---
 
@@ -9,6 +9,7 @@
 
 | 文档 | 说明 | 适合谁 |
 |------|------|--------|
+| [docs/PRIVATE_GARDEN.md](docs/PRIVATE_GARDEN.md) | **私人花园**：免费密码门、每晚查岗、A 股自动推荐 | 只想简单选股的人 |
 | [docs/PUBLIC_DATA_PLAYBOOK.md](docs/PUBLIC_DATA_PLAYBOOK.md) | 散户公开数据作战手册（能力地图功能对照） | 想用免费数据建立每日流程 |
 | [docs/PRODUCT.md](docs/PRODUCT.md) | 产品定位、功能地图、使用场景、数据来源、局限、公网访问 | 想先了解「这是什么」 |
 | [docs/USER_GUIDE.md](docs/USER_GUIDE.md) | 编号步骤：本地启动、登录、自选股、生成简报、Streamlit Cloud | 第一次上手操作 |

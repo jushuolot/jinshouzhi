@@ -57,8 +57,24 @@ _PHASE_OPTIONS = [
 ]
 
 
-def render_workflow_sidebar() -> None:
+def render_workflow_sidebar(*, simple: bool = False) -> None:
     with st.sidebar:
+        if simple:
+            st.markdown("### 🌱 私人花园")
+            st.caption("只有你知道密码。每晚来看成长日记即可。")
+            if st.button("⚙️ 进入专家模式（七页完整版）", use_container_width=True):
+                st.session_state.ui_mode = "pro"
+                st.rerun()
+            st.markdown(
+                "[📖 如何部署你的私密空间](docs/PRIVATE_GARDEN.md)"
+            )
+            render_theme_toggle()
+            return
+
+        if st.button("🌱 回到花园简版", use_container_width=True):
+            st.session_state.ui_mode = "garden"
+            st.rerun()
+
         collapsed_prefs = normalize_sidebar_collapsed(st.session_state.get("sidebar_collapsed"))
         workflow_collapsed = is_section_collapsed(collapsed_prefs, "workflow_phase")
         capability_collapsed = is_section_collapsed(collapsed_prefs, "capability_map")

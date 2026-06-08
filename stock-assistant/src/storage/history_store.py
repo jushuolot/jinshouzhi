@@ -328,6 +328,9 @@ def collect_latest_state() -> dict[str, Any]:
         "query_labels": labels,
         "conclusions": conclusions,
         "watch_snapshots": dict(st.session_state.get("watch_snapshots") or {}),
+        "pick_log": list(st.session_state.get("pick_log") or []),
+        "today_picks": list(st.session_state.get("today_picks") or []),
+        "last_pick_at": st.session_state.get("last_pick_at"),
         "brief_archive": _collect_brief_archive(),
         "user_prefs": {
             "auto_refresh_enabled": bool(st.session_state.get("auto_refresh_enabled")),
@@ -396,6 +399,12 @@ def apply_latest_to_session(latest: dict[str, Any]) -> None:
 
     if latest.get("watch_snapshots"):
         st.session_state.watch_snapshots = dict(latest["watch_snapshots"])
+    if latest.get("pick_log") is not None:
+        st.session_state.pick_log = list(latest["pick_log"])
+    if latest.get("today_picks") is not None:
+        st.session_state.today_picks = list(latest["today_picks"])
+    if latest.get("last_pick_at"):
+        st.session_state.last_pick_at = latest["last_pick_at"]
     _apply_brief_archive(latest.get("brief_archive"))
 
     prefs = latest.get("user_prefs") or {}

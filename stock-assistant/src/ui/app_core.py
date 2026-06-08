@@ -112,6 +112,12 @@ def _init_state() -> None:
         st.session_state.dark_mode = True
     if "locale" not in st.session_state:
         st.session_state.locale = "zh"
+    if "pick_log" not in st.session_state:
+        st.session_state.pick_log = []
+    if "today_picks" not in st.session_state:
+        st.session_state.today_picks = []
+    if "ui_mode" not in st.session_state:
+        st.session_state.ui_mode = "garden"
 
 
 def _save_history(
