@@ -60,8 +60,13 @@ git pull --rebase origin main && git push origin main
 | `elder1@test.nuanban.dev` | 老人 | 找陪护、SOS |
 | `multi1@test.nuanban.dev` | 三角色 | 身份切换演示 |
 
+## 产品核心（勿偏离）
+
+**附近中老年 ↔ 在校女大学生 · 有偿陪护 · 平台撮合。** 三种路径：机构派单、老人找同学、同学找需求。上帝视角：[PROGRESS_GOD_VIEW.md](./docs/PROGRESS_GOD_VIEW.md) · H5 `pages/common/god-view`。
+
 ## 文档索引
 
+- [PROGRESS_GOD_VIEW.md](./docs/PROGRESS_GOD_VIEW.md) — **上帝视角进度（给用户看）**
 - [AGENT_EVOLUTION.md](./docs/AGENT_EVOLUTION.md) — 自我进化与教训
 - [PERFECT.md](./docs/PERFECT.md) — 验收清单
 - [TEST_MATURITY.md](./docs/TEST_MATURITY.md) — 成熟度矩阵

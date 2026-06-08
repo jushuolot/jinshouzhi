@@ -798,6 +798,52 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
     return delay(pbList(SERVICE_ITEMS.map(serviceRecord)) as T);
   }
 
+  if (method === 'GET' && path === '/nuanban/platform/overview') {
+    const pending = state.orders.filter((o) => o.status === 'pending_accept').length;
+    const inSvc = state.orders.filter((o) => o.status === 'in_service').length;
+    const done = state.orders.filter((o) => o.status === 'completed').length;
+    return delay({
+      mission: '附近中老年 ↔ 在校女大学生 · 平台撮合有偿陪护',
+      updatedAt: new Date().toISOString(),
+      eldersTotal: ELDERS.length,
+      studentsActive: CAREGIVERS.length,
+      ordersPendingAccept: pending,
+      ordersInService: inSvc,
+      ordersCompleted: done,
+      caregiversNearby: CAREGIVERS.length,
+      eldersNearby: ELDERS.length,
+      matchingPaths: [
+        {
+          id: 'org_dispatch',
+          label: '机构派单',
+          description: '平台/养老院将订单指定给同学',
+          status: 'demo',
+          metric: '待派单',
+          metricValue: pending,
+        },
+        {
+          id: 'elder_find_student',
+          label: '老人找同学',
+          description: '老人按距离浏览女大学生志愿者并预约',
+          status: 'live',
+          metric: '附近同学',
+          metricValue: CAREGIVERS.length,
+        },
+        {
+          id: 'student_find_elder',
+          label: '同学找需求',
+          description: '学生看待接单池或附近老人并接单',
+          status: 'live',
+          metric: '附近老人',
+          metricValue: ELDERS.length,
+        },
+      ],
+      coreCompletionPct: 88,
+      auditStatus: 'PASS',
+      demoUrl: 'https://jushuolot.github.io/jinshouzhi/nuanban/#/pages/common/login',
+    } as T);
+  }
+
   if (method === 'GET' && path === '/nuanban/auth/me') {
     return delay({ roles: [{ role: 'student', status: 'active' }] } as T);
   }

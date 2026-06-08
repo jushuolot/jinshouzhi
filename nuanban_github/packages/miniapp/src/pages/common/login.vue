@@ -1,7 +1,7 @@
 <template>
   <view class="page">
     <text class="title">暖伴勤工</text>
-    <text class="sub">一个小程序，服务老人、家属与同学</text>
+    <text class="sub">附近中老年 ↔ 在校女大学生 · 有偿陪护匹配</text>
     <button class="btn-primary" :loading="loading" @tap="onWxLogin">微信登录</button>
     <button
       v-for="dev in DEV_ACCOUNTS"
@@ -19,6 +19,7 @@
       <text @tap="goRegister('student')">学生注册</text>
     </view>
     <view class="links secondary">
+      <text @tap="goGodView">上帝视角</text>
       <text @tap="goAgreement">用户协议</text>
       <text @tap="goAdminHub">运营演示</text>
     </view>
@@ -151,6 +152,10 @@ function goAgreement() {
 
 function goAdminHub() {
   uni.navigateTo({ url: '/pages/common/admin-hub' });
+}
+
+function goGodView() {
+  uni.navigateTo({ url: '/pages/common/god-view' });
 }
 </script>
 

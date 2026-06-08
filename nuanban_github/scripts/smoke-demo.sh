@@ -26,7 +26,7 @@ smoke_bundle() {
   local body
   body="$(curl -sf "${BASE}assets/${login_js}" || true)"
   local ok=0
-  for token in 'multi1@test.nuanban.dev' 'student3@test.nuanban.dev' '运营演示'; do
+  for token in 'multi1@test.nuanban.dev' 'student3@test.nuanban.dev' '上帝视角' '有偿陪护'; do
     if echo "$body" | grep -q "$token"; then
       echo "PASS: bundle contains «$token»"
       ok=1

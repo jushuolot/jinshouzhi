@@ -16,6 +16,13 @@
       </view>
       <text class="chevron">›</text>
     </view>
+    <view class="link-card highlight" @tap="goGodView">
+      <view class="link-main">
+        <text class="link-title">上帝视角 · 撮合进度</text>
+        <text class="link-desc">平台 KPI、三种撮合路径、验收清单</text>
+      </view>
+      <text class="chevron">›</text>
+    </view>
     <view class="link-card" @tap="goSchoolCoop">
       <view class="link-main">
         <text class="link-title">学校合作配置</text>
@@ -48,6 +55,10 @@ onShow(reload);
 
 function goDispatch() {
   uni.navigateTo({ url: '/pages/common/org-dispatch' });
+}
+
+function goGodView() {
+  uni.navigateTo({ url: '/pages/common/god-view' });
 }
 
 function goSchoolCoop() {
@@ -95,6 +106,10 @@ function goSchoolCoop() {
   font-size: 28rpx;
   font-weight: 600;
   margin-bottom: 16rpx;
+}
+.link-card.highlight {
+  border: 1rpx solid #f0dcc8;
+  background: #fffaf5;
 }
 .link-card {
   display: flex;

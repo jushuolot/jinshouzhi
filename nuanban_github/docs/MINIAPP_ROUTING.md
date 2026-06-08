@@ -15,6 +15,7 @@
   admin-hub        运营演示入口（派单 + 学校合作）
   school-coop      学校合作配置（只读）
   student-pending  学生资质审核中拦截页
+  god-view         平台上帝视角（撮合 KPI · 无需登录）
 
 分包 package-elder/
   home

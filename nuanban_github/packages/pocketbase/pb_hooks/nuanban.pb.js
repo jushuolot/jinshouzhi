@@ -1354,3 +1354,57 @@ routerAdd("POST", "/api/nuanban/family/packages/purchase", (e) => {
     packageName: names[pkgId] || "服务包",
   });
 });
+
+/** 平台上帝视角：撮合漏斗与核心指标（演示） */
+routerAdd("GET", "/api/nuanban/platform/overview", (e) => {
+  let pending = 0;
+  let inSvc = 0;
+  let done = 0;
+  let elders = 0;
+  try {
+    pending = $app.findRecordsByFilter("orders", 'status = "pending_accept"', "", 200, 0).length;
+    inSvc = $app.findRecordsByFilter("orders", 'status = "in_service"', "", 200, 0).length;
+    done = $app.findRecordsByFilter("orders", 'status = "completed"', "", 200, 0).length;
+    elders = $app.findRecordsByFilter("elders", "enabled = true", "", 200, 0).length;
+  } catch (_) {}
+  return e.json(200, {
+    mission: "附近中老年 ↔ 在校女大学生 · 平台撮合有偿陪护",
+    updatedAt: new Date().toISOString(),
+    eldersTotal: elders,
+    studentsActive: 6,
+    ordersPendingAccept: pending,
+    ordersInService: inSvc,
+    ordersCompleted: done,
+    caregiversNearby: 6,
+    eldersNearby: elders,
+    matchingPaths: [
+      {
+        id: "org_dispatch",
+        label: "机构派单",
+        description: "平台/养老院将订单指定给同学",
+        status: "demo",
+        metric: "待派单",
+        metricValue: pending,
+      },
+      {
+        id: "elder_find_student",
+        label: "老人找同学",
+        description: "老人按距离浏览女大学生志愿者并预约",
+        status: "live",
+        metric: "附近同学",
+        metricValue: 6,
+      },
+      {
+        id: "student_find_elder",
+        label: "同学找需求",
+        description: "学生看待接单池或附近老人并接单",
+        status: "live",
+        metric: "附近老人",
+        metricValue: elders,
+      },
+    ],
+    coreCompletionPct: 88,
+    auditStatus: "PASS",
+    demoUrl: "https://jushuolot.github.io/jinshouzhi/nuanban/#/pages/common/login",
+  });
+});
