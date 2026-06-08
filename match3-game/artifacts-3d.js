@@ -4,8 +4,13 @@
 (function () {
   "use strict";
 
-  var TE = window.ThreeEngine;
   var instance = null;
+
+  function eng() {
+    var TE = window.ThreeEngine;
+    if (TE && !TE.ok && TE.retryInit) TE.retryInit();
+    return TE && TE.ok ? TE : null;
+  }
 
   function buildMask() {
     var g = new THREE.Group();
@@ -99,7 +104,14 @@
   var BUILDERS = [buildMask, buildStaff, buildMask, buildStaff, buildStaff, buildBird];
 
   function ArtifactViewer3D(mount, typeId) {
-    if (!TE || !TE.ok || !mount) { this.ok = false; return; }
+    var TE = eng();
+    if (!TE || !mount) {
+      this.ok = false;
+      return;
+    }
+    this._TE = TE;
+    this.mount = mount;
+    this.ok = true;
     this.typeId = typeId || 0;
     var scene = new THREE.Scene();
     scene.fog = new THREE.FogExp2(0x0a0806, 0.06);
@@ -125,6 +137,8 @@
   }
 
   ArtifactViewer3D.prototype.setType = function (typeId) {
+    var TE = this._TE || eng();
+    if (!TE || !this.scene) return;
     if (this.model) {
       this.scene.remove(this.model);
       TE.disposeObject(this.model);
@@ -144,15 +158,47 @@
   };
 
   ArtifactViewer3D.prototype.destroy = function () {
-    if (this.loopId) TE.stopLoop(this.loopId);
-    TE.disposeScene(this.scene);
-    this.mount.innerHTML = "";
+    var TE = this._TE || eng();
+    if (this.loopId && TE) TE.stopLoop(this.loopId);
+    if (this.scene && TE) TE.disposeScene(this.scene);
+    if (this.mount) this.mount.innerHTML = "";
   };
+
+  function mountReady(mount, cb, tries) {
+    tries = tries || 0;
+    if (!mount) {
+      cb();
+      return;
+    }
+    if (mount.clientWidth >= 80 && mount.clientHeight >= 80) {
+      cb();
+      return;
+    }
+    if (tries > 20) {
+      cb();
+      return;
+    }
+    window.requestAnimationFrame(function () {
+      mountReady(mount, cb, tries + 1);
+    });
+  }
 
   window.ArtifactViewer3D = {
     create: function (mount, typeId) {
       if (instance) instance.destroy();
+      var TE = eng();
+      if (!TE || !mount) {
+        instance = { ok: false, setType: function () {}, destroy: function () {} };
+        return instance;
+      }
       instance = new ArtifactViewer3D(mount, typeId);
+      if (instance.ok) {
+        mountReady(mount, function () {
+          if (instance && instance._TE && instance.renderer && instance.camera) {
+            instance._TE.resizeObserver(mount, instance.camera, instance.renderer);
+          }
+        });
+      }
       return instance;
     },
     get: function () { return instance; },

@@ -142,11 +142,16 @@
   }
 
   function ensureCodex() {
-    if (window.Codex && window.Artifacts3D) return Promise.resolve();
+    if (window.Codex && window.ArtifactViewer3D) return Promise.resolve();
     if (!codexReady) {
-      codexReady = loadScriptChain(CODEX_SCRIPTS).catch(function () {
-        return null;
-      });
+      codexReady = ensureThree()
+        .then(function () {
+          if (window.ThreeEngine && window.ThreeEngine.retryInit) window.ThreeEngine.retryInit();
+          return loadScriptChain(CODEX_SCRIPTS);
+        })
+        .catch(function () {
+          return null;
+        });
     }
     return codexReady || Promise.resolve();
   }

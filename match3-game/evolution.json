@@ -1,6 +1,6 @@
 {
-  "version": "5.7.1",
-  "generation": 51,
+  "version": "5.7.2",
+  "generation": 52,
   "universeDay": 4,
   "civilizationEpoch": "1929-07",
   "civilizationDay": 51,
@@ -15,6 +15,7 @@
     "targetWinRate": 0.52
   },
   "patchNotes": [
+    "修复图鉴 3D 文物不显示（Three 引擎延后加载竞态）",
     "性能大改：asset-loader 分阶段加载，首屏不等立绘/Three.js",
     "立绘改 JPEG（约 7.6MB→1.4MB），后台预载",
     "网络赏金探测延后到 idle，不卡启动",

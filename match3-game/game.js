@@ -1898,13 +1898,23 @@
 
   function openCodexModal() {
     function show() {
-      renderCodexModal();
+      if (window.ThreeEngine && window.ThreeEngine.retryInit) window.ThreeEngine.retryInit();
       if (codexModalEl) codexModalEl.hidden = false;
+      window.requestAnimationFrame(function () {
+        renderCodexModal();
+        if (artifact3dMountEl && window.setMountLoading) {
+          var v = window.ArtifactViewer3D && window.ArtifactViewer3D.get();
+          if (!v || !v.ok) {
+            window.setMountLoading(artifact3dMountEl, "3D 文物加载中…");
+            window.setTimeout(function () {
+              renderCodexModal();
+            }, 400);
+          }
+        }
+      });
     }
     if (window.MATCH3_ASSETS && window.MATCH3_ASSETS.ensureCodex) {
-      var loads = [window.MATCH3_ASSETS.ensureCodex()];
-      if (window.MATCH3_ASSETS.ensureThree) loads.push(window.MATCH3_ASSETS.ensureThree());
-      Promise.all(loads).then(show).catch(show);
+      window.MATCH3_ASSETS.ensureCodex().then(show).catch(show);
     } else {
       show();
     }
