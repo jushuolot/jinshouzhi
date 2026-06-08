@@ -198,6 +198,102 @@ def _on_watch_code_change() -> None:
     _record_recent_viewed(code, name)
 
 
+def _execute_quick_analysis(item: dict[str, Any], code: str) -> None:
+    """一键分析：更新快照、简报、行动路线。"""
+    _record_recent_viewed(code, str(item.get("名称") or code))
+    q_label = C._stamp_query("watch")
+    result = run_quick_analysis(item, C._fetch_one, query_label=q_label)
+    st.session_state.watch_snapshots[code] = result.snapshot.as_dict()
+    st.session_state["route_report"] = result.route_report
+    st.session_state["insight_pick"] = {
+        "代码": code,
+        "名称": item.get("名称"),
+        "市场": item.get("市场"),
+    }
+    st.session_state[f"brief_md_{code}"] = result.brief_md
+    if result.fin_data and result.fin_data.get("ok"):
+        st.session_state[f"watch_fin_{code}"] = True
+    mark_dirty()
+    C._save_history(
+        log_kind="insight",
+        log_label=f"一键分析 {item.get('名称')}",
+        conclusions_summary=result.snapshot.one_line[:120],
+    )
+    render_analysis_done(
+        name=str(item.get("名称") or code),
+        code=code,
+        score=result.score.total if result.score else result.snapshot.score,
+        pct=result.snapshot.pct,
+        one_line=result.snapshot.one_line,
+    )
+
+
+def _render_quick_analysis_zone(
+    display_wl: list[dict[str, Any]],
+    *,
+    readonly: bool,
+) -> tuple[str | None, dict[str, Any] | None]:
+    """自选股表格下方：选股 + 大号一键分析按钮。"""
+    codes = [str(x.get("代码") or "") for x in display_wl if x.get("代码")]
+    if not codes:
+        return None, None
+    st.divider()
+    st.markdown("### ⚡ 一键分析（在这里点）")
+    st.caption("选好股票 → 点下面红色按钮，自动出结论、简报和行动路线（约 10–60 秒）。")
+    if "watch_code" not in st.session_state or st.session_state.watch_code not in codes:
+        st.session_state.watch_code = codes[0]
+    code = st.selectbox(
+        "选择要分析的股票",
+        options=codes,
+        key="watch_code",
+        on_change=_on_watch_code_change,
+    )
+    item = next((x for x in display_wl if str(x.get("代码") or "") == code), None)
+    if not item:
+        return code, None
+    snap_sel = (st.session_state.get("watch_snapshots") or {}).get(code) or {}
+    render_stock_verdict_card(
+        name=str(item.get("名称") or code),
+        code=code,
+        score=snap_sel.get("score"),
+        pct=snap_sel.get("pct"),
+        one_line=str(snap_sel.get("one_line") or ""),
+    )
+    if readonly:
+        st.caption("只读模式：不可运行一键分析。")
+    else:
+        c_qa, c_rf = st.columns([3, 1])
+        with c_qa:
+            if st.button(
+                "⚡ 一键分析",
+                type="primary",
+                key="watch_quick",
+                use_container_width=True,
+            ):
+                try:
+                    with st.spinner("并行拉取行情、新闻、财务对比并生成简报…"):
+                        _execute_quick_analysis(item, code)
+                except Exception as exc:
+                    st.error(f"一键分析失败：{exc}")
+        with c_rf:
+            if st.button("🔄 刷新这只", key="watch_refresh_one", use_container_width=True):
+                new_snap, ok = refresh_one_snapshot(
+                    item,
+                    C._fetch_one,
+                    query_label=C._stamp_query("watch"),
+                )
+                if "watch_snapshots" not in st.session_state:
+                    st.session_state.watch_snapshots = {}
+                st.session_state.watch_snapshots[code] = new_snap
+                mark_dirty()
+                if ok:
+                    st.success("摘要已更新")
+                else:
+                    st.warning("拉取失败，请重试")
+                st.rerun()
+    return code, item
+
+
 def _render_recent_viewed_chips() -> None:
     recent = normalize_recent_viewed(st.session_state.get("recent_viewed"))
     if not recent:
@@ -223,8 +319,8 @@ def _render_recent_viewed_chips() -> None:
 def render() -> None:
     st.subheader("自选分析")
     st.caption(
-        "**三步：** 表格看结论（偏强/中性/偏弱）→ 选中一只 → 点 **一键分析**。"
-        "行动路线、K 线、财务都在本页下方展开。"
+        "**三步：** ① 表格看自选 → ② 在 **「⚡ 一键分析」** 区选股票点红按钮 "
+        "→ ③ 往下看 K 线与简报下载。"
     )
     _render_recent_viewed_chips()
     C._show_query_banner("watch", extra=f"今天 {today_label_cn()}")
@@ -297,6 +393,28 @@ def render() -> None:
         pinned = normalize_pinned_tickers(st.session_state.get("pinned_tickers") or [])
         st.session_state.pinned_tickers = pinned
         display_wl = apply_pinned_order(display_wl, pinned)
+        picked_code: str | None = None
+        picked_item: dict[str, Any] | None = None
+        wl_main = pd.DataFrame(_watchlist_display_rows(display_wl))
+        show_cols_main = [
+            c
+            for c in [
+                "名称", "代码", "结论", "涨跌幅%", "评分", "摘要时间", "一句话", "新鲜度", "货币", "类型", "市场"
+            ]
+            if c in wl_main.columns
+        ]
+        st.markdown("**你的自选股一览**（绿=偏强 · 红=偏弱 · 黄=中性）")
+        st.dataframe(
+            wl_main[show_cols_main] if show_cols_main else wl_main,
+            use_container_width=True,
+            hide_index=True,
+            column_config={
+                "结论": st.column_config.TextColumn("结论", help="偏强/中性/偏弱/待分析"),
+                "货币": st.column_config.TextColumn("货币", help="报价货币：A股 CNY / 港股 HKD / 美股 USD"),
+                "一句话": st.column_config.TextColumn("一句话", width="large"),
+            },
+        )
+        picked_code, picked_item = _render_quick_analysis_zone(display_wl, readonly=readonly)
         notes = normalize_watch_notes(st.session_state.get("watch_notes") or {})
         csv_bytes = watchlist_table_to_csv_bytes(
             display_wl,
@@ -974,25 +1092,6 @@ def render() -> None:
                             st.warning(f"{code} 仍拉取失败。")
                         st.rerun()
 
-        wl = pd.DataFrame(_watchlist_display_rows(display_wl))
-        show_cols = [
-            c
-            for c in [
-                "名称", "代码", "结论", "涨跌幅%", "评分", "摘要时间", "一句话", "新鲜度", "货币", "类型", "市场"
-            ]
-            if c in wl.columns
-        ]
-        st.markdown("**你的自选股一览**（绿=偏强 · 红=偏弱 · 黄=中性）")
-        st.dataframe(
-            wl[show_cols] if show_cols else wl,
-            use_container_width=True,
-            hide_index=True,
-            column_config={
-                "结论": st.column_config.TextColumn("结论", help="偏强/中性/偏弱/待分析"),
-                "货币": st.column_config.TextColumn("货币", help="报价货币：A股 CNY / 港股 HKD / 美股 USD"),
-                "一句话": st.column_config.TextColumn("一句话", width="large"),
-            },
-        )
         if not readonly:
             with st.expander("📦 批量操作", expanded=False):
                 pick_codes = [
@@ -1054,23 +1153,17 @@ def render() -> None:
         render_sector_linkage_panel(watchlist=display_wl)
 
         st.divider()
-        st.subheader("② 深入分析单只股票")
-        code = st.selectbox(
-            "选择要分析的标的",
-            options=wl["代码"].tolist(),
-            key="watch_code",
-            on_change=_on_watch_code_change,
+        st.subheader("K 线与详情")
+        code = picked_code or str(st.session_state.get("watch_code") or "")
+        item = picked_item or next(
+            (x for x in st.session_state.watchlist if str(x.get("代码") or "") == code),
+            None,
         )
-        item = next((x for x in st.session_state.watchlist if x.get("代码") == code), None)
+        if not item or not code:
+            st.info("请先在上方 **⚡ 一键分析** 区选择一只股票。")
+            return
         snap_sel = (st.session_state.get("watch_snapshots") or {}).get(code) or {}
         if item and code:
-            render_stock_verdict_card(
-                name=str(item.get("名称") or code),
-                code=code,
-                score=snap_sel.get("score"),
-                pct=snap_sel.get("pct"),
-                one_line=str(snap_sel.get("one_line") or ""),
-            )
             rel_radar = sector_relative_for_ticker(
                 compute_sector_relative(
                     st.session_state.watchlist,
@@ -1229,7 +1322,7 @@ def render() -> None:
         watch_score = None
 
         if item:
-            with st.expander("K线", expanded=True):
+            with st.expander("K线", expanded=False):
                 chart_h = st.selectbox(
                     "图高度",
                     [720, 900, 1080],
@@ -1377,7 +1470,8 @@ def render() -> None:
                     )
 
             st.divider()
-            st.subheader("③ 一键出报告")
+            st.subheader("报告与下载")
+            st.caption("一键分析在上方；这里可单独补 **行动路线** 或 **可读简报**。")
             code6 = code if kind == "A" and code.isdigit() else None
             yh = str(item.get("Yahoo") or code)
             news_watch = fetch_aggregated_news(code6=code6, yahoo_ticker=yh, limit=15)
@@ -1385,48 +1479,8 @@ def render() -> None:
             gen_route = False
             gen_brief = False
             if readonly:
-                st.caption("只读模式：不可运行一键分析或生成新简报。")
+                st.caption("只读模式：不可生成新简报。")
             else:
-                if st.button("⚡ 一键分析", type="primary", key="watch_quick", use_container_width=True):
-                    try:
-                        _record_recent_viewed(code, str(item.get("名称") or code))
-                        with st.spinner("并行拉取行情、新闻、财务对比并生成简报…"):
-                            q_label = C._stamp_query("watch")
-                            result = run_quick_analysis(
-                                item,
-                                C._fetch_one,
-                                query_label=q_label,
-                            )
-                        watch_df = result.df
-                        watch_ksrc = result.kline_src
-                        watch_stats = result.stats
-                        watch_score = result.score
-                        st.session_state.watch_snapshots[code] = result.snapshot.as_dict()
-                        st.session_state["route_report"] = result.route_report
-                        st.session_state["insight_pick"] = {
-                            "代码": code,
-                            "名称": item.get("名称"),
-                            "市场": item.get("市场"),
-                        }
-                        st.session_state[f"brief_md_{code}"] = result.brief_md
-                        if result.fin_data and result.fin_data.get("ok"):
-                            st.session_state[f"watch_fin_{code}"] = True
-                        mark_dirty()
-                        C._save_history(
-                            log_kind="insight",
-                            log_label=f"一键分析 {item.get('名称')}",
-                            conclusions_summary=result.snapshot.one_line[:120],
-                        )
-                        render_analysis_done(
-                            name=str(item.get("名称") or code),
-                            code=code,
-                            score=result.score.total if result.score else result.snapshot.score,
-                            pct=result.snapshot.pct,
-                            one_line=result.snapshot.one_line,
-                        )
-                    except Exception as e:
-                        st.error(f"一键分析失败：{e}")
-
                 btn_route, btn_brief = st.columns(2)
                 with btn_route:
                     gen_route = st.button("生成行动路线", type="primary", key="watch_route", use_container_width=True)
