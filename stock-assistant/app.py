@@ -16,6 +16,7 @@ from src.ui.theme_style import inject_theme_styles
 from src.ui.onboarding import render_onboarding_banner
 from src.ui.welcome_banner import render_welcome_banner
 from src.ui.milestone_banner import render_milestone_banner
+from src.ui.v5_celebration_banner import render_v5_celebration_banner
 from src.ui.simple_result import render_home_steps
 from src.ui.priority_home import render_priority_home_entry
 from src.ui.footer import render_app_footer
@@ -38,6 +39,7 @@ render_home_steps()
 render_priority_home_entry()
 render_welcome_banner()
 render_milestone_banner()
+render_v5_celebration_banner()
 render_onboarding_banner()
 if is_readonly_mode():
     st.info("👁 **只读模式**：链接带 `?readonly=1`，已隐藏编辑与写入操作。")

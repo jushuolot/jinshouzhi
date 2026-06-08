@@ -32,6 +32,11 @@ _STRINGS: dict[str, dict[str, str]] = {
     "dash_up": {"zh": "上涨", "en": "Up"},
     "dash_down": {"zh": "下跌", "en": "Down"},
     "dash_alerts": {"zh": "今日提醒", "en": "Alerts Today"},
+    "dash_health": {"zh": "健康分", "en": "Health"},
+    "dash_help_health": {
+        "zh": "均分+提醒+新鲜度+板块分散加权 0–100",
+        "en": "Weighted 0–100: score, alerts, freshness, sectors",
+    },
     "dash_help_watch": {"zh": "当前自选股数量", "en": "Number of watchlist items"},
     "dash_help_avg": {"zh": "有评分 {n} 只", "en": "{n} scored"},
     "dash_help_up": {"zh": "涨跌幅 > 0", "en": "Change > 0"},

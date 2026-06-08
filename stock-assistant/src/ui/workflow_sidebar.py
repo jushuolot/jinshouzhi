@@ -53,6 +53,7 @@ _PHASE_OPTIONS = [
     "P91 900步庆祝", "P92 一键全开推送", "P93 文档与v4.5",
     "P94 能力地图跳转", "P95 公开数据手册", "P96 文档与v4.6",
     "P97 手册内置预览", "P98 千步预热", "P99 文档与v5.0",
+    "P100 v5庆祝横幅", "P101 自选健康分", "P102 文档与v5.1",
 ]
 
 
@@ -92,7 +93,7 @@ def render_workflow_sidebar() -> None:
             phase = st.selectbox(
                 "当前进化阶段",
                 _PHASE_OPTIONS,
-                index=98,
+                index=101,
                 disabled=True,
             )
             st.caption(phase)

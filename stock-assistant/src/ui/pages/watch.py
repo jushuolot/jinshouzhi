@@ -109,6 +109,7 @@ from src.util.retry_fetch_ui import (
 )
 from src.analysis.trend_summary import collect_trend_points, format_trend_markdown, trend_delta
 from src.analysis.contribution import contribution_table_rows
+from src.analysis.portfolio_health import compute_portfolio_health, portfolio_health_markdown
 from src.analysis.sector_relative import (
     compute_sector_relative,
     sector_relative_for_ticker,
@@ -196,6 +197,7 @@ def render() -> None:
             pct_down=float(st.session_state.get("alert_pct_down", -5.0)),
             score_low=float(st.session_state.get("alert_score_low", 40.0)),
             score_high=float(st.session_state.get("alert_score_high", 65.0)),
+            stale_hours=float(st.session_state.get("stale_hours", 24.0)),
         )
         c_refresh, c_hint = st.columns([1, 2])
         with c_refresh:
@@ -679,6 +681,20 @@ def render() -> None:
                         mark_dirty()
                         st.success("权重已保存。")
                         st.rerun()
+
+        if display_wl and snaps:
+            with st.expander("💚 自选健康分", expanded=False):
+                ph = compute_portfolio_health(
+                    display_wl,
+                    snaps,
+                    stale_hours=float(st.session_state.get("stale_hours", 24.0)),
+                    pct_up=float(st.session_state.get("alert_pct_up", 5.0)),
+                    pct_down=float(st.session_state.get("alert_pct_down", -5.0)),
+                    score_low=float(st.session_state.get("alert_score_low", 40.0)),
+                    score_high=float(st.session_state.get("alert_score_high", 65.0)),
+                    brief_for_code=lambda c: st.session_state.get(f"brief_md_{c}"),
+                )
+                st.markdown(portfolio_health_markdown(ph))
 
         if display_wl and snaps:
             with st.expander("📈 涨跌贡献", expanded=False):

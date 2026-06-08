@@ -105,6 +105,11 @@
 | **P97** | 手册内置预览 | ✅ 已完成 | 侧边栏作战手册前 80 行 expander |
 | **P98** | 千步预热 | ✅ 已完成 | milestone 1000 预热横幅、页脚千步提示 |
 | **P99** | 文档与 v5.0 | ✅ 已完成 | EVOLUTION 961–1000、v5.0.0 step 1000 |
+| **P100** | v5庆祝横幅 | ✅ 已完成 | v5_celebration_banner、独立会话旗标 |
+| **P101** | 自选健康分 | ✅ 已完成 | portfolio_health、仪表盘 metric、工作台 expander |
+| **P102** | 文档与 v5.1 | ✅ 已完成 | EVOLUTION 1001–1030、v5.1.0 step 1030 |
+
+**v5.1 定位**：在 v5.0 千步里程碑后，用独立 v5 庆祝条收束版本感知，并以「自选健康分」把均分/提醒/新鲜度/板块分散合成 0–100 傻瓜指标，**非**真实风控或交易指令。
 
 **v5.0 定位**：在 v4.6 作战手册基础上，侧边栏内置手册关键章节预览，并以 **1000 步**里程碑收束百步进化周期；强调公开数据流程可读性，**非**真实交易指令。
 
@@ -346,6 +351,12 @@
 - **P98 千步预热**：`milestone_banner` step 960–999 预热条；页脚 `build_footer_warmup_note` 千步倒计时；`test_p98_milestone_warmup`
 - **P99 文档与 v5.0**：EVOLUTION_100 步 961–1000；v5.0.0 step 1000；千步里程碑庆祝；`evolve_verify.sh` 覆盖 P97–P99 测试
 
+## P100–P102：v5庆祝、自选健康分、v5.1（已完成）
+
+- **P100 v5 千步庆祝横幅**：`src/ui/v5_celebration_banner.py`；step≥1000 时会话内一次性 info 条，与 `milestone_banner` 独立旗标；`test_p100_celebration`
+- **P101 自选健康分**：`src/analysis/portfolio_health.py`；均分 40% + 低提醒 25% + 数据新鲜 20% + 板块分散 15% → 0–100；标签 健康/一般/需关注；仪表盘 metric + 工作台 expander；`test_p101_portfolio_health`
+- **P102 文档与 v5.1**：EVOLUTION_100 步 1001–1030；v5.1.0 step 1030；`evolve_verify.sh` 覆盖 P100–P102 测试
+
 ## 进化原则
 
 1. **先可读，再炫功能** — 每轮至少产出一种「能发给同事看的资料」
@@ -462,3 +473,6 @@ streamlit run app.py
 - [x] 作战手册内置预览 playbook_preview · P97
 - [x] 千步预热横幅 + 页脚提示 · P98
 - [x] v5.0.0 · 进化 step 1000 · P99
+- [x] v5 庆祝横幅 v5_celebration_banner · P100
+- [x] 自选健康分 portfolio_health · 仪表盘 + expander · P101
+- [x] v5.1.0 · 进化 step 1030 · P102
