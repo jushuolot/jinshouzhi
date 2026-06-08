@@ -2039,6 +2039,7 @@
     if (window.WorldMap3D) window.WorldMap3D.destroy();
     if (window.WorldMap2D) window.WorldMap2D.destroy();
     if (window.ExpeditionMap3D) window.ExpeditionMap3D.destroy();
+    if (window.ExpeditionMap2D) window.ExpeditionMap2D.destroy();
   }
 
   function initBriefingCinema() {
@@ -2067,30 +2068,8 @@
     if (window.ThreeEngine && window.ThreeEngine.retryInit) window.ThreeEngine.retryInit();
 
     function bootWorldMap() {
-      var ok3d = false;
-      if (window.WorldMap3D && window.ThreeEngine && window.ThreeEngine.ok) {
-        var inst = window.WorldMap3D.create(world3dMountEl, function (wi) {
-          if (chapterUnlocked(wi)) enterChapterExpedition(wi);
-        });
-        ok3d = inst && inst.ok;
-        if (ok3d && inst.setChapterHighlight) {
-          inst.setChapterHighlight(getChapterForLevel(maxUnlockedLevel));
-        }
-        if (ok3d && inst.renderer && window.ThreeEngine.resizeObserver) {
-          window.requestAnimationFrame(function () {
-            var cam = inst.camera;
-            var r = inst.renderer;
-            var w = world3dMountEl.clientWidth || 400;
-            var h = world3dMountEl.clientHeight || 300;
-            if (cam && cam.aspect !== undefined) {
-              cam.aspect = w / h;
-              cam.updateProjectionMatrix();
-            }
-            r.setSize(w, h);
-          });
-        }
-      }
-      if (!ok3d && window.WorldMap2D) {
+      var ok2d = false;
+      if (window.WorldMap2D) {
         if (window.WorldMap3D) window.WorldMap3D.destroy();
         var m2 = window.WorldMap2D.create(
           world3dMountEl,
@@ -2103,11 +2082,21 @@
             chapterUnlocked: chapterUnlocked,
           }
         );
-        if (m2 && m2.setChapterHighlight) m2.setChapterHighlight(getChapterForLevel(maxUnlockedLevel));
-        if (window.showSystemToast) {
-          window.showSystemToast("已启用 2D 蜀地地图（3D 延迟或未就绪时自动切换）", 4000);
+        ok2d = m2 && m2.ok;
+        if (ok2d && m2.setChapterHighlight) {
+          m2.setChapterHighlight(getChapterForLevel(maxUnlockedLevel));
         }
-      } else if (!ok3d && window.setMountLoading) {
+      }
+      if (!ok2d && window.WorldMap3D && window.ThreeEngine && window.ThreeEngine.ok) {
+        var inst = window.WorldMap3D.create(world3dMountEl, function (wi) {
+          if (chapterUnlocked(wi)) enterChapterExpedition(wi);
+        });
+        if (inst && inst.ok && inst.setChapterHighlight) {
+          inst.setChapterHighlight(getChapterForLevel(maxUnlockedLevel));
+        } else if (window.setMountLoading) {
+          window.setMountLoading(world3dMountEl, "地图加载失败 · 请刷新或稍后再试");
+        }
+      } else if (!ok2d && window.setMountLoading) {
         window.setMountLoading(world3dMountEl, "地图加载失败 · 请刷新或稍后再试");
       }
     }
@@ -2191,15 +2180,18 @@
       tombTierBannerEl.textContent = tier.icon + " " + tier.name + " · " + tier.desc;
     }
     if (routeChapterTitleEl) {
-      routeChapterTitleEl.textContent = (world ? world.icon + " " + world.name : "") + " · 三维探宝";
+      routeChapterTitleEl.textContent = (world ? world.icon + " " + world.name : "") + " · 堪舆探方";
     }
     if (routeChapterBlurbEl) {
-      routeChapterBlurbEl.textContent = narr && narr.routeIntro ? narr.routeIntro : "点击探点 · 发现线索 · 闯关过关 · 直至大墓";
+      routeChapterBlurbEl.textContent = narr && narr.routeIntro ? narr.routeIntro : "卷轴择点 · 发现线索 · 闯关过关 · 直至大墓";
     }
-    if (window.ExpeditionMap3D && expedition3dMountEl && window.ThreeEngine && window.ThreeEngine.ok) {
+    if (window.ExpeditionMap2D && expedition3dMountEl) {
+      if (window.ExpeditionMap3D) window.ExpeditionMap3D.destroy();
+      window.ExpeditionMap2D.create(expedition3dMountEl, chIdx, expeditionState, onExpeditionNodePick);
+    } else if (window.ExpeditionMap3D && expedition3dMountEl && window.ThreeEngine && window.ThreeEngine.ok) {
       window.ExpeditionMap3D.create(expedition3dMountEl, chIdx, expeditionState, onExpeditionNodePick);
     } else if (expedition3dMountEl && window.setMountLoading) {
-      window.setMountLoading(expedition3dMountEl, "探宝路线（请从下方列表选探点）");
+      window.setMountLoading(expedition3dMountEl, "探宝路线加载中…");
     }
     if (routeNodeListEl && expData && expData.chapters[chIdx]) {
       routeNodeListEl.innerHTML = "";
@@ -3847,9 +3839,9 @@
   if (window.PortraitPainter && window.PortraitPainter.preloadAll) {
     window.PortraitPainter.preloadAll(
       function () {
-        if (window.dismissBootSplash) window.dismissBootSplash("Gen.43 · 宽屏布局就绪");
+        if (window.dismissBootSplash) window.dismissBootSplash("Gen.44 · 堪舆图就绪");
         if (window.showSystemToast)
-          window.showSystemToast("Gen.43 · 立绘/地图宽屏对齐 · 摸金天团出征", 4200);
+          window.showSystemToast("Gen.44 · 古风堪舆图 · 探点清晰可辨", 4200);
       },
       function (done, total) {
         if (window.setProgress) window.setProgress(72 + Math.round((done / total) * 24));
@@ -3857,6 +3849,6 @@
       }
     );
   } else {
-    if (window.dismissBootSplash) window.dismissBootSplash("Gen.43 · 就绪");
+    if (window.dismissBootSplash) window.dismissBootSplash("Gen.44 · 就绪");
   }
 })();

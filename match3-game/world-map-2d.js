@@ -1,16 +1,16 @@
 /**
- * 蜀地 2D 地图 · Three 不可用时的立绘风 fallback
+ * 蜀地堪舆图 · 古风二维总览（默认主视图）
  */
 (function () {
   "use strict";
 
   var instance = null;
   var POSITIONS = [
-    { x: 18, y: 70 },
-    { x: 34, y: 52 },
-    { x: 50, y: 65 },
-    { x: 66, y: 44 },
-    { x: 82, y: 58 },
+    { x: 16, y: 68 },
+    { x: 32, y: 48 },
+    { x: 50, y: 62 },
+    { x: 68, y: 42 },
+    { x: 84, y: 56 },
   ];
 
   function WorldMap2D(mount, onPick, opts) {
@@ -28,14 +28,15 @@
     var isUnlocked = opts.chapterUnlocked || function () {
       return true;
     };
+    var tiers = (window.MATCH3_EXPEDITION && window.MATCH3_EXPEDITION.tombTiers) || [];
 
     mount.innerHTML =
-      '<div class="world-map-canvas world-map-2d" role="application" aria-label="蜀地二维地图">' +
-      '<span class="world-map-2d-badge">2D 立绘地图</span>' +
+      '<div class="ancient-map-ui world-map-canvas ancient-scroll" role="application" aria-label="蜀地堪舆总览图">' +
+      '<p class="ancient-scroll-title">蜀 · 地 · 堪 · 舆 · 图</p>' +
       '<div class="world-map-bg"></div>' +
       '<div class="world-map-river"></div>' +
       '<svg class="world-map-path-svg" viewBox="0 0 100 100" preserveAspectRatio="none">' +
-      '<path d="M18 70 Q34 58 50 65 T82 58" /></svg>' +
+      '<path d="M16 68 Q32 52 50 62 T84 56" /></svg>' +
       '<div class="world-map-nodes"></div>' +
       "</div>";
 
@@ -43,6 +44,7 @@
     worlds.forEach(function (w, i) {
       var pos = POSITIONS[i] || { x: 20 + i * 15, y: 60 };
       var unlocked = isUnlocked(i);
+      var tier = tiers[i] || {};
       var btn = document.createElement("button");
       btn.type = "button";
       btn.className =
@@ -50,11 +52,14 @@
       btn.style.left = pos.x + "%";
       btn.style.top = pos.y + "%";
       btn.disabled = !unlocked;
+      btn.setAttribute("aria-label", (w.name || "章节") + (unlocked ? "，点击进入" : "，尚未解锁"));
       btn.innerHTML =
         '<span class="world-node-pin">' +
         (w.icon || "🏺") +
         '</span><span class="world-node-label">' +
         (w.name || "章节") +
+        '</span><span class="world-node-tier">' +
+        (tier.name || "") +
         "</span>";
       btn.addEventListener("click", function () {
         if (unlocked && onPick) onPick(i);

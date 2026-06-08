@@ -19,6 +19,7 @@
   <link rel="stylesheet" href="match-fx.css" />
   <link rel="stylesheet" href="tomb-atmosphere.css" />
   <link rel="stylesheet" href="stars.css" />
+  <link rel="stylesheet" href="ancient-map.css" />
 </head>
 <body class="world-1 stars-mode glam-mode">
   <div id="boot-splash" class="boot-splash" role="status" aria-live="polite">
@@ -26,7 +27,7 @@
     <h1>古蜀秘档</h1>
     <p id="boot-status" class="boot-status">系统加载中…</p>
     <div class="boot-bar"><div id="boot-bar-fill" class="boot-bar-fill"></div></div>
-    <p class="boot-ver">Gen.43 · 宽屏布局</p>
+    <p class="boot-ver">Gen.44 · 堪舆图</p>
   </div>
   <div id="confetti-layer" aria-hidden="true"></div>
   <div id="mega-combo" class="mega-combo" hidden aria-live="polite"></div>
@@ -96,8 +97,13 @@
       <!-- ① 蜀地总览 -->
       <div id="map-phase-world" class="map-phase">
         <p id="world-map-intro" class="world-map-intro"></p>
-        <div id="world-3d-mount" class="world-3d-mount" aria-label="蜀地三维探宝地图"></div>
-        <p class="world-map-intro">点击三维墓冢 · 进入策划 → 集合 → 探点闯关 · 直至大墓</p>
+        <div class="ancient-map-legend" style="margin:0 0 0.5rem">
+          <span><i class="leg-dot leg-tomb"></i>点击神墓进入探方</span>
+          <span>◎ 当前章节高亮</span>
+          <span>🔒 通关上一章解锁</span>
+        </div>
+        <div id="world-3d-mount" class="world-3d-mount ancient-map-stack" aria-label="蜀地堪舆总览图"></div>
+        <p class="world-map-intro">堪舆图上择墓而入 · 策划 → 集合 → 探点闯关 · 直至大墓</p>
       </div>
 
       <!-- ② 策划 -->
@@ -141,9 +147,9 @@
           <h3 id="route-chapter-title" class="route-chapter-title"></h3>
           <p id="route-chapter-blurb" class="route-chapter-blurb"></p>
         </div>
-        <div id="expedition-3d-mount" class="expedition-3d-mount" aria-label="三维探宝路线"></div>
-        <p class="discovery-hint" style="margin-top:0.5rem">点击发光探点 · 发现线索后需完成层位消除才能前进 · 终点点亮大墓</p>
-        <div id="route-node-list" class="route-node-list"></div>
+        <div id="expedition-3d-mount" class="expedition-3d-mount ancient-map-stack" aria-label="探方路线堪舆图"></div>
+        <p class="discovery-hint" style="margin-top:0.5rem">点击卷轴探点 · 发现线索后完成层位消除方可深入 · ⚱ 为终极大墓</p>
+        <div id="route-node-list" class="route-node-list" hidden aria-hidden="true"></div>
         <button type="button" id="map-replay-story" class="btn btn-secondary" style="margin-top:0.5rem;width:100%">📖 重看策划与集合</button>
         <button type="button" id="map-back-world" class="btn btn-secondary" style="margin-top:0.35rem;width:100%">← 返回蜀地总览</button>
       </div>
@@ -489,6 +495,7 @@
   <script src="world-3d.js"></script>
   <script src="world-map-2d.js"></script>
   <script src="expedition-3d.js"></script>
+  <script src="expedition-map-2d.js"></script>
   <script src="portrait-art.js"></script>
   <script src="portrait-painter.js"></script>
   <script src="portrait-real.js"></script>

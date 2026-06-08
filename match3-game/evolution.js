@@ -6,10 +6,10 @@
   "use strict";
 
   var DEFAULT = {
-    version: "5.2.2",
-    generation: 43,
+    version: "5.3.0",
+    generation: 44,
     autoTune: { enabled: true, windowSize: 8, maxMoveAdjust: 3, targetWinRate: 0.52 },
-    patchNotes: ["Gen.43 宽屏布局", "立绘横条修复+地图全宽"],
+    patchNotes: ["Gen.44 堪舆图", "蜀地+探方古风卷轴"],
   };
 
   window.MATCH3_EVOLUTION = DEFAULT;
