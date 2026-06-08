@@ -1,16 +1,28 @@
 {
   "enabled": true,
   "cadence": "daily",
+  "mode": "parallel-universe",
+  "ownerRole": "observer-god",
+  "ownerNote": "用户上帝视角每晚验收；世界每日循环、每日不同，像真人过日子",
   "checkTimeLocal": "evening",
-  "ownerNote": "用户每晚检查，Agent 白天后台进化",
+  "universeDay": 0,
   "lastGeneration": 47,
   "lastVersion": "5.5.0",
+  "dailyChronicle": "手册改版：平行宇宙开启，摸金天团从此按日活人。",
+  "storyPolicy": {
+    "allowRewrite": true,
+    "files": ["story.js", "map-narrative.js", "expedition-data.js"],
+    "minDialogueChangesPerNight": 3,
+    "keepTheme": "古蜀秘档 · 三星堆 · 摸金考古"
+  },
   "nextThemes": [
-    "闯关连击与 match-fx 强化",
-    "章节过场与 BGM 衔接",
-    "图鉴 3D 与 codex 影院",
-    "大墓 BOSS 关特殊演出",
-    "桌面快捷键扩展到发现/结算"
+    "周一：新坑 discover 台词换一批",
+    "周二：王墩与金牙刘拌嘴日",
+    "周三：险情旁白 + BOSS 关前后对白",
+    "周四：营地伙食与天气真人细节",
+    "周五：briefing 或 assembly 整段换新",
+    "周六：轻松整活 + 音效/视觉小彩蛋",
+    "周日：收工复盘与图鉴旁白"
   ],
   "deploy": {
     "monorepo": "jushuolot/jinshouzhi",

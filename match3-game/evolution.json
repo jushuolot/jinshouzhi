@@ -1,6 +1,8 @@
 {
   "version": "5.5.0",
   "generation": 47,
+  "universeDay": 0,
+  "dailyChronicle": "平行宇宙锚点：摸金天团待命，等待第一日苏醒。",
   "releasedAt": "2026-06-08",
   "autoTune": {
     "enabled": true,
