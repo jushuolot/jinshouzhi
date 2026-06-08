@@ -1283,7 +1283,18 @@
       }
       spawnConfetti();
     }
-    renderStarRow(modalStarsEl, stars);
+    renderStarRow(modalStarsEl, 0);
+    if (window.ResultCinema) {
+      window.ResultCinema.decorate(modalEl, {
+        isWin: isWin,
+        stars: stars,
+        isBoss: isBossLevel(currentLevelIndex),
+        levelIdx: currentLevelIndex,
+      });
+      window.ResultCinema.animateStars(modalStarsEl, stars, renderStarRow);
+    } else {
+      renderStarRow(modalStarsEl, stars);
+    }
 
     if (modalLevelEl) modalLevelEl.textContent = currentLevelIndex + 1 + " / " + MAX_LEVEL;
     if (modalTargetEl) modalTargetEl.textContent = String(levelTarget);
@@ -1316,14 +1327,23 @@
 
     function revealModal() {
       modalEl.hidden = false;
+      if (window.ResultCinema) window.ResultCinema.reveal(modalEl);
     }
-    if (isWin) runStoryAfterChapterWin(currentLevelIndex, revealModal);
-    else revealModal();
+    function showEpilogueThenResult() {
+      if (isWin) runStoryAfterChapterWin(currentLevelIndex, revealModal);
+      else revealModal();
+    }
+    if (isWin && (currentLevelIndex + 1) % 20 === 0 && window.ResultCinema) {
+      window.ResultCinema.chapterClear(currentLevelIndex, showEpilogueThenResult);
+    } else {
+      showEpilogueThenResult();
+    }
   }
 
   function hideModal() {
     if (!modalEl) return;
     modalEl.hidden = true;
+    modalEl.classList.remove("result-cinema", "result-win", "result-lose", "result-boss", "result-visible");
   }
 
   function key(r, c) {
@@ -2552,8 +2572,10 @@
   function showComboBanner(step) {
     const loreIdx = Math.min(COMBO_LORE.length - 1, Math.max(0, step));
     const loreText = COMBO_LORE[loreIdx] || step + " 连击";
-    if (step >= 5) showMegaCombo(loreText + " !!");
-    else if (step >= 3) showMegaCombo(loreText + " !");
+    if (step >= 5) {
+      showMegaCombo(loreText + " !!");
+      if (window.ResultCinema && window.ResultCinema.bronzePulse) window.ResultCinema.bronzePulse();
+    } else if (step >= 3) showMegaCombo(loreText + " !");
     if (!comboBannerEl || step < 2) return;
     comboBannerEl.textContent = loreText;
     comboBannerEl.hidden = false;

@@ -6,10 +6,10 @@
   "use strict";
 
   var DEFAULT = {
-    version: "4.6.0",
-    generation: 35,
+    version: "4.7.0",
+    generation: 36,
     autoTune: { enabled: true, windowSize: 8, maxMoveAdjust: 3, targetWinRate: 0.52 },
-    patchNotes: ["Gen.35 探墓大片感", "探点影院+文物收录+BOSS卡"],
+    patchNotes: ["Gen.36 结算大片", "过关影院+章节wipe+5连震屏"],
   };
 
   window.MATCH3_EVOLUTION = DEFAULT;
