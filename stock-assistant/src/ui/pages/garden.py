@@ -16,6 +16,7 @@ from src.analysis.daily_picks import (
 from src.analysis.pick_tracker import (
     append_today_picks,
     hit_rate_summary,
+    normalize_pick_log,
     records_for_display,
     verify_log,
 )
@@ -65,8 +66,8 @@ def render() -> None:
         st.caption("💡 不想占本地配置？请看 [零本地公网指南](docs/CLOUD_ONLY.md) 部署 Streamlit Cloud。")
 
     cloud = load_cloud_picks()
-    if cloud and cloud.get("picks") and not st.session_state.get("today_picks"):
-        st.session_state.today_picks = list(cloud["picks"])
+    if cloud and cloud.get("generated_at") and not st.session_state.get("today_picks"):
+        st.session_state.today_picks = list(cloud.get("picks") or [])
         st.session_state.last_pick_at = str(cloud.get("generated_at") or "")[:10]
         st.session_state["last_pick_source"] = f"GitHub 云端 · {cloud.get('source', '')}"
         st.info(
@@ -80,7 +81,8 @@ def render() -> None:
     )
 
     readonly = is_readonly_mode()
-    pick_log: list = list(st.session_state.get("pick_log") or [])
+    pick_log = normalize_pick_log(st.session_state.get("pick_log"))
+    st.session_state.pick_log = pick_log
     today_picks: list = list(st.session_state.get("today_picks") or [])
     scan_stats = dict(st.session_state.get("last_pick_scan") or {})
 

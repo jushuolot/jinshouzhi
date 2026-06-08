@@ -4,6 +4,8 @@ from datetime import date, timedelta
 from src.analysis.pick_tracker import (
     append_today_picks,
     hit_rate_summary,
+    normalize_pick_log,
+    records_for_display,
     verify_pick_record,
 )
 
@@ -39,6 +41,14 @@ class TestPickTracker(unittest.TestCase):
         s = hit_rate_summary(log)
         self.assertEqual(s["hits"], 2)
         self.assertEqual(s["total_verified"], 3)
+
+    def test_normalize_pick_log_dirty(self):
+        self.assertEqual(normalize_pick_log(None), [])
+        self.assertEqual(normalize_pick_log(42), [])
+        self.assertEqual(len(normalize_pick_log(["bad", {"code": "1", "pick_date": "2025-01-01"}])), 1)
+        rows = records_for_display([{"pick_date": "2025-01-01", "code": "600519", "hold_days": "3天"}])
+        self.assertEqual(rows[0].hold_days, 3)
+        self.assertEqual(records_for_display({"pick_date": "2025-01-01", "code": "600519"})[0].code, "600519")
 
 
 if __name__ == "__main__":

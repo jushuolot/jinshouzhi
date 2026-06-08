@@ -400,7 +400,9 @@ def apply_latest_to_session(latest: dict[str, Any]) -> None:
     if latest.get("watch_snapshots"):
         st.session_state.watch_snapshots = dict(latest["watch_snapshots"])
     if latest.get("pick_log") is not None:
-        st.session_state.pick_log = list(latest["pick_log"])
+        from src.analysis.pick_tracker import normalize_pick_log
+
+        st.session_state.pick_log = normalize_pick_log(latest["pick_log"])
     if latest.get("today_picks") is not None:
         st.session_state.today_picks = list(latest["today_picks"])
     if latest.get("last_pick_at"):

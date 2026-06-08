@@ -127,19 +127,67 @@ def verify_pick_record(
 
 
 def verify_log(
-    log: list[dict[str, Any]],
+    log: list[dict[str, Any]] | Any,
     pct_by_code: dict[str, float | None],
     *,
     today: date | None = None,
 ) -> list[dict[str, Any]]:
     return [
         verify_pick_record(r, pct_by_code.get(str(r.get("code") or "")), today=today)
-        for r in (log or [])
+        for r in normalize_pick_log(log)
     ]
 
 
-def hit_rate_summary(log: list[dict[str, Any]], *, last_n: int = 20) -> dict[str, Any]:
-    verified = [r for r in (log or []) if r.get("verified") and r.get("hit") is not None]
+def _coerce_float(v: Any) -> float | None:
+    if v is None:
+        return None
+    try:
+        f = float(v)
+        if f != f:
+            return None
+        return f
+    except (TypeError, ValueError):
+        return None
+
+
+def _coerce_hold_days(v: Any) -> int:
+    if v is None:
+        return HOLD_DAYS_DEFAULT
+    if isinstance(v, bool):
+        return HOLD_DAYS_DEFAULT
+    if isinstance(v, int):
+        return max(1, min(10, v))
+    if isinstance(v, float):
+        if v != v:
+            return HOLD_DAYS_DEFAULT
+        return max(1, min(10, int(v)))
+    if isinstance(v, str):
+        return _parse_hold_days(v)
+    try:
+        return max(1, min(10, int(v)))
+    except (TypeError, ValueError):
+        return HOLD_DAYS_DEFAULT
+
+
+def normalize_pick_log(raw: Any) -> list[dict[str, Any]]:
+    """Session/快照里的 pick_log 可能是脏数据，统一成 dict 列表。"""
+    if raw is None:
+        return []
+    if isinstance(raw, dict):
+        if raw.get("code") and raw.get("pick_date"):
+            return [dict(raw)]
+        return []
+    if not isinstance(raw, (list, tuple)):
+        return []
+    out: list[dict[str, Any]] = []
+    for item in raw:
+        if isinstance(item, dict):
+            out.append(dict(item))
+    return out
+
+
+def hit_rate_summary(log: list[dict[str, Any]] | Any, *, last_n: int = 20) -> dict[str, Any]:
+    verified = [r for r in normalize_pick_log(log) if r.get("verified") and r.get("hit") is not None]
     recent = verified[-last_n:]
     hits = sum(1 for r in recent if r.get("hit"))
     total = len(recent)
@@ -152,21 +200,30 @@ def hit_rate_summary(log: list[dict[str, Any]], *, last_n: int = 20) -> dict[str
     }
 
 
-def records_for_display(log: list[dict[str, Any]], *, limit: int = 15) -> list[PickRecord]:
+def records_for_display(log: list[dict[str, Any]] | Any, *, limit: int = 15) -> list[PickRecord]:
     rows: list[PickRecord] = []
-    for r in reversed(log or [])[:limit]:
+    items = normalize_pick_log(log)
+    for r in items[-limit:][::-1]:
+        hit_raw = r.get("hit")
+        hit: bool | None
+        if hit_raw is None:
+            hit = None
+        elif isinstance(hit_raw, bool):
+            hit = hit_raw
+        else:
+            hit = bool(hit_raw)
         rows.append(
             PickRecord(
                 pick_date=str(r.get("pick_date") or ""),
                 code=str(r.get("code") or ""),
                 name=str(r.get("name") or ""),
                 signal=str(r.get("signal") or ""),
-                pick_score=r.get("pick_score"),
-                pick_pct=r.get("pick_pct"),
-                hold_days=int(r.get("hold_days") or HOLD_DAYS_DEFAULT),
+                pick_score=_coerce_float(r.get("pick_score")),
+                pick_pct=_coerce_float(r.get("pick_pct")),
+                hold_days=_coerce_hold_days(r.get("hold_days")),
                 verified=bool(r.get("verified")),
-                end_pct=r.get("end_pct"),
-                hit=r.get("hit"),
+                end_pct=_coerce_float(r.get("end_pct")),
+                hit=hit,
                 note=str(r.get("note") or ""),
             )
         )
