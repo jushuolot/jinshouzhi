@@ -116,6 +116,8 @@ def _init_state() -> None:
         st.session_state.pick_log = []
     if "today_picks" not in st.session_state:
         st.session_state.today_picks = []
+    if "global_picks" not in st.session_state:
+        st.session_state.global_picks = []
     if "ui_mode" not in st.session_state:
         st.session_state.ui_mode = "garden"
 

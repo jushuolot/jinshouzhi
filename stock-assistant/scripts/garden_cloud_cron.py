@@ -22,7 +22,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from src.analysis.daily_picks import fetch_and_rank_a_picks, picks_to_markdown  # noqa: E402
+from src.analysis.daily_picks import fetch_garden_picks_bundle, picks_to_markdown  # noqa: E402
 from src.providers import market_data  # noqa: E402
 from src.ui import app_core as C  # noqa: E402
 
@@ -35,18 +35,20 @@ def _fetch_ranking():
 
 
 def run_scan(*, max_picks: int = 5) -> dict:
-    picks, src, stats = fetch_and_rank_a_picks(
+    a_picks, global_picks, src, stats = fetch_garden_picks_bundle(
         _fetch_ranking,
         C._fetch_one,
-        max_picks=max_picks,
+        max_a=max_picks,
+        max_global_per_market=2,
     )
     now = datetime.now(timezone.utc).astimezone().isoformat(timespec="seconds")
     payload = {
         "generated_at": now,
         "source": src,
         "stats": stats,
-        "picks": [p.as_dict() for p in picks],
-        "markdown": picks_to_markdown(picks, day=now[:10]),
+        "picks": [p.as_dict() for p in a_picks],
+        "global_picks": [p.as_dict() for p in global_picks],
+        "markdown": picks_to_markdown(a_picks, day=now[:10], global_picks=global_picks),
     }
     return payload
 
@@ -99,7 +101,8 @@ def main() -> int:
         print(f"[garden_cloud_cron] scan FAIL: {exc}")
         return 1
     n = len(payload.get("picks") or [])
-    print(f"[garden_cloud_cron] picks={n} source={payload.get('source')}")
+    gn = len(payload.get("global_picks") or [])
+    print(f"[garden_cloud_cron] a_picks={n} global={gn} source={payload.get('source')}")
     if stdout_only:
         print(payload.get("markdown") or "")
         return 0

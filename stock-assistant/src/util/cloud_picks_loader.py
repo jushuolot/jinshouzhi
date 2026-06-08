@@ -20,6 +20,6 @@ def load_cloud_picks(path: Path | None = None) -> dict[str, Any] | None:
         return None
     if not isinstance(data, dict):
         return None
-    if not data.get("picks") and not data.get("generated_at"):
+    if not data.get("picks") and not data.get("global_picks") and not data.get("generated_at"):
         return None
     return data

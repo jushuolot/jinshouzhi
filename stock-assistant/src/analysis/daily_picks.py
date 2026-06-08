@@ -27,6 +27,7 @@ class DailyPick:
     hold_days: str
     reason: str
     price: float | None = None
+    market: str = "A股"
 
     def as_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -46,23 +47,157 @@ def _row_to_item(row: pd.Series) -> dict[str, Any]:
 
 def _signal_from(score: float | None, pct: float | None) -> tuple[str, str, str]:
     """返回 (信号, 持有建议, 理由片段)。"""
-    name_st = ""
     if score is None:
+        if pct is not None and 1.0 <= pct <= 19.9:
+            return SIGNAL_WATCH, "1–3天", "榜单动能强（轻量模式）"
+        if pct is not None and 0.3 <= pct < 1.0:
+            return SIGNAL_WATCH, "1–2天", "温和上涨，可观察"
         return SIGNAL_SKIP, "—", "暂无评分"
     if pct is not None and pct >= 9.5:
-        return SIGNAL_SKIP, "1–2天", "涨幅过大，追高风险高"
+        return SIGNAL_WATCH, "1–2天", "涨停附近，仅观察不追"
     if pct is not None and pct <= -3:
         return SIGNAL_SKIP, "—", "弱势下跌，暂不介入"
     if score >= 68 and (pct is None or pct >= 0.5):
         return SIGNAL_BUY, "3–5天", "评分偏强且动能尚可"
     if score >= 55:
         return SIGNAL_WATCH, "2–3天", "评分中性偏上，可小仓观察"
+    if score >= 48 and (pct is None or pct >= 0.3):
+        return SIGNAL_WATCH, "2–3天", "评分尚可，谨慎观察"
     return SIGNAL_SKIP, "—", "评分偏弱"
 
 
 def _is_st_name(name: str) -> bool:
     n = (name or "").upper()
     return "ST" in n or "*ST" in n
+
+
+def _pct_ok(pct: float | None, lo: float, hi: float) -> bool:
+    if pct is None:
+        return True
+    return lo <= pct <= hi
+
+
+def _collect_candidates(
+    df: pd.DataFrame,
+    *,
+    max_scan: int,
+    pct_tiers: list[tuple[float, float]],
+) -> tuple[list[tuple[dict[str, Any], float | None]], dict[str, Any]]:
+    """按多档涨跌幅阈值收集候选；强市日涨停多也能扫出标的。"""
+    stats: dict[str, Any] = {"skipped_st": 0, "skipped_pct": 0, "skipped_anomaly": 0}
+    if df is None or df.empty:
+        return [], stats
+
+    work = df.copy()
+    if "涨跌幅%" in work.columns:
+        work = work.sort_values("涨跌幅%", ascending=False)
+
+    chosen: list[tuple[dict[str, Any], float | None]] = []
+    seen: set[str] = set()
+
+    for lo, hi in pct_tiers:
+        for _, row in work.iterrows():
+            if len(chosen) >= max_scan:
+                break
+            item = _row_to_item(row)
+            code = item["代码"]
+            name = item["名称"]
+            if not code or code in seen:
+                continue
+            if item.get("市场") == "A" or item.get("类型") == "A":
+                if len(code) != 6 or not code.isdigit():
+                    continue
+            if _is_st_name(name):
+                stats["skipped_st"] += 1
+                continue
+            try:
+                pct = float(row.get("涨跌幅%"))
+            except (TypeError, ValueError):
+                pct = None
+            if pct is not None and abs(pct) > 35:
+                stats["skipped_anomaly"] += 1
+                continue
+            if not _pct_ok(pct, lo, hi):
+                stats["skipped_pct"] += 1
+                continue
+            seen.add(code)
+            chosen.append((item, pct))
+        if chosen:
+            break
+    return chosen, stats
+
+
+def _signal_from_global(anomaly: float, pct: float | None) -> tuple[str, str, str]:
+    if pct is not None and pct >= 12:
+        return SIGNAL_WATCH, "1–2天", "短线涨幅偏大，仅观察"
+    if anomaly >= 62 and (pct is None or pct >= 0.5):
+        return SIGNAL_BUY, "3–7天", "全球榜单动能强"
+    if anomaly >= 40 and (pct is None or pct >= 0.3):
+        return SIGNAL_WATCH, "2–5天", "全球异动可关注"
+    return SIGNAL_SKIP, "—", "动能偏弱"
+
+
+def rank_global_from_ranking(
+    ranking_df: pd.DataFrame,
+    *,
+    market_label: str = "港股",
+    max_picks: int = 2,
+) -> tuple[list[DailyPick], dict[str, Any]]:
+    """港/美涨幅榜 → 轻量异动分 → 观望/买入。"""
+    from src.analysis.global_anomaly import analyze_one_mover_fast
+
+    stats: dict[str, Any] = {"scanned": 0, "market": market_label}
+    if ranking_df is None or ranking_df.empty:
+        return [], stats
+
+    picks: list[DailyPick] = []
+    df = ranking_df.copy()
+    if "涨跌幅%" in df.columns:
+        df = df.sort_values("涨跌幅%", ascending=False)
+
+    for _, row in df.iterrows():
+        if len(picks) >= max_picks:
+            break
+        stats["scanned"] += 1
+        item = _row_to_item(row)
+        code = item["代码"]
+        if not code:
+            continue
+        try:
+            pct = float(row.get("涨跌幅%"))
+        except (TypeError, ValueError):
+            pct = None
+        if pct is not None and pct <= 0:
+            continue
+        fast = analyze_one_mover_fast(row.to_dict(), market=market_label)
+        anomaly = float(fast.anomaly_score)
+        signal, hold, reason_bit = _signal_from_global(anomaly, pct)
+        if signal == SIGNAL_SKIP:
+            continue
+        cap = fast.capital.as_dict()
+        flow = str(cap.get("主力倾向") or "")
+        reason = reason_bit
+        if flow:
+            reason = f"{reason_bit}；{flow[:40]}"
+        price = row.get("最新价")
+        try:
+            price_f = float(price) if price is not None else None
+        except (TypeError, ValueError):
+            price_f = None
+        picks.append(
+            DailyPick(
+                code=code,
+                name=item["名称"],
+                score=round(anomaly, 1),
+                pct=pct,
+                signal=signal,
+                hold_days=hold,
+                reason=reason,
+                price=price_f,
+                market=market_label,
+            )
+        )
+    return picks, stats
 
 
 def rank_candidates_from_ranking(
@@ -76,33 +211,21 @@ def rank_candidates_from_ranking(
     从 A 股涨幅榜 DataFrame 筛出今日可关注标的。
     fetch_fn 提供时对前 max_scan 只做轻量 K 线评分；否则仅用榜单涨跌幅粗筛。
     """
-    stats: dict[str, Any] = {"scanned": 0, "skipped_st": 0, "skipped_pct": 0, "errors": 0}
+    stats: dict[str, Any] = {"scanned": 0, "skipped_st": 0, "skipped_pct": 0, "skipped_anomaly": 0, "errors": 0}
     if ranking_df is None or ranking_df.empty:
         return [], stats
 
-    df = ranking_df.copy()
-    if "涨跌幅%" in df.columns:
-        df = df.sort_values("涨跌幅%", ascending=False)
-    candidates: list[tuple[dict[str, Any], float | None]] = []
-    for _, row in df.iterrows():
-        if len(candidates) >= max_scan:
-            break
-        item = _row_to_item(row)
-        code = item["代码"]
-        name = item["名称"]
-        if not code or len(code) != 6 or not code.isdigit():
-            continue
-        if _is_st_name(name):
-            stats["skipped_st"] += 1
-            continue
-        try:
-            pct = float(row.get("涨跌幅%"))
-        except (TypeError, ValueError):
-            pct = None
-        if pct is not None and (pct < 0.3 or pct > 9.8):
-            stats["skipped_pct"] += 1
-            continue
-        candidates.append((item, pct))
+    pct_tiers = [
+        (0.3, 9.5),
+        (0.0, 19.9),
+        (-2.0, 29.9),
+    ]
+    candidates, collect_stats = _collect_candidates(
+        ranking_df,
+        max_scan=max_scan,
+        pct_tiers=pct_tiers,
+    )
+    stats.update(collect_stats)
 
     picks: list[DailyPick] = []
     for item, list_pct in candidates:
@@ -148,6 +271,7 @@ def rank_candidates_from_ranking(
                 hold_days=hold,
                 reason=reason,
                 price=price,
+                market=str(item.get("市场") or "A股"),
             )
         )
 
@@ -160,6 +284,43 @@ def rank_candidates_from_ranking(
 
     picks.sort(key=sort_key)
     buy_watch = [p for p in picks if p.signal in (SIGNAL_BUY, SIGNAL_WATCH)]
+    if not buy_watch and picks:
+        # 强市日涨停多：兜底取评分最高的 2 只标为观望
+        fallback = sorted(picks, key=lambda p: -(p.score or 0))[:2]
+        buy_watch = [
+            DailyPick(
+                code=p.code,
+                name=p.name,
+                score=p.score,
+                pct=p.pct,
+                signal=SIGNAL_WATCH,
+                hold_days="1–3天",
+                reason=f"强市兜底；{p.reason[:50]}",
+                price=p.price,
+                market=p.market,
+            )
+            for p in fallback
+            if (p.score or 0) >= 40
+        ]
+    if not buy_watch and candidates:
+        # K 线拉取失败时：纯榜单轻量推荐
+        for item, list_pct in candidates[:max_picks]:
+            signal, hold, reason = _signal_from(None, list_pct)
+            if signal == SIGNAL_SKIP:
+                continue
+            buy_watch.append(
+                DailyPick(
+                    code=item["代码"],
+                    name=item["名称"],
+                    score=None,
+                    pct=list_pct,
+                    signal=signal,
+                    hold_days=hold,
+                    reason=reason,
+                    price=None,
+                    market=str(item.get("市场") or "A股"),
+                )
+            )
     return buy_watch[:max_picks], stats
 
 
@@ -169,33 +330,100 @@ def fetch_and_rank_a_picks(
     *,
     max_picks: int = 5,
 ) -> tuple[list[DailyPick], str, dict[str, Any]]:
-    """拉 A 股涨幅榜并评分筛选。"""
+    """拉 A 股涨幅榜并评分筛选；无结果时尝试换手率榜。"""
     df, src = fetch_ranking()
     picks, stats = rank_candidates_from_ranking(
         df,
         fetch_fn=fetch_fn,
-        max_scan=20,
+        max_scan=24,
         max_picks=max_picks,
     )
+    if not picks:
+        from src.providers import market_data
+
+        df2, src2 = market_data.fetch_a_ranking_multi(board="换手率榜", limit=40)
+        if not df2.empty:
+            picks2, stats2 = rank_candidates_from_ranking(
+                df2,
+                fetch_fn=fetch_fn,
+                max_scan=20,
+                max_picks=max_picks,
+            )
+            if picks2:
+                picks, stats = picks2, stats2
+                src = f"{src2}（换手率榜备用）"
     stats["source"] = src
     stats["board"] = "涨幅榜"
     stats["market"] = "A股"
     return picks, src, stats
 
 
-def picks_to_markdown(picks: list[DailyPick], *, day: str | None = None) -> str:
+def fetch_global_watch_picks(
+    *,
+    max_per_market: int = 2,
+) -> tuple[list[DailyPick], dict[str, Any]]:
+    """港/美各取少量全球关注（A 股为主、全球不丢）。"""
+    from src.providers import market_data
+
+    all_picks: list[DailyPick] = []
+    gstats: dict[str, Any] = {"hk": 0, "us": 0}
+    for label in ("港股", "美股"):
+        df, src = market_data.fetch_global_ranking_multi(market=label, board="涨幅榜", limit=30)
+        part, st = rank_global_from_ranking(df, market_label=label, max_picks=max_per_market)
+        all_picks.extend(part)
+        gstats["us" if label == "美股" else "hk"] = len(part)
+        gstats[f"source_{label}"] = src
+    gstats["total"] = len(all_picks)
+    return all_picks, gstats
+
+
+def fetch_garden_picks_bundle(
+    fetch_ranking: Callable[[], tuple[pd.DataFrame, str]],
+    fetch_fn: FetchFn,
+    *,
+    max_a: int = 5,
+    max_global_per_market: int = 2,
+) -> tuple[list[DailyPick], list[DailyPick], str, dict[str, Any]]:
+    """花园一键扫盘：A 股为主 + 港美全球关注。"""
+    a_picks, src, stats = fetch_and_rank_a_picks(fetch_ranking, fetch_fn, max_picks=max_a)
+    global_picks, gstats = fetch_global_watch_picks(max_per_market=max_global_per_market)
+    stats["global"] = gstats
+    stats["global_count"] = len(global_picks)
+    return a_picks, global_picks, src, stats
+
+
+def picks_to_markdown(
+    picks: list[DailyPick],
+    *,
+    day: str | None = None,
+    global_picks: list[DailyPick] | None = None,
+) -> str:
     d = day or date.today().isoformat()
-    lines = [f"# 今日 A 股推荐 · {d}", ""]
+    lines = [f"# 今日推荐 · {d}", ""]
+    lines.append("## 🇨🇳 A股")
     if not picks:
-        lines.append("暂无符合条件的推荐（可稍后重试刷新）。")
-        return "\n".join(lines)
-    lines.append("| 信号 | 名称 | 代码 | 评分 | 涨跌% | 持有 | 理由 |")
-    lines.append("|------|------|------|------|-------|------|------|")
-    for p in picks:
-        sc = f"{p.score:.1f}" if p.score is not None else "—"
-        pc = f"{p.pct:+.2f}" if p.pct is not None else "—"
-        lines.append(
-            f"| {p.signal} | {p.name} | {p.code} | {sc} | {pc} | {p.hold_days} | {p.reason[:40]} |"
-        )
+        lines.append("暂无符合条件的 A 股推荐（已尝试涨幅榜/换手率榜）。")
+    else:
+        lines.append("| 信号 | 名称 | 代码 | 评分 | 涨跌% | 持有 | 理由 |")
+        lines.append("|------|------|------|------|-------|------|------|")
+        for p in picks:
+            sc = f"{p.score:.1f}" if p.score is not None else "—"
+            pc = f"{p.pct:+.2f}" if p.pct is not None else "—"
+            lines.append(
+                f"| {p.signal} | {p.name} | {p.code} | {sc} | {pc} | {p.hold_days} | {p.reason[:40]} |"
+            )
+    gp = global_picks or []
+    lines.extend(["", "## 🌍 全球关注（港/美）"])
+    if not gp:
+        lines.append("暂无港/美推荐。")
+    else:
+        lines.append("| 市场 | 信号 | 名称 | 代码 | 异动分 | 涨跌% | 理由 |")
+        lines.append("|------|------|------|------|--------|-------|------|")
+        for p in gp:
+            sc = f"{p.score:.1f}" if p.score is not None else "—"
+            pc = f"{p.pct:+.2f}" if p.pct is not None else "—"
+            lines.append(
+                f"| {p.market} | {p.signal} | {p.name} | {p.code} | {sc} | {pc} | {p.reason[:36]} |"
+            )
     lines.extend(["", "*公开数据自动筛选，非投资建议。*"])
     return "\n".join(lines)

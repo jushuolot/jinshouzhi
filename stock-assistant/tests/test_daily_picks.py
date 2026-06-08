@@ -7,6 +7,7 @@ from src.analysis.daily_picks import (
     SIGNAL_BUY,
     SIGNAL_WATCH,
     DailyPick,
+    _collect_candidates,
     rank_candidates_from_ranking,
     picks_to_markdown,
 )
@@ -101,9 +102,35 @@ class TestDailyPicks(unittest.TestCase):
                 )
             ],
             day="2025-06-08",
+            global_picks=[
+                DailyPick(
+                    code="0700.HK",
+                    name="腾讯",
+                    score=65,
+                    pct=1.5,
+                    signal=SIGNAL_WATCH,
+                    hold_days="3天",
+                    reason="全球异动",
+                    market="港股",
+                )
+            ],
         )
         self.assertIn("600519", md)
         self.assertIn("买入", md)
+        self.assertIn("0700.HK", md)
+
+    def test_adaptive_pct_tiers(self):
+        """强市日涨停多：第二档阈值仍能出候选。"""
+        df = pd.DataFrame(
+            [
+                {"代码": "300001", "名称": "特锐德", "涨跌幅%": 10.0, "类型": "A", "市场": "SZ"},
+                {"代码": "600519", "名称": "贵州茅台", "涨跌幅%": 10.0, "类型": "A", "市场": "SH"},
+            ]
+        )
+        candidates, stats = _collect_candidates(
+            df, max_scan=5, pct_tiers=[(0.3, 9.5), (0.0, 19.9)]
+        )
+        self.assertGreaterEqual(len(candidates), 1)
 
 
 if __name__ == "__main__":

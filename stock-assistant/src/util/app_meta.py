@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-APP_VERSION = "5.3.0"
-EVOLUTION_STEP = 1090
-EVOLUTION_PHASE = "P108"
+APP_VERSION = "5.3.1"
+EVOLUTION_STEP = 1091
+EVOLUTION_PHASE = "P109"
 BUILD_LABEL = f"{EVOLUTION_PHASE} · step {EVOLUTION_STEP}"
 
 CHANGELOG: list[tuple[str, str]] = [
@@ -44,4 +44,5 @@ CHANGELOG: list[tuple[str, str]] = [
     ("P100–P102", "v5庆祝横幅、自选健康分、v5.1.0"),
     ("P103–P105", "私人选股花园、自动筛A股、命中率追踪、v5.2.0"),
     ("P106–P108", "GitHub  nightly 扫盘、cloud_state、零本地指南、v5.3.0"),
+    ("P109", "强市日 A 股兜底 + 港美全球关注、v5.3.1"),
 ]
