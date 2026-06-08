@@ -3951,9 +3951,9 @@
   if (window.PortraitPainter && window.PortraitPainter.preloadAll) {
     window.PortraitPainter.preloadAll(
       function () {
-        if (window.dismissBootSplash) window.dismissBootSplash("Gen.48 · 第1日 · 全网寻金");
+        if (window.dismissBootSplash) window.dismissBootSplash("Gen.49 · 第2日 · 拌嘴日");
         if (window.showSystemToast)
-          window.showSystemToast("Gen.48 · 全网寻金渠道已上线", 4200);
+          window.showSystemToast("Gen.49 · 雨后拌嘴日已上线", 4200);
       },
       function (done, total) {
         if (window.setProgress) window.setProgress(72 + Math.round((done / total) * 24));
@@ -3961,6 +3961,6 @@
       }
     );
   } else {
-    if (window.dismissBootSplash) window.dismissBootSplash("Gen.48 · 第1日 · 就绪");
+    if (window.dismissBootSplash) window.dismissBootSplash("Gen.49 · 第2日 · 就绪");
   }
 })();

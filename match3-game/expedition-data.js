@@ -15,10 +15,10 @@
     chapters: [
       {
         nodes: [
-          { id: "c0n0", name: "雨夜营地", level: 0, x: -3.5, z: 2.2, discover: ["narrator", "广汉平原，探照灯撕开雨幕。第一层探方，从这里下。"], artifactHint: 3 },
-          { id: "c0n1", name: "陶片层", level: 4, x: -2, z: 0.8, discover: ["wangdun", "胖爷铲子下去——陶片！成片的！"], artifactHint: 3 },
-          { id: "c0n2", name: "象牙露头", level: 9, x: -0.5, z: -0.3, discover: ["yangxue", "象牙饰！古蜀不产象，这是丝路来的。"], artifactHint: 4 },
-          { id: "c0n3", name: "金粉纹层", level: 14, x: 1, z: -1.2, discover: ["jinyaliu", "金粉！刘哥我……就看看！"], artifactHint: 1 },
+          { id: "c0n0", name: "雨后营地", level: 0, x: -3.5, z: 2.2, discover: ["narrator", "广汉平原，雨停了，湿柴烟贴着探照灯。第一层探方，从锅盖声里下。"], artifactHint: 3 },
+          { id: "c0n1", name: "陶片层", level: 4, x: -2, z: 0.8, discover: ["wangdun", "胖爷铲子下去——陶片！成片的！金牙刘你别摸，我连花生账都没跟你算完。"], artifactHint: 3 },
+          { id: "c0n2", name: "象牙露头", level: 9, x: -0.5, z: -0.3, discover: ["yangxue", "象牙饰！古蜀不产象，这是长线交流的证据。旁边两位小声点，我要录层位。"], artifactHint: 4 },
+          { id: "c0n3", name: "金粉纹层", level: 14, x: 1, z: -1.2, discover: ["jinyaliu", "金粉！刘哥我……就看看！王墩你放心，花生和金粉我都只看不拿。"], artifactHint: 1 },
           { id: "c0n4", name: "祭祀面", level: 18, x: 2.2, z: -2, discover: ["hutan", "罗盘疯了。前面是祭祀面，层位不能乱。"], artifactHint: 0 },
           { id: "c0n5", name: "青铜门墓", level: 19, isTomb: true, discover: ["chenli", "门缝里有光。I 级大墓——青铜门启。"], artifactHint: 0 },
         ],

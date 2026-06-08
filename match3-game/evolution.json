@@ -1,8 +1,8 @@
 {
-  "version": "5.6.0",
-  "generation": 48,
-  "universeDay": 1,
-  "dailyChronicle": "第 1 日，陈礼在营地嘀咕：网上各种钱都能汇进账簿了，摸金天团只管攒着不花。",
+  "version": "5.6.1",
+  "generation": 49,
+  "universeDay": 2,
+  "dailyChronicle": "第 2 日，雨停后营地一股湿柴味。王墩和金牙刘为一包花生拌嘴，杨雪把争吵声也记进了今日层位备注。",
   "releasedAt": "2026-06-08",
   "autoTune": {
     "enabled": true,
@@ -11,9 +11,9 @@
     "targetWinRate": 0.52
   },
   "patchNotes": [
-    "全网寻金：多渠道入账注册表 network-earnings.js",
-    "联盟推荐 · 赞助落地 · 驻场收益 · 赏金/水龙头演示",
-    "管理面板按渠道拆分收益（口令 Mz168）"
+    "第 2 日拌嘴日：王墩与金牙刘营地对白刷新",
+    "发现点与策划台词加入雨后湿柴、花生和层位备注",
+    "新增文物索引回声寻金渠道（network_settlement，只入账不扣款）"
   ],
   "virtualAccount": {
     "module": "virtual-account.js",

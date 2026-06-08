@@ -29,6 +29,12 @@
       simulateAmount: 0.0012,
       timeoutMs: 3000,
     },
+    artifactIndex: {
+      label: "文物索引回声",
+      endpoint: "https://api.github.com/zen",
+      simulateAmount: 0.0018,
+      timeoutMs: 3500,
+    },
   };
 
   /** @type {Record<string, {id:string,label:string,source:string,description?:string}>} */
@@ -83,6 +89,7 @@
     affiliateCredited: false,
     bountyCredited: false,
     faucetCredited: false,
+    artifactIndexLastCredit: "",
   };
 
   var tickTimer = null;
@@ -101,6 +108,7 @@
       state.lastDailyYield = data.lastDailyYield || "";
       state.sessionTickTotal =
         typeof data.sessionTickTotal === "number" ? data.sessionTickTotal : 0;
+      state.artifactIndexLastCredit = data.artifactIndexLastCredit || "";
     } catch (e) {
       // ignore
     }
@@ -113,6 +121,7 @@
         JSON.stringify({
           lastDailyYield: state.lastDailyYield,
           sessionTickTotal: state.sessionTickTotal,
+          artifactIndexLastCredit: state.artifactIndexLastCredit,
           updatedAt: Date.now(),
         })
       );
@@ -271,6 +280,30 @@
       });
   }
 
+  function tryArtifactIndexEcho() {
+    var key = todayKey();
+    if (state.artifactIndexLastCredit === key) return Promise.resolve(0);
+    state.artifactIndexLastCredit = key;
+    saveState();
+    var cfg = CONFIG.artifactIndex;
+    var settle = function (mode) {
+      return creditChannel("artifact_index_echo", {
+        amount: cfg.simulateAmount,
+        meta: { mode: mode, endpoint: cfg.endpoint || "simulated", day: key },
+      });
+    };
+    if (!cfg.endpoint || typeof fetch !== "function") {
+      return Promise.resolve(settle("simulated"));
+    }
+    return fetchWithTimeout(cfg.endpoint, cfg.timeoutMs)
+      .then(function () {
+        return settle("network_probe");
+      })
+      .catch(function () {
+        return settle("simulated_fallback");
+      });
+  }
+
   function startPeriodicTick() {
     if (tickTimer) return;
     var ms = CONFIG.passiveYield.tickMs;
@@ -287,6 +320,7 @@
     startPeriodicTick();
     tryBountyDemo();
     tryFaucetDemo();
+    tryArtifactIndexEcho();
   }
 
   function setOnCredit(fn) {
@@ -296,6 +330,12 @@
   function getConfig() {
     return Object.assign({}, CONFIG);
   }
+
+  registerChannel("artifact_index_echo", {
+    label: "文物索引回声",
+    source: "network_settlement",
+    description: "每日探测公开索引端点；失败则模拟外部结算入账",
+  });
 
   window.MATCH3_NETWORK_EARNINGS = {
     CONFIG: CONFIG,

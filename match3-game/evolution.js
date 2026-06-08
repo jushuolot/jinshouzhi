@@ -6,11 +6,11 @@
   "use strict";
 
   var DEFAULT = {
-    version: "5.6.0",
-    generation: 48,
-    universeDay: 1,
+    version: "5.6.1",
+    generation: 49,
+    universeDay: 2,
     autoTune: { enabled: true, windowSize: 8, maxMoveAdjust: 3, targetWinRate: 0.52 },
-    patchNotes: ["Gen.48 全网寻金", "多渠道入账+管理面板渠道拆分"],
+    patchNotes: ["Gen.49 第2日拌嘴日", "文物索引回声入账渠道"],
   };
 
   window.MATCH3_EVOLUTION = DEFAULT;
