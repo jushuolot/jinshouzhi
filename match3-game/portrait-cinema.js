@@ -33,6 +33,8 @@
       align +
       (compact ? " compact" : "") +
       (art.photo ? " pc-photo" : "") +
+      (art.feidudu ? " pc-feidudu" : "") +
+      (art.chubby ? " pc-chubby" : "") +
       '" style="--pc-accent:' +
       art.accent +
       '">' +

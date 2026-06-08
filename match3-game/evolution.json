@@ -1,6 +1,6 @@
 {
-  "version": "4.8.0",
-  "generation": 37,
+  "version": "4.9.0",
+  "generation": 38,
   "releasedAt": "2026-06-08",
   "autoTune": {
     "enabled": true,
@@ -9,9 +9,9 @@
     "targetWinRate": 0.52
   },
   "patchNotes": [
-    "消除 · 文物色粒子 + 青铜冲击波 + 大消除文物飞出",
-    "4/5 连生成圣物 · 诞生闪光 + 弹跳动画",
-    "5 连 mega 字 · 青铜大字震屏",
-    "首页 · 浮尘文物氛围 + 标题微光"
+    "六角色肥嘟嘟写实立绘 · 圆润暖调重绘",
+    "全站 feidudu.css · 圆角按钮/格子/柔和阴影",
+    "立绘影院暖色分级 · 王墩额外 pc-chubby",
+    "首页胖爷小队圆 pill · 锤子胖爷之力 toast"
   ]
 }

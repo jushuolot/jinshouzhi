@@ -1,10 +1,10 @@
 /**
- * 乙女风 Canvas 立绘 · 正常人像 Gen.30
+ * 乙女风 Canvas 立绘 · 肥嘟嘟 Gen.38
  */
 (function () {
   "use strict";
 
-  var VER = 30;
+  var VER = 38;
   var cache = {};
 
   var META = {
@@ -19,14 +19,17 @@
       name: "胡探",
       side: "right",
       stubble: true,
+      soft: 1.06,
     },
     wangdun: {
       accent: "#e07a4a",
-      skin: ["#f0d0a0", "#daa070", "#a87848"],
+      skin: ["#f5dcc8", "#e0b888", "#b88858"],
       hair: ["#1a1410", "#050403"],
       coat: ["#5a3020", "#2a1810"],
       eye: "#2a1810",
-      bulk: 1.14,
+      bulk: 1.28,
+      chubby: true,
+      soft: 1.12,
       role: "力士",
       name: "王墩",
       side: "left",
@@ -38,6 +41,7 @@
       coat: ["#2a4060", "#142030"],
       eye: "#3a6878",
       fem: true,
+      soft: 1.08,
       role: "考古学家",
       name: "杨雪",
       side: "right",
@@ -52,6 +56,7 @@
       role: "顾问",
       name: "金牙刘",
       side: "left",
+      soft: 1.06,
     },
     chenli: {
       accent: "#a8d4b8",
@@ -63,6 +68,7 @@
       role: "权威",
       name: "陈礼",
       side: "right",
+      soft: 1.06,
     },
     narrator: {
       accent: "#a89070",
@@ -73,6 +79,7 @@
       role: "古蜀秘档",
       name: "旁白",
       side: "center",
+      soft: 1.06,
     },
   };
 
@@ -201,6 +208,7 @@
   function paintComposite(ctx, w, h, m) {
     var cx = w * 0.5;
     var bulk = m.bulk || 1;
+    var soft = m.soft || 1;
     var fem = m.fem;
     var headY = h * 0.36;
     var chinY = headY + (fem ? 72 : 78) * bulk;
@@ -246,7 +254,7 @@
 
     ctx.fillStyle = lin(ctx, cx - 30, headY, cx + 30, chinY, [[0, m.skin[0]], [0.55, m.skin[1]], [1, m.skin[2]]]);
     ctx.beginPath();
-    ctx.ellipse(cx, headY, (fem ? 68 : 74) * bulk, (fem ? 82 : 86) * bulk, 0, 0, Math.PI * 2);
+    ctx.ellipse(cx, headY, (fem ? 68 : 74) * bulk * soft, (fem ? 82 : 86) * bulk * soft * 1.03, 0, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.globalCompositeOperation = "multiply";
@@ -409,7 +417,10 @@
       role: m.role,
       accent: m.accent,
       side: m.side,
+      charId: charId,
       composite: true,
+      feidudu: true,
+      chubby: !!m.chubby,
       layers: {
         back: layerImg(cGlow.toDataURL("image/png"), ""),
         body: "",

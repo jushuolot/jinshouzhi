@@ -6,10 +6,10 @@
   "use strict";
 
   var DEFAULT = {
-    version: "4.8.0",
-    generation: 37,
+    version: "4.9.0",
+    generation: 38,
     autoTune: { enabled: true, windowSize: 8, maxMoveAdjust: 3, targetWinRate: 0.52 },
-    patchNotes: ["Gen.37 消除大片", "文物粒子+圣物诞生+首页氛围"],
+    patchNotes: ["Gen.38 肥嘟嘟全站", "圆润立绘+暖UI+胖爷小队"],
   };
 
   window.MATCH3_EVOLUTION = DEFAULT;

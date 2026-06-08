@@ -1,10 +1,10 @@
 /**
- * 写实人像立绘 Gen.32 · 双层景深 + 预载进度
+ * 写实人像立绘 Gen.38 · 肥嘟嘟暖调
  */
 (function () {
   "use strict";
 
-  var VER = 32;
+  var VER = 38;
   var BASE = "assets/portraits/";
   var cache = {};
   var loaded = {};
@@ -41,6 +41,8 @@
       composite: true,
       photo: true,
       depth: true,
+      feidudu: true,
+      chubby: charId === "wangdun",
       layers: {
         back: layerImg(url, "", "pc-photo-bg"),
         body: "",

@@ -2537,6 +2537,7 @@
     renderCells();
     soundMatch(1);
     spawnMatchParticles(new Set([key(r, c)]));
+    if (window.showSystemToast) window.showSystemToast("💪 胖爷之力 · 一格封土碎！", 2200);
       setMessage("⛏ 已清理一格");
   }
 
@@ -3778,9 +3779,9 @@
   if (window.PortraitPainter && window.PortraitPainter.preloadAll) {
     window.PortraitPainter.preloadAll(
       function () {
-        if (window.dismissBootSplash) window.dismissBootSplash("Gen.37 · 消除大片就绪");
+        if (window.dismissBootSplash) window.dismissBootSplash("Gen.38 · 肥嘟嘟全站就绪");
         if (window.showSystemToast)
-          window.showSystemToast("Gen.37 · 文物色消除 · 圣物诞生 · 首页浮尘", 4200);
+          window.showSystemToast("Gen.38 · 圆润暖调 · 六角色肥嘟嘟立绘 · 胖爷小队", 4500);
       },
       function (done, total) {
         if (window.setProgress) window.setProgress(72 + Math.round((done / total) * 24));
@@ -3788,6 +3789,6 @@
       }
     );
   } else {
-    if (window.dismissBootSplash) window.dismissBootSplash("Gen.37 · 就绪");
+    if (window.dismissBootSplash) window.dismissBootSplash("Gen.38 · 就绪");
   }
 })();
