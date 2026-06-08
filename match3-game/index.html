@@ -22,7 +22,7 @@
     <h1>古蜀秘档</h1>
     <p id="boot-status" class="boot-status">系统加载中…</p>
     <div class="boot-bar"><div id="boot-bar-fill" class="boot-bar-fill"></div></div>
-    <p class="boot-ver">Gen.33 · 赞助变现体系</p>
+    <p class="boot-ver">Gen.34 · 赞助已就绪</p>
   </div>
   <div id="confetti-layer" aria-hidden="true"></div>
   <div id="mega-combo" class="mega-combo" hidden aria-live="polite"></div>
@@ -63,6 +63,7 @@
           连续天数
         </div>
       </div>
+      <p class="home-sponsor-note">免费游玩 · 由赞助内容支持开发维护</p>
       <div class="home-actions">
         <button type="button" id="home-continue" class="btn btn-hero">继续探方</button>
         <button type="button" id="home-map" class="btn btn-secondary">蜀地地图 · 完整剧情</button>
@@ -360,7 +361,7 @@
         <button type="button" class="modal-close" aria-label="关闭" data-admin-gate-close="1">×</button>
       </div>
       <div class="modal-body">
-        <p class="admin-hint">请输入管理口令。</p>
+        <p class="admin-hint">口令已为你配置好，输入后即可查看收益（玩家看不到这些数字）。</p>
         <label class="admin-field">
           <span class="admin-field-label">口令</span>
           <input id="admin-pass-input" class="admin-input" type="password" autocomplete="off" />
@@ -382,6 +383,16 @@
         <button type="button" class="modal-close" aria-label="关闭" data-admin-panel-close="1">×</button>
       </div>
       <div class="modal-body">
+        <div class="admin-guide">
+          <p><strong>已帮你弄好，你只需要：</strong></p>
+          <ol>
+            <li>把游戏链接发给玩家：<a href="https://jushuolot.github.io/game/" target="_blank" rel="noopener">jushuolot.github.io/game</a></li>
+            <li>玩家闯关时会自动看赞助（不用你操作）</li>
+            <li>来这里看累计赚了多少钱 ↓</li>
+          </ol>
+          <p class="admin-guide-note">金额记在本浏览器；换电脑会重新开始。点「复制收益报表」可备份。</p>
+        </div>
+        <p id="admin-status-line" class="admin-status-line"></p>
         <div class="admin-stats">
           <div class="admin-stat"><span class="admin-stat-label">本局</span><strong id="admin-session" class="admin-stat-value">¥0</strong></div>
           <div class="admin-stat"><span class="admin-stat-label">累计</span><strong id="admin-total" class="admin-stat-value">¥0</strong></div>
@@ -401,6 +412,9 @@
           <div id="admin-slot-stats" class="admin-slot-stats"></div>
         </div>
         <ul id="admin-withdraw-list" class="admin-withdraw-list"></ul>
+        <div class="admin-tools">
+          <button type="button" id="admin-export-btn" class="btn btn-secondary">复制收益报表</button>
+        </div>
       </div>
       <div class="modal-actions actions-row">
         <button type="button" id="admin-panel-close" class="btn" data-admin-panel-close="1">关闭</button>

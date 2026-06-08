@@ -1,6 +1,6 @@
 {
-  "version": "4.4.0",
-  "generation": 33,
+  "version": "4.5.0",
+  "generation": 34,
   "releasedAt": "2026-06-08",
   "autoTune": {
     "enabled": true,
@@ -9,9 +9,8 @@
     "targetWinRate": 0.52
   },
   "patchNotes": [
-    "六广告位：关头/关尾/探点/继续/激励⛏/激励🔀",
-    "古蜀主题赞助 + 电影感赞助弹窗",
-    "道具用尽可观看赞助领取补给",
-    "开发者后台：连点标题×5 → Mz168 · 分广告位统计"
+    "赞助变现开箱即用 · 线上自动展示+记账",
+    "开发者后台中文说明 · 复制收益报表",
+    "一键本地脚本 scripts/start-local.sh"
   ]
 }

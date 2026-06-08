@@ -1017,6 +1017,50 @@ body {
   50% { filter: brightness(1.15); }
 }
 
+.admin-guide {
+  margin-bottom: 1rem;
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  background: rgba(201, 162, 39, 0.08);
+  border: 1px solid rgba(201, 162, 39, 0.22);
+  font-size: 0.86rem;
+  line-height: 1.55;
+  color: rgba(255, 248, 232, 0.92);
+}
+
+.admin-guide ol {
+  margin: 0.5rem 0 0.35rem 1.1rem;
+  padding: 0;
+}
+
+.admin-guide a {
+  color: #ffe08a;
+}
+
+.admin-guide-note {
+  margin: 0.35rem 0 0;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.admin-status-line {
+  margin: 0 0 0.85rem;
+  font-size: 0.82rem;
+  color: #c8f7a8;
+}
+
+.admin-tools {
+  margin-top: 0.85rem;
+}
+
+.home-sponsor-note {
+  margin: 0 0 1rem;
+  text-align: center;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.38);
+}
+
 .admin-slot-block {
   margin: 1rem 0;
 }

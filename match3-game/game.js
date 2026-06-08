@@ -444,6 +444,8 @@
   const adminWithdrawMsgEl = document.getElementById("admin-withdraw-msg");
   const adminWithdrawListEl = document.getElementById("admin-withdraw-list");
   const adminSlotStatsEl = document.getElementById("admin-slot-stats");
+  const adminStatusLineEl = document.getElementById("admin-status-line");
+  const adminExportBtn = document.getElementById("admin-export-btn");
   const adminWithdrawAllBtn = document.getElementById("admin-withdraw-all");
   const adminWithdrawSubmitBtn = document.getElementById("admin-withdraw-submit");
 
@@ -757,7 +759,45 @@
 
   function openAdminPanel() {
     updateAdminPanel();
+    if (adminStatusLineEl) {
+      const slotCount = Object.keys(AD_CONFIG.slots || {}).length;
+      adminStatusLineEl.textContent =
+        (AD_CONFIG.enabled ? "✓ 赞助已开启" : "赞助已关闭") +
+        " · " +
+        slotCount +
+        " 个广告位自动运行 · 演示单价 CPM/CPC 已配置";
+    }
     if (adminPanelModalEl) adminPanelModalEl.hidden = false;
+  }
+
+  function exportAdReport() {
+    const report = {
+      game: "古蜀秘档",
+      exportedAt: new Date().toISOString(),
+      session: Math.round(revenueSession * 1000) / 1000,
+      total: Math.round(revenueTotal * 1000) / 1000,
+      withdrawn: Math.round(revenueWithdrawn * 1000) / 1000,
+      balance: getRevenueBalance(),
+      bySlot: adSlotStats,
+      withdrawals: withdrawalHistory.slice(-20),
+    };
+    const text = JSON.stringify(report, null, 2);
+    function done(ok) {
+      if (adminWithdrawMsgEl) {
+        adminWithdrawMsgEl.textContent = ok
+          ? "收益报表已复制到剪贴板，可粘贴到备忘录备份"
+          : "复制失败，请手动截图保存";
+      }
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () {
+        done(true);
+      }).catch(function () {
+        done(false);
+      });
+    } else {
+      done(false);
+    }
   }
 
   function tryAdminLogin() {
@@ -3482,6 +3522,9 @@
   if (gameTitleEl) {
     gameTitleEl.addEventListener("click", onAdminTitleTap);
   }
+  if (adminExportBtn) {
+    adminExportBtn.addEventListener("click", exportAdReport);
+  }
   if (adminGateSubmitBtn) {
     adminGateSubmitBtn.addEventListener("click", tryAdminLogin);
   }
@@ -3661,8 +3704,9 @@
   if (window.PortraitPainter && window.PortraitPainter.preloadAll) {
     window.PortraitPainter.preloadAll(
       function () {
-        if (window.dismissBootSplash) window.dismissBootSplash("Gen.33 · 赞助变现就绪");
-        if (window.showSystemToast) window.showSystemToast("Gen.33 · 六广告位 · 道具可看赞助领取补给", 4200);
+        if (window.dismissBootSplash) window.dismissBootSplash("Gen.34 · 赞助已就绪 · 打开即赚");
+        if (window.showSystemToast)
+          window.showSystemToast("赞助已帮你配好 · 连点标题5次+口令Mz168 看收益", 5000);
       },
       function (done, total) {
         if (window.setProgress) window.setProgress(72 + Math.round((done / total) * 24));
@@ -3670,6 +3714,6 @@
       }
     );
   } else {
-    if (window.dismissBootSplash) window.dismissBootSplash("Gen.33 · 就绪");
+    if (window.dismissBootSplash) window.dismissBootSplash("Gen.34 · 就绪");
   }
 })();

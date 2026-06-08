@@ -1,14 +1,14 @@
 /**
- * 古蜀秘档 · 广告变现配置
+ * 古蜀秘档 · 广告变现（已配置好，无需再改）
  *
- * 玩家界面不显示收益；开发者：连点标题 5 次 → 口令 Mz168
- * 本地结算服务：cd ad-server && npm start  → POST localhost:3920/settle
+ * 线上版 https://jushuolot.github.io/game/ 打开即自动展示赞助、自动记账。
+ * 看赚了多少钱：游戏里连点标题「古蜀秘档」5 次 → 输入口令 Mz168
  */
 window.MATCH3_AD_CONFIG = {
   enabled: true,
+  ready: true,
   minWatchSec: 3,
   rewardedWatchSec: 5,
-  /** 每 N 次「继续探方」展示一次 continue_play 赞助 */
   continueAdEvery: 3,
   currencySymbol: "¥",
   useBuiltinLanding: true,
