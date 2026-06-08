@@ -108,26 +108,11 @@
   window.setBootStatus = setStatus;
 
   window.threeReady = typeof THREE !== "undefined";
+  window.bootLoaderEnsureThree = ensureThree;
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", startProgress);
   } else {
     startProgress();
-  }
-
-  if (typeof THREE === "undefined") {
-    window.__threePending = true;
-    ensureThree(function (ok) {
-      window.threeReady = ok;
-      window.__threePending = false;
-      if (!ok) {
-        setStatus("3D 未就绪 · 将使用 2D 立绘地图");
-      } else {
-        setStatus("3D 引擎就绪");
-      }
-      if (window.ThreeEngine && typeof window.ThreeEngine.ok === "boolean") {
-        /* three-engine already ran without THREE — re-init if needed */
-      }
-    });
   }
 })();

@@ -4,8 +4,9 @@
 (function () {
   "use strict";
 
-  var VER = 43;
+  var VER = 44;
   var BASE = "assets/portraits/";
+  var EXT = ".jpg";
   var cache = {};
   var loaded = {};
   var failed = {};
@@ -19,14 +20,14 @@
       url +
       '" alt="' +
       (alt || "") +
-      '" draggable="false" loading="eager" decoding="async" class="pc-photo' +
+      '" draggable="false" loading="lazy" decoding="async" class="pc-photo' +
       (extraClass ? " " + extraClass : "") +
       '"/>'
     );
   }
 
   function photoUrl(charId) {
-    return BASE + charId + ".png?v=" + VER;
+    return BASE + charId + EXT + "?v=" + VER;
   }
 
   function photoArt(charId) {

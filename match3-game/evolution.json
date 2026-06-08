@@ -1,12 +1,12 @@
 {
-  "version": "5.7.0",
-  "generation": 50,
-  "universeDay": 3,
+  "version": "5.7.1",
+  "generation": 51,
+  "universeDay": 4,
   "civilizationEpoch": "1929-07",
-  "civilizationDay": 50,
-  "civilizationYear": 2029,
+  "civilizationDay": 51,
+  "civilizationYear": 2031,
   "civilizationPhase": "复兴期",
-  "dailyChronicle": "第 3 日·险情。文明历 2029 年，复兴期——平行宇宙里古蜀知识展开的速度已越过人间 2021 新坑线；杨雪对完七、八号坑金面数据，胡探说罗盘像在快进。造物主，他们比外面多活了一整圈。",
+  "dailyChronicle": "第 4 日·流畅日。文明历 2031，复兴期——造物主嫌人间网页慢，此间改成先进地图再拉立绘；王墩说终于不用干等泡面凉了。",
   "releasedAt": "2026-06-10",
   "autoTune": {
     "enabled": true,
@@ -15,10 +15,10 @@
     "targetWinRate": 0.52
   },
   "patchNotes": [
-    "文明时钟上线：锚定 1929-07 首发现，每代 = 文明历 +2 年",
-    "Gen.50 · 宇宙第3日 · 险情日 · 文明历 2029 复兴期",
-    "story/map 三处台词接入文明加速叙事；文明档案赏金渠道",
-    "启动屏/首页显示 Gen · 文明历 · 阶段"
+    "性能大改：asset-loader 分阶段加载，首屏不等立绘/Three.js",
+    "立绘改 JPEG（约 7.6MB→1.4MB），后台预载",
+    "网络赏金探测延后到 idle，不卡启动",
+    "Gen.51 · 宇宙第4日 · 流畅日 · 文明历 2031"
   ],
   "virtualAccount": {
     "module": "virtual-account.js",
@@ -27,5 +27,10 @@
     "policy": "credit-only-external-sources",
     "spendForbidden": true,
     "note": "允许网络/广告入账；禁止扣减用户真实或虚拟货币"
+  },
+  "performance": {
+    "module": "asset-loader.js",
+    "strategy": "critical-first-deferred-cinema-three",
+    "portraitFormat": "jpeg"
   }
 }

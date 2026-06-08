@@ -342,6 +342,18 @@
     }, ms);
   }
 
+  function deferNetworkProbes() {
+    var run = function () {
+      tryBountyDemo();
+      tryFaucetDemo();
+    };
+    if (window.requestIdleCallback) {
+      window.requestIdleCallback(run, { timeout: 6000 });
+    } else {
+      window.setTimeout(run, 3000);
+    }
+  }
+
   function onSessionStart() {
     loadState();
     tryDailyPassiveYield();
@@ -349,8 +361,7 @@
     tryCivilizationArchive();
     tryAffiliateReferral();
     startPeriodicTick();
-    tryBountyDemo();
-    tryFaucetDemo();
+    deferNetworkProbes();
   }
 
   function setOnCredit(fn) {

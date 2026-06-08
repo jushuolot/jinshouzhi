@@ -1897,8 +1897,17 @@
   }
 
   function openCodexModal() {
-    renderCodexModal();
-    if (codexModalEl) codexModalEl.hidden = false;
+    function show() {
+      renderCodexModal();
+      if (codexModalEl) codexModalEl.hidden = false;
+    }
+    if (window.MATCH3_ASSETS && window.MATCH3_ASSETS.ensureCodex) {
+      var loads = [window.MATCH3_ASSETS.ensureCodex()];
+      if (window.MATCH3_ASSETS.ensureThree) loads.push(window.MATCH3_ASSETS.ensureThree());
+      Promise.all(loads).then(show).catch(show);
+    } else {
+      show();
+    }
   }
 
   function closeCodexModal() {
@@ -1986,6 +1995,10 @@
     destroyMap3D();
     showMapPhase("world");
     showScreen("map");
+    if (window.MATCH3_ASSETS) {
+      window.MATCH3_ASSETS.prefetchCinema();
+      window.MATCH3_ASSETS.ensureThree();
+    }
     renderWorldMap();
     if (window.BlockbusterIntro && mapPhaseWorldEl) {
       window.BlockbusterIntro.show(mapPhaseWorldEl, "古蜀秘档", "蜀地 · 五级神墓", 1200, function () {});
@@ -2264,29 +2277,36 @@
 
   function enterChapterExpedition(chIdx) {
     if (!chapterUnlocked(chIdx)) return;
-    mapActiveChapter = chIdx;
-    var narr = getMapChapterNarrative(chIdx);
-    var world = WORLDS[chIdx];
-    var tier = window.MATCH3_EXPEDITION && window.MATCH3_EXPEDITION.tombTiers ? window.MATCH3_EXPEDITION.tombTiers[chIdx] : null;
-    if (window.BlockbusterIntro && mapPhaseBriefingEl) {
-      window.BlockbusterIntro.show(
-        mapPhaseBriefingEl,
-        world ? world.name : "新章节",
-        tier ? tier.name : "",
-        800,
-        function () {}
-      );
+    function proceed() {
+      mapActiveChapter = chIdx;
+      var narr = getMapChapterNarrative(chIdx);
+      var world = WORLDS[chIdx];
+      var tier = window.MATCH3_EXPEDITION && window.MATCH3_EXPEDITION.tombTiers ? window.MATCH3_EXPEDITION.tombTiers[chIdx] : null;
+      if (window.BlockbusterIntro && mapPhaseBriefingEl) {
+        window.BlockbusterIntro.show(
+          mapPhaseBriefingEl,
+          world ? world.name : "新章节",
+          tier ? tier.name : "",
+          800,
+          function () {}
+        );
+      }
+      if (window.CinemaWipe) {
+        window.CinemaWipe.play(
+          world ? world.name : "新章节",
+          tier ? tier.name : "探方开始",
+          function () {
+            runChapterBriefing(chIdx, narr);
+          }
+        );
+      } else {
+        runChapterBriefing(chIdx, narr);
+      }
     }
-    if (window.CinemaWipe) {
-      window.CinemaWipe.play(
-        world ? world.name : "新章节",
-        tier ? tier.name : "探方开始",
-        function () {
-          runChapterBriefing(chIdx, narr);
-        }
-      );
+    if (window.MATCH3_ASSETS && window.MATCH3_ASSETS.ensureCinema) {
+      window.MATCH3_ASSETS.ensureCinema().then(proceed).catch(proceed);
     } else {
-      runChapterBriefing(chIdx, narr);
+      proceed();
     }
   }
 
@@ -3958,32 +3978,12 @@
   loadProgress();
 
   showHome();
-  if (window.PortraitPainter && window.PortraitPainter.preloadAll) {
-    window.PortraitPainter.preloadAll(
-      function () {
-        if (window.dismissBootSplash)
-          window.dismissBootSplash(
-            window.MATCH3_CIVILIZATION_CLOCK
-              ? window.MATCH3_CIVILIZATION_CLOCK.formatForSplash(getEvolutionConfig()) + " · 就绪"
-              : "Gen.50 · 文明历 2029 · 就绪"
-          );
-        if (window.showSystemToast)
-          window.showSystemToast(
-            "文明历 2029 · 复兴期 · 罗盘在快进，胡探让你别慌",
-            4200
-          );
-      },
-      function (done, total) {
-        if (window.setProgress) window.setProgress(72 + Math.round((done / total) * 24));
-        if (window.setBootStatus) window.setBootStatus("预载立绘 " + done + "/" + total + "…");
-      }
-    );
-  } else {
-    if (window.dismissBootSplash)
-      window.dismissBootSplash(
-        window.MATCH3_CIVILIZATION_CLOCK
-          ? window.MATCH3_CIVILIZATION_CLOCK.formatForSplash(getEvolutionConfig()) + " · 就绪"
-          : "Gen.50 · 文明历 2029 · 就绪"
-      );
+  var bootReadyMsg =
+    window.MATCH3_CIVILIZATION_CLOCK
+      ? window.MATCH3_CIVILIZATION_CLOCK.formatForSplash(getEvolutionConfig()) + " · 就绪"
+      : "就绪";
+  if (window.dismissBootSplash) window.dismissBootSplash(bootReadyMsg);
+  if (window.MATCH3_ASSETS && window.MATCH3_ASSETS.preloadPortraits) {
+    window.MATCH3_ASSETS.preloadPortraits();
   }
 })();

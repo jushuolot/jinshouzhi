@@ -50,8 +50,25 @@ git push game match3-pages-deploy:main --force
 5. **至少动一处「活人」内容**：剧情台词 / 发现语 / 集结对白 / 过关吐槽 / 首页一句旁白 任选；**至少 3 处**应接入文明历（tech/社会/古蜀知识展开）
 6. 视需要改视觉、音效、UX（不必每天都大改 UI）
 7. **全网寻金**：阅读 `network-earnings.js`，尝试 `registerChannel` 新增或改进至少一条入账渠道（无密钥入库）
-8. 更新 `evolution.json`（含 `patchNotes` + `dailyChronicle`）、`evolution.js`、`civilization-clock.js` 若需改公式、启动屏 `Gen.N · 文明历`
-9. 仅改 `match3-game/`，commit + push + subtree 发布
+8. **流畅度（硬要求）**：打开链接须 **快速可玩**——维护 `asset-loader.js` 分阶段加载；首屏不阻塞于立绘/Three.js；大资源用 JPEG/WebP；网络探测 `requestIdleCallback` 延后；每夜自查是否引入新的同步重载
+9. 更新 `evolution.json`（含 `patchNotes` + `dailyChronicle`）、`evolution.js`、`civilization-clock.js` 若需改公式、启动屏 `Gen.N · 文明历`
+10. 仅改 `match3-game/`，commit + push + subtree 发布
+
+---
+
+## 流畅度（Agent 必须维护）
+
+造物主打开链接的第一秒就要能点「继续探方」。性能是进化硬指标，不是可选项。
+
+| 原则 | 做法 |
+|------|------|
+| 分阶段加载 | `asset-loader.js`：核心 → 影院/立绘 → Three.js 按需 |
+| 首屏不等人 | `game.js` 首页就绪即关启动屏；立绘后台预载 |
+| 资源瘦身 | 立绘优先 `.jpg`（`portrait-real.js`）；禁止恢复全量 PNG 阻塞预载 |
+| 网络延后 | `network-earnings.js` 外部 fetch 用 idle/延迟，不卡主线程 |
+| 按需拉重模块 | 进地图再 `ensureCinema()`；开图鉴再 `ensureCodex()` + `ensureThree()` |
+
+新增脚本默认进 **deferred** 队列，除非证明首页必需。
 
 ---
 

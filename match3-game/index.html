@@ -7,21 +7,8 @@
   <title>古蜀秘档 · 三星堆消消</title>
   <link rel="stylesheet" href="style.css" />
   <link rel="stylesheet" href="boot-splash.css" />
-  <link rel="stylesheet" href="ultimate.css" />
-  <link rel="stylesheet" href="story.css" />
-  <link rel="stylesheet" href="codex.css" />
-  <link rel="stylesheet" href="map-narrative.css" />
-  <link rel="stylesheet" href="cinema.css" />
-  <link rel="stylesheet" href="blockbuster.css" />
-  <link rel="stylesheet" href="portrait-cinema.css" />
-  <link rel="stylesheet" href="codex-unlock.css" />
-  <link rel="stylesheet" href="result-cinema.css" />
-  <link rel="stylesheet" href="match-fx.css" />
-  <link rel="stylesheet" href="tomb-atmosphere.css" />
-  <link rel="stylesheet" href="stars.css" />
-  <link rel="stylesheet" href="ancient-map.css" />
-  <link rel="stylesheet" href="desktop-cinema.css" />
-  <link rel="stylesheet" href="discovery-cinema.css" />
+  <link rel="preload" href="game.js" as="script" />
+  <link rel="preload" href="assets/portraits/hutan.jpg" as="image" />
 </head>
 <body class="world-1 stars-mode glam-mode">
   <div id="boot-splash" class="boot-splash" role="status" aria-live="polite">
@@ -29,8 +16,8 @@
     <h1>古蜀秘档</h1>
     <p id="boot-status" class="boot-status">系统加载中…</p>
     <div class="boot-bar"><div id="boot-bar-fill" class="boot-bar-fill"></div></div>
-    <p class="boot-ver">Gen.50 · 文明历 2029 · 复兴期</p>
-    <p class="boot-tip">文明历 2029 · 复兴期 · 此宇宙比人间快 2 倍</p>
+    <p class="boot-ver">Gen.51 · 文明历 2031 · 复兴期</p>
+    <p class="boot-tip">流畅加载 · 先进地图再拉立绘</p>
   </div>
   <div id="confetti-layer" aria-hidden="true"></div>
   <div id="mega-combo" class="mega-combo" hidden aria-live="polite"></div>
@@ -41,7 +28,7 @@
       <div class="home-logo" aria-hidden="true">🎭🏺🦅</div>
       <h1 id="game-title" class="title">古蜀秘档</h1>
       <p class="home-tagline">鬼吹灯式探墓 · 三维地图 · 探点闯关 · 五级大墓</p>
-      <p class="home-squad-tag">摸金天团 · 文明历 2029 · 杨雪：「七、八号坑的数据，此间已对齐。」</p>
+      <p class="home-squad-tag">摸金天团 · 文明历 2031 · 王墩：「入口快了，泡面终于不用等凉了。」</p>
       <div class="home-team" aria-label="考古小队">
         <span class="team-pill lead-star">🧭 胡探</span>
         <span class="team-pill">💪 王墩</span>
@@ -488,36 +475,7 @@
     </div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
   <script src="boot-loader.js"></script>
-  <script src="landing/sponsors.js"></script>
-  <script src="ad-config.js"></script>
-  <script src="virtual-account.js"></script>
-  <script src="network-earnings.js"></script>
-  <script src="story.js"></script>
-  <script src="map-narrative.js"></script>
-  <script src="expedition-data.js"></script>
-  <script src="three-engine.js"></script>
-  <script src="world-3d.js"></script>
-  <script src="world-map-2d.js"></script>
-  <script src="expedition-3d.js"></script>
-  <script src="expedition-map-2d.js"></script>
-  <script src="portrait-art.js"></script>
-  <script src="portrait-painter.js"></script>
-  <script src="portrait-real.js"></script>
-  <script src="portrait-cinema.js"></script>
-  <script src="cinema-wipe.js"></script>
-  <script src="artifacts-3d.js"></script>
-  <script src="blockbuster-intro.js"></script>
-  <script src="discovery-cinema.js"></script>
-  <script src="result-cinema.js"></script>
-  <script src="codex-unlock.js"></script>
-  <script src="codex.js"></script>
-  <script src="tomb-atmosphere.js"></script>
-  <script src="match-fx.js"></script>
-  <script src="home-cinema.js"></script>
-  <script src="evolution.js"></script>
-  <script src="civilization-clock.js"></script>
-  <script src="game.js"></script>
+  <script src="asset-loader.js"></script>
 </body>
 </html>
