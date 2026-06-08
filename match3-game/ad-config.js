@@ -2,7 +2,8 @@
  * 古蜀秘档 · 广告变现（已配置好，无需再改）
  *
  * 线上版 https://jushuolot.github.io/game/ 打开即自动展示赞助、自动记账。
- * 看赚了多少钱：游戏里连点标题「古蜀秘档」5 次 → 输入口令 Mz168
+ * 看虚拟账户入账：游戏里连点标题「古蜀秘档」5 次 → 输入口令 Mz168
+ * 账户策略：只记外部入账，禁止扣减用户真实/虚拟货币（见 virtual-account.js）
  */
 window.MATCH3_AD_CONFIG = {
   enabled: true,

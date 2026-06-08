@@ -3,7 +3,7 @@
  *
  * 启动：node server.js
  * 默认：http://localhost:3920
- *   POST /settle  — 游戏每次展示/点击会 POST JSON
+ *   POST /settle  — 游戏每次展示/点击会 POST JSON（仅入账事件，无 withdraw）
  *   GET  /stats   — 查看累计笔数与金额
  *   GET  /log     — 最近 50 条原始记录
  */
@@ -99,6 +99,13 @@ const server = http.createServer(function (req, res) {
         payload = JSON.parse(body || "{}");
       } catch (e) {
         sendJson(res, 400, { ok: false, error: "invalid json" });
+        return;
+      }
+      if (payload.type === "withdraw") {
+        sendJson(res, 403, {
+          ok: false,
+          error: "withdraw forbidden by virtual account policy",
+        });
         return;
       }
       const record = Object.assign({ receivedAt: new Date().toISOString() }, payload);

@@ -14,5 +14,12 @@
     "探点发现弹窗影院化 · 立绘+打字机台词",
     "桌面宽屏发现分栏 · 回车开战 Esc 稍后",
     "三星通关金冠特效+三声和鸣"
-  ]
+  ],
+  "virtualAccount": {
+    "module": "virtual-account.js",
+    "storage": "localStorage:match3_virtual_account",
+    "policy": "credit-only-external-sources",
+    "spendForbidden": true,
+    "note": "允许网络/广告入账；禁止扣减用户真实或虚拟货币"
+  }
 }

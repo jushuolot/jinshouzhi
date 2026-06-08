@@ -1292,6 +1292,37 @@ body {
   color: #c8f7a8;
 }
 
+.admin-policy {
+  margin: 0 0 0.75rem;
+  padding: 0.55rem 0.65rem;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--text-muted, #8a7a62);
+  background: rgba(212, 168, 75, 0.08);
+  border: 1px solid rgba(212, 168, 75, 0.22);
+  border-radius: 8px;
+}
+
+.admin-credit-list {
+  margin: 0.35rem 0 0.75rem;
+  padding: 0;
+  list-style: none;
+  max-height: 9rem;
+  overflow-y: auto;
+  font-size: 0.78rem;
+  color: var(--text-muted, #8a7a62);
+}
+
+.admin-credit-list li {
+  padding: 0.35rem 0;
+  border-bottom: 1px solid rgba(212, 168, 75, 0.12);
+}
+
+.admin-credit-empty {
+  color: var(--text-muted, #8a7a62);
+  font-style: italic;
+}
+
 .admin-withdraw-list {
   margin: 0;
   padding-left: 1rem;

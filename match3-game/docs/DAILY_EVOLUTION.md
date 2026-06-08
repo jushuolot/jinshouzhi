@@ -35,6 +35,7 @@ git push game match3-pages-deploy:main --force
 ## 不可改动
 
 - 不向**玩家**展示广告收入（赞助逻辑保留，管理门 `Mz168` 标题连点 5 次）
+- **虚拟账户策略（硬约束）**：Agent 可实现网络赚钱/广告入账等**外部来源的记账**，存入 `virtual-account.js` 管理的虚拟账户（`localStorage`）；**严禁**花费用户的真实货币或虚拟货币——禁止提取、内购扣费、余额消费、任何 debit/withdraw 类操作
 - 不删除核心玩法：百关、五章、堪舆地图 → 策划 → 集合 → 探方 → 消消乐
 - 不把题材改成与古蜀/三星堆无关的异世界（仍是同一平行宇宙的延续）
 
@@ -72,6 +73,20 @@ git push game match3-pages-deploy:main --force
 - 同一场景换角度：昨天杨雪讲层位，今天她讲碳十四；昨天胡探讲罗盘，今天他讲梦里的神树。
 - `discover` 探点语：像现场随口一句，别像百科。
 - 每晚 **至少 3 处**台词变化（可分散在 story / map / expedition）；不必全书重写。
+
+---
+
+## 虚拟账户（Agent 参考）
+
+| 项 | 说明 |
+|----|------|
+| 模块 | `virtual-account.js` |
+| 存储 | `localStorage` 键 `match3_virtual_account`（自动从旧键 `match3_ad_revenue_stats` 迁移累计入账） |
+| 允许入账来源 | `impression` / `click` / `affiliate` / `reward` / `network_settlement` |
+| 管理入口 | 首页连点标题 5 次 → 口令 `Mz168`（仅开发者可见） |
+| 硬禁止 | `debit()`、`withdraw`、内购扣费、余额消费——不得实现任何花费用户货币的功能 |
+
+每日进化可扩展赞助位、联盟回调、`ad-server` 结算日志，但**不得**添加提取或消费 UI/API。
 
 ---
 

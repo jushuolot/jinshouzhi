@@ -9,6 +9,14 @@
   "lastGeneration": 47,
   "lastVersion": "5.5.0",
   "dailyChronicle": "手册改版：平行宇宙开启，摸金天团从此按日活人。",
+  "virtualAccountPolicy": {
+    "allowEarning": true,
+    "sources": ["impression", "click", "affiliate", "reward", "network_settlement"],
+    "spendForbidden": true,
+    "forbiddenOps": ["debit", "withdraw", "iap_charge", "wallet_spend"],
+    "adminGate": "Mz168-title-5-tap",
+    "module": "virtual-account.js"
+  },
   "storyPolicy": {
     "allowRewrite": true,
     "files": ["story.js", "map-narrative.js", "expedition-data.js"],

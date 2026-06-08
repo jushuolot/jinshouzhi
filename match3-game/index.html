@@ -399,7 +399,7 @@
     <div class="modal-backdrop" data-admin-panel-close="1"></div>
     <div class="modal-panel admin-panel admin-panel-wide">
       <div class="modal-head">
-        <h2 id="admin-panel-title" class="modal-title">收益管理</h2>
+        <h2 id="admin-panel-title" class="modal-title">虚拟账户 · 收益</h2>
         <button type="button" class="modal-close" aria-label="关闭" data-admin-panel-close="1">×</button>
       </div>
       <div class="modal-body">
@@ -410,30 +410,24 @@
             <li>玩家闯关时会自动看赞助（不用你操作）</li>
             <li>来这里看累计赚了多少钱 ↓</li>
           </ol>
-          <p class="admin-guide-note">金额记在本浏览器；换电脑会重新开始。点「复制收益报表」可备份。</p>
+          <p class="admin-guide-note">金额记在本浏览器 localStorage；换电脑会重新开始。点「复制账户报表」可备份。</p>
         </div>
+        <p class="admin-policy">账户策略：允许从赞助/网络等外部来源入账；<strong>禁止扣减或花费</strong>用户的真实货币与虚拟货币（无提取、无内购扣费）。</p>
         <p id="admin-status-line" class="admin-status-line"></p>
         <div class="admin-stats">
-          <div class="admin-stat"><span class="admin-stat-label">本局</span><strong id="admin-session" class="admin-stat-value">¥0</strong></div>
-          <div class="admin-stat"><span class="admin-stat-label">累计</span><strong id="admin-total" class="admin-stat-value">¥0</strong></div>
-          <div class="admin-stat"><span class="admin-stat-label">已提取</span><strong id="admin-withdrawn" class="admin-stat-value">¥0</strong></div>
-          <div class="admin-stat admin-stat-highlight"><span class="admin-stat-label">余额</span><strong id="admin-balance" class="admin-stat-value">¥0</strong></div>
-        </div>
-        <div class="admin-withdraw">
-          <label class="admin-field"><span class="admin-field-label">提取金额</span><input id="admin-withdraw-input" class="admin-input" type="number" min="0" step="0.001" /></label>
-          <div class="admin-withdraw-actions">
-            <button type="button" id="admin-withdraw-all" class="btn btn-secondary">全部</button>
-            <button type="button" id="admin-withdraw-submit" class="btn">提取</button>
-          </div>
-          <p id="admin-withdraw-msg" class="admin-msg"></p>
+          <div class="admin-stat"><span class="admin-stat-label">本局入账</span><strong id="admin-session" class="admin-stat-value">¥0</strong></div>
+          <div class="admin-stat"><span class="admin-stat-label">累计入账</span><strong id="admin-total" class="admin-stat-value">¥0</strong></div>
+          <div class="admin-stat admin-stat-highlight"><span class="admin-stat-label">虚拟余额</span><strong id="admin-balance" class="admin-stat-value">¥0</strong></div>
         </div>
         <div class="admin-slot-block">
           <p class="admin-field-label">各广告位收益</p>
           <div id="admin-slot-stats" class="admin-slot-stats"></div>
         </div>
-        <ul id="admin-withdraw-list" class="admin-withdraw-list"></ul>
+        <p class="admin-field-label">最近入账</p>
+        <ul id="admin-credit-list" class="admin-credit-list"></ul>
         <div class="admin-tools">
-          <button type="button" id="admin-export-btn" class="btn btn-secondary">复制收益报表</button>
+          <button type="button" id="admin-export-btn" class="btn btn-secondary">复制账户报表</button>
+          <p id="admin-export-msg" class="admin-msg"></p>
         </div>
       </div>
       <div class="modal-actions actions-row">
@@ -493,6 +487,7 @@
   <script src="boot-loader.js"></script>
   <script src="landing/sponsors.js"></script>
   <script src="ad-config.js"></script>
+  <script src="virtual-account.js"></script>
   <script src="story.js"></script>
   <script src="map-narrative.js"></script>
   <script src="expedition-data.js"></script>

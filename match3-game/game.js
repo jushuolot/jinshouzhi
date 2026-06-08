@@ -223,15 +223,11 @@
 
   const AD_CONFIG = buildAdConfig();
 
-  const AD_STATS_KEY = "match3_ad_revenue_stats";
   const ADMIN_SESSION_KEY = "match3_admin_unlocked";
-  let revenueSession = 0;
-  let revenueTotal = 0;
-  let revenueWithdrawn = 0;
-  /** @type {Record<string, {impressions: number, clicks: number, amount: number}>} */
-  let adSlotStats = {};
-  /** @type {{ amount: number, ts: number, balanceAfter: number }[]} */
-  let withdrawalHistory = [];
+  const virtualAccount =
+    typeof window !== "undefined" && window.MATCH3_VIRTUAL_ACCOUNT
+      ? window.MATCH3_VIRTUAL_ACCOUNT
+      : null;
   /** @type {number | null} */
   let adCountdownTimer = null;
   /** @type {(() => void) | null} */
@@ -439,16 +435,12 @@
   const adminGateSubmitBtn = document.getElementById("admin-gate-submit");
   const adminSessionEl = document.getElementById("admin-session");
   const adminTotalEl = document.getElementById("admin-total");
-  const adminWithdrawnEl = document.getElementById("admin-withdrawn");
   const adminBalanceEl = document.getElementById("admin-balance");
-  const adminWithdrawInputEl = document.getElementById("admin-withdraw-input");
-  const adminWithdrawMsgEl = document.getElementById("admin-withdraw-msg");
-  const adminWithdrawListEl = document.getElementById("admin-withdraw-list");
+  const adminCreditListEl = document.getElementById("admin-credit-list");
   const adminSlotStatsEl = document.getElementById("admin-slot-stats");
   const adminStatusLineEl = document.getElementById("admin-status-line");
   const adminExportBtn = document.getElementById("admin-export-btn");
-  const adminWithdrawAllBtn = document.getElementById("admin-withdraw-all");
-  const adminWithdrawSubmitBtn = document.getElementById("admin-withdraw-submit");
+  const adminExportMsgEl = document.getElementById("admin-export-msg");
 
   let adminTapCount = 0;
   /** @type {number | null} */
@@ -666,53 +658,26 @@
     return AD_CONFIG.currencySymbol + n.toFixed(3);
   }
 
-  function getRevenueBalance() {
-    return Math.max(0, Math.round((revenueTotal - revenueWithdrawn) * 1000) / 1000);
+  function getVirtualBalance() {
+    return virtualAccount ? virtualAccount.getBalance() : 0;
   }
 
-  function loadAdStats() {
-    try {
-      const raw = window.localStorage.getItem(AD_STATS_KEY);
-      if (!raw) return;
-      const data = JSON.parse(raw);
-      if (data && typeof data.total === "number") revenueTotal = data.total;
-      if (data && typeof data.withdrawn === "number") revenueWithdrawn = data.withdrawn;
-      if (data && Array.isArray(data.withdrawals)) withdrawalHistory = data.withdrawals;
-      if (data && data.bySlot && typeof data.bySlot === "object") adSlotStats = data.bySlot;
-    } catch (e) {
-      revenueTotal = 0;
-      revenueWithdrawn = 0;
-      withdrawalHistory = [];
-      adSlotStats = {};
-    }
-  }
-
-  function saveAdStats() {
-    try {
-      window.localStorage.setItem(
-        AD_STATS_KEY,
-        JSON.stringify({
-          total: revenueTotal,
-          withdrawn: revenueWithdrawn,
-          withdrawals: withdrawalHistory,
-          bySlot: adSlotStats,
-          updatedAt: Date.now(),
-        })
-      );
-    } catch (e) {
-      // ignore
-    }
+  function creditSourceLabel(source) {
+    if (source === "impression") return "展示";
+    if (source === "click") return "点击";
+    if (source === "reward") return "奖励";
+    if (source === "affiliate") return "联盟";
+    if (source === "network_settlement") return "网络结算";
+    return source || "入账";
   }
 
   function updateAdminPanel() {
-    const balance = getRevenueBalance();
-    if (adminSessionEl) adminSessionEl.textContent = formatMoney(revenueSession);
-    if (adminTotalEl) adminTotalEl.textContent = formatMoney(revenueTotal);
-    if (adminWithdrawnEl) adminWithdrawnEl.textContent = formatMoney(revenueWithdrawn);
+    const balance = getVirtualBalance();
+    const sessionCredits = virtualAccount ? virtualAccount.getSessionCredits() : 0;
+    const adSlotStats = virtualAccount ? virtualAccount.getBySlot() : {};
+    if (adminSessionEl) adminSessionEl.textContent = formatMoney(sessionCredits);
+    if (adminTotalEl) adminTotalEl.textContent = formatMoney(balance);
     if (adminBalanceEl) adminBalanceEl.textContent = formatMoney(balance);
-    if (adminWithdrawInputEl && document.activeElement !== adminWithdrawInputEl) {
-      adminWithdrawInputEl.placeholder = balance.toFixed(3);
-    }
     if (adminSlotStatsEl) {
       const keys = Object.keys(adSlotStats).sort(function (a, b) {
         return (adSlotStats[b].amount || 0) - (adSlotStats[a].amount || 0);
@@ -740,28 +705,34 @@
           .join("");
       }
     }
-    if (!adminWithdrawListEl) return;
-    adminWithdrawListEl.innerHTML = "";
-    if (!withdrawalHistory.length) {
+    if (!adminCreditListEl) return;
+    adminCreditListEl.innerHTML = "";
+    const credits = virtualAccount ? virtualAccount.getCreditHistory() : [];
+    if (!credits.length) {
       const empty = document.createElement("li");
-      empty.className = "admin-withdraw-empty";
-      empty.textContent = "暂无提取记录";
-      adminWithdrawListEl.appendChild(empty);
+      empty.className = "admin-credit-empty";
+      empty.textContent = "暂无入账记录";
+      adminCreditListEl.appendChild(empty);
       return;
     }
-    withdrawalHistory
+    credits
       .slice()
       .reverse()
       .forEach(function (item) {
         const li = document.createElement("li");
         const when = new Date(item.ts);
+        const slot = item.slot && AD_CONFIG.slots[item.slot];
+        const slotLabel = slot ? slot.label : item.slot || "";
         li.textContent =
           when.toLocaleString() +
-          " · 提取 " +
+          " · " +
+          creditSourceLabel(item.source) +
+          (slotLabel ? " · " + slotLabel : "") +
+          " +" +
           formatMoney(item.amount) +
           " · 余额 " +
           formatMoney(item.balanceAfter);
-        adminWithdrawListEl.appendChild(li);
+        adminCreditListEl.appendChild(li);
       });
   }
 
@@ -790,7 +761,7 @@
 
   function hideAdminPanel() {
     if (adminPanelModalEl) adminPanelModalEl.hidden = true;
-    if (adminWithdrawMsgEl) adminWithdrawMsgEl.textContent = "";
+    if (adminExportMsgEl) adminExportMsgEl.textContent = "";
   }
 
   function openAdminGate() {
@@ -816,27 +787,20 @@
         (AD_CONFIG.enabled ? "✓ 赞助已开启" : "赞助已关闭") +
         " · " +
         slotCount +
-        " 个广告位自动运行 · 演示单价 CPM/CPC 已配置";
+        " 个广告位自动入账 · 虚拟账户只增不减";
     }
     if (adminPanelModalEl) adminPanelModalEl.hidden = false;
   }
 
   function exportAdReport() {
-    const report = {
-      game: "古蜀秘档",
-      exportedAt: new Date().toISOString(),
-      session: Math.round(revenueSession * 1000) / 1000,
-      total: Math.round(revenueTotal * 1000) / 1000,
-      withdrawn: Math.round(revenueWithdrawn * 1000) / 1000,
-      balance: getRevenueBalance(),
-      bySlot: adSlotStats,
-      withdrawals: withdrawalHistory.slice(-20),
-    };
+    const report = virtualAccount
+      ? Object.assign({ game: "古蜀秘档" }, virtualAccount.exportSnapshot())
+      : { game: "古蜀秘档", balance: 0 };
     const text = JSON.stringify(report, null, 2);
     function done(ok) {
-      if (adminWithdrawMsgEl) {
-        adminWithdrawMsgEl.textContent = ok
-          ? "收益报表已复制到剪贴板，可粘贴到备忘录备份"
+      if (adminExportMsgEl) {
+        adminExportMsgEl.textContent = ok
+          ? "虚拟账户报表已复制到剪贴板，可粘贴到备忘录备份"
           : "复制失败，请手动截图保存";
       }
     }
@@ -861,35 +825,6 @@
     setAdminUnlocked(true);
     hideAdminGate();
     openAdminPanel();
-  }
-
-  function withdrawRevenue(amount) {
-    const balance = getRevenueBalance();
-    const value = Math.round(amount * 1000) / 1000;
-    if (adminWithdrawMsgEl) adminWithdrawMsgEl.textContent = "";
-    if (!value || value <= 0) {
-      if (adminWithdrawMsgEl) adminWithdrawMsgEl.textContent = "请输入大于 0 的金额";
-      return;
-    }
-    if (value > balance + 0.0001) {
-      if (adminWithdrawMsgEl) adminWithdrawMsgEl.textContent = "超过可提取余额";
-      return;
-    }
-    revenueWithdrawn = Math.round((revenueWithdrawn + value) * 1000) / 1000;
-    const balanceAfter = getRevenueBalance();
-    withdrawalHistory.push({ amount: value, ts: Date.now(), balanceAfter: balanceAfter });
-    saveAdStats();
-    updateAdminPanel();
-    postSettlementEvent({
-      type: "withdraw",
-      amount: value,
-      balanceAfter: balanceAfter,
-      currency: "CNY",
-      ts: Date.now(),
-    });
-    if (adminWithdrawInputEl) adminWithdrawInputEl.value = "";
-    if (adminWithdrawMsgEl)
-      adminWithdrawMsgEl.textContent = "已提取 " + formatMoney(value) + "（演示记账，真实打款需对接后端）";
   }
 
   function onAdminTitleTap() {
@@ -924,23 +859,25 @@
   }
 
   function settleAdEvent(slotKey, type, amount) {
-    revenueSession += amount;
-    revenueTotal += amount;
-    if (!adSlotStats[slotKey]) adSlotStats[slotKey] = { impressions: 0, clicks: 0, amount: 0 };
-    if (type === "impression") adSlotStats[slotKey].impressions += 1;
-    else if (type === "click") adSlotStats[slotKey].clicks += 1;
-    adSlotStats[slotKey].amount = Math.round((adSlotStats[slotKey].amount + amount) * 1000) / 1000;
+    let credited = amount;
+    if (virtualAccount) {
+      credited = virtualAccount.credit({
+        amount: amount,
+        source: type,
+        slot: slotKey,
+        meta: { level: currentLevelIndex + 1 },
+      });
+    }
     if (adminPanelModalEl && !adminPanelModalEl.hidden) updateAdminPanel();
-    saveAdStats();
     postSettlementEvent({
       type: type,
       slot: slotKey,
-      amount: amount,
+      amount: credited,
       currency: "CNY",
       level: currentLevelIndex + 1,
       ts: Date.now(),
     });
-    return amount;
+    return credited;
   }
 
   function clearAdCountdown() {
@@ -3637,7 +3574,7 @@
 
   function resetCampaign() {
     soundRestart();
-    revenueSession = 0;
+    if (virtualAccount) virtualAccount.resetSession();
     if (adminPanelModalEl && !adminPanelModalEl.hidden) updateAdminPanel();
     maxUnlockedLevel = 0;
     saveProgress();
@@ -3773,18 +3710,6 @@
       if (t && t instanceof HTMLElement && t.dataset && t.dataset.adminPanelClose) hideAdminPanel();
     });
   }
-  if (adminWithdrawAllBtn) {
-    adminWithdrawAllBtn.addEventListener("click", function () {
-      withdrawRevenue(getRevenueBalance());
-    });
-  }
-  if (adminWithdrawSubmitBtn) {
-    adminWithdrawSubmitBtn.addEventListener("click", function () {
-      const raw = adminWithdrawInputEl ? adminWithdrawInputEl.value : "";
-      withdrawRevenue(parseFloat(raw) || 0);
-    });
-  }
-
   function shuffleBoardFree() {
     shuffleBoard();
     setMessage("🔀 棋盘已重排");
@@ -3944,7 +3869,7 @@
     boosterHintBtn.addEventListener("click", showHint);
   }
 
-  loadAdStats();
+  if (virtualAccount) virtualAccount.load();
   loadLevelStars();
   syncStoryTheme();
   loadStorySeen();
