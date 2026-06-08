@@ -53,9 +53,9 @@
     });
   }
 
-  function ivoryMat() {
+  function ivoryMat(tint) {
     return new THREE.MeshStandardMaterial({
-      color: 0xf5ecd8,
+      color: tint || 0xf5ecd8,
       metalness: 0.08,
       roughness: 0.38,
       emissive: 0x403830,

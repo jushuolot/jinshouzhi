@@ -19,6 +19,7 @@
     "stars.css",
     "ancient-map.css",
     "desktop-cinema.css",
+    "artifact-museum.css",
     "discovery-cinema.css",
   ];
 
@@ -51,7 +52,13 @@
     "blockbuster-intro.js",
   ];
 
-  var CODEX_SCRIPTS = ["codex-unlock.js", "codex.js", "artifacts-3d.js"];
+  var CODEX_SCRIPTS = [
+    "codex-unlock.js",
+    "codex.js",
+    "artifact-photos.js",
+    "artifact-gallery.js",
+    "artifacts-3d.js",
+  ];
 
   var THREE_SCRIPTS = [
     "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js",
@@ -142,12 +149,12 @@
   }
 
   function ensureCodex() {
-    if (window.Codex && window.ArtifactViewer3D) return Promise.resolve();
+    if (window.ArtifactGallery) return Promise.resolve();
     if (!codexReady) {
-      codexReady = ensureThree()
+      loadDeferredCss();
+      codexReady = loadScriptChain(CODEX_SCRIPTS)
         .then(function () {
           if (window.ThreeEngine && window.ThreeEngine.retryInit) window.ThreeEngine.retryInit();
-          return loadScriptChain(CODEX_SCRIPTS);
         })
         .catch(function () {
           return null;

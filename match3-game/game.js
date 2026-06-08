@@ -1874,11 +1874,15 @@
         (unlocked ? entry.lore : "消除该文物即可解锁条目") +
         "</p>" +
         detailHtml +
-        (unlocked ? '<div class="codex-card-count">已消除 ' + count + " 次 · 点击查看3D</div>" : "");
+        (unlocked ? '<div class="codex-card-count">已消除 ' + count + " 次 · 点击查看实物</div>" : "");
       if (unlocked) {
         card.style.cursor = "pointer";
         card.addEventListener("click", function () {
-          if (window.ArtifactViewer3D && artifact3dMountEl) {
+          if (window.ArtifactGallery && artifact3dMountEl) {
+            var g = window.ArtifactGallery.get();
+            if (g && g.ok) g.setType(i);
+            else window.ArtifactGallery.create(artifact3dMountEl, i);
+          } else if (window.ArtifactViewer3D && artifact3dMountEl) {
             var v = window.ArtifactViewer3D.get();
             if (v && v.ok) v.setType(i);
             else window.ArtifactViewer3D.create(artifact3dMountEl, i);
@@ -1887,12 +1891,21 @@
       }
       codexGridEl.appendChild(card);
     });
-    if (window.ArtifactViewer3D && artifact3dMountEl) {
+    if (artifact3dMountEl) {
       var showId = codexState.unlocked[firstUnlocked] ? firstUnlocked : 0;
       for (var j = 0; j < NUM_TYPES; j++) {
-        if (codexState.unlocked[j]) { showId = j; break; }
+        if (codexState.unlocked[j]) {
+          showId = j;
+          break;
+        }
       }
-      window.ArtifactViewer3D.create(artifact3dMountEl, showId);
+      if (window.ArtifactGallery) {
+        var gal = window.ArtifactGallery.get();
+        if (gal && gal.ok) gal.setType(showId);
+        else window.ArtifactGallery.create(artifact3dMountEl, showId);
+      } else if (window.ArtifactViewer3D) {
+        window.ArtifactViewer3D.create(artifact3dMountEl, showId);
+      }
     }
   }
 
@@ -1903,9 +1916,10 @@
       window.requestAnimationFrame(function () {
         renderCodexModal();
         if (artifact3dMountEl && window.setMountLoading) {
+          var g = window.ArtifactGallery && window.ArtifactGallery.get();
           var v = window.ArtifactViewer3D && window.ArtifactViewer3D.get();
-          if (!v || !v.ok) {
-            window.setMountLoading(artifact3dMountEl, "3D 文物加载中…");
+          if ((!g || !g.ok) && (!v || !v.ok)) {
+            window.setMountLoading(artifact3dMountEl, "文物展柜加载中…");
             window.setTimeout(function () {
               renderCodexModal();
             }, 400);

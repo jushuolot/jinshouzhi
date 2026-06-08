@@ -66,7 +66,8 @@ git push game match3-pages-deploy:main --force
 | 首屏不等人 | `game.js` 首页就绪即关启动屏；立绘后台预载 |
 | 资源瘦身 | 立绘优先 `.jpg`（`portrait-real.js`）；禁止恢复全量 PNG 阻塞预载 |
 | 网络延后 | `network-earnings.js` 外部 fetch 用 idle/延迟，不卡主线程 |
-| 按需拉重模块 | 进地图再 `ensureCinema()`；开图鉴再 `ensureCodex()` + `ensureThree()` |
+| 按需拉重模块 | 进地图再 `ensureCinema()`；开图鉴再 `ensureCodex()`（实拍展柜优先，无需 Three.js） |
+| 图鉴实物 | `artifact-gallery.js` + `assets/artifacts/` 实拍参照；禁止退回几何木棍占位 |
 
 新增脚本默认进 **deferred** 队列，除非证明首页必需。
 
