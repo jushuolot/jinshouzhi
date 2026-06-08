@@ -5,6 +5,8 @@ from __future__ import annotations
 from typing import Any
 
 RECENT_VIEWED_MAX = 10
+RECENT_CHIP_DISPLAY = 6
+RECENT_CHIP_ROW = 3
 
 
 def normalize_recent_viewed(raw: Any) -> list[dict[str, str]]:
@@ -41,6 +43,17 @@ def push_recent_viewed(
     label = str(name or ticker).strip() or ticker
     rest = [x for x in base if x.get("code") != ticker]
     return ([{"code": ticker, "name": label}] + rest)[:RECENT_VIEWED_MAX]
+
+
+def push_recent_viewed_many(
+    history: list[dict[str, str]] | Any,
+    entries: list[tuple[str, str]],
+) -> list[dict[str, str]]:
+    """按时间顺序写入多条（后者更新、排在更前）。"""
+    out = normalize_recent_viewed(history)
+    for code, name in entries:
+        out = push_recent_viewed(out, code=code, name=name)
+    return out
 
 
 def chip_label(entry: dict[str, str]) -> str:

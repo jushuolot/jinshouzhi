@@ -52,7 +52,14 @@ from src.util.query_time import format_data_range, format_query_datetime
 from src.util.score_badge import pct_badge, score_badge
 from src.util.watchlist_export import filter_watchlist, sort_watchlist
 from src.util.watchlist_csv_export import watchlist_table_to_csv_bytes
-from src.util.recent_viewed import chip_label, normalize_recent_viewed, push_recent_viewed
+from src.util.recent_viewed import (
+    RECENT_CHIP_DISPLAY,
+    RECENT_CHIP_ROW,
+    chip_label,
+    normalize_recent_viewed,
+    push_recent_viewed,
+    push_recent_viewed_many,
+)
 from src.util.watch_groups import (
     assign_ticker_to_group,
     filter_watchlist_by_group,
@@ -169,19 +176,44 @@ def _record_recent_viewed(code: str, name: str = "") -> None:
         mark_dirty()
 
 
-def render() -> None:
-    st.subheader("① 分析工作台")
-    st.caption("先看下面表格（**结论**列：偏强/中性/偏弱）→ 选一只 → 点 **一键分析** 看大框结论。")
+def _on_watch_code_change() -> None:
+    code = str(st.session_state.get("watch_code") or "").strip()
+    if not code:
+        return
+    item = next(
+        (x for x in (st.session_state.get("watchlist") or []) if str(x.get("代码") or "") == code),
+        None,
+    )
+    name = str(item.get("名称") or code) if item else code
+    _record_recent_viewed(code, name)
+
+
+def _render_recent_viewed_chips() -> None:
     recent = normalize_recent_viewed(st.session_state.get("recent_viewed"))
-    if recent:
-        st.caption("最近查看（点击切换标的）")
-        chip_cols = st.columns(min(len(recent), 5))
-        for i, entry in enumerate(recent[:10]):
-            with chip_cols[i % len(chip_cols)]:
-                if st.button(chip_label(entry), key=f"recent_viewed_{i}", use_container_width=True):
+    if not recent:
+        return
+    shown = recent[:RECENT_CHIP_DISPLAY]
+    st.caption(f"最近查看（最新在左，共 {len(recent)} 只）")
+    for row_start in range(0, len(shown), RECENT_CHIP_ROW):
+        chunk = shown[row_start : row_start + RECENT_CHIP_ROW]
+        cols = st.columns(len(chunk))
+        for i, entry in enumerate(chunk):
+            with cols[i]:
+                idx = row_start + i
+                if st.button(
+                    chip_label(entry),
+                    key=f"recent_viewed_{idx}_{entry.get('code')}",
+                    use_container_width=True,
+                ):
                     st.session_state.watch_code = entry["code"]
                     _record_recent_viewed(entry["code"], entry.get("name", entry["code"]))
                     st.rerun()
+
+
+def render() -> None:
+    st.subheader("① 分析工作台")
+    st.caption("先看下面表格（**结论**列：偏强/中性/偏弱）→ 选一只 → 点 **一键分析** 看大框结论。")
+    _render_recent_viewed_chips()
     C._show_query_banner("watch")
     readonly = is_readonly_mode()
     if st.session_state.watchlist:
@@ -864,6 +896,15 @@ def render() -> None:
                     else:
                         if "watch_snapshots" not in st.session_state:
                             st.session_state.watch_snapshots = {}
+                        batch_entries = [
+                            (code, str(res.snapshot.name or code))
+                            for code, res in results.items()
+                        ]
+                        if batch_entries:
+                            st.session_state.recent_viewed = push_recent_viewed_many(
+                                st.session_state.get("recent_viewed"),
+                                batch_entries,
+                            )
                         for code, res in results.items():
                             st.session_state.watch_snapshots[code] = res.snapshot.as_dict()
                             st.session_state[f"brief_md_{code}"] = res.brief_md
@@ -999,7 +1040,12 @@ def render() -> None:
 
         st.divider()
         st.subheader("② 深入分析单只股票")
-        code = st.selectbox("选择要分析的标的", options=wl["代码"].tolist(), key="watch_code")
+        code = st.selectbox(
+            "选择要分析的标的",
+            options=wl["代码"].tolist(),
+            key="watch_code",
+            on_change=_on_watch_code_change,
+        )
         item = next((x for x in st.session_state.watchlist if x.get("代码") == code), None)
         snap_sel = (st.session_state.get("watch_snapshots") or {}).get(code) or {}
         if item and code:
@@ -1034,8 +1080,6 @@ def render() -> None:
                         code=code,
                     )
                 )
-        if item and code:
-            _record_recent_viewed(code, str(item.get("名称") or code))
         kind = str(item.get("类型") or "A") if item else "A"
         quote_ccy = str(item.get("货币") or "CNY") if item else "CNY"
         if item:
@@ -1315,6 +1359,7 @@ def render() -> None:
             else:
                 if st.button("⚡ 一键分析", type="primary", key="watch_quick", use_container_width=True):
                     try:
+                        _record_recent_viewed(code, str(item.get("名称") or code))
                         with st.spinner("并行拉取行情、新闻、财务对比并生成简报…"):
                             q_label = C._stamp_query("watch")
                             result = run_quick_analysis(
