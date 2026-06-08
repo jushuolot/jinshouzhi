@@ -239,7 +239,7 @@ def render() -> None:
         ap = len(st.session_state.get("today_picks") or [])
         gp = len(st.session_state.get("global_picks") or [])
         if ap or gp:
-            tgt = str(cloud.get("stats") or {}).get("predict_for") or tomorrow_trading_date()
+            tgt = (cloud.get("stats") or {}).get("predict_for") or tomorrow_trading_date()
             st.info(
                 f"🌙 **云端已预测明日**（目标 **{tgt}**）— "
                 f"A股 {ap} 只 · 全球 {gp} 只 · 基于今日收盘+历史K线。"
