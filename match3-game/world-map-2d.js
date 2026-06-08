@@ -52,7 +52,9 @@
       btn.style.left = pos.x + "%";
       btn.style.top = pos.y + "%";
       btn.disabled = !unlocked;
-      btn.setAttribute("aria-label", (w.name || "章节") + (unlocked ? "，点击进入" : "，尚未解锁"));
+      var tip = (w.name || "章节") + (tier.name ? " · " + tier.name : "") + (tier.desc ? " — " + tier.desc : "");
+      btn.title = tip + (unlocked ? "" : "（未解锁）");
+      btn.setAttribute("aria-label", tip + (unlocked ? "，点击进入" : "，尚未解锁"));
       btn.innerHTML =
         '<span class="world-node-pin">' +
         (w.icon || "🏺") +

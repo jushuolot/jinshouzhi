@@ -1,0 +1,77 @@
+/* Gen.46 · 桌面宽屏影院体验 */
+
+@media (min-width: 960px) {
+  body.blockbuster-mode .vn-screen.cinema-mode {
+    display: grid;
+    grid-template-columns: 1fr minmax(300px, 38%);
+    grid-template-rows: 1fr;
+    min-height: calc(100vh - 3.5rem);
+    min-height: calc(100dvh - 3.5rem);
+  }
+
+  body.blockbuster-mode .vn-screen.cinema-mode .cinema-mount {
+    grid-column: 1;
+    grid-row: 1;
+    min-height: 100%;
+    height: 100%;
+  }
+
+  body.blockbuster-mode .vn-screen.cinema-mode .vn-dialogue-box {
+    grid-column: 2;
+    grid-row: 1;
+    margin-top: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    min-height: 100%;
+    border-top: none;
+    border-left: 1px solid rgba(201, 162, 39, 0.22);
+    background: linear-gradient(90deg, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0.92) 18%);
+    padding: 2rem 1.75rem 2rem;
+  }
+
+  body.blockbuster-mode .vn-screen.cinema-mode .vn-text {
+    font-size: 1.08rem;
+    min-height: 4.5em;
+  }
+
+  body.blockbuster-mode .portrait-cinema.pc-photo .pc-layer {
+    max-width: min(88%, 520px);
+    height: 100%;
+  }
+
+  .vn-kbd-hint {
+    display: block;
+    margin: 0.5rem 0 0;
+    font-size: 0.62rem;
+    letter-spacing: 0.06em;
+    color: rgba(200, 180, 140, 0.55);
+    text-align: right;
+  }
+
+  body.blockbuster-mode #map-phase-world {
+    max-width: 980px;
+    margin: 0 auto;
+    width: 100%;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+
+  body.blockbuster-mode #map-phase-route {
+    max-width: 640px;
+    margin: 0 auto;
+    width: 100%;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+
+  body:not(.blockbuster-mode) .wrap {
+    max-width: 520px;
+  }
+}
+
+@media (max-width: 959px) {
+  .vn-kbd-hint {
+    display: none;
+  }
+}

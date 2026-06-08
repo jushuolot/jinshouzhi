@@ -60,6 +60,13 @@
       if (ni === nextOpen) cls += " current";
       card.className = cls;
       card.disabled = !unlocked;
+      card.title =
+        node.name +
+        " · 第 " +
+        (node.level + 1) +
+        " 层" +
+        (node.isTomb ? " · 终极大墓" : "") +
+        (beaten ? " · 已通过" : unlocked ? " · 点击发现线索" : " · 需先通过上一探点");
 
       var pinIcon = node.isTomb ? "⚱" : beaten ? "✓" : unlocked ? "◎" : "🔒";
       card.innerHTML =

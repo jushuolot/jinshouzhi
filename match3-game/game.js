@@ -2466,6 +2466,23 @@
     if (onSkipTo) onSkipTo();
   }
 
+  function isVnActive() {
+    if (!screenMapEl || screenMapEl.hidden) return false;
+    if (mapPhaseBriefingEl && !mapPhaseBriefingEl.hidden) return true;
+    if (mapPhaseAssemblyEl && !mapPhaseAssemblyEl.hidden) return true;
+    return false;
+  }
+
+  function skipActiveVn() {
+    if (mapPhaseBriefingEl && !mapPhaseBriefingEl.hidden) {
+      if (vnBriefingSkipBtn) vnBriefingSkipBtn.click();
+      return;
+    }
+    if (mapPhaseAssemblyEl && !mapPhaseAssemblyEl.hidden) {
+      if (vnAssemblySkipBtn) vnAssemblySkipBtn.click();
+    }
+  }
+
   function emptyIceGrid() {
     const g = [];
     for (let r = 0; r < ROWS; r++) {
@@ -3823,6 +3840,18 @@
       });
     });
   }
+  window.addEventListener("keydown", function (ev) {
+    if (!isVnActive()) return;
+    const tag = ev.target && ev.target.tagName ? ev.target.tagName.toLowerCase() : "";
+    if (tag === "input" || tag === "textarea" || tag === "select") return;
+    if (ev.key === " " || ev.key === "Enter") {
+      ev.preventDefault();
+      advanceVnLine();
+    } else if (ev.key === "Escape") {
+      ev.preventDefault();
+      skipActiveVn();
+    }
+  });
   if (boosterHammerBtn) {
     boosterHammerBtn.addEventListener("click", function () {
       if (processing || gameOver) return;
@@ -3876,9 +3905,9 @@
   if (window.PortraitPainter && window.PortraitPainter.preloadAll) {
     window.PortraitPainter.preloadAll(
       function () {
-        if (window.dismissBootSplash) window.dismissBootSplash("Gen.45 · 剧情继续就绪");
+        if (window.dismissBootSplash) window.dismissBootSplash("Gen.46 · 桌面影院就绪");
         if (window.showSystemToast)
-          window.showSystemToast("Gen.45 · 修复剧情继续按钮 · 堪舆图", 4200);
+          window.showSystemToast("Gen.46 · 宽屏分栏剧情 · 空格继续", 4200);
       },
       function (done, total) {
         if (window.setProgress) window.setProgress(72 + Math.round((done / total) * 24));
@@ -3886,6 +3915,6 @@
       }
     );
   } else {
-    if (window.dismissBootSplash) window.dismissBootSplash("Gen.45 · 就绪");
+    if (window.dismissBootSplash) window.dismissBootSplash("Gen.46 · 就绪");
   }
 })();
