@@ -3475,5 +3475,5 @@
     });
   }
   if (window.dismissBootSplash) window.dismissBootSplash("Gen.29 · 高清立绘");
-  if (window.showSystemToast) window.showSystemToast("Gen.29 · 立绘画质升级，请刷新看陈礼/胡探", 4000);
+  if (window.showSystemToast) window.showSystemToast("Gen.30 · 人像修复：不再遮脸/黑洞眼", 4000);
 })();

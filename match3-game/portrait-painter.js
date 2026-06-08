@@ -1,10 +1,10 @@
 /**
- * 乙女风 Canvas 立绘 · 高清合成绘制 Gen.29
+ * 乙女风 Canvas 立绘 · 正常人像 Gen.30
  */
 (function () {
   "use strict";
 
-  var VER = 29;
+  var VER = 30;
   var cache = {};
 
   var META = {
@@ -33,10 +33,10 @@
     },
     yangxue: {
       accent: "#6ec6ff",
-      skin: ["#fff0e8", "#f0dcc8", "#c8a890"],
-      hair: ["#0a0810", "#020104"],
-      coat: ["#243858", "#101828"],
-      eye: "#285868",
+      skin: ["#fff4ec", "#f5dcc8", "#ddb8a0"],
+      hair: ["#1a1418", "#080608"],
+      coat: ["#2a4060", "#142030"],
+      eye: "#3a6878",
       fem: true,
       role: "考古学家",
       name: "杨雪",
@@ -98,46 +98,54 @@
     return g;
   }
 
-  function drawEye(ctx, x, y, iris, sz, fem) {
+  function drawEye(ctx, x, y, irisHex, sz) {
     sz = sz || 1;
+    var iris = irisHex || "#4a3820";
     ctx.save();
-    ctx.shadowColor = "rgba(0,0,0,0.25)";
-    ctx.shadowBlur = 4;
-    ctx.fillStyle = "#faf6ee";
-    ctx.beginPath();
-    ctx.ellipse(x, y, 14 * sz, 10 * sz, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.shadowBlur = 0;
 
-    ctx.fillStyle = rad(ctx, x, y, 10 * sz, iris, "#0a0806");
+    ctx.fillStyle = "#faf8f2";
     ctx.beginPath();
-    ctx.arc(x, y + 1, 8.5 * sz, 0, Math.PI * 2);
+    ctx.ellipse(x, y, 15 * sz, 10 * sz, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    ctx.fillStyle = fem ? "rgba(100,160,200,0.35)" : "rgba(255,255,255,0.08)";
+    ctx.strokeStyle = "rgba(60,45,35,0.35)";
+    ctx.lineWidth = 1.2;
     ctx.beginPath();
-    ctx.arc(x - 2, y - 1, 5 * sz, 0, Math.PI * 2);
+    ctx.ellipse(x, y, 15 * sz, 10 * sz, 0, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.fillStyle = rad(ctx, x, y - 1, 7 * sz, iris, "#1a1008");
+    ctx.beginPath();
+    ctx.arc(x, y + 0.5, 6.5 * sz, 0, Math.PI * 2);
     ctx.fill();
 
-    ctx.fillStyle = "#0a0a0a";
+    ctx.fillStyle = "#141010";
     ctx.beginPath();
-    ctx.arc(x, y + 1, 3.5 * sz, 0, Math.PI * 2);
+    ctx.arc(x, y + 1, 2.8 * sz, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.fillStyle = "#ffffff";
     ctx.beginPath();
-    ctx.arc(x + 3, y - 2, 2.2 * sz, 0, Math.PI * 2);
+    ctx.arc(x + 2.5 * sz, y - 1.5 * sz, 2 * sz, 0, Math.PI * 2);
     ctx.fill();
     ctx.beginPath();
-    ctx.arc(x - 2, y + 2, 1 * sz, 0, Math.PI * 2);
+    ctx.arc(x - 2 * sz, y + 1.5 * sz, 0.9 * sz, 0, Math.PI * 2);
     ctx.fill();
 
-    ctx.strokeStyle = "rgba(40,30,20,0.5)";
-    ctx.lineWidth = 1.8;
+    ctx.strokeStyle = "rgba(50,35,25,0.55)";
+    ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(x - 14 * sz, y - 8 * sz);
-    ctx.quadraticCurveTo(x, y - 12 * sz, x + 14 * sz, y - 8 * sz);
+    ctx.moveTo(x - 15 * sz, y - 6 * sz);
+    ctx.quadraticCurveTo(x, y - 11 * sz, x + 15 * sz, y - 6 * sz);
     ctx.stroke();
+
+    ctx.strokeStyle = "rgba(180,140,120,0.4)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x - 12 * sz, y + 7 * sz);
+    ctx.quadraticCurveTo(x, y + 9 * sz, x + 12 * sz, y + 7 * sz);
+    ctx.stroke();
+
     ctx.restore();
   }
 
@@ -152,41 +160,42 @@
 
     if (phase === "back") {
       ctx.beginPath();
-      ctx.ellipse(cx, cy - 15, 88 * bulk, 62 * bulk, 0, Math.PI, 0);
+      ctx.ellipse(cx, cy - 18, 90 * bulk, 64 * bulk, 0, Math.PI, 0);
       ctx.fill();
       if (m.fem) {
         ctx.beginPath();
-        ctx.moveTo(cx - 75, cy);
-        ctx.bezierCurveTo(cx - 90, cy + 120, cx - 55, cy + 200, cx - 40, cy + 80);
-        ctx.bezierCurveTo(cx - 50, cy + 40, cx - 60, cy + 10, cx - 75, cy);
+        ctx.moveTo(cx - 78, cy - 5);
+        ctx.bezierCurveTo(cx - 95, cy + 90, cx - 70, cy + 210, cx - 48, cy + 95);
+        ctx.bezierCurveTo(cx - 58, cy + 50, cx - 68, cy + 15, cx - 78, cy - 5);
         ctx.fill();
         ctx.beginPath();
-        ctx.moveTo(cx + 75, cy);
-        ctx.bezierCurveTo(cx + 90, cy + 120, cx + 55, cy + 200, cx + 40, cy + 80);
-        ctx.bezierCurveTo(cx + 50, cy + 40, cx + 60, cy + 10, cx + 75, cy);
+        ctx.moveTo(cx + 78, cy - 5);
+        ctx.bezierCurveTo(cx + 95, cy + 90, cx + 70, cy + 210, cx + 48, cy + 95);
+        ctx.bezierCurveTo(cx + 58, cy + 50, cx + 68, cy + 15, cx + 78, cy - 5);
         ctx.fill();
       }
       return;
     }
 
     ctx.beginPath();
-    ctx.moveTo(cx - 70 * bulk, cy + 5);
-    ctx.bezierCurveTo(cx - 35, cy + 45, cx - 8, cy + 25, cx + 5, cy + 15);
-    ctx.bezierCurveTo(cx + 30, cy + 38, cx + 55 * bulk, cy + 12, cx + 68 * bulk, cy - 5);
-    ctx.bezierCurveTo(cx + 45, cy - 18, cx - 45, cy - 18, cx - 70 * bulk, cy + 5);
+    ctx.moveTo(cx - 72 * bulk, cy - 8);
+    ctx.bezierCurveTo(cx - 45, cy + 8, cx - 28, cy - 2, cx - 18, cy - 22);
+    ctx.lineTo(cx - 55 * bulk, cy - 28);
+    ctx.closePath();
     ctx.fill();
 
-    ctx.globalAlpha = 0.45;
-    ctx.strokeStyle = h0;
-    ctx.lineWidth = 2;
-    for (var i = 0; i < 12; i++) {
-      var sx = cx - 50 + i * 9;
-      ctx.beginPath();
-      ctx.moveTo(sx, cy - 5);
-      ctx.bezierCurveTo(sx + 4, cy + 20, sx - 2, cy + 45, sx + 6, cy + 65);
-      ctx.stroke();
-    }
-    ctx.globalAlpha = 1;
+    ctx.beginPath();
+    ctx.moveTo(cx + 72 * bulk, cy - 8);
+    ctx.bezierCurveTo(cx + 45, cy + 8, cx + 28, cy - 2, cx + 18, cy - 22);
+    ctx.lineTo(cx + 55 * bulk, cy - 28);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.moveTo(cx - 55 * bulk, cy - 30);
+    ctx.bezierCurveTo(cx - 20, cy - 38, cx + 20, cy - 38, cx + 55 * bulk, cy - 30);
+    ctx.bezierCurveTo(cx + 25, cy - 18, cx - 25, cy - 18, cx - 55 * bulk, cy - 30);
+    ctx.fill();
   }
 
   function paintComposite(ctx, w, h, m) {
@@ -241,13 +250,13 @@
     ctx.fill();
 
     ctx.globalCompositeOperation = "multiply";
-    ctx.fillStyle = "rgba(60,40,30,0.12)";
+    ctx.fillStyle = "rgba(80,50,40,0.06)";
     ctx.beginPath();
-    ctx.ellipse(cx + 25 * bulk, headY + 10, 50 * bulk, 70 * bulk, 0, 0, Math.PI * 2);
+    ctx.ellipse(cx + 22 * bulk, headY + 12, 42 * bulk, 58 * bulk, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.globalCompositeOperation = "source-over";
 
-    ctx.fillStyle = "rgba(240,160,140,0.22)";
+    ctx.fillStyle = "rgba(255,180,160,0.28)";
     ctx.beginPath();
     ctx.ellipse(cx - 38 * bulk, headY + 22, 16, 11, 0, 0, Math.PI * 2);
     ctx.ellipse(cx + 38 * bulk, headY + 22, 16, 11, 0, 0, Math.PI * 2);
@@ -260,35 +269,47 @@
       ctx.fill();
     });
 
-    drawEye(ctx, cx - 36 * bulk, headY + 4, m.eye, 1, fem);
-    drawEye(ctx, cx + 36 * bulk, headY + 4, m.eye, 1, fem);
+    drawEye(ctx, cx - 36 * bulk, headY + 4, m.eye, 1);
+    drawEye(ctx, cx + 36 * bulk, headY + 4, m.eye, 1);
 
     ctx.strokeStyle = m.hair[1];
-    ctx.lineWidth = 2.5;
+    ctx.lineWidth = 2.2;
     ctx.lineCap = "round";
     [-1, 1].forEach(function (s) {
       ctx.beginPath();
-      ctx.moveTo(cx + s * 12, headY - 18);
-      ctx.quadraticCurveTo(cx + s * 28, headY - 28, cx + s * 38, headY - 14);
+      ctx.moveTo(cx + s * 14, headY - 20);
+      ctx.quadraticCurveTo(cx + s * 32, headY - 32, cx + s * 42, headY - 16);
       ctx.stroke();
     });
 
-    ctx.fillStyle = "rgba(80,50,40,0.15)";
+    ctx.fillStyle = "rgba(90,55,45,0.12)";
     ctx.beginPath();
-    ctx.ellipse(cx, headY + 18, 8, 12, 0, 0, Math.PI * 2);
+    ctx.ellipse(cx, headY + 16, 7, 10, 0, 0, Math.PI * 2);
     ctx.fill();
+    ctx.strokeStyle = "rgba(70,45,35,0.2)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(cx, headY + 8);
+    ctx.lineTo(cx, headY + 22);
+    ctx.stroke();
 
-    ctx.fillStyle = "#a06058";
+    ctx.fillStyle = "#b86860";
     ctx.beginPath();
-    ctx.moveTo(cx - 12, headY + 38);
-    ctx.quadraticCurveTo(cx, headY + 48, cx + 12, headY + 38);
-    ctx.quadraticCurveTo(cx, headY + 44, cx - 12, headY + 38);
+    ctx.moveTo(cx - 13, headY + 36);
+    ctx.quadraticCurveTo(cx, headY + 40, cx + 13, headY + 36);
+    ctx.quadraticCurveTo(cx, headY + 43, cx - 13, headY + 36);
     ctx.fill();
-    ctx.fillStyle = "#c87870";
+    ctx.fillStyle = "#d88878";
     ctx.beginPath();
-    ctx.moveTo(cx - 10, headY + 40);
-    ctx.quadraticCurveTo(cx, headY + 46, cx + 10, headY + 40);
+    ctx.moveTo(cx - 11, headY + 38);
+    ctx.quadraticCurveTo(cx, headY + 44, cx + 11, headY + 38);
     ctx.fill();
+    ctx.strokeStyle = "rgba(120,60,50,0.35)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(cx - 11, headY + 37);
+    ctx.quadraticCurveTo(cx, headY + 39, cx + 11, headY + 37);
+    ctx.stroke();
 
     if (m.gold) {
       ctx.fillStyle = lin(ctx, cx + 6, headY + 38, cx + 18, headY + 46, [[0, "#ffe880"], [1, "#c89820"]]);

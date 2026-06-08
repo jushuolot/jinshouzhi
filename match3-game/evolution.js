@@ -6,10 +6,10 @@
   "use strict";
 
   var DEFAULT = {
-    version: "4.0.0",
-    generation: 29,
+    version: "4.1.0",
+    generation: 30,
     autoTune: { enabled: true, windowSize: 8, maxMoveAdjust: 3, targetWinRate: 0.52 },
-    patchNotes: ["Gen.29 高清乙女风立绘", "合成Canvas绘制升级"],
+    patchNotes: ["Gen.30 正常人像修复", "去遮脸发束+眼白"],
   };
 
   window.MATCH3_EVOLUTION = DEFAULT;

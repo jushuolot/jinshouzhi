@@ -193,6 +193,10 @@
   z-index: 3;
 }
 
+.pc-layer-main img {
+  filter: drop-shadow(0 20px 48px rgba(0, 0, 0, 0.75)) saturate(1.08) brightness(1.06) contrast(1.02);
+}
+
 .pc-layer-rim {
   mix-blend-mode: screen;
   opacity: 0.5;
