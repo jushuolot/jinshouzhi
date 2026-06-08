@@ -1,6 +1,6 @@
 {
-  "version": "5.8.0",
-  "generation": 54,
+  "version": "5.8.1",
+  "generation": 55,
   "universeDay": 4,
   "civilizationEpoch": "1929-07",
   "civilizationDay": 51,
@@ -15,6 +15,7 @@
     "targetWinRate": 0.52
   },
   "patchNotes": [
+    "图鉴六件文物换为 Wikimedia Commons 公开授权实拍（CC0 / CC BY-SA）",
     "图鉴按实物：六件国宝实拍展柜（纵目面具/金杖/玉璋/陶盉/象牙/太阳神鸟）",
     "图鉴 3D 文物博物馆级重做：纵目面具/金杖/玉璋/陶盉/象牙/太阳神鸟",
     "修复图鉴 3D 文物不显示（Three 引擎延后加载竞态）",

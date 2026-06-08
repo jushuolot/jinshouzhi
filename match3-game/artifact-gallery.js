@@ -41,6 +41,9 @@
     var cap = document.createElement("p");
     cap.className = "artifact-museum-caption";
     cap.textContent = e.name + " · " + e.ref;
+    if (e.license) {
+      cap.title = (e.source || "公开资料") + " · " + e.license + (e.author ? " · " + e.author : "");
+    }
     wrap.appendChild(cap);
 
     mount.appendChild(wrap);
@@ -67,6 +70,10 @@
     }
     if (this.dom && this.dom.cap) {
       this.dom.cap.textContent = e.name + " · " + e.ref;
+      if (e.license) {
+        this.dom.cap.title =
+          (e.source || "公开资料") + " · " + e.license + (e.author ? " · " + e.author : "");
+      }
     }
   };
 

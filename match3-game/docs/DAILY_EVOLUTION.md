@@ -67,7 +67,7 @@ git push game match3-pages-deploy:main --force
 | 资源瘦身 | 立绘优先 `.jpg`（`portrait-real.js`）；禁止恢复全量 PNG 阻塞预载 |
 | 网络延后 | `network-earnings.js` 外部 fetch 用 idle/延迟，不卡主线程 |
 | 按需拉重模块 | 进地图再 `ensureCinema()`；开图鉴再 `ensureCodex()`（实拍展柜优先，无需 Three.js） |
-| 图鉴实物 | `artifact-gallery.js` + `assets/artifacts/` 实拍参照；禁止退回几何木棍占位 |
+| 图鉴实物 | `artifact-gallery.js` + `assets/artifacts/` **Wikimedia Commons 公开图**（见 `ATTRIBUTION.md`）；禁止 AI 假图替代有 CC 授权的原图 |
 
 新增脚本默认进 **deferred** 队列，除非证明首页必需。
 
