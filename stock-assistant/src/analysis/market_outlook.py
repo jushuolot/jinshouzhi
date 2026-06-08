@@ -101,6 +101,15 @@ def _f(v: Any) -> float | None:
 def _fetch_index_df(ticker: str, *, days: int = 160) -> pd.DataFrame | None:
     end = date.today()
     start = end - timedelta(days=days)
+    if ticker.endswith((".SS", ".SZ")):
+        code = ticker.split(".")[0].zfill(6)
+        try:
+            from src.providers import fresh_fetch
+
+            df, _ = fresh_fetch.fetch_a_kline_fresh(code, kline="日线", start=start, end=end)
+            return df
+        except Exception:
+            pass
     try:
         return yahoo.fetch_history(ticker, start=start, end=end, interval="1d")
     except Exception:
