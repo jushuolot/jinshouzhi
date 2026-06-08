@@ -1,6 +1,6 @@
 {
-  "version": "5.2.0",
-  "generation": 41,
+  "version": "5.2.1",
+  "generation": 42,
   "releasedAt": "2026-06-08",
   "autoTune": {
     "enabled": true,
@@ -9,8 +9,8 @@
     "targetWinRate": 0.52
   },
   "patchNotes": [
-    "六人妖艳摸金校尉立绘 · 大片级光影质感",
-    "glam-mode UI · 金/绯/青三色奢华氛围",
-    "王墩力士外形俊朗 · 剧情台词保持原样"
+    "六人立绘统一为 900×1200（3:4 竖版画幅）",
+    "CSS 统一 object-fit / object-position · 消除角色间尺寸差异",
+    "Canvas 回退立绘比例对齐 450×600"
   ]
 }

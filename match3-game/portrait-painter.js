@@ -1,10 +1,10 @@
 /**
- * 乙女风 Canvas 立绘 · 妖艳摸金 Gen.41
+ * 乙女风 Canvas 立绘 · 妖艳摸金 Gen.42
  */
 (function () {
   "use strict";
 
-  var VER = 41;
+  var VER = 42;
   var cache = {};
 
   var META = {
@@ -398,8 +398,8 @@
     var key = VER + ":" + charId;
     if (cache[key]) return cache[key];
     var m = META[charId] || META.narrator;
-    var W = 560;
-    var H = 780;
+    var W = 450;
+    var H = 600;
 
     var cMain = mkCanvas(W, H);
     paintComposite(cMain.getContext("2d"), W, H, m);

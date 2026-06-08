@@ -1,10 +1,10 @@
 /**
- * 写实人像立绘 Gen.41 · 妖艳摸金校尉
+ * 写实人像立绘 Gen.42 · 统一 3:4 立绘画幅
  */
 (function () {
   "use strict";
 
-  var VER = 41;
+  var VER = 42;
   var BASE = "assets/portraits/";
   var cache = {};
   var loaded = {};

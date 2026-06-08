@@ -108,12 +108,10 @@ body.feidudu-mode .wrap {
 .portrait-cinema.pc-feidudu .pc-layer-main img.pc-photo-main {
   filter: drop-shadow(0 24px 56px rgba(0, 0, 0, 0.78)) saturate(1.08) brightness(1.06) contrast(1.02)
     sepia(0.06);
-  object-position: center 10%;
 }
 
 .portrait-cinema.pc-feidudu.pc-chubby .pc-layer-main img.pc-photo-main {
-  transform: scale(1.06);
-  object-position: center 8%;
+  transform: scale(1.04);
   filter: drop-shadow(0 28px 60px rgba(0, 0, 0, 0.8)) saturate(1.1) brightness(1.08) sepia(0.08);
 }
 

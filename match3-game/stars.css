@@ -1,4 +1,4 @@
-/* 妖艳摸金 · 大片质感 UI Gen.41 */
+/* 妖艳摸金 · 大片质感 UI Gen.42 */
 
 :root {
   --stars-radius: 14px;
@@ -163,7 +163,6 @@ body.glam-mode .evolution-badge {
 
 .portrait-cinema.pc-idol .pc-layer-main img.pc-photo-main {
   filter: drop-shadow(0 22px 52px rgba(0, 0, 0, 0.82)) saturate(1.04) brightness(1.05) contrast(1.04);
-  object-position: center 11%;
 }
 
 .portrait-cinema.pc-glam .pc-layer-main img.pc-photo-main {
@@ -173,7 +172,6 @@ body.glam-mode .evolution-badge {
     saturate(1.12)
     brightness(calc(1.08 * var(--pc-talk-light, 1)))
     contrast(1.08);
-  object-position: center 10%;
 }
 
 .portrait-cinema.pc-glam .pc-layer-back img.pc-photo-bg {

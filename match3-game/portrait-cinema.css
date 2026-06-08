@@ -197,18 +197,25 @@
   filter: drop-shadow(0 20px 48px rgba(0, 0, 0, 0.75)) saturate(1.08) brightness(1.06) contrast(1.02);
 }
 
-/* Gen.31 写实摄影立绘 */
+/* Gen.31 写实摄影立绘 · Gen.42 统一 3:4 画幅 */
+.portrait-cinema.pc-photo {
+  --pc-aspect: 3 / 4;
+  --pc-photo-focus: center 14%;
+}
+
 .portrait-cinema.pc-photo .pc-layer {
-  width: min(98%, 640px);
-  height: 100%;
+  width: min(92%, 480px);
+  height: auto;
+  aspect-ratio: var(--pc-aspect);
+  max-height: 100%;
 }
 
 .portrait-cinema.pc-photo .pc-layer-main img.pc-photo-main {
   object-fit: cover;
-  object-position: center 12%;
-  width: 108%;
-  height: 108%;
-  margin-left: -4%;
+  object-position: var(--pc-photo-focus);
+  width: 100%;
+  height: 100%;
+  margin: 0;
   filter: drop-shadow(0 24px 56px rgba(0, 0, 0, 0.82)) saturate(1.05) brightness(calc(1.04 * var(--pc-talk-light, 1))) contrast(1.06);
   transform: scale(var(--pc-talk-zoom, 1));
   transition: opacity 0.45s ease, filter 0.2s ease, transform 0.2s ease;
@@ -216,13 +223,13 @@
 
 .portrait-cinema.pc-photo .pc-layer-back img.pc-photo-bg {
   object-fit: cover;
-  object-position: center 18%;
-  width: 118%;
-  height: 118%;
-  margin-left: -9%;
+  object-position: var(--pc-photo-focus);
+  width: 106%;
+  height: 106%;
+  margin-left: -3%;
   filter: blur(22px) saturate(1.2) brightness(0.55);
   opacity: 0.72;
-  transform: scale(1.08);
+  transform: scale(1.04);
 }
 
 .portrait-cinema.pc-photo .pc-photo-loading {

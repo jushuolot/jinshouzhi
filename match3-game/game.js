@@ -3815,9 +3815,9 @@
   if (window.PortraitPainter && window.PortraitPainter.preloadAll) {
     window.PortraitPainter.preloadAll(
       function () {
-        if (window.dismissBootSplash) window.dismissBootSplash("Gen.41 · 妖艳摸金就绪");
+        if (window.dismissBootSplash) window.dismissBootSplash("Gen.42 · 画幅统一就绪");
         if (window.showSystemToast)
-          window.showSystemToast("Gen.41 · 妖艳摸金校尉立绘 · 摸金天团出征", 4200);
+          window.showSystemToast("Gen.42 · 立绘画幅统一 · 摸金天团出征", 4200);
       },
       function (done, total) {
         if (window.setProgress) window.setProgress(72 + Math.round((done / total) * 24));
@@ -3825,6 +3825,6 @@
       }
     );
   } else {
-    if (window.dismissBootSplash) window.dismissBootSplash("Gen.41 · 就绪");
+    if (window.dismissBootSplash) window.dismissBootSplash("Gen.42 · 就绪");
   }
 })();
