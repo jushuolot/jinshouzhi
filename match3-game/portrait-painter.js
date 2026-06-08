@@ -1,19 +1,19 @@
 /**
- * 乙女风 Canvas 立绘 · 俊男美女 Gen.40
+ * 乙女风 Canvas 立绘 · 妖艳摸金 Gen.41
  */
 (function () {
   "use strict";
 
-  var VER = 40;
+  var VER = 41;
   var cache = {};
 
   var META = {
     hutan: {
-      accent: "#c9a227",
-      skin: ["#f5dcc0", "#d4a574", "#9a6840"],
-      hair: ["#2a2018", "#0a0806"],
-      coat: ["#3d5038", "#1a2818"],
-      eye: "#4a3820",
+      accent: "#e8c060",
+      skin: ["#f8e8d8", "#e0c098", "#b88858"],
+      hair: ["#1a1410", "#050403"],
+      coat: ["#2a3028", "#0a1008"],
+      eye: "#3a2818",
       hat: true,
       role: "摸金校尉",
       name: "胡探",
@@ -21,55 +21,55 @@
       stubble: true,
     },
     wangdun: {
-      accent: "#e07a4a",
-      skin: ["#f0d0a0", "#daa070", "#a87848"],
-      hair: ["#1a1410", "#050403"],
-      coat: ["#5a3020", "#2a1810"],
+      accent: "#e89060",
+      skin: ["#f5dcc0", "#daa070", "#b07848"],
+      hair: ["#141010", "#030201"],
+      coat: ["#4a2818", "#1a0c08"],
       eye: "#2a1810",
-      bulk: 1.06,
+      bulk: 1.04,
       role: "力士",
       name: "王墩",
       side: "left",
     },
     yangxue: {
-      accent: "#6ec6ff",
-      skin: ["#fff4ec", "#f5dcc8", "#ddb8a0"],
-      hair: ["#1a1418", "#080608"],
-      coat: ["#2a4060", "#142030"],
-      eye: "#3a6878",
+      accent: "#5ec8e0",
+      skin: ["#fff8f0", "#f8e0d0", "#e0b8a0"],
+      hair: ["#141018", "#060608"],
+      coat: ["#1a3048", "#0a1828"],
+      eye: "#286878",
       fem: true,
       role: "考古学家",
       name: "杨雪",
       side: "right",
     },
     jinyaliu: {
-      accent: "#ffd93d",
-      skin: ["#f0c890", "#cea060", "#986040"],
-      hair: ["#3a2818", "#1a1008"],
-      coat: ["#4a3828", "#2a2010"],
-      eye: "#3a2010",
+      accent: "#ffd040",
+      skin: ["#f5d8a8", "#d89860", "#a86838"],
+      hair: ["#2a1810", "#100804"],
+      coat: ["#3a2818", "#1a1008"],
+      eye: "#381808",
       gold: true,
       role: "顾问",
       name: "金牙刘",
       side: "left",
     },
     chenli: {
-      accent: "#a8d4b8",
-      skin: ["#f5ead8", "#e0c8a0", "#b09870"],
-      hair: ["#707070", "#404040"],
-      coat: ["#383430", "#181614"],
-      eye: "#3a5850",
+      accent: "#88d8a8",
+      skin: ["#faf0e0", "#e8d0a8", "#c0a078"],
+      hair: ["#606060", "#303030"],
+      coat: ["#283028", "#101410"],
+      eye: "#285848",
       glasses: true,
       role: "权威",
       name: "陈礼",
       side: "right",
     },
     narrator: {
-      accent: "#a89070",
-      skin: ["#d4b898", "#a08060", "#786048"],
-      hair: ["#404040", "#202020"],
-      coat: ["#2a2420", "#0a0806"],
-      eye: "#504838",
+      accent: "#c8a878",
+      skin: ["#e8c8a8", "#b89878", "#886848"],
+      hair: ["#383838", "#181818"],
+      coat: ["#2a2018", "#080604"],
+      eye: "#484030",
       role: "古蜀秘档",
       name: "旁白",
       side: "center",
@@ -257,7 +257,7 @@
     ctx.fill();
     ctx.globalCompositeOperation = "source-over";
 
-    ctx.fillStyle = "rgba(255,180,160,0.28)";
+    ctx.fillStyle = "rgba(255,180,160,0.38)";
     ctx.beginPath();
     ctx.ellipse(cx - 38 * bulk, headY + 22, 16, 11, 0, 0, Math.PI * 2);
     ctx.ellipse(cx + 38 * bulk, headY + 22, 16, 11, 0, 0, Math.PI * 2);
@@ -371,7 +371,10 @@
       ctx.stroke();
     }
 
-    ctx.fillStyle = lin(ctx, w * 0.7, 0, w, h, [[0, "rgba(0,0,0,0)"], [1, m.accent + "18"]]);
+    ctx.fillStyle = lin(ctx, w * 0.72, 0, w, h, [[0, "rgba(0,0,0,0)"], [0.6, m.accent + "12"], [1, m.accent + "28"]]);
+    ctx.fillRect(0, 0, w, h);
+
+    ctx.fillStyle = rad(ctx, w * 0.15, h * 0.2, w * 0.35, "rgba(192,64,80,0.06)", "rgba(0,0,0,0)");
     ctx.fillRect(0, 0, w, h);
   }
 

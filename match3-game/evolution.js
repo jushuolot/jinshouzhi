@@ -6,10 +6,10 @@
   "use strict";
 
   var DEFAULT = {
-    version: "5.1.0",
-    generation: 40,
+    version: "5.2.0",
+    generation: 41,
     autoTune: { enabled: true, windowSize: 8, maxMoveAdjust: 3, targetWinRate: 0.52 },
-    patchNotes: ["Gen.40 俊男美女", "写实立绘+考古天团UI"],
+    patchNotes: ["Gen.41 妖艳摸金", "妖艳立绘+glam-mode UI"],
   };
 
   window.MATCH3_EVOLUTION = DEFAULT;

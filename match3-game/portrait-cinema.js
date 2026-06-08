@@ -34,6 +34,7 @@
       (compact ? " compact" : "") +
       (art.photo ? " pc-photo" : "") +
       (art.idol ? " pc-idol" : "") +
+      (art.glam ? " pc-glam" : "") +
       '" style="--pc-accent:' +
       art.accent +
       '">' +

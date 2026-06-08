@@ -1,10 +1,10 @@
 /**
- * 写实人像立绘 Gen.40 · 俊男美女
+ * 写实人像立绘 Gen.41 · 妖艳摸金校尉
  */
 (function () {
   "use strict";
 
-  var VER = 40;
+  var VER = 41;
   var BASE = "assets/portraits/";
   var cache = {};
   var loaded = {};
@@ -42,6 +42,7 @@
       photo: true,
       depth: true,
       idol: true,
+      glam: true,
       layers: {
         back: layerImg(url, "", "pc-photo-bg"),
         body: "",

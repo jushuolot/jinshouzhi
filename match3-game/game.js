@@ -1907,7 +1907,7 @@
   function applyWorldTheme(levelIdx) {
     const w = worldForLevel(levelIdx);
     const keepBlockbuster = document.body.classList.contains("blockbuster-mode");
-    document.body.className = w.theme + " stars-mode";
+    document.body.className = w.theme + " stars-mode glam-mode";
     if (keepBlockbuster) document.body.classList.add("blockbuster-mode");
     if (worldIconEl) worldIconEl.textContent = w.icon;
     if (worldNameEl) worldNameEl.textContent = w.name;
@@ -3815,9 +3815,9 @@
   if (window.PortraitPainter && window.PortraitPainter.preloadAll) {
     window.PortraitPainter.preloadAll(
       function () {
-        if (window.dismissBootSplash) window.dismissBootSplash("Gen.40 · 俊男美女就绪");
+        if (window.dismissBootSplash) window.dismissBootSplash("Gen.41 · 妖艳摸金就绪");
         if (window.showSystemToast)
-          window.showSystemToast("Gen.40 · 写实俊男美女立绘 · 考古天团出征", 4200);
+          window.showSystemToast("Gen.41 · 妖艳摸金校尉立绘 · 摸金天团出征", 4200);
       },
       function (done, total) {
         if (window.setProgress) window.setProgress(72 + Math.round((done / total) * 24));
@@ -3825,6 +3825,6 @@
       }
     );
   } else {
-    if (window.dismissBootSplash) window.dismissBootSplash("Gen.40 · 就绪");
+    if (window.dismissBootSplash) window.dismissBootSplash("Gen.41 · 就绪");
   }
 })();

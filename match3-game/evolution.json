@@ -1,6 +1,6 @@
 {
-  "version": "5.1.0",
-  "generation": 40,
+  "version": "5.2.0",
+  "generation": 41,
   "releasedAt": "2026-06-08",
   "autoTune": {
     "enabled": true,
@@ -9,8 +9,8 @@
     "targetWinRate": 0.52
   },
   "patchNotes": [
-    "六人写实俊男美女立绘 · 替换肥嘟嘟圆润风",
-    "考古天团 UI · stars-mode 大片质感",
+    "六人妖艳摸金校尉立绘 · 大片级光影质感",
+    "glam-mode UI · 金/绯/青三色奢华氛围",
     "王墩力士外形俊朗 · 剧情台词保持原样"
   ]
 }
