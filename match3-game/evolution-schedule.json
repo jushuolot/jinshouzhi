@@ -1,0 +1,22 @@
+{
+  "enabled": true,
+  "cadence": "daily",
+  "checkTimeLocal": "evening",
+  "ownerNote": "用户每晚检查，Agent 白天后台进化",
+  "lastGeneration": 47,
+  "lastVersion": "5.5.0",
+  "nextThemes": [
+    "闯关连击与 match-fx 强化",
+    "章节过场与 BGM 衔接",
+    "图鉴 3D 与 codex 影院",
+    "大墓 BOSS 关特殊演出",
+    "桌面快捷键扩展到发现/结算"
+  ],
+  "deploy": {
+    "monorepo": "jushuolot/jinshouzhi",
+    "branch": "main",
+    "subtreeRemote": "game",
+    "subtreePrefix": "match3-game",
+    "liveUrl": "https://jushuolot.github.io/game/"
+  }
+}
