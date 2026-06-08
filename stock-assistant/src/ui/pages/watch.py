@@ -48,6 +48,15 @@ from src.ui.sector_alert_panel import render_sector_linkage_panel
 from src.ui.speech_summary import render_speech_button
 from src.ui.stock_plates_panel import render_stock_plates_panel
 from src.util.currency import currency_display, normalize_watchlist
+from src.util.data_date_label import (
+    build_kline_caption,
+    data_lag_hint,
+    format_trade_date_cn,
+    metric_date_suffix,
+    parse_bar_date,
+    snapshot_time_label,
+    today_label_cn,
+)
 from src.util.query_time import format_data_range, format_query_datetime
 from src.util.score_badge import pct_badge, score_badge
 from src.util.watchlist_export import filter_watchlist, sort_watchlist
@@ -158,6 +167,7 @@ def _watchlist_display_rows(watchlist: list[dict[str, Any]]) -> list[dict[str, A
                 "结论": verdict,
                 "涨跌幅%": pct_badge(pct) if pct is not None else "—",
                 "评分": score_badge(score) if score is not None else "—",
+                "摘要时间": snapshot_time_label(snap.get("updated_at")),
                 "新鲜度": stale or "✓",
                 "一句话": snap.get("one_line") or "—",
                 "货币": item.get("货币"),
@@ -214,7 +224,7 @@ def render() -> None:
     st.subheader("① 分析工作台")
     st.caption("先看下面表格（**结论**列：偏强/中性/偏弱）→ 选一只 → 点 **一键分析** 看大框结论。")
     _render_recent_viewed_chips()
-    C._show_query_banner("watch")
+    C._show_query_banner("watch", extra=f"今天 {today_label_cn()}")
     readonly = is_readonly_mode()
     if st.session_state.watchlist:
         st.session_state.watchlist = normalize_watchlist(st.session_state.watchlist)
@@ -964,7 +974,9 @@ def render() -> None:
         wl = pd.DataFrame(_watchlist_display_rows(display_wl))
         show_cols = [
             c
-            for c in ["名称", "代码", "结论", "涨跌幅%", "评分", "一句话", "新鲜度", "货币", "类型", "市场"]
+            for c in [
+                "名称", "代码", "结论", "涨跌幅%", "评分", "摘要时间", "一句话", "新鲜度", "货币", "类型", "市场"
+            ]
             if c in wl.columns
         ]
         st.markdown("**你的自选股一览**（绿=偏强 · 红=偏弱 · 黄=中性）")
@@ -1273,20 +1285,32 @@ def render() -> None:
                     df, ksrc = watch_df, watch_ksrc
                     q_label = C._stamp_query("watch")
                     stats = last_bar_stats(df)
+                    bar_d = parse_bar_date(stats.get("日期"))
+                    ds = metric_date_suffix(bar_d)
                     title = f"{item.get('名称', '')}（{code}）"
                     if stats:
                         m1, m2, m3, m4, m5 = st.columns(5)
                         pct = stats.get("涨跌幅%") or 0
-                        m1.metric("最新收盘", f"{stats.get('收盘', 0):.2f}")
-                        m2.metric("涨跌幅", f"{pct:+.2f}%", delta=f"{stats.get('涨跌额', 0):+.2f}")
-                        m3.metric("最高", f"{stats.get('最高', 0):.2f}")
-                        m4.metric("最低", f"{stats.get('最低', 0):.2f}")
+                        m1.metric(f"收盘{ds}", f"{stats.get('收盘', 0):.2f}")
+                        m2.metric(f"涨跌{ds}", f"{pct:+.2f}%", delta=f"{stats.get('涨跌额', 0):+.2f}")
+                        m3.metric(f"最高{ds}", f"{stats.get('最高', 0):.2f}")
+                        m4.metric(f"最低{ds}", f"{stats.get('最低', 0):.2f}")
                         vol = stats.get("成交量")
-                        m5.metric("成交量", f"{vol:,.0f}" if vol is not None else "—")
+                        m5.metric(f"成交量{ds}", f"{vol:,.0f}" if vol is not None else "—")
                         st.caption(
-                            f"行情：{ksrc}　|　报价货币：{currency_display(quote_ccy)}　|　查询：{q_label}　|　"
-                            f"区间：{format_data_range(start, end)}　|　最新交易日：{stats.get('日期', '')}"
+                            build_kline_caption(
+                                stats,
+                                ksrc=ksrc,
+                                query_label=q_label,
+                                range_text=format_data_range(start, end),
+                                currency=currency_display(quote_ccy),
+                            )
                         )
+                        lag = data_lag_hint(bar_d)
+                        if lag:
+                            st.warning(lag)
+                        if "Yahoo" in ksrc and "东财" in ksrc:
+                            st.caption("💡 当前走 Yahoo 备用源，A 股日线可能比东财慢 1–3 个交易日。")
                     else:
                         st.info(
                             f"报价货币：{currency_display(quote_ccy)}　|　"
@@ -1294,9 +1318,12 @@ def render() -> None:
                         )
                     if intraday and kind != "A":
                         st.warning("分钟 K 线仅支持沪深京 A 股东方财富；当前标的将尝试日线或可能无数据。")
+                    chart_title = f"{title} · {currency_display(quote_ccy)}"
+                    if bar_d:
+                        chart_title += f" · K线至 {format_trade_date_cn(bar_d)}"
                     fig = build_pro_chart_multipane(
                         df,
-                        f"{title} · {currency_display(quote_ccy)}",
+                        chart_title,
                         indicator=indicator,
                         show_ma=(5, 10, 20, 60),
                         visible_bars=int(st.session_state.watch_visible_bars),

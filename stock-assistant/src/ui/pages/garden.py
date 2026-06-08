@@ -31,6 +31,7 @@ from src.ui import app_core as C
 from src.util.app_meta import APP_VERSION, EVOLUTION_STEP
 from src.util.cloud_picks_loader import load_cloud_picks
 from src.util.cloud_runtime import cloud_mode_label, is_streamlit_cloud
+from src.util.data_date_label import build_listing_caption, today_label_cn
 from src.util.readonly_mode import is_readonly_mode
 
 
@@ -303,9 +304,14 @@ def render() -> None:
     predict_for = st.session_state.get("predict_for") or tomorrow_trading_date()
     if st.session_state.get("last_pick_at"):
         st.caption(
-            f"分析日：{st.session_state['last_pick_at']} · 预测目标：**{predict_for}** · "
-            f"数据源：{st.session_state.get('last_pick_source', '东财')}"
+            build_listing_caption(
+                data_day=str(st.session_state["last_pick_at"]),
+                query_day=date.today().isoformat(),
+                extra=f"预测交易日 **{predict_for}** · {st.session_state.get('last_pick_source', '东财')}",
+            )
         )
+    else:
+        st.caption(f"📅 今天：**{today_label_cn()}**")
 
     # 核对历史推荐（轻量，可手动触发）
     if not readonly and st.button("📊 核对推荐成绩单", use_container_width=False):
@@ -342,7 +348,7 @@ def render() -> None:
                 "名称": p.get("name"),
                 "代码": p.get("code"),
                 "明日分": f"{float(p['score']):.1f}" if p.get("score") is not None else "—",
-                "今日涨跌%": f"{float(p['pct']):+.2f}" if p.get("pct") is not None else "—",
+                "榜单日涨跌%": f"{float(p['pct']):+.2f}" if p.get("pct") is not None else "—",
                 "建议持有": p.get("hold_days") or "—",
                 "一句话": (p.get("reason") or "")[:80],
             }
