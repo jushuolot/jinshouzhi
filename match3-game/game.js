@@ -507,33 +507,64 @@
 
   const MUSIC_TRACKS = [
     {
-      name: "林间小调",
-      bpm: 104,
-      root: 60, // C
-      scale: [0, 2, 4, 7, 9], // pentatonic major
-      leadType: "sine",
-      bassType: "triangle",
-      patternLen: 16,
-    },
-    {
-      name: "蘑菇舞步",
-      bpm: 122,
-      root: 57, // A
-      scale: [0, 3, 5, 7, 10], // pentatonic minor
+      name: "青铜祭鼓",
+      bpm: 88,
+      root: 55,
+      scale: [0, 3, 5, 7, 10],
       leadType: "triangle",
       bassType: "sine",
       patternLen: 16,
     },
     {
-      name: "仙人掌夜曲",
-      bpm: 96,
-      root: 62, // D
-      scale: [0, 2, 3, 5, 7, 10], // dorian-ish
+      name: "纵目诡歌",
+      bpm: 92,
+      root: 58,
+      scale: [0, 2, 3, 7, 8],
+      leadType: "sine",
+      bassType: "triangle",
+      patternLen: 16,
+    },
+    {
+      name: "神树脉动",
+      bpm: 100,
+      root: 62,
+      scale: [0, 2, 4, 7, 9],
       leadType: "sine",
       bassType: "triangle",
       patternLen: 12,
     },
+    {
+      name: "金沙夜火",
+      bpm: 108,
+      root: 64,
+      scale: [0, 2, 4, 7, 11],
+      leadType: "triangle",
+      bassType: "sine",
+      patternLen: 16,
+    },
+    {
+      name: "天书终章",
+      bpm: 96,
+      root: 52,
+      scale: [0, 3, 5, 8, 10],
+      leadType: "sine",
+      bassType: "triangle",
+      patternLen: 14,
+    },
   ];
+
+  function syncMusicToChapter(levelIdx) {
+    const ch = Math.min(MUSIC_TRACKS.length - 1, Math.floor(levelIdx / 20));
+    if (musicTrackIdx !== ch) {
+      musicTrackIdx = ch;
+      if (musicEnabled) startMusic();
+    }
+  }
+
+  function soundTypeTick() {
+    resumeAudio();
+    beep(420 + randomInt(80), 0.028, 0.12, "sine");
+  }
 
   function stopMusic() {
     if (musicTimer) {
@@ -1875,13 +1906,17 @@
 
   function applyWorldTheme(levelIdx) {
     const w = worldForLevel(levelIdx);
-    document.body.className = w.theme;
+    const keepBlockbuster = document.body.classList.contains("blockbuster-mode");
+    document.body.className = w.theme + " feidudu-mode";
+    if (keepBlockbuster) document.body.classList.add("blockbuster-mode");
     if (worldIconEl) worldIconEl.textContent = w.icon;
     if (worldNameEl) worldNameEl.textContent = w.name;
     if (goalsWorldEl) {
       goalsWorldEl.textContent =
         w.icon + " " + w.name + (w.subtitle ? " · " + w.subtitle : "") + " · 第 " + (levelIdx + 1) + " 层";
     }
+    syncMusicToChapter(levelIdx);
+    if (window.TombAtmosphere) window.TombAtmosphere.apply(levelIdx);
   }
 
   function showScreen(name) {
@@ -2280,6 +2315,7 @@
     let i = 0;
     vnTypingTimer = window.setInterval(function () {
       el.textContent += text.charAt(i);
+      if (i % 2 === 0) soundTypeTick();
       i += 1;
       if (i >= text.length) {
         clearVnTyping();
@@ -3779,9 +3815,9 @@
   if (window.PortraitPainter && window.PortraitPainter.preloadAll) {
     window.PortraitPainter.preloadAll(
       function () {
-        if (window.dismissBootSplash) window.dismissBootSplash("Gen.38 · 肥嘟嘟全站就绪");
+        if (window.dismissBootSplash) window.dismissBootSplash("Gen.39 · 墓冢音画就绪");
         if (window.showSystemToast)
-          window.showSystemToast("Gen.38 · 圆润暖调 · 六角色肥嘟嘟立绘 · 胖爷小队", 4500);
+          window.showSystemToast("Gen.39 · 五章古蜀BGM · 火把氛围 · VN打字音", 4200);
       },
       function (done, total) {
         if (window.setProgress) window.setProgress(72 + Math.round((done / total) * 24));
@@ -3789,6 +3825,6 @@
       }
     );
   } else {
-    if (window.dismissBootSplash) window.dismissBootSplash("Gen.38 · 就绪");
+    if (window.dismissBootSplash) window.dismissBootSplash("Gen.39 · 就绪");
   }
 })();

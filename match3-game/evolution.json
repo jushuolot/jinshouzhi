@@ -1,6 +1,6 @@
 {
-  "version": "4.9.0",
-  "generation": 38,
+  "version": "5.0.0",
+  "generation": 39,
   "releasedAt": "2026-06-08",
   "autoTune": {
     "enabled": true,
@@ -9,9 +9,9 @@
     "targetWinRate": 0.52
   },
   "patchNotes": [
-    "六角色肥嘟嘟写实立绘 · 圆润暖调重绘",
-    "全站 feidudu.css · 圆角按钮/格子/柔和阴影",
-    "立绘影院暖色分级 · 王墩额外 pc-chubby",
-    "首页胖爷小队圆 pill · 锤子胖爷之力 toast"
+    "五章古蜀 procedural BGM · 随章节自动切换",
+    "闯关火把氛围 · 棋盘暗角随章节变色",
+    "VN 打字机轻音 · 墓冢对话更有临场感",
+    "修复换章时 feidudu-mode 样式丢失"
   ]
 }
