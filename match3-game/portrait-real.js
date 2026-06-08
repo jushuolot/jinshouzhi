@@ -1,10 +1,10 @@
 /**
- * 写实人像立绘 Gen.31 · PNG 主路径，Canvas 回退
+ * 写实人像立绘 Gen.32 · 双层景深 + 预载进度
  */
 (function () {
   "use strict";
 
-  var VER = 31;
+  var VER = 32;
   var BASE = "assets/portraits/";
   var cache = {};
   var loaded = {};
@@ -13,19 +13,25 @@
   var fallback = window.PortraitPainter;
   var META = (fallback && fallback.meta) || {};
 
-  function layerImg(url, alt) {
+  function layerImg(url, alt, extraClass) {
     return (
       '<img src="' +
       url +
       '" alt="' +
       (alt || "") +
-      '" draggable="false" loading="eager" class="pc-photo" decoding="async"/>'
+      '" draggable="false" loading="eager" decoding="async" class="pc-photo' +
+      (extraClass ? " " + extraClass : "") +
+      '"/>'
     );
+  }
+
+  function photoUrl(charId) {
+    return BASE + charId + ".png?v=" + VER;
   }
 
   function photoArt(charId) {
     var m = META[charId] || META.narrator || {};
-    var url = BASE + charId + ".png?v=" + VER;
+    var url = photoUrl(charId);
     return {
       name: m.name || charId,
       role: m.role || "",
@@ -34,10 +40,11 @@
       charId: charId,
       composite: true,
       photo: true,
+      depth: true,
       layers: {
-        back: "",
+        back: layerImg(url, "", "pc-photo-bg"),
         body: "",
-        face: layerImg(url, m.name),
+        face: layerImg(url, m.name, "pc-photo-main"),
         hair: "",
         acc: "",
         rim: "",
@@ -55,28 +62,31 @@
     return cache[key];
   }
 
-  function preloadAll(onDone) {
+  function preloadAll(onDone, onProgress) {
     var ids = Object.keys(META);
     if (!ids.length) {
       if (onDone) onDone();
       return;
     }
     var pending = ids.length;
-    function doneOne(id, ok) {
+    var done = 0;
+    function tick(id, ok) {
       loaded[id] = !!ok;
       if (!ok) failed[id] = true;
+      done += 1;
       pending -= 1;
+      if (onProgress) onProgress(done, ids.length, id);
       if (pending <= 0 && onDone) onDone();
     }
     ids.forEach(function (id) {
       var img = new Image();
       img.onload = function () {
-        doneOne(id, true);
+        tick(id, true);
       };
       img.onerror = function () {
-        doneOne(id, false);
+        tick(id, false);
       };
-      img.src = BASE + id + ".png?v=" + VER;
+      img.src = photoUrl(id);
     });
   }
 
@@ -88,6 +98,7 @@
     paint: getArt,
     getArt: getArt,
     preloadAll: preloadAll,
+    photoUrl: photoUrl,
     isPhotoReady: function (charId) {
       return !!loaded[charId] && !failed[charId];
     },

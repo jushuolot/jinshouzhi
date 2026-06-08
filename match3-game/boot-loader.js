@@ -104,6 +104,9 @@
       "</p></div>";
   };
 
+  window.setProgress = setProgress;
+  window.setBootStatus = setStatus;
+
   window.threeReady = typeof THREE !== "undefined";
 
   if (document.readyState === "loading") {

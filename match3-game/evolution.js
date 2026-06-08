@@ -6,10 +6,10 @@
   "use strict";
 
   var DEFAULT = {
-    version: "4.2.0",
-    generation: 31,
+    version: "4.3.0",
+    generation: 32,
     autoTune: { enabled: true, windowSize: 8, maxMoveAdjust: 3, targetWinRate: 0.52 },
-    patchNotes: ["Gen.31 写实摄影立绘", "六角色 PNG + 电影调色"],
+    patchNotes: ["Gen.32 活照片影院", "景深双层+换角淡化+打字微动"],
   };
 
   window.MATCH3_EVOLUTION = DEFAULT;

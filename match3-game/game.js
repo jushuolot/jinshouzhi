@@ -2027,6 +2027,11 @@
     });
   }
 
+  function getActiveCinema() {
+    if (vnMode === "briefing") return briefingCinema;
+    return assemblyCinema;
+  }
+
   function clearVnTyping() {
     if (vnTypingTimer) {
       window.clearInterval(vnTypingTimer);
@@ -2042,6 +2047,8 @@
     clearVnTyping();
     el.textContent = "";
     el.classList.add("typing");
+    var cinema = getActiveCinema();
+    if (cinema && cinema.ok) cinema.setTalking(true);
     let i = 0;
     vnTypingTimer = window.setInterval(function () {
       el.textContent += text.charAt(i);
@@ -2049,6 +2056,7 @@
       if (i >= text.length) {
         clearVnTyping();
         el.classList.remove("typing");
+        if (cinema && cinema.ok) cinema.setTalking(false);
         if (onDone) onDone();
       }
     }, 32);
@@ -2091,10 +2099,10 @@
     }
     if (vnMode === "briefing") {
       initBriefingCinema();
-      if (briefingCinema && briefingCinema.ok) briefingCinema.showCharacter(charId, true);
+      if (briefingCinema && briefingCinema.ok) briefingCinema.showCharacter(charId, false);
     } else {
       initAssemblyCinema();
-      if (assemblyCinema && assemblyCinema.ok) assemblyCinema.showCharacter(charId, true);
+      if (assemblyCinema && assemblyCinema.ok) assemblyCinema.showCharacter(charId, false);
     }
     typewriteLine(ui.text, line.text || "", function () {});
   }
@@ -2106,6 +2114,8 @@
       const line = vnLines[vnLineIndex];
       ui.text.textContent = line ? line.text : "";
       ui.text.classList.remove("typing");
+      var cinema = getActiveCinema();
+      if (cinema && cinema.ok) cinema.setTalking(false);
       return;
     }
     vnLineIndex += 1;
@@ -3470,10 +3480,17 @@
 
   showHome();
   if (window.PortraitPainter && window.PortraitPainter.preloadAll) {
-    window.PortraitPainter.preloadAll(function () {
-      if (window.showSystemToast) window.showSystemToast("手绘立绘已预载 · Gen.27", 2800);
-    });
+    window.PortraitPainter.preloadAll(
+      function () {
+        if (window.dismissBootSplash) window.dismissBootSplash("Gen.32 · 活照片影院就绪");
+        if (window.showSystemToast) window.showSystemToast("Gen.32 · 景深双层 · 换角交叉淡化 · 打字微动", 4200);
+      },
+      function (done, total) {
+        if (window.setProgress) window.setProgress(72 + Math.round((done / total) * 24));
+        if (window.setBootStatus) window.setBootStatus("预载立绘 " + done + "/" + total + "…");
+      }
+    );
+  } else {
+    if (window.dismissBootSplash) window.dismissBootSplash("Gen.32 · 就绪");
   }
-  if (window.dismissBootSplash) window.dismissBootSplash("Gen.31 · 写实人像就绪");
-  if (window.showSystemToast) window.showSystemToast("Gen.31 · 六角色写实摄影立绘 · 电影感 VN", 4200);
 })();

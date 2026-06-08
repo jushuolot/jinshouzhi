@@ -102,7 +102,7 @@
     requestAnimationFrame(this._frame);
   }
 
-  PortraitCinema.prototype.showCharacter = function (charId, talking) {
+  PortraitCinema.prototype._mountCharacter = function (charId, talking) {
     var art = resolveArt(charId);
     if (!art) return;
     art.charId = charId;
@@ -114,11 +114,49 @@
     this.talking = !!talking;
     this.enterT = 0;
     this.charId = charId;
-    if (this.root) this.root.classList.add("pc-enter");
+    if (this.root) {
+      this.root.classList.add("pc-enter");
+      this.root.classList.remove("pc-exit");
+    }
+    var photos = this.mount.querySelectorAll(".pc-photo-main, .pc-photo-bg");
+    for (var p = 0; p < photos.length; p++) {
+      var img = photos[p];
+      img.classList.add("pc-photo-loading");
+      if (img.complete && img.naturalWidth > 0) {
+        img.classList.add("pc-photo-loaded");
+      } else {
+        img.addEventListener(
+          "load",
+          function (el) {
+            el.classList.remove("pc-photo-loading");
+            el.classList.add("pc-photo-loaded");
+          }.bind(null, img),
+          { once: true }
+        );
+      }
+    }
     var self = this;
     window.requestAnimationFrame(function () {
       if (self.root) self.root.classList.add("pc-ready");
     });
+    if (this.root) this.root.classList.toggle("pc-talking", this.talking);
+  };
+
+  PortraitCinema.prototype.showCharacter = function (charId, talking) {
+    talking = !!talking;
+    if (this.charId === charId && this.root) {
+      this.setTalking(talking);
+      return;
+    }
+    var self = this;
+    if (this.root && this.stage) {
+      this.root.classList.add("pc-exit");
+      window.setTimeout(function () {
+        self._mountCharacter(charId, talking);
+      }, 260);
+      return;
+    }
+    this._mountCharacter(charId, talking);
   };
 
   PortraitCinema.prototype.setTalking = function (on) {
@@ -162,7 +200,8 @@
     }
 
     this.blinkT += 0.016;
-    if (this.blinkT > 4.5) {
+    var isPhoto = this.root && this.root.classList.contains("pc-photo");
+    if (!isPhoto && this.blinkT > 4.5) {
       this.blinkT = 0;
       if (this.root) {
         this.root.classList.add("pc-blink");
@@ -175,7 +214,15 @@
 
     if (this.root) {
       this.root.classList.toggle("pc-talking", this.talking);
-      this.root.style.setProperty("--pc-pulse", 0.5 + Math.sin(t * 12) * 0.5);
+      var pulse = 0.5 + Math.sin(t * 12) * 0.5;
+      this.root.style.setProperty("--pc-pulse", pulse);
+      if (isPhoto && this.talking) {
+        this.root.style.setProperty("--pc-talk-zoom", 1 + pulse * 0.012);
+        this.root.style.setProperty("--pc-talk-light", 1 + pulse * 0.06);
+      } else {
+        this.root.style.setProperty("--pc-talk-zoom", 1);
+        this.root.style.setProperty("--pc-talk-light", 1);
+      }
     }
   };
 

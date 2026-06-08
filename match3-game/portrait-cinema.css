@@ -203,17 +203,56 @@
   height: 100%;
 }
 
-.portrait-cinema.pc-photo .pc-layer-main img.pc-photo {
+.portrait-cinema.pc-photo .pc-layer-main img.pc-photo-main {
   object-fit: cover;
   object-position: center 12%;
   width: 108%;
   height: 108%;
   margin-left: -4%;
-  filter: drop-shadow(0 24px 56px rgba(0, 0, 0, 0.82)) saturate(1.05) brightness(1.04) contrast(1.06);
+  filter: drop-shadow(0 24px 56px rgba(0, 0, 0, 0.82)) saturate(1.05) brightness(calc(1.04 * var(--pc-talk-light, 1))) contrast(1.06);
+  transform: scale(var(--pc-talk-zoom, 1));
+  transition: opacity 0.45s ease, filter 0.2s ease, transform 0.2s ease;
 }
 
-.portrait-cinema.pc-photo.pc-talking .pc-layer-main img.pc-photo {
+.portrait-cinema.pc-photo .pc-layer-back img.pc-photo-bg {
+  object-fit: cover;
+  object-position: center 18%;
+  width: 118%;
+  height: 118%;
+  margin-left: -9%;
+  filter: blur(22px) saturate(1.2) brightness(0.55);
+  opacity: 0.72;
+  transform: scale(1.08);
+}
+
+.portrait-cinema.pc-photo .pc-photo-loading {
+  opacity: 0;
+}
+
+.portrait-cinema.pc-photo .pc-photo-loaded {
+  opacity: 1;
+  transition: opacity 0.55s ease;
+}
+
+.portrait-cinema.pc-photo.pc-exit .pc-stage {
+  opacity: 0 !important;
+  filter: blur(8px) !important;
+  transform: scale(0.96) !important;
+  transition: opacity 0.26s ease, filter 0.26s ease, transform 0.26s ease;
+}
+
+.portrait-cinema.pc-photo.pc-talking .pc-layer-main img.pc-photo-main {
   animation: pcTalkBounce 0.35s ease-in-out infinite alternate;
+}
+
+.portrait-cinema.pc-photo .pc-flare {
+  width: 55%;
+  animation: pcFlarePulse 4s ease-in-out infinite, pcPhotoSweep 8s ease-in-out infinite;
+}
+
+@keyframes pcPhotoSweep {
+  0%, 100% { transform: translateX(8%); opacity: 0.35; }
+  50% { transform: translateX(-6%); opacity: 0.75; }
 }
 
 .portrait-cinema.pc-photo .pc-bg-gradient {
