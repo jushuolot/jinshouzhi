@@ -26,6 +26,7 @@ from src.analysis.tomorrow_picks import fetch_garden_picks_bundle, picks_to_mark
 from src.analysis.market_outlook import compute_market_outlook, outlook_to_markdown  # noqa: E402
 from src.providers import market_data  # noqa: E402
 from src.ui import app_core as C  # noqa: E402
+from src.util.buddha_ritual import build_ritual_meta, probe_a_market  # noqa: E402
 
 CLOUD_STATE_DIR = ROOT / "cloud_state"
 LATEST_JSON = CLOUD_STATE_DIR / "latest_picks.json"
@@ -36,6 +37,12 @@ def _fetch_ranking():
 
 
 def run_scan(*, max_picks: int = 5) -> dict:
+    probe = probe_a_market()
+    if not probe.fresh:
+        raise RuntimeError(
+            f"佛祖金标准：A股数据不新鲜（需 {probe.expected_lo}~{probe.expected_hi}，"
+            f"实际 {probe.bar_date or '无'}）。{probe.error}"
+        )
     a_picks, global_picks, src, stats = fetch_garden_picks_bundle(
         _fetch_ranking,
         C._fetch_one,
@@ -45,12 +52,20 @@ def run_scan(*, max_picks: int = 5) -> dict:
     now = datetime.now(timezone.utc).astimezone().isoformat(timespec="seconds")
     tgt = stats.get("predict_for") or tomorrow_trading_date()
     outlook = compute_market_outlook()
+    ritual = build_ritual_meta(
+        probe,
+        a_picks=len(a_picks),
+        global_picks=len(global_picks),
+        predict_for=tgt,
+    )
     payload = {
         "generated_at": now,
         "source": src,
         "stats": stats,
         "predict_for": tgt,
         "market_outlook": outlook.as_dict(),
+        "ritual": ritual,
+        "data_probe": probe.as_dict(),
         "picks": [p.as_dict() for p in a_picks],
         "global_picks": [p.as_dict() for p in global_picks],
         "markdown": picks_to_markdown(
@@ -119,6 +134,27 @@ def main() -> int:
     if stdout_only:
         print(payload.get("markdown") or "")
         return 0
+    if n == 0 and gn == 0 and LATEST_JSON.exists():
+        try:
+            old = json.loads(LATEST_JSON.read_text(encoding="utf-8"))
+            old_n = len(old.get("picks") or [])
+            old_gn = len(old.get("global_picks") or [])
+            if old_n or old_gn:
+                old["ritual"] = payload.get("ritual")
+                old["data_probe"] = payload.get("data_probe")
+                old["generated_at"] = payload.get("generated_at")
+                old["market_outlook"] = payload.get("market_outlook")
+                old["stats"] = payload.get("stats")
+                old["predict_for"] = payload.get("predict_for")
+                path = write_cloud_state(old)
+                print(
+                    f"[garden_cloud_cron] empty scan, kept previous "
+                    f"a_picks={old_n} global={old_gn} ritual updated"
+                )
+                maybe_webhook(old)
+                return 0
+        except Exception as exc:
+            print(f"[garden_cloud_cron] keep-previous skip: {exc}")
     path = write_cloud_state(payload)
     print(f"[garden_cloud_cron] wrote {path}")
     maybe_webhook(payload)

@@ -30,6 +30,7 @@ def _print_kline_source(label: str, df, *, now) -> None:
 
 
 def main() -> int:
+    strict = "--strict" in sys.argv
     now = fresh_fetch.china_now()
     end = now.date()
     start = end - timedelta(days=30)
@@ -65,11 +66,13 @@ def main() -> int:
     except Exception as exc:
         print(f"  Yahoo Finance: ❌ 失败 ({exc})")
 
+    kline_ok = False
     try:
         df_best, src = fresh_fetch.fetch_a_kline_fresh(
             PROBE, kline="日线", start=start, end=end, now=now
         )
         _print_kline_source(f"新鲜优选 → {src}", df_best, now=now)
+        kline_ok = True
     except Exception as exc:
         print(f"  新鲜优选: ❌ 全部失败 ({exc})")
 
@@ -90,12 +93,17 @@ def main() -> int:
         except Exception as exc:
             print(f"  {label}: ❌ 失败 ({exc})")
 
+    rank_ok = False
     try:
         df_r, src_r = fresh_fetch.fetch_a_ranking_fresh(board=BOARD, limit=20, now=now)
         print(f"  新鲜优选 → {src_r}: {len(df_r)} 行 ✅")
+        rank_ok = True
     except Exception as exc:
         print(f"  新鲜优选: ❌ 全部失败 ({exc})")
 
+    if strict and not (kline_ok and rank_ok):
+        print("\n[data_freshness_check] STRICT 未通过")
+        return 1
     return 0
 
 

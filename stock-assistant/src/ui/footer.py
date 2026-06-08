@@ -5,6 +5,7 @@ from __future__ import annotations
 import streamlit as st
 
 from src.util.app_meta import APP_VERSION, BUILD_LABEL, EVOLUTION_STEP
+from src.util.cloud_picks_loader import load_cloud_picks
 from src.ui.keyboard_hints import render_keyboard_hints
 from src.ui.milestone_banner import MILESTONE_STEP, WARMUP_MIN_STEP
 
@@ -24,13 +25,27 @@ def build_footer_warmup_note(step: int = EVOLUTION_STEP) -> str | None:
     )
 
 
+def _ritual_footer_bits() -> str:
+    meta = st.session_state.get("ritual_meta")
+    if not meta:
+        cloud = load_cloud_picks()
+        meta = (cloud or {}).get("ritual")
+    if not meta:
+        return ""
+    bar = meta.get("data_bar_date") or "—"
+    src = meta.get("data_source") or "—"
+    fresh = "新鲜" if meta.get("data_fresh") else "滞后"
+    return f" · 行情截止 {bar} · {src} · {fresh}"
+
+
 def render_app_footer() -> None:
     simple = str(st.session_state.get("ui_mode", "garden")) != "pro"
     st.divider()
     if not simple:
         render_keyboard_hints()
+    ritual_bits = _ritual_footer_bits()
     st.caption(
-        f"Stock Assistant v{APP_VERSION} · {BUILD_LABEL} · "
+        f"Stock Assistant v{APP_VERSION} · {BUILD_LABEL}{ritual_bits} · "
         f"已进化 {EVOLUTION_STEP} 步 · 非投资建议"
     )
     if simple:

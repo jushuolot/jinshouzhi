@@ -31,6 +31,7 @@ from src.ui import app_core as C
 from src.util.app_meta import APP_VERSION, EVOLUTION_STEP
 from src.util.cloud_picks_loader import load_cloud_picks
 from src.util.cloud_runtime import cloud_mode_label, is_streamlit_cloud
+from src.util.buddha_ritual import build_ritual_meta, probe_a_market, ritual_banner_lines
 from src.util.data_date_label import build_listing_caption, today_label_cn
 from src.util.readonly_mode import is_readonly_mode
 
@@ -150,6 +151,45 @@ def _render_market_outlook(readonly: bool, fetch_ranking) -> None:
         )
 
 
+def _sync_ritual_meta(*, a_picks: int, global_picks: int, predict_for: str) -> None:
+    """扫描后写入佛祖金标准 ritual 元数据。"""
+    try:
+        probe = probe_a_market()
+        st.session_state.ritual_meta = build_ritual_meta(
+            probe,
+            a_picks=a_picks,
+            global_picks=global_picks,
+            predict_for=predict_for,
+        )
+    except Exception as exc:
+        st.session_state.ritual_meta = {
+            "ritual_level": "red",
+            "ritual_summary": f"自检失败：{exc}",
+            "data_fresh": False,
+            "a_picks": a_picks,
+            "global_picks": global_picks,
+            "predict_for": predict_for,
+        }
+
+
+def _render_buddha_gold_banner() -> None:
+    meta = st.session_state.get("ritual_meta")
+    if not meta:
+        cloud = load_cloud_picks()
+        if cloud and cloud.get("ritual"):
+            meta = cloud["ritual"]
+            st.session_state.ritual_meta = meta
+    line, level = ritual_banner_lines(meta)
+    summary = (meta or {}).get("ritual_summary")
+    suffix = f" — {summary}" if summary else ""
+    if level == "green":
+        st.success(line + suffix)
+    elif level == "yellow":
+        st.warning(line + suffix)
+    else:
+        st.error(line + suffix)
+
+
 def _try_auto_fill_garden(
     *,
     readonly: bool,
@@ -178,7 +218,13 @@ def _try_auto_fill_garden(
             st.session_state.last_pick_scan = stats
             st.session_state["last_pick_source"] = src
             st.session_state["last_pick_at"] = date.today().isoformat()
-            st.session_state["predict_for"] = stats.get("predict_for") or tgt_date
+            pred = stats.get("predict_for") or tgt_date
+            st.session_state["predict_for"] = pred
+            _sync_ritual_meta(
+                a_picks=len(a_picks),
+                global_picks=len(global_picks),
+                predict_for=pred,
+            )
             if a_picks:
                 pick_log = append_today_picks(pick_log, a_picks)
                 st.session_state.pick_log = pick_log
@@ -209,6 +255,7 @@ def _try_auto_market_outlook(readonly: bool) -> None:
 
 def render() -> None:
     st.markdown("## 🌱 私人选股花园")
+    _render_buddha_gold_banner()
     st.caption(
         f"只有你知道密码 · {cloud_mode_label()} · "
         f"v{APP_VERSION} · 已进化 {EVOLUTION_STEP} 步"
@@ -237,6 +284,8 @@ def render() -> None:
             st.session_state["_cloud_picks_date"] = cloud_day
         if cloud.get("market_outlook"):
             st.session_state.market_outlook = cloud["market_outlook"]
+        if cloud.get("ritual"):
+            st.session_state.ritual_meta = cloud["ritual"]
         ap = len(st.session_state.get("today_picks") or [])
         gp = len(st.session_state.get("global_picks") or [])
         if ap or gp:
@@ -287,7 +336,13 @@ def render() -> None:
                 st.session_state.last_pick_scan = stats
                 st.session_state["last_pick_source"] = src
                 st.session_state["last_pick_at"] = date.today().isoformat()
-                st.session_state["predict_for"] = stats.get("predict_for") or tgt_date
+                pred = stats.get("predict_for") or tgt_date
+                st.session_state["predict_for"] = pred
+                _sync_ritual_meta(
+                    a_picks=len(a_picks),
+                    global_picks=len(global_picks),
+                    predict_for=pred,
+                )
                 pick_log = append_today_picks(pick_log, a_picks)
                 st.session_state.pick_log = pick_log
                 mark_dirty()
