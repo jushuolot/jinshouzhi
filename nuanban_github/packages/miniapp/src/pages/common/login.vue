@@ -2,7 +2,7 @@
   <view class="page">
     <image
       class="bg-img"
-      src="/static/images/login-bg-kawaii.png"
+      :src="loginBg"
       mode="aspectFill"
     />
     <view class="bg-mask" />
@@ -92,6 +92,7 @@ import { ROLE_HOME } from '../../config/tabs';
 import { useRoleStore } from '../../store/role';
 import { pbErrorMessage } from '../../utils/request';
 import { isDemoMockEnabled } from '../../utils/demo-mock';
+import loginBg from '@/static/images/login-bg-kawaii.png';
 
 const loading = ref(false);
 const phone = ref('');
@@ -249,41 +250,41 @@ function goDemoTour() {
 <style scoped>
 .page {
   position: relative;
+  min-height: 100%;
   min-height: 100vh;
   box-sizing: border-box;
   overflow: hidden;
-  background: #fff5eb;
+  background: var(--nb-peach);
 }
 
 .bg-img {
-  position: fixed;
-  top: 0;
-  left: 0;
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   z-index: 0;
 }
 
 .bg-mask {
-  position: fixed;
-  top: 0;
-  left: 0;
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   z-index: 1;
   pointer-events: none;
   background: linear-gradient(
     180deg,
-    rgba(255, 248, 240, 0.15) 0%,
-    rgba(255, 245, 235, 0.55) 38%,
-    rgba(255, 252, 248, 0.92) 62%,
-    rgba(255, 252, 248, 0.97) 100%
+    rgba(255, 248, 240, 0.08) 0%,
+    rgba(255, 245, 235, 0.45) 38%,
+    rgba(255, 252, 248, 0.88) 62%,
+    rgba(255, 252, 248, 0.95) 100%
   );
 }
 
 .content {
   position: relative;
   z-index: 2;
+  min-height: 100%;
   min-height: 100vh;
   box-sizing: border-box;
   padding: 32rpx 40rpx 48rpx;
@@ -306,11 +307,11 @@ function goDemoTour() {
   width: 100rpx;
   height: 100rpx;
   border-radius: 32rpx;
-  background: linear-gradient(145deg, #e88b4a, #c45c26);
+  background: var(--nb-primary-gradient);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 16rpx 40rpx rgba(196, 92, 38, 0.28);
+  box-shadow: var(--nb-shadow-primary);
   margin-bottom: 28rpx;
 }
 
@@ -323,7 +324,7 @@ function goDemoTour() {
 .title {
   font-size: 52rpx;
   font-weight: 700;
-  color: #3d2a1f;
+  color: var(--nb-text);
   letter-spacing: 4rpx;
   text-shadow: 0 2rpx 12rpx rgba(255, 255, 255, 0.9);
 }
@@ -331,7 +332,7 @@ function goDemoTour() {
 .sub {
   margin-top: 16rpx;
   font-size: 28rpx;
-  color: #6b5748;
+  color: var(--nb-text-secondary);
   text-align: center;
   line-height: 1.55;
   max-width: 520rpx;
@@ -351,7 +352,7 @@ function goDemoTour() {
   display: block;
   font-size: 30rpx;
   font-weight: 600;
-  color: #3d2a1f;
+  color: var(--nb-text);
   margin-bottom: 28rpx;
 }
 
@@ -361,26 +362,26 @@ function goDemoTour() {
   height: 96rpx;
   padding: 0 24rpx;
   margin-bottom: 24rpx;
-  background: #faf7f4;
-  border-radius: 16rpx;
-  border: 2rpx solid #f0e6dc;
+  background: var(--nb-surface-muted);
+  border-radius: var(--nb-radius-md);
+  border: 2rpx solid var(--nb-border);
 }
 
 .field-prefix {
   flex-shrink: 0;
   font-size: 30rpx;
   font-weight: 500;
-  color: #3d2a1f;
+  color: var(--nb-text);
   padding-right: 20rpx;
   margin-right: 20rpx;
-  border-right: 2rpx solid #ebe0d6;
+  border-right: 2rpx solid var(--nb-border-light);
 }
 
 .field-input {
   flex: 1;
   height: 96rpx;
   font-size: 30rpx;
-  color: #3d2a1f;
+  color: var(--nb-text);
   background: transparent;
 }
 
@@ -393,7 +394,7 @@ function goDemoTour() {
 }
 
 .ph {
-  color: #b8a99e;
+  color: var(--nb-text-placeholder);
 }
 
 .btn-code {
@@ -404,17 +405,17 @@ function goDemoTour() {
   line-height: 72rpx;
   font-size: 24rpx;
   font-weight: 500;
-  color: #c45c26;
-  background: #fff;
+  color: var(--nb-primary);
+  background: var(--nb-surface);
   border: none;
-  border-radius: 12rpx;
+  border-radius: var(--nb-radius-sm);
   box-shadow: 0 4rpx 12rpx rgba(196, 92, 38, 0.12);
 }
 
 .btn-code.disabled {
-  color: #b8a99e;
+  color: var(--nb-text-placeholder);
   box-shadow: none;
-  background: #f5f0eb;
+  background: var(--nb-cream-deep);
 }
 
 .btn-primary {
@@ -424,9 +425,9 @@ function goDemoTour() {
   font-size: 32rpx;
   font-weight: 600;
   color: #fff;
-  background: linear-gradient(135deg, #e88b4a 0%, #c45c26 100%);
+  background: var(--nb-primary-gradient);
   border: none;
-  border-radius: 48rpx;
+  border-radius: var(--nb-radius-pill);
   box-shadow: 0 12rpx 32rpx rgba(196, 92, 38, 0.35);
 }
 
@@ -444,12 +445,12 @@ function goDemoTour() {
 .line {
   flex: 1;
   height: 2rpx;
-  background: #f0e6dc;
+  background: var(--nb-border);
 }
 
 .or {
   font-size: 24rpx;
-  color: #b8a99e;
+  color: var(--nb-text-placeholder);
 }
 
 .btn-wx {
@@ -487,9 +488,9 @@ function goDemoTour() {
   padding: 16rpx 24rpx;
   text-align: center;
   font-size: 22rpx;
-  color: #c45c26;
+  color: var(--nb-primary);
   background: rgba(255, 255, 255, 0.75);
-  border: 2rpx dashed #e8c4a8;
+  border: 2rpx dashed var(--nb-border-dashed);
   border-radius: 999rpx;
 }
 
@@ -497,7 +498,7 @@ function goDemoTour() {
   display: block;
   margin-top: 24rpx;
   font-size: 22rpx;
-  color: #a89488;
+  color: var(--nb-text-muted);
   text-align: center;
   line-height: 1.55;
   padding: 0 16rpx;
@@ -514,11 +515,11 @@ function goDemoTour() {
 }
 
 .foot-link {
-  color: #c45c26;
+  color: var(--nb-primary);
 }
 
 .foot-muted {
-  color: #a89488;
+  color: var(--nb-text-muted);
 }
 
 .sep {
