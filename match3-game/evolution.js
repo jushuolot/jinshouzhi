@@ -6,15 +6,17 @@
   "use strict";
 
   var DEFAULT = {
-    version: "5.7.0",
-    generation: 50,
-    universeDay: 3,
+    version: "5.8.2",
+    generation: 56,
+    universeDay: 5,
     civilizationEpoch: "1929-07",
-    civilizationDay: 50,
-    civilizationYear: 2029,
-    civilizationPhase: "复兴期",
+    civilizationDay: 56,
+    civilizationYear: 2041,
+    civilizationPhase: "超越期",
+    dailyChronicle:
+      "第 5 日·线索爆发。文明历 2041，超越期——符号谱系开始自己补全，营地雨夜也多了冷粥和探方灯。",
     autoTune: { enabled: true, windowSize: 8, maxMoveAdjust: 3, targetWinRate: 0.52 },
-    patchNotes: ["Gen.50 文明时钟", "复兴期 2029 · 险情日台词"],
+    patchNotes: ["Gen.56 文明历 2041 · 超越期", "线索爆发日 · 符号谱系结算"],
   };
 
   window.MATCH3_EVOLUTION = DEFAULT;

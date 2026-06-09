@@ -15,7 +15,7 @@
     chapters: [
       {
         nodes: [
-          { id: "c0n0", name: "雨夜营地", level: 0, x: -3.5, z: 2.2, discover: ["narrator", "广汉平原，探照灯撕开雨幕。第一层探方，从这里下。"], artifactHint: 3 },
+          { id: "c0n0", name: "雨夜营地", level: 0, x: -3.5, z: 2.2, discover: ["narrator", "广汉平原，探照灯撕开雨幕。文明历二〇四一的第一层探方，从冷粥和备用电池旁边下。"], artifactHint: 3 },
           { id: "c0n1", name: "陶片层", level: 4, x: -2, z: 0.8, discover: ["wangdun", "胖爷铲子下去——陶片！成片的！刘哥你别顺手揣兜里！"], artifactHint: 3 },
           { id: "c0n2", name: "象牙露头", level: 9, x: -0.5, z: -0.3, discover: ["yangxue", "象牙饰！古蜀不产象，这是丝路来的。"], artifactHint: 4 },
           { id: "c0n3", name: "金粉纹层", level: 14, x: 1, z: -1.2, discover: ["jinyaliu", "金粉！刘哥我……就看看！王墩你闭嘴，昨晚泡面的事还没算呢！"], artifactHint: 1 },
@@ -27,7 +27,7 @@
         nodes: [
           { id: "c1n0", name: "门后甬道", level: 20, x: -3.2, z: 2, discover: ["hutan", "门开了。风从里面来，带着铜锈味。"], artifactHint: 0 },
           { id: "c1n1", name: "封土区", level: 24, x: -1.8, z: 0.5, discover: ["yangxue", "封土层！消除相邻文物等于震土。"], artifactHint: 3 },
-          { id: "c1n2", name: "金杖影", level: 29, x: -0.3, z: -0.8, discover: ["narrator", "黑暗中一根金杖的轮廓。王权与神权，在一根杖上。"], artifactHint: 1 },
+          { id: "c1n2", name: "金杖影", level: 29, x: -0.3, z: -0.8, discover: ["narrator", "黑暗中一根金杖的轮廓。王权与神权，在一根杖上；超越期的谱系表把它接到符号墙。"], artifactHint: 1 },
           { id: "c1n3", name: "神格位", level: 34, x: 1.2, z: -1.8, discover: ["chenli", "面具不是装饰，是容器。记录每一面。"], artifactHint: 0 },
           { id: "c1n4", name: "千面阵", level: 38, x: 2.5, z: -2.8, discover: ["wangdun", "妈呀，全是眼睛！胖爷先消一层——金牙刘闭上你的估价嘴！"], artifactHint: 0 },
           { id: "c1n5", name: "纵目神墓", level: 39, isTomb: true, discover: ["hutan", "II 级大墓。纵目之神，在等我们读完层位。"], artifactHint: 0 },
@@ -38,7 +38,7 @@
           { id: "c2n0", name: "树根层", level: 40, x: -3, z: 2.5, discover: ["wangdun", "神树！根比胖爷腰还粗！"], artifactHint: 2 },
           { id: "c2n1", name: "树腰洞", level: 44, x: -1.5, z: 1, discover: ["hutan", "树腰有榫眼。古蜀人插真枝于此。"], artifactHint: 2 },
           { id: "c2n2", name: "半百祭台", level: 49, x: 0, z: -0.2, discover: ["chenli", "第五十层探方。半百之数，祭台现。"], artifactHint: 5 },
-          { id: "c2n3", name: "九枝叉", level: 54, x: 1.5, z: -1.5, discover: ["yangxue", "九枝九鸟，与《山海经》互文。"], artifactHint: 5 },
+          { id: "c2n3", name: "九枝叉", level: 54, x: 1.5, z: -1.5, discover: ["yangxue", "九枝九鸟，与《山海经》互文。文明历二〇四一的对照表第一次把鸟足纹读成动词。"], artifactHint: 5 },
           { id: "c2n4", name: "树顶平台", level: 58, x: 2.8, z: -2.5, discover: ["narrator", "树顶有金沙碳迹。两个文明，一条河。"], artifactHint: 5 },
           { id: "c2n5", name: "神树天墓", level: 59, isTomb: true, discover: ["hutan", "III 级大墓。树通天地，墓通古今。"], artifactHint: 2 },
         ],
@@ -59,7 +59,7 @@
           { id: "c4n1", name: "目字层", level: 84, x: -1.7, z: 0.8, discover: ["hutan", "目。纵目。看穿了三千年的雾。"], artifactHint: 0 },
           { id: "c4n2", name: "树字层", level: 89, x: 0, z: -0.4, discover: ["yangxue", "树。神树。数据与神话，重合了。"], artifactHint: 2 },
           { id: "c4n3", name: "鸟字层", level: 94, x: 1.6, z: -1.7, discover: ["wangdun", "鸟字！胖爷识字不多，但这字认识！"], artifactHint: 5 },
-          { id: "c4n4", name: "续字前庭", level: 98, x: 2.9, z: -2.8, discover: ["narrator", "墙上只有一个字：续。"], artifactHint: 2 },
+          { id: "c4n4", name: "续字前庭", level: 98, x: 2.9, z: -2.8, discover: ["narrator", "墙上只有一个字：续。雨声停了一拍，像超越期把下一代的门缝先推开。"], artifactHint: 2 },
           { id: "c4n5", name: "天书终极墓", level: 99, isTomb: true, discover: ["chenli", "V 级终极大墓。百关杀青。文明不灭。"], artifactHint: 0 },
         ],
       },

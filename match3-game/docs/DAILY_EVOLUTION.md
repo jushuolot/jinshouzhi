@@ -172,6 +172,7 @@ MATCH3_CIVILIZATION_CLOCK.formatForSplash(); // "Gen.50 · 文明历 2029 · 复
 | `faucet_demo` | `faucet_demo` | 会话启动，可配置水龙头或模拟 |
 | `relic_bounty` | `bounty` | 晚间 18–24 点首次启动 |
 | `civilization_archive` | `network_settlement` | 每日首次启动（复兴期/超越期） |
+| `symbol_ledger` | `network_settlement` | 每日首次启动（超越期符号谱系结算） |
 
 ### 新增渠道模板（复制改写）
 
@@ -194,8 +195,8 @@ MATCH3_NETWORK_EARNINGS.creditChannel("my_channel", { amount: 0.01, meta: { ... 
 
 ## 当前基线
 
-- **Gen.50** · v5.7.0 · 宇宙第 3 日 · 险情日 · **文明历 2029 · 复兴期**
-- 文明时钟已上线；堪舆图、桌面 VN、发现弹窗、三星盛典已就绪
+- **Gen.56** · v5.8.2 · 宇宙第 5 日 · 线索爆发 · **文明历 2041 · 超越期**
+- 文明时钟已校准为 civilizationDay=generation；符号谱系结算、堪舆图、桌面 VN、发现弹窗、三星盛典已就绪
 
 ---
 
