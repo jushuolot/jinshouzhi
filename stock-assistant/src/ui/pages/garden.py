@@ -32,6 +32,7 @@ from src.ui import app_core as C
 from src.util.app_meta import APP_VERSION, EVOLUTION_STEP
 from src.util.cloud_picks_loader import load_cloud_picks
 from src.util.cloud_runtime import cloud_mode_label, is_streamlit_cloud
+from src.util.buddha_nightly_brief import build_nightly_brief, brief_to_markdown
 from src.util.buddha_ritual import build_ritual_meta, probe_a_market, ritual_banner_lines
 from src.util.data_date_label import build_listing_caption, today_label_cn
 from src.util.readonly_mode import is_readonly_mode
@@ -173,21 +174,40 @@ def _sync_ritual_meta(*, a_picks: int, global_picks: int, predict_for: str) -> N
         }
 
 
-def _render_hit_rate_card(pick_log: list) -> None:
-    summary = hit_rate_summary(pick_log)
-    if summary.get("total_verified"):
-        rate = summary.get("rate_pct")
-        st.metric(
-            "推荐成绩单",
-            f"{rate:.0f}% 涨过" if rate is not None else "—",
-            summary.get("label") or "",
-        )
+def _render_nightly_brief(
+    pick_log: list,
+    *,
+    today_picks: list,
+    global_picks: list,
+    predict_for: str,
+) -> None:
+    """佛祖每晚一页：结论 + 建议 + 可下载。"""
+    brief = build_nightly_brief(
+        ritual=st.session_state.get("ritual_meta"),
+        predict_for=predict_for,
+        a_picks=today_picks,
+        global_picks=global_picks,
+        outlook=st.session_state.get("market_outlook"),
+        hit_summary=hit_rate_summary(pick_log),
+        cloud_sync_at=st.session_state.get("_cloud_sync_at"),
+    )
+    st.session_state.nightly_brief = brief
+    mood = str(brief.get("mood") or "yellow")
+    body = "\n".join(f"- {ln}" for ln in brief.get("lines") or [])
+    action = str(brief.get("action") or "")
+    if mood == "green":
+        st.success(f"**今晚查岗**\n\n{body}\n\n**建议：** {action}")
+    elif mood == "red":
+        st.error(f"**今晚查岗**\n\n{body}\n\n**建议：** {action}")
     else:
-        pending = sum(1 for r in normalize_pick_log(pick_log) if not r.get("verified"))
-        st.caption(
-            f"📊 **推荐成绩单**：已记录 {pending} 条，"
-            "持有期满后自动核对（也可手动点下方按钮）。"
-        )
+        st.warning(f"**今晚查岗**\n\n{body}\n\n**建议：** {action}")
+    st.download_button(
+        "📥 下载今晚查岗简报 (.md)",
+        data=brief_to_markdown(brief).encode("utf-8"),
+        file_name=f"佛祖查岗_{date.today().isoformat()}.md",
+        mime="text/markdown",
+        use_container_width=True,
+    )
 
 
 def _try_auto_verify_garden(*, pick_log: list, readonly: bool) -> list:
@@ -345,22 +365,20 @@ def render() -> None:
     readonly = is_readonly_mode()
     tgt_date = tomorrow_trading_date()
     _try_auto_market_outlook(readonly)
-    _render_market_outlook(readonly=readonly, fetch_ranking=_fetch_ranking)
-
-    st.info(
-        f"**核心逻辑：** 不是今天涨最多的，而是用 **今日收盘 + 过去60日K线** "
-        f"预测 **{tgt_date} 谁更可能继续走强**（趋势延续 / 强势回踩 / 突破在即）。"
-        f" A股为主，港/美同步。"
-    )
 
     pick_log = normalize_pick_log(st.session_state.get("pick_log"))
     st.session_state.pick_log = pick_log
     pick_log = _try_auto_verify_garden(pick_log=pick_log, readonly=readonly)
-    _render_hit_rate_card(pick_log)
-    if st.session_state.get("_cloud_sync_at"):
-        st.caption(f"☁️ 云端扫盘同步：**{st.session_state['_cloud_sync_at']}**（每 5 分钟自动拉取）")
     pick_log = _try_auto_fill_garden(readonly=readonly, pick_log=pick_log, tgt_date=tgt_date)
     today_picks: list = list(st.session_state.get("today_picks") or [])
+    global_picks_early: list = list(st.session_state.get("global_picks") or [])
+    predict_for_early = st.session_state.get("predict_for") or tomorrow_trading_date()
+    _render_nightly_brief(
+        pick_log,
+        today_picks=today_picks,
+        global_picks=global_picks_early,
+        predict_for=predict_for_early,
+    )
     scan_stats = dict(st.session_state.get("last_pick_scan") or {})
 
     col_a, col_b = st.columns([2, 1])
@@ -430,16 +448,6 @@ def render() -> None:
             except Exception as e:
                 st.warning(f"核对失败：{e}")
         st.rerun()
-
-    summary = hit_rate_summary(pick_log)
-    if summary.get("total_verified"):
-        rate = summary.get("rate_pct")
-        st.success(
-            f"📊 **推荐成绩单** — {summary['label']}"
-            + (f" · 命中率 **{rate:.0f}%**" if rate is not None else "")
-        )
-    else:
-        st.caption("📊 推荐成绩单：多刷新几次、过几天再来看「涨过没有」。")
 
     today_picks = st.session_state.get("today_picks") or []
     global_picks = st.session_state.get("global_picks") or []
@@ -520,15 +528,8 @@ def render() -> None:
             use_container_width=True,
         )
 
-        buy_n = sum(
-            1
-            for p in today_picks
-            if p.get("signal") in (SIGNAL_BUY, "明日偏多")
-        )
-        st.caption(
-            f"🌙 **佛祖查岗：** 预测 **{predict_for}** · A股 {buy_n} 只「明日偏多」· "
-            f"全球 {len(global_picks)} 只 · 次日收盘后点「核对成绩单」看准不准 · 非投资建议"
-        )
+    with st.expander("📉 大盘长线风向标（1~2周大跌概率）", expanded=False):
+        _render_market_outlook(readonly=readonly, fetch_ranking=_fetch_ranking)
 
     hist = records_for_display(pick_log, limit=12)
     if hist:

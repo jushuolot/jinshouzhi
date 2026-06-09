@@ -26,6 +26,7 @@ from src.analysis.tomorrow_picks import fetch_garden_picks_bundle, picks_to_mark
 from src.analysis.market_outlook import compute_market_outlook, outlook_to_markdown  # noqa: E402
 from src.providers import market_data  # noqa: E402
 from src.ui import app_core as C  # noqa: E402
+from src.util.buddha_nightly_brief import build_nightly_brief  # noqa: E402
 from src.util.buddha_ritual import build_ritual_meta, probe_a_market  # noqa: E402
 
 CLOUD_STATE_DIR = ROOT / "cloud_state"
@@ -58,6 +59,15 @@ def run_scan(*, max_picks: int = 5) -> dict:
         global_picks=len(global_picks),
         predict_for=tgt,
     )
+    nightly = build_nightly_brief(
+        ritual=ritual,
+        predict_for=tgt,
+        a_picks=[p.as_dict() for p in a_picks],
+        global_picks=[p.as_dict() for p in global_picks],
+        outlook=outlook.as_dict(),
+        hit_summary=None,
+        cloud_sync_at=now,
+    )
     payload = {
         "generated_at": now,
         "source": src,
@@ -65,6 +75,7 @@ def run_scan(*, max_picks: int = 5) -> dict:
         "predict_for": tgt,
         "market_outlook": outlook.as_dict(),
         "ritual": ritual,
+        "nightly_brief": nightly,
         "data_probe": probe.as_dict(),
         "picks": [p.as_dict() for p in a_picks],
         "global_picks": [p.as_dict() for p in global_picks],
