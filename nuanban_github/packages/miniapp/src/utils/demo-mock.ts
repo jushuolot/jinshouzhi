@@ -181,11 +181,89 @@ function emailFromPhone(phone: string): string {
   return DEMO_PHONE_EMAIL[digits] || 'student1@test.nuanban.dev';
 }
 
-const mockRegisterRoles: {
+type DemoAuthRole = {
   role: RoleKey;
   status: string;
   elderProfileId?: string | null;
-}[] = [];
+};
+
+const mockRegisterRoles: DemoAuthRole[] = [];
+
+const DEMO_STORAGE_ROLES = 'roles';
+const DEMO_STORAGE_USER = 'user';
+
+function readStoredRoles(): DemoAuthRole[] {
+  try {
+    const stored = uni.getStorageSync(DEMO_STORAGE_ROLES);
+    if (Array.isArray(stored) && stored.length) return stored as DemoAuthRole[];
+  } catch {
+    /* ignore */
+  }
+  return [];
+}
+
+function syncMockRolesFromStorage() {
+  const stored = readStoredRoles();
+  if (stored.length && !mockRegisterRoles.length) {
+    mockRegisterRoles.push(...stored);
+  }
+}
+
+function persistDemoRoles(roles: DemoAuthRole[], user?: { id: string; nickname: string; email: string }) {
+  mockRegisterRoles.length = 0;
+  mockRegisterRoles.push(...roles);
+  try {
+    uni.setStorageSync(DEMO_STORAGE_ROLES, roles);
+    if (user) uni.setStorageSync(DEMO_STORAGE_USER, user);
+  } catch {
+    /* ignore */
+  }
+}
+
+function demoUserForRoles(roles: DemoAuthRole[]) {
+  try {
+    const stored = uni.getStorageSync(DEMO_STORAGE_USER) as { id: string; nickname: string; email: string };
+    if (stored?.id) return stored;
+  } catch {
+    /* ignore */
+  }
+  if (roles.some((r) => r.role === 'student' && r.status === 'active')) {
+    return {
+      ...DEMO_USERS.student,
+      nickname: studentProfileState.displayName || DEMO_USERS.student.nickname,
+    };
+  }
+  if (roles.some((r) => r.role === 'family')) return DEMO_USERS.family;
+  if (roles.some((r) => r.role === 'elder')) return DEMO_USERS.elder;
+  return { id: 'user-demo', nickname: '暖伴用户', email: 'demo@nuanban.dev' };
+}
+
+function loginDemoWx(pickRole?: RoleKey) {
+  syncMockRolesFromStorage();
+  const roles = mockRegisterRoles.length ? [...mockRegisterRoles] : readStoredRoles();
+  if (!roles.length) {
+    return {
+      token: MOCK_TOKEN,
+      user: { id: 'user-demo', nickname: '暖伴用户', email: 'demo@nuanban.dev' },
+      roles: [] as DemoAuthRole[],
+    };
+  }
+  const activeRoles = roles.filter((r) => r.status === 'active');
+  const active =
+    pickRole && activeRoles.some((r) => r.role === pickRole)
+      ? pickRole
+      : activeRoles.length === 1
+        ? activeRoles[0].role
+        : undefined;
+  return {
+    token: MOCK_TOKEN,
+    user: demoUserForRoles(roles),
+    roles,
+    activeRole: active,
+  };
+}
+
+syncMockRolesFromStorage();
 
 function loginByEmail(email: string, pickRole?: RoleKey) {
   const em = email.toLowerCase();
@@ -383,7 +461,8 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
 
   if (method === 'POST' && path === '/nuanban/auth/register') {
     const role = (data.role as RoleKey) || 'student';
-    const status = role === 'student' ? 'pending' : 'active';
+    const displayName = data.displayName ? String(data.displayName) : undefined;
+    const status = 'active';
     const existing = mockRegisterRoles.find((r) => r.role === role);
     if (!existing) {
       mockRegisterRoles.push({
@@ -392,7 +471,15 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
         elderProfileId: role === 'elder' ? 'elder-zhang' : null,
       });
     }
-    return delay({ ok: true, roles: [...mockRegisterRoles] } as T);
+    if (role === 'student' && displayName) {
+      studentProfileState.displayName = displayName;
+      studentProfileState.schoolName = '示范大学';
+    }
+    const roles = [...mockRegisterRoles];
+    const user = demoUserForRoles(roles);
+    if (displayName) user.nickname = displayName;
+    persistDemoRoles(roles, user);
+    return delay({ ok: true, roles } as T);
   }
 
   if (method === 'POST' && path === '/nuanban/dev-login') {
@@ -414,13 +501,7 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
 
   if (method === 'POST' && path === '/nuanban/wx-login') {
     const pickRole = data.role as RoleKey | undefined;
-    const email =
-      pickRole === 'family'
-        ? 'family1@test.nuanban.dev'
-        : pickRole === 'elder'
-          ? 'elder1@test.nuanban.dev'
-          : 'student1@test.nuanban.dev';
-    return delay(loginByEmail(email, pickRole) as T);
+    return delay(loginDemoWx(pickRole) as T);
   }
 
   if (method === 'GET' && path === '/nuanban/student/settlements') {
@@ -875,7 +956,9 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
   }
 
   if (method === 'GET' && path === '/nuanban/auth/me') {
-    return delay({ roles: [{ role: 'student', status: 'active' }] } as T);
+    syncMockRolesFromStorage();
+    const roles = mockRegisterRoles.length ? [...mockRegisterRoles] : readStoredRoles();
+    return delay({ roles } as T);
   }
 
   return Promise.reject({ message: `[演示模式] 未模拟: ${method} ${path}` });

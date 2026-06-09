@@ -11,7 +11,7 @@
     </view>
 
     <view class="tip">
-      <text>建议顺序：动画演示 → 上帝视角 → 登录 student1 → 待接单完成</text>
+      <text>建议顺序：动画演示 → 上帝视角 → 登录并选择学生身份 → 待接单完成</text>
     </view>
 
     <button class="btn-outline" @tap="goBack">返回</button>
@@ -37,7 +37,7 @@ const links = [
   {
     id: 'login',
     title: '演示登录入口',
-    desc: '开发登录 student1 / elder1 / family1',
+    desc: '一键登录 · 登录后选择老人/家属/学生身份',
     url: `${BASE}/#/pages/common/login`,
   },
   {
@@ -47,10 +47,10 @@ const links = [
     url: `${BASE}/#/pages/common/launch?tour=1`,
   },
   {
-    id: 'student1-hint',
-    title: '动画结束 → 学生体验',
-    desc: '末幕自动跳转并提示 student1',
-    url: `${BASE}/#/pages/common/login?from=tour&hint=student1`,
+    id: 'tour-login',
+    title: '动画结束 → 登录体验',
+    desc: '末幕自动跳转登录页',
+    url: `${BASE}/#/pages/common/login?from=tour`,
   },
 ];
 

@@ -98,7 +98,7 @@
             <text class="income-num">¥285.00</text>
           </view>
           <text class="caption">平台记录结算 · 三端可追溯</text>
-          <text class="last-hint">即将进入演示登录 · 建议 student1 接单体验</text>
+          <text class="last-hint">即将进入登录 · 选择身份后即可体验接单</text>
         </view>
       </view>
     </view>
@@ -184,7 +184,7 @@ onUnload(stopAuto);
 
 function goLoginFromTour() {
   stopAuto();
-  uni.navigateTo({ url: '/pages/common/login?from=tour&hint=student1' });
+  uni.navigateTo({ url: '/pages/common/login?from=tour' });
 }
 
 function goLogin() {
