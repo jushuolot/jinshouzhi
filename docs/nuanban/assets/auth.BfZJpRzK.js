@@ -1,1 +1,0 @@
-import{r as a}from"./request.CAuH8xVP.js";async function n(n,r){return a({url:"/nuanban/phone-login",method:"POST",data:{phone:n,...r?{code:r}:{}}})}async function r(n,r){return a({url:"/nuanban/wx-login",method:"POST",data:{code:n}})}async function e(n,r){return(await a({url:"/nuanban/auth/register",method:"POST",data:{role:n,displayName:r}})).roles}export{r as a,n as l,e as r};
