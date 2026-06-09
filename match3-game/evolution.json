@@ -1,12 +1,12 @@
 {
-  "version": "5.9.1",
-  "generation": 57,
-  "universeDay": 6,
+  "version": "5.9.2",
+  "generation": 58,
+  "universeDay": 7,
   "civilizationEpoch": "1929-07",
-  "civilizationDay": 57,
-  "civilizationYear": 2043,
+  "civilizationDay": 58,
+  "civilizationYear": 2045,
   "civilizationPhase": "超越期",
-  "dailyChronicle": "第 6 日·对齐日。文明历 2043，超越期——杨雪把纵目面具的公开档案和坑内序列叠在一起，差半代；胡探说罗盘在读还没发表的论文。",
+  "dailyChronicle": "第 7 日·收工复盘。文明历 2045，宇宙一圈走完——神树层位对上图鉴，王墩说最后一铲留给胖爷；造物主，此间比人间又多活了一周。",
   "releasedAt": "2026-06-10",
   "autoTune": {
     "enabled": true,
@@ -15,9 +15,9 @@
     "targetWinRate": 0.52
   },
   "patchNotes": [
-    "Gen.57 · 宇宙第6日 · 超越期 · 文明历 2043",
-    "纵目章剧情接入二〇四三对齐叙事",
-    "超越期驻场寻金渠道 + 公开镜像加码"
+    "Gen.58 · 宇宙第7日 · 收工复盘 · 文明历 2045",
+    "神树章超越期叙事；周复盘寻金渠道",
+    "超越期驻场收益略增"
   ],
   "virtualAccount": {
     "module": "virtual-account.js",

@@ -20,7 +20,8 @@
     relicBounty: { startHour: 18, endHour: 24, amount: 0.018 },
     civilizationArchive: { amount: 0.022, beyondAmount: 0.032, phases: ["复兴期", "超越期"] },
     publicCommonsMirror: { amount: 0.016, phases: ["超越期"] },
-    beyondPhaseTick: { amount: 0.0012, sessionCap: 0.008, phases: ["超越期"] },
+    beyondPhaseTick: { amount: 0.0014, sessionCap: 0.01, phases: ["超越期"] },
+    weeklyRecap: { amount: 0.02, phases: ["超越期", "复兴期"] },
     bounty: {
       label: "任务赏金(演示)",
       endpoint: "https://api.coingecko.com/api/v3/ping",
@@ -103,6 +104,12 @@
       source: "passive_yield",
       description: "超越期会话网络存在感微量收益",
     },
+    weekly_recap: {
+      id: "weekly_recap",
+      label: "周复盘赏金",
+      source: "network_settlement",
+      description: "宇宙第七日收工复盘入账",
+    },
   };
 
   var state = {
@@ -115,6 +122,7 @@
     lastCivilizationArchive: "",
     lastPublicCommonsMirror: "",
     beyondSessionTickTotal: 0,
+    lastWeeklyRecap: "",
   };
 
   var tickTimer = null;
@@ -138,6 +146,7 @@
       state.lastPublicCommonsMirror = data.lastPublicCommonsMirror || "";
       state.beyondSessionTickTotal =
         typeof data.beyondSessionTickTotal === "number" ? data.beyondSessionTickTotal : 0;
+      state.lastWeeklyRecap = data.lastWeeklyRecap || "";
     } catch (e) {
       // ignore
     }
@@ -372,6 +381,31 @@
     return credited;
   }
 
+  function tryWeeklyRecap() {
+    var evo = typeof window !== "undefined" && window.MATCH3_EVOLUTION ? window.MATCH3_EVOLUTION : {};
+    var uday = evo.universeDay || 0;
+    if (uday % 7 !== 0) return 0;
+    var key = todayKey() + "-w" + uday;
+    if (state.lastWeeklyRecap === key) return 0;
+    var clock =
+      typeof window !== "undefined" && window.MATCH3_CIVILIZATION_CLOCK
+        ? window.MATCH3_CIVILIZATION_CLOCK
+        : null;
+    var phase = clock ? clock.getPhase() : "复兴期";
+    var cfg = CONFIG.weeklyRecap;
+    if (!cfg || cfg.phases.indexOf(phase) < 0) return 0;
+    state.lastWeeklyRecap = key;
+    saveState();
+    var credited = creditChannel("weekly_recap", {
+      amount: cfg.amount,
+      meta: { kind: "weekly_recap", universeDay: uday, phase: phase },
+    });
+    if (credited > 0 && typeof window.showSystemToast === "function") {
+      window.showSystemToast("📋 宇宙第" + uday + "日收工复盘 · 入账", 3600);
+    }
+    return credited;
+  }
+
   function tryPublicCommonsMirror() {
     var key = todayKey();
     if (state.lastPublicCommonsMirror === key) return 0;
@@ -422,6 +456,7 @@
     tryRelicBounty();
     tryCivilizationArchive();
     tryPublicCommonsMirror();
+    tryWeeklyRecap();
     tryAffiliateReferral();
     startPeriodicTick();
     deferNetworkProbes();
