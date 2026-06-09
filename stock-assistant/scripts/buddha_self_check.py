@@ -76,6 +76,10 @@ def run_checks(*, strict_cloud: bool = False) -> tuple[list[str], list[str]]:
             ok.append(f"大盘展望：1~2周大跌概率 {outlook['crash_prob_1_2w_pct']}%")
         if not ap and not gp and strict_cloud:
             warn.append("云端 picks 为空（cron 应保留旧推荐或黄灯说明）")
+        err_n = int((cloud.get("stats") or {}).get("errors") or 0)
+        scanned = int((cloud.get("stats") or {}).get("scanned") or 0)
+        if scanned and err_n > scanned // 2:
+            warn.append(f"扫盘 K 线错误率偏高：errors={err_n}/{scanned}（检查 kline 周期）")
 
     for goal in CORE_GOALS:
         ok.append(f"核心目标覆盖：{goal}")

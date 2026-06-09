@@ -186,6 +186,18 @@ def normalize_pick_log(raw: Any) -> list[dict[str, Any]]:
     return out
 
 
+def has_due_verifications(log: list[dict[str, Any]] | Any, *, today: date | None = None) -> bool:
+    """是否有已到持有期、尚未验证的推荐。"""
+    ref = today or date.today()
+    for r in normalize_pick_log(log):
+        if r.get("verified"):
+            continue
+        hold = int(r.get("hold_days") or HOLD_DAYS_DEFAULT)
+        if _days_since(str(r.get("pick_date") or ""), today=ref) >= hold:
+            return True
+    return False
+
+
 def hit_rate_summary(log: list[dict[str, Any]] | Any, *, last_n: int = 20) -> dict[str, Any]:
     verified = [r for r in normalize_pick_log(log) if r.get("verified") and r.get("hit") is not None]
     recent = verified[-last_n:]

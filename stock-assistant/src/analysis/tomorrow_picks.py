@@ -314,7 +314,7 @@ def rank_tomorrow_a_picks(
     for item, list_pct, turn in candidates:
         stats["scanned"] += 1
         try:
-            df, _ = fetch_fn(item, start=start, end=end, kline="daily")
+            df, _ = fetch_fn(item, start=start, end=end, kline="日线")
         except Exception:
             stats["errors"] += 1
             continue

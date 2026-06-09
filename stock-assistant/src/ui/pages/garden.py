@@ -20,6 +20,7 @@ from src.analysis.market_outlook import (
 )
 from src.analysis.pick_tracker import (
     append_today_picks,
+    has_due_verifications,
     hit_rate_summary,
     normalize_pick_log,
     records_for_display,
@@ -172,6 +173,41 @@ def _sync_ritual_meta(*, a_picks: int, global_picks: int, predict_for: str) -> N
         }
 
 
+def _render_hit_rate_card(pick_log: list) -> None:
+    summary = hit_rate_summary(pick_log)
+    if summary.get("total_verified"):
+        rate = summary.get("rate_pct")
+        st.metric(
+            "推荐成绩单",
+            f"{rate:.0f}% 涨过" if rate is not None else "—",
+            summary.get("label") or "",
+        )
+    else:
+        pending = sum(1 for r in normalize_pick_log(pick_log) if not r.get("verified"))
+        st.caption(
+            f"📊 **推荐成绩单**：已记录 {pending} 条，"
+            "持有期满后自动核对（也可手动点下方按钮）。"
+        )
+
+
+def _try_auto_verify_garden(*, pick_log: list, readonly: bool) -> list:
+    """到期推荐每天自动核对一次。"""
+    if readonly or not has_due_verifications(pick_log):
+        return pick_log
+    if st.session_state.get("_verify_auto_date") == date.today().isoformat():
+        return pick_log
+    st.session_state._verify_auto_date = date.today().isoformat()
+    try:
+        rank_df, _ = _fetch_ranking()
+        pct_map = _pct_map_from_ranking(rank_df)
+        pick_log = verify_log(pick_log, pct_map)
+        st.session_state.pick_log = pick_log
+        mark_dirty()
+    except Exception:
+        pass
+    return pick_log
+
+
 def _render_buddha_gold_banner() -> None:
     meta = st.session_state.get("ritual_meta")
     if not meta:
@@ -271,8 +307,10 @@ def render() -> None:
     cloud = load_cloud_picks()
     if cloud and cloud.get("generated_at"):
         cloud_day = str(cloud.get("generated_at") or "")[:10]
+        cloud_ts = str(cloud.get("generated_at") or "")[:19].replace("T", " ")
         cloud_picks = list(cloud.get("picks") or [])
         cloud_global = list(cloud.get("global_picks") or [])
+        st.session_state["_cloud_sync_at"] = cloud_ts
         if st.session_state.get("_cloud_picks_date") != cloud_day:
             if cloud_picks or cloud_global:
                 st.session_state.today_picks = cloud_picks
@@ -284,6 +322,10 @@ def render() -> None:
                     or (cloud.get("stats") or {}).get("predict_for")
                     or tomorrow_trading_date()
                 )
+                pl = normalize_pick_log(st.session_state.get("pick_log"))
+                pl = append_today_picks(pl, cloud_picks, day=cloud_day)
+                st.session_state.pick_log = pl
+                mark_dirty()
             st.session_state["_cloud_picks_date"] = cloud_day
         if cloud.get("market_outlook"):
             st.session_state.market_outlook = cloud["market_outlook"]
@@ -313,6 +355,10 @@ def render() -> None:
 
     pick_log = normalize_pick_log(st.session_state.get("pick_log"))
     st.session_state.pick_log = pick_log
+    pick_log = _try_auto_verify_garden(pick_log=pick_log, readonly=readonly)
+    _render_hit_rate_card(pick_log)
+    if st.session_state.get("_cloud_sync_at"):
+        st.caption(f"☁️ 云端扫盘同步：**{st.session_state['_cloud_sync_at']}**（每 5 分钟自动拉取）")
     pick_log = _try_auto_fill_garden(readonly=readonly, pick_log=pick_log, tgt_date=tgt_date)
     today_picks: list = list(st.session_state.get("today_picks") or [])
     scan_stats = dict(st.session_state.get("last_pick_scan") or {})

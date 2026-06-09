@@ -450,7 +450,7 @@ def enrich_picks_with_long_term(
         name = str(p.get("name") or code)
         item = {"代码": code, "名称": name, "类型": "A", "市场": p.get("market") or "A股"}
         try:
-            df, _ = fetch_fn(item, start=start, end=end, kline="daily")
+            df, _ = fetch_fn(item, start=start, end=end, kline="日线")
             lo = analyze_stock_long_term(df, code=code, name=name)
             if lo:
                 row["long_2w"] = lo.outlook_2w

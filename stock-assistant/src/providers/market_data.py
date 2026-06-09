@@ -39,6 +39,13 @@ def fetch_a_ranking_multi(*, board: str = "涨幅榜", limit: int = 50) -> tuple
     return fresh_fetch.fetch_a_ranking_fresh(board=board, limit=limit)
 
 
+def _normalize_kline_period(kline: str) -> str:
+    k = (kline or "").strip()
+    if k.lower() in ("daily", "1d", "d"):
+        return "日线"
+    return k
+
+
 def fetch_kline_multi(
     *,
     kind: str,
@@ -47,6 +54,7 @@ def fetch_kline_multi(
     start: date,
     end: date,
 ) -> tuple[pd.DataFrame, str]:
+    kline = _normalize_kline_period(kline)
     code = (code or "").strip()
     if kind == "A" and code.isdigit() and len(code) == 6:
         if eastmoney.is_intraday_kline(kline):
