@@ -14,6 +14,7 @@ from src.util.cloud_runtime import is_streamlit_cloud
 ROOT = Path(__file__).resolve().parents[2]
 LATEST = ROOT / "cloud_state" / "latest_picks.json"
 COHORT = ROOT / "cloud_state" / "cohort_insights.json"
+CLOUD_PICK_LOG = ROOT / "cloud_state" / "cloud_pick_log.json"
 DEFAULT_RAW_URL = (
     "https://raw.githubusercontent.com/jushuolot/jinshouzhi/main/"
     "stock-assistant/cloud_state/latest_picks.json"
@@ -123,6 +124,29 @@ def load_cohort_insights(path: Path | None = None, *, prefer_remote: bool | None
         try:
             data = json.loads(p.read_text(encoding="utf-8"))
             return _normalize_cohort(data)
+        except (json.JSONDecodeError, OSError):
+            pass
+    return None
+
+
+def load_cloud_pick_summary(*, prefer_remote: bool | None = None) -> dict[str, Any] | None:
+    """云端推荐成绩单摘要（含命中率与复盘提示）。"""
+    use_remote = is_streamlit_cloud() if prefer_remote is None else prefer_remote
+    if use_remote:
+        cloud = load_cloud_picks(prefer_remote=True)
+        if cloud and cloud.get("hit_summary"):
+            return {
+                "hit_summary": cloud.get("hit_summary"),
+                "strategy_hints": cloud.get("strategy_hints") or [],
+            }
+    if CLOUD_PICK_LOG.is_file():
+        try:
+            data = json.loads(CLOUD_PICK_LOG.read_text(encoding="utf-8"))
+            if isinstance(data, dict) and data.get("hit_summary"):
+                return {
+                    "hit_summary": data.get("hit_summary"),
+                    "strategy_hints": [],
+                }
         except (json.JSONDecodeError, OSError):
             pass
     return None

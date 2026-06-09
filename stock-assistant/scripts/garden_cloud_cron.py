@@ -26,6 +26,7 @@ from src.analysis.tomorrow_picks import fetch_garden_picks_bundle, picks_to_mark
 from src.analysis.market_outlook import compute_market_outlook, outlook_to_markdown  # noqa: E402
 from src.providers import market_data  # noqa: E402
 from src.ui import app_core as C  # noqa: E402
+from src.storage.cloud_pick_log import sync_cloud_pick_log  # noqa: E402
 from src.util.buddha_nightly_brief import build_nightly_brief  # noqa: E402
 from src.util.buddha_ritual import build_ritual_meta, probe_a_market  # noqa: E402
 
@@ -59,14 +60,21 @@ def run_scan(*, max_picks: int = 5) -> dict:
         global_picks=len(global_picks),
         predict_for=tgt,
     )
+    pick_day = now[:10]
+    pick_meta = sync_cloud_pick_log(
+        [p.as_dict() for p in a_picks],
+        pick_day=pick_day,
+        fetch_ranking=_fetch_ranking,
+    )
     nightly = build_nightly_brief(
         ritual=ritual,
         predict_for=tgt,
         a_picks=[p.as_dict() for p in a_picks],
         global_picks=[p.as_dict() for p in global_picks],
         outlook=outlook.as_dict(),
-        hit_summary=None,
+        hit_summary=pick_meta.get("hit_summary"),
         cloud_sync_at=now,
+        strategy_hints=pick_meta.get("strategy_hints"),
     )
     payload = {
         "generated_at": now,
@@ -76,6 +84,8 @@ def run_scan(*, max_picks: int = 5) -> dict:
         "market_outlook": outlook.as_dict(),
         "ritual": ritual,
         "nightly_brief": nightly,
+        "hit_summary": pick_meta.get("hit_summary"),
+        "strategy_hints": pick_meta.get("strategy_hints") or [],
         "data_probe": probe.as_dict(),
         "picks": [p.as_dict() for p in a_picks],
         "global_picks": [p.as_dict() for p in global_picks],

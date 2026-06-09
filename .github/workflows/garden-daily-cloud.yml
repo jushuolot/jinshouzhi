@@ -14,6 +14,7 @@ on:
       - "stock-assistant/scripts/garden_cloud_cron.py"
       - "stock-assistant/scripts/cohort_cloud_cron.py"
       - "stock-assistant/cloud_state/user_contrib/**"
+      - "stock-assistant/cloud_state/cloud_pick_log.json"
 
 permissions:
   contents: write

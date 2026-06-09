@@ -18,6 +18,7 @@ def build_nightly_brief(
     outlook: dict[str, Any] | None,
     hit_summary: dict[str, Any] | None,
     cloud_sync_at: str | None = None,
+    strategy_hints: list[str] | None = None,
     version: str = APP_VERSION,
     step: int = EVOLUTION_STEP,
 ) -> dict[str, Any]:
@@ -37,7 +38,10 @@ def build_nightly_brief(
     advice = str((outlook or {}).get("advice") or "")[:120]
 
     hit_rate = (hit_summary or {}).get("rate_pct")
+    hit_src = (hit_summary or {}).get("source")
     hit_label = (hit_summary or {}).get("label") or "尚无到期验证"
+    if hit_src == "cloud" and hit_label != "尚无到期验证记录":
+        hit_label = f"云端{hit_label}"
 
     if not fresh:
         action = "数据未达今日标准，请勿采信推荐；等收盘后或明日再开。"
@@ -67,6 +71,8 @@ def build_nightly_brief(
     cohort_line = cohort_brief_line(resolve_cohort_data())
     if cohort_line:
         lines.append(cohort_line)
+    for hint in (strategy_hints or [])[:3]:
+        lines.append(f"**复盘** {hint}")
 
     return {
         "as_of": date.today().isoformat(),

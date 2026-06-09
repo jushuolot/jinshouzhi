@@ -1,0 +1,23 @@
+---
+description: Stock Assistant 自主进化约定（用户忙时持续迭代）
+globs: stock-assistant/**
+alwaysApply: false
+---
+
+# 暖伴选股 · 自主进化
+
+用户说「自己进化」「按计划进化」「记住进化」时：
+
+1. **读当前版本**：`stock-assistant/src/util/app_meta.py`（PHASE / step / version）
+2. **下一阶命名**：`P{N}` + 必要时 `P{N}b` 小修；step +1；版本按语义递增（小改 patch，功能 minor）
+3. **优先方向**（按价值排序）：
+   - 花园主流程：搜 → 体检卡 → 佛祖查岗 → 明日推荐 → 复盘闭环
+   - 云端零本地：`cloud_state/`、nightly cron、GitHub raw 热更新
+   - 多人 cohort 画像与汇总
+   - 可读一页纸 / 简报导出
+   - 修复 Streamlit 布局与嵌套 expander 问题
+4. **每次交付**：单元测试 + `bash scripts/evolve_verify.sh` → commit → push `main`（用户未反对时默认推送以便 Streamlit 部署）
+5. **克制**：最小 diff；不堆无关功能；不提交 secrets
+6. **文档**：只更新 `app_meta.py` CHANGELOG；除非用户要求，不改大段 EVOLUTION.md
+
+当前基线：**P124 · v5.9.0 · step 1166**

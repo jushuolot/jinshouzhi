@@ -31,7 +31,7 @@ from src.providers import market_data
 from src.storage.history_store import mark_dirty
 from src.ui import app_core as C
 from src.util.app_meta import APP_VERSION, EVOLUTION_STEP
-from src.util.cloud_picks_loader import load_cloud_picks
+from src.util.cloud_picks_loader import load_cloud_pick_summary, load_cloud_picks
 from src.util.cloud_runtime import cloud_mode_label, is_streamlit_cloud
 from src.util.buddha_nightly_brief import build_nightly_brief, brief_to_markdown
 from src.util.buddha_ritual import build_ritual_meta, probe_a_market, ritual_banner_lines
@@ -297,6 +297,21 @@ def _sync_ritual_meta(*, a_picks: int, global_picks: int, predict_for: str) -> N
         }
 
 
+def _effective_hit_summary(pick_log: list) -> tuple[dict, list[str]]:
+    local = hit_rate_summary(pick_log)
+    hints: list[str] = list(st.session_state.get("_cloud_strategy_hints") or [])
+    cloud = load_cloud_pick_summary()
+    if cloud:
+        ch = cloud.get("hit_summary") or {}
+        hints = list(cloud.get("strategy_hints") or hints)
+        if int(ch.get("total_verified") or 0) > int(local.get("total_verified") or 0):
+            return ch, hints
+    ch_sess = st.session_state.get("_cloud_hit_summary")
+    if ch_sess and int(ch_sess.get("total_verified") or 0) > int(local.get("total_verified") or 0):
+        return ch_sess, hints
+    return local, hints
+
+
 def _render_nightly_brief(
     pick_log: list,
     *,
@@ -305,14 +320,16 @@ def _render_nightly_brief(
     predict_for: str,
 ) -> None:
     """佛祖每晚一页：结论 + 建议 + 可下载。"""
+    hit_summary, strategy_hints = _effective_hit_summary(pick_log)
     brief = build_nightly_brief(
         ritual=st.session_state.get("ritual_meta"),
         predict_for=predict_for,
         a_picks=today_picks,
         global_picks=global_picks,
         outlook=st.session_state.get("market_outlook"),
-        hit_summary=hit_rate_summary(pick_log),
+        hit_summary=hit_summary,
         cloud_sync_at=st.session_state.get("_cloud_sync_at"),
+        strategy_hints=strategy_hints,
     )
     st.session_state.nightly_brief = brief
     mood = str(brief.get("mood") or "yellow")
@@ -475,6 +492,10 @@ def render() -> None:
             st.session_state.market_outlook = cloud["market_outlook"]
         if cloud.get("ritual"):
             st.session_state.ritual_meta = cloud["ritual"]
+        if cloud.get("hit_summary"):
+            st.session_state["_cloud_hit_summary"] = cloud["hit_summary"]
+        if cloud.get("strategy_hints"):
+            st.session_state["_cloud_strategy_hints"] = cloud["strategy_hints"]
         ap = len(st.session_state.get("today_picks") or [])
         gp = len(st.session_state.get("global_picks") or [])
         if ap or gp:
