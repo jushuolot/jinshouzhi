@@ -65,6 +65,37 @@ def _pct_map_from_ranking(df: pd.DataFrame) -> dict[str, float | None]:
     return out
 
 
+def _try_auto_pick_review(pick_log: list, *, readonly: bool) -> None:
+    """每天打开花园自动跑一次 3 日复盘（缓存，限 8 条）。"""
+    if readonly or not pick_log:
+        return
+    today_s = date.today().isoformat()
+    if st.session_state.get("_pick_review_auto_date") == today_s:
+        return
+    if st.session_state.get("pick_reviews") is not None:
+        st.session_state._pick_review_auto_date = today_s
+        return
+    st.session_state._pick_review_auto_date = today_s
+    with st.spinner("自动复盘近几日推荐（D+1~D+3）…"):
+        try:
+            reviews = review_recent_picks(pick_log, C._fetch_one, limit=8)
+            st.session_state.pick_reviews = [r.as_dict() for r in reviews]
+        except Exception:
+            pass
+
+
+def _fund_tag_display(p: dict) -> str:
+    tag = p.get("fund_tag")
+    if tag:
+        return str(tag)
+    reason = str(p.get("reason") or "")
+    if "质量：" not in reason:
+        return "—"
+    qpart = reason.split("质量：", 1)[-1]
+    bits = [t.strip() for t in qpart.split("、") if any(k in t for k in ("基金", "QFII", "机构"))]
+    return "、".join(bits[:2]) if bits else "—"
+
+
 def _render_pick_review(pick_log: list, *, readonly: bool) -> None:
     """昨日及近几日推荐的 3 日内涨跌对比，用于优化策略。"""
     st.markdown("### 📊 推荐复盘 · 3日对比")
@@ -73,6 +104,8 @@ def _render_pick_review(pick_log: list, *, readonly: bool) -> None:
     if not pick_log:
         st.info("尚无推荐记录；完成一次「预测明日」后会自动记入。")
         return
+
+    _try_auto_pick_review(pick_log, readonly=readonly)
 
     col_r1, col_r2 = st.columns([2, 1])
     with col_r1:
@@ -85,11 +118,11 @@ def _render_pick_review(pick_log: list, *, readonly: bool) -> None:
     cached = st.session_state.get("pick_reviews")
     if do_refresh:
         with st.spinner("拉取推荐标的 K 线，计算 D+1~D+3…"):
-            reviews = review_recent_picks(pick_log, C._fetch_one, limit=15)
+            reviews = review_recent_picks(pick_log, C._fetch_one, limit=8)
             st.session_state.pick_reviews = [r.as_dict() for r in reviews]
             cached = st.session_state.pick_reviews
     elif cached is None:
-        st.info("点 **「刷新 3 日复盘」** 对比昨日推荐在之后 3 个交易日的表现。")
+        st.info("复盘数据加载中；也可点 **「刷新 3 日复盘」** 手动更新。")
         return
 
     reviews_objs = []
@@ -554,6 +587,7 @@ def render() -> None:
                 "名称": p.get("name"),
                 "代码": p.get("code"),
                 "明日分": f"{float(p['score']):.1f}" if p.get("score") is not None else "—",
+                "机构持股": _fund_tag_display(p),
                 "榜单日涨跌%": f"{float(p['pct']):+.2f}" if p.get("pct") is not None else "—",
                 "建议持有": p.get("hold_days") or "—",
                 "一句话": (p.get("reason") or "")[:80],

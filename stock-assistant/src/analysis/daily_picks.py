@@ -28,6 +28,7 @@ class DailyPick:
     reason: str
     price: float | None = None
     market: str = "A股"
+    fund_tag: str | None = None
 
     def as_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -137,6 +138,33 @@ def _signal_from_global(anomaly: float, pct: float | None) -> tuple[str, str, st
     return SIGNAL_SKIP, "—", "动能偏弱"
 
 
+GLOBAL_PCT_ABS_MAX = 50.0
+
+
+def _is_weird_global_ticker(code: str, name: str, market_label: str) -> bool:
+    """过滤权证壳股、OTC 粉单等异常代码。"""
+    c = (code or "").upper().strip().replace(".HK", "")
+    n = (name or "").upper()
+    if market_label == "港股" and c.isdigit() and len(c) >= 5 and c.startswith("55"):
+        return True
+    if market_label == "美股":
+        if len(c) > 6 or (len(c) == 5 and c.endswith("F")):
+            return True
+        if len(n) > 45:
+            return True
+    return False
+
+
+def _global_price_penalty(price: float | None, market_label: str) -> float:
+    if price is None:
+        return 0.0
+    if market_label == "美股" and price < 2.0:
+        return 22.0
+    if market_label == "港股" and price < 0.5:
+        return 18.0
+    return 0.0
+
+
 def rank_global_from_ranking(
     ranking_df: pd.DataFrame,
     *,
@@ -146,7 +174,12 @@ def rank_global_from_ranking(
     """港/美涨幅榜 → 轻量异动分 → 观望/买入。"""
     from src.analysis.global_anomaly import analyze_one_mover_fast
 
-    stats: dict[str, Any] = {"scanned": 0, "market": market_label}
+    stats: dict[str, Any] = {
+        "scanned": 0,
+        "market": market_label,
+        "skipped_anomaly": 0,
+        "skipped_weird": 0,
+    }
     if ranking_df is None or ranking_df.empty:
         return [], stats
 
@@ -161,16 +194,26 @@ def rank_global_from_ranking(
         stats["scanned"] += 1
         item = _row_to_item(row)
         code = item["代码"]
+        name = item["名称"]
         if not code:
+            continue
+        if _is_weird_global_ticker(code, name, market_label):
+            stats["skipped_weird"] = int(stats.get("skipped_weird") or 0) + 1
             continue
         try:
             pct = float(row.get("涨跌幅%"))
         except (TypeError, ValueError):
             pct = None
-        if pct is not None and pct <= 0:
+        if pct is not None and (pct <= 0 or abs(pct) > GLOBAL_PCT_ABS_MAX):
+            stats["skipped_anomaly"] = int(stats.get("skipped_anomaly") or 0) + 1
             continue
+        price = row.get("最新价")
+        try:
+            price_f = float(price) if price is not None else None
+        except (TypeError, ValueError):
+            price_f = None
         fast = analyze_one_mover_fast(row.to_dict(), market=market_label)
-        anomaly = float(fast.anomaly_score)
+        anomaly = float(fast.anomaly_score) - _global_price_penalty(price_f, market_label)
         signal, hold, reason_bit = _signal_from_global(anomaly, pct)
         if signal == SIGNAL_SKIP:
             continue
@@ -179,16 +222,13 @@ def rank_global_from_ranking(
         reason = reason_bit
         if flow:
             reason = f"{reason_bit}；{flow[:40]}"
-        price = row.get("最新价")
-        try:
-            price_f = float(price) if price is not None else None
-        except (TypeError, ValueError):
-            price_f = None
+        if price_f is not None and _global_price_penalty(price_f, market_label) > 0:
+            reason = f"{reason_bit}（低价股降权）"
         picks.append(
             DailyPick(
                 code=code,
                 name=item["名称"],
-                score=round(anomaly, 1),
+                score=round(max(0.0, anomaly), 1),
                 pct=pct,
                 signal=signal,
                 hold_days=hold,

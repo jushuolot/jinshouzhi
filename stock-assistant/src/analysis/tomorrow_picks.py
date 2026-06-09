@@ -28,7 +28,7 @@ from src.analysis.daily_picks import (
 )
 from src.analysis.signals import add_indicators, score_stock
 from src.analysis.pick_review import pattern_score_adjustments_from_log
-from src.analysis.stock_quality import evaluate_stock_quality
+from src.analysis.stock_quality import QualityVerdict, evaluate_stock_quality
 
 FetchFn = Callable[..., tuple[pd.DataFrame, str]]
 
@@ -39,6 +39,9 @@ PATTERN_GLOBAL = "全球动量"
 
 SIGNAL_TOMORROW_BUY = "明日偏多"
 SIGNAL_TOMORROW_WATCH = "明日观望"
+
+# P120：创业板/科创板明日偏多门槛更严
+_GROWTH_PREFIXES = ("300", "301", "688")
 
 
 @dataclass(frozen=True)
@@ -178,10 +181,12 @@ def analyze_tomorrow_from_kline(
         if vol_r >= 1.35:
             score += 12
             tags.append("放量")
-            if near_hi is not None and near_hi >= 0.97:
+            if near_hi is not None and near_hi >= 0.98:
                 pattern = PATTERN_BREAKOUT
-                score += 6
+                score += 4
                 tags.append("近20日高位")
+            elif near_hi is not None and near_hi >= 0.96:
+                tags.append("近高位")
         elif vol_r >= 1.05:
             score += 5
         elif vol_r < 0.65:
@@ -202,9 +207,13 @@ def analyze_tomorrow_from_kline(
     if pattern_adj and pattern in pattern_adj:
         score += pattern_adj[pattern]
 
-    score = float(np.clip(score, 0, 92))
+    tags = list(dict.fromkeys(tags))
+    if pattern == PATTERN_BREAKOUT:
+        score = min(score, 82.0)
 
-    buy_th = 78 if pattern == PATTERN_PULLBACK else 76
+    score = float(np.clip(score, 0, 86))
+
+    buy_th = 80 if pattern == PATTERN_BREAKOUT else (78 if pattern == PATTERN_PULLBACK else 77)
     if score >= buy_th and pattern in (PATTERN_CONTINUATION, PATTERN_BREAKOUT, PATTERN_PULLBACK):
         signal = SIGNAL_TOMORROW_BUY
         hold = "1–3天"
@@ -230,6 +239,24 @@ def analyze_tomorrow_from_kline(
         today_pct=pct,
         tech_score=round(tech, 1) if tech is not None else None,
     )
+
+
+def _fund_tag_from_quality(qv: QualityVerdict) -> str | None:
+    bits = [t for t in qv.tags if any(k in t for k in ("基金", "QFII", "机构"))]
+    if not bits:
+        return None
+    return "、".join(bits[:3])
+
+
+def _a_buy_threshold(code: str, adj: float, qv: QualityVerdict) -> bool:
+    """P120：成长板明日偏多需更高综合分与质量加分。"""
+    c = str(code).zfill(6)
+    delta = qv.score_delta
+    if c.startswith("301"):
+        return adj >= 82 and delta >= 1.0
+    if c.startswith(_GROWTH_PREFIXES):
+        return adj >= 80 and delta >= 0.0
+    return adj >= 74
 
 
 def _merge_ranking_frames(frames: list[pd.DataFrame]) -> pd.DataFrame:
@@ -356,11 +383,12 @@ def rank_tomorrow_a_picks(
         if not qv.ok:
             stats["skipped_quality"] = int(stats.get("skipped_quality") or 0) + 1
             continue
-        adj = float(np.clip(ta.tomorrow_score + qv.score_delta, 0, 95))
+        adj = float(np.clip(ta.tomorrow_score + qv.score_delta, 0, 88))
         if adj < 62:
             stats["low_score"] += 1
             continue
-        sig = SIGNAL_BUY if (ta.signal == SIGNAL_TOMORROW_BUY and adj >= 74) else SIGNAL_WATCH
+        buy_ok = ta.signal == SIGNAL_TOMORROW_BUY and _a_buy_threshold(item["代码"], adj, qv)
+        sig = SIGNAL_BUY if buy_ok else SIGNAL_WATCH
         reason = f"[{ta.pattern}] {ta.reason}{qv.reason_suffix()}"
         pick = DailyPick(
             code=item["代码"],
@@ -372,6 +400,7 @@ def rank_tomorrow_a_picks(
             reason=reason,
             price=price,
             market="A股",
+            fund_tag=_fund_tag_from_quality(qv),
         )
         scored.append((pick, adj, item["代码"][:3]))
 
@@ -379,7 +408,8 @@ def rank_tomorrow_a_picks(
     picks: list[DailyPick] = []
     prefix_count: dict[str, int] = {}
     for pick, adj, prefix in scored:
-        if prefix_count.get(prefix, 0) >= 2:
+        cap = 1 if prefix == "301" else 2
+        if prefix_count.get(prefix, 0) >= cap:
             continue
         picks.append(pick)
         prefix_count[prefix] = prefix_count.get(prefix, 0) + 1
