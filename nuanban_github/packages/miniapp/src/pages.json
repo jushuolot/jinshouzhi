@@ -1,7 +1,15 @@
 {
   "pages": [
     { "path": "pages/common/launch", "style": { "navigationBarTitleText": "暖伴勤工" } },
-    { "path": "pages/common/login", "style": { "navigationBarTitleText": "登录" } },
+    {
+      "path": "pages/common/login",
+      "style": {
+        "navigationBarTitleText": "登录",
+        "navigationBarBackgroundColor": "#fff8f0",
+        "navigationBarTextStyle": "black",
+        "backgroundColor": "#fff8f0"
+      }
+    },
     { "path": "pages/common/role-select", "style": { "navigationBarTitleText": "选择身份" } },
     { "path": "pages/common/register", "style": { "navigationBarTitleText": "注册" } },
     { "path": "pages/common/agreement", "style": { "navigationBarTitleText": "用户协议" } },

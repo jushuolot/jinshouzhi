@@ -1,42 +1,78 @@
 <template>
   <view class="page">
-    <text class="title">{{ APP_TITLE }}</text>
-    <text class="sub">{{ APP_TAGLINE }}</text>
+    <view class="bg-blob blob-a" />
+    <view class="bg-blob blob-b" />
 
-    <view class="form">
-      <input
-        class="input"
-        type="number"
-        maxlength="11"
-        :value="phone"
-        placeholder="请输入手机号"
-        @input="onPhoneInput"
-      />
-      <view class="code-row">
+    <view class="hero">
+      <view class="logo-wrap">
+        <text class="logo-char">暖</text>
+      </view>
+      <text class="title">{{ APP_TITLE }}</text>
+      <text class="sub">{{ APP_TAGLINE }}</text>
+    </view>
+
+    <view class="card">
+      <text class="card-label">手机号登录</text>
+
+      <view class="field">
+        <text class="field-prefix">+86</text>
         <input
-          class="input code"
+          class="field-input"
+          type="number"
+          maxlength="11"
+          :value="phone"
+          placeholder="请输入手机号"
+          placeholder-class="ph"
+          @input="onPhoneInput"
+        />
+      </view>
+
+      <view class="field code-field">
+        <input
+          class="field-input flex"
           type="number"
           maxlength="6"
           :value="smsCode"
           placeholder="短信验证码"
+          placeholder-class="ph"
           @input="onCodeInput"
         />
-        <button class="btn-code" :disabled="codeCooldown > 0" @tap="sendCode">
+        <button
+          class="btn-code"
+          :class="{ disabled: codeCooldown > 0 }"
+          :disabled="codeCooldown > 0"
+          @tap="sendCode"
+        >
           {{ codeBtnText }}
         </button>
       </view>
+
       <button class="btn-primary" :loading="loading" @tap="onPhoneLogin">登录</button>
+
+      <view class="divider">
+        <view class="line" />
+        <text class="or">或</text>
+        <view class="line" />
+      </view>
+
+      <button class="btn-wx" :loading="loading" @tap="onWxLogin">
+        <text class="wx-icon">微</text>
+        <text>微信快捷登录（可关联）</text>
+      </button>
     </view>
 
-    <text class="wx-link" @tap="onWxLogin">微信快捷登录（可关联）</text>
+    <view v-if="isDemoMockEnabled()" class="demo-chip" @tap="fillDemoPhone">
+      <text>演示：13800000001 学生 · 点按填入</text>
+    </view>
 
-    <view class="hint">{{ loginHint }}</view>
+    <text class="hint">{{ loginHint }}</text>
+
     <view class="footer">
-      <text @tap="goDemoTour">动画演示</text>
+      <text class="foot-link" @tap="goDemoTour">动画演示</text>
       <text class="sep">·</text>
-      <text @tap="goAgreement">用户协议</text>
+      <text class="foot-link" @tap="goAgreement">用户协议</text>
       <text class="sep">·</text>
-      <text class="more" @tap="showMore">更多</text>
+      <text class="foot-muted" @tap="showMore">更多</text>
     </view>
   </view>
 </template>
@@ -75,14 +111,18 @@ const codeBtnText = computed(() =>
 
 const loginHint = computed(() => {
   if (fromTour.value) {
-    return '动画演示结束 · 直接登录，首次将引导选择身份';
+    return '动画演示结束 · 登录后首次将引导选择身份';
   }
   return isDemoMockEnabled()
-    ? '登录后选择身份 · 系统按设定分配角色与权限 · 演示号 13800000001–06'
-    : '手机号登录 · 首次使用将引导完善身份资料';
+    ? '登录后系统按身份分配权限 · 13800000002–06 对应其他演示角色'
+    : '首次登录将引导完善身份资料';
 });
 
 const roleStore = useRoleStore();
+
+function fillDemoPhone() {
+  phone.value = '13800000001';
+}
 
 function onPhoneInput(e: { detail: { value: string } }) {
   phone.value = e.detail.value.replace(/\D/g, '').slice(0, 11);
@@ -202,102 +242,275 @@ function goDemoTour() {
 
 <style scoped>
 .page {
-  padding: 120rpx 48rpx 80rpx;
+  position: relative;
   min-height: 100vh;
   box-sizing: border-box;
+  padding: 48rpx 40rpx 48rpx;
+  padding-top: calc(48rpx + env(safe-area-inset-top));
+  padding-bottom: calc(48rpx + env(safe-area-inset-bottom));
   display: flex;
   flex-direction: column;
-  align-items: stretch;
+  background: linear-gradient(165deg, #fff8f0 0%, #ffefe0 45%, #fff5eb 100%);
+  overflow: hidden;
 }
+
+.bg-blob {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0.45;
+}
+.blob-a {
+  width: 420rpx;
+  height: 420rpx;
+  top: -120rpx;
+  right: -100rpx;
+  background: radial-gradient(circle, rgba(232, 139, 74, 0.35), transparent 70%);
+}
+.blob-b {
+  width: 360rpx;
+  height: 360rpx;
+  bottom: 80rpx;
+  left: -140rpx;
+  background: radial-gradient(circle, rgba(196, 92, 38, 0.2), transparent 70%);
+}
+
+.hero {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 48rpx;
+  padding-top: 24rpx;
+}
+
+.logo-wrap {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 32rpx;
+  background: linear-gradient(145deg, #e88b4a, #c45c26);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 16rpx 40rpx rgba(196, 92, 38, 0.28);
+  margin-bottom: 28rpx;
+}
+
+.logo-char {
+  font-size: 56rpx;
+  font-weight: 700;
+  color: #fff;
+}
+
 .title {
   font-size: 52rpx;
-  font-weight: 600;
-  color: #c45c26;
-  text-align: center;
+  font-weight: 700;
+  color: #3d2a1f;
+  letter-spacing: 4rpx;
 }
+
 .sub {
-  display: block;
-  margin: 20rpx 0 64rpx;
-  color: #666;
+  margin-top: 16rpx;
   font-size: 28rpx;
+  color: #8a7568;
   text-align: center;
-  line-height: 1.5;
+  line-height: 1.55;
+  max-width: 520rpx;
 }
-.form {
-  margin-bottom: 16rpx;
+
+.card {
+  position: relative;
+  z-index: 1;
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 28rpx;
+  padding: 40rpx 36rpx 36rpx;
+  box-shadow: 0 12rpx 48rpx rgba(61, 42, 31, 0.08);
+  border: 2rpx solid rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
 }
-.input {
-  width: 100%;
-  box-sizing: border-box;
-  height: 88rpx;
-  padding: 0 24rpx;
-  margin-bottom: 20rpx;
-  border: 1px solid #e0d5cc;
-  border-radius: 12rpx;
+
+.card-label {
+  display: block;
   font-size: 30rpx;
-  background: #fff;
+  font-weight: 600;
+  color: #3d2a1f;
+  margin-bottom: 28rpx;
 }
-.code-row {
+
+.field {
   display: flex;
-  gap: 16rpx;
-  margin-bottom: 20rpx;
+  align-items: center;
+  height: 96rpx;
+  padding: 0 24rpx;
+  margin-bottom: 24rpx;
+  background: #faf7f4;
+  border-radius: 16rpx;
+  border: 2rpx solid #f0e6dc;
 }
-.input.code {
+
+.field-prefix {
+  flex-shrink: 0;
+  font-size: 30rpx;
+  font-weight: 500;
+  color: #3d2a1f;
+  padding-right: 20rpx;
+  margin-right: 20rpx;
+  border-right: 2rpx solid #ebe0d6;
+}
+
+.field-input {
   flex: 1;
-  margin-bottom: 0;
+  height: 96rpx;
+  font-size: 30rpx;
+  color: #3d2a1f;
+  background: transparent;
 }
+
+.field-input.flex {
+  padding-left: 8rpx;
+}
+
+.code-field {
+  padding-right: 12rpx;
+}
+
+.ph {
+  color: #b8a99e;
+}
+
 .btn-code {
   flex-shrink: 0;
-  width: 220rpx;
-  height: 88rpx;
-  line-height: 88rpx;
-  padding: 0;
-  font-size: 26rpx;
+  margin: 0;
+  padding: 0 20rpx;
+  height: 72rpx;
+  line-height: 72rpx;
+  font-size: 24rpx;
+  font-weight: 500;
   color: #c45c26;
   background: #fff;
-  border: 1px solid #c45c26;
+  border: none;
   border-radius: 12rpx;
+  box-shadow: 0 4rpx 12rpx rgba(196, 92, 38, 0.12);
 }
-.btn-code[disabled] {
-  color: #aaa;
-  border-color: #ddd;
+
+.btn-code.disabled {
+  color: #b8a99e;
+  box-shadow: none;
+  background: #f5f0eb;
 }
+
 .btn-primary {
-  background: #c45c26;
-  color: #fff;
-  border-radius: 12rpx;
+  margin-top: 8rpx;
+  height: 96rpx;
+  line-height: 96rpx;
   font-size: 32rpx;
-  padding: 8rpx 0;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(135deg, #e88b4a 0%, #c45c26 100%);
+  border: none;
+  border-radius: 48rpx;
+  box-shadow: 0 12rpx 32rpx rgba(196, 92, 38, 0.35);
 }
-.wx-link {
-  display: block;
+
+.btn-primary::after {
+  border: none;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  margin: 36rpx 0 28rpx;
+}
+
+.line {
+  flex: 1;
+  height: 2rpx;
+  background: #f0e6dc;
+}
+
+.or {
+  font-size: 24rpx;
+  color: #b8a99e;
+}
+
+.btn-wx {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+  height: 88rpx;
+  margin: 0;
+  font-size: 28rpx;
+  color: #2d8a4e;
+  background: #f0faf4;
+  border: 2rpx solid #c8e6d4;
+  border-radius: 44rpx;
+}
+
+.btn-wx::after {
+  border: none;
+}
+
+.wx-icon {
+  width: 40rpx;
+  height: 40rpx;
+  line-height: 40rpx;
   text-align: center;
-  font-size: 26rpx;
-  color: #888;
-  margin-bottom: 8rpx;
+  font-size: 22rpx;
+  font-weight: 700;
+  color: #fff;
+  background: #07c160;
+  border-radius: 8rpx;
 }
+
+.demo-chip {
+  position: relative;
+  z-index: 1;
+  margin-top: 28rpx;
+  padding: 16rpx 24rpx;
+  text-align: center;
+  font-size: 22rpx;
+  color: #c45c26;
+  background: rgba(255, 255, 255, 0.75);
+  border: 2rpx dashed #e8c4a8;
+  border-radius: 999rpx;
+}
+
 .hint {
+  position: relative;
+  z-index: 1;
   display: block;
   margin-top: 24rpx;
-  font-size: 24rpx;
-  color: #888;
+  font-size: 22rpx;
+  color: #a89488;
   text-align: center;
-  line-height: 1.5;
+  line-height: 1.55;
+  padding: 0 16rpx;
 }
+
 .footer {
+  position: relative;
+  z-index: 1;
   margin-top: auto;
-  padding-top: 64rpx;
+  padding-top: 40rpx;
   display: flex;
   justify-content: center;
   align-items: center;
   gap: 16rpx;
   font-size: 26rpx;
+}
+
+.foot-link {
   color: #c45c26;
 }
-.sep {
-  color: #ccc;
+
+.foot-muted {
+  color: #a89488;
 }
-.more {
-  color: #999;
+
+.sep {
+  color: #ddd0c6;
 }
 </style>
