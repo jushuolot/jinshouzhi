@@ -5,6 +5,7 @@ from __future__ import annotations
 from datetime import date
 from typing import Any
 
+from src.analysis.garden_cohort import cohort_brief_line, resolve_cohort_data
 from src.util.app_meta import APP_VERSION, EVOLUTION_STEP
 
 
@@ -63,6 +64,9 @@ def build_nightly_brief(
     ]
     if cloud_sync_at:
         lines.append(f"**云端同步** {cloud_sync_at}")
+    cohort_line = cohort_brief_line(resolve_cohort_data())
+    if cohort_line:
+        lines.append(cohort_line)
 
     return {
         "as_of": date.today().isoformat(),

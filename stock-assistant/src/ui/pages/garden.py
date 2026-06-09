@@ -36,6 +36,7 @@ from src.util.cloud_runtime import cloud_mode_label, is_streamlit_cloud
 from src.util.buddha_nightly_brief import build_nightly_brief, brief_to_markdown
 from src.util.buddha_ritual import build_ritual_meta, probe_a_market, ritual_banner_lines
 from src.util.data_date_label import build_listing_caption, today_label_cn
+from src.ui.garden_cohort_strip import render_garden_cohort_strip
 from src.ui.garden_search_lens import render_garden_search_lens
 from src.util.garden_selection_doc import SELECTION_CRITERIA_MD
 from src.util.readonly_mode import is_readonly_mode
@@ -495,6 +496,7 @@ def render() -> None:
     pick_log = _try_auto_fill_garden(readonly=readonly, pick_log=pick_log, tgt_date=tgt_date)
 
     render_garden_search_lens(pick_log, fetch_fn=C._fetch_one)
+    render_garden_cohort_strip()
 
     show_full_garden = st.checkbox(
         "显示今晚花园（查岗简报 / 明日推荐 / 复盘）",

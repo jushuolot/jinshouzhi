@@ -52,6 +52,8 @@ def _render_lens_card(card: GardenLensCard, hit: eastmoney.SearchHit, *, readonl
 
     st.caption(f"**一句话：** {card.one_line}")
     st.caption(f"**推荐记忆：** {card.pick_history} · {card.hit_rate_label}")
+    if card.cohort_note:
+        st.caption(card.cohort_note)
     if card.google_note:
         if card.google_url:
             st.caption(f"**对照：** {card.google_note} · [Google 财经]({card.google_url})")
@@ -200,6 +202,7 @@ def render_garden_search_lens(pick_log: list, *, fetch_fn) -> None:
             hit_rate_label=str(cached.get("hit_rate_label") or ""),
             google_note=str(cached.get("google_note") or ""),
             google_url=str(cached.get("google_url") or ""),
+            cohort_note=str(cached.get("cohort_note") or ""),
         )
         st.divider()
         _render_lens_card(card, hit, readonly=readonly)

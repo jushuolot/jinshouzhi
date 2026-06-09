@@ -14,6 +14,7 @@ from src.providers.google_finance import (
     fetch_google_finance_quote,
     google_finance_symbol,
 )
+from src.analysis.garden_cohort import cohort_note_for_code, resolve_cohort_data
 from src.util.watchlist_add import hit_to_watchlist_item
 
 FetchFn = Callable[..., tuple[Any, str]]
@@ -33,6 +34,7 @@ class GardenLensCard:
     hit_rate_label: str
     google_note: str
     google_url: str
+    cohort_note: str = ""
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -48,6 +50,7 @@ class GardenLensCard:
             "hit_rate_label": self.hit_rate_label,
             "google_note": self.google_note,
             "google_url": self.google_url,
+            "cohort_note": self.cohort_note,
         }
 
 
@@ -94,6 +97,7 @@ def build_garden_lens_card(
     pick_log: list[dict[str, Any]] | None = None,
     *,
     fetch_google: bool = True,
+    cohort: dict[str, Any] | None = None,
 ) -> GardenLensCard:
     item = hit_to_watchlist_item(hit)
     code = str(item.get("代码") or hit.code)
@@ -124,6 +128,9 @@ def build_garden_lens_card(
                 if not google_note:
                     google_note = f"Google {gq.price:.2f}"
 
+    cohort_data = cohort if cohort is not None else resolve_cohort_data()
+    c_note = cohort_note_for_code(cohort_data, hit.code)
+
     return GardenLensCard(
         code=code,
         name=name,
@@ -137,4 +144,5 @@ def build_garden_lens_card(
         hit_rate_label=hr_label,
         google_note=google_note,
         google_url=google_url,
+        cohort_note=c_note,
     )

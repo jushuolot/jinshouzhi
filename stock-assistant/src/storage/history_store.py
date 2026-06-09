@@ -93,6 +93,32 @@ def _sync_cloud_contribution(data: dict[str, Any]) -> dict[str, Any] | None:
         return None
 
 
+def _iso_week_key(dt: datetime | None = None) -> str:
+    d = dt or datetime.now()
+    iso = d.isocalendar()
+    return f"{iso.year}-W{iso.week:02d}"
+
+
+def _has_cohort_log_this_week(log: list[dict[str, Any]], week_key: str) -> bool:
+    for e in log:
+        if str(e.get("kind") or "") != "cohort":
+            continue
+        meta = str(e.get("conclusions_summary") or "")
+        if meta.startswith(week_key):
+            return True
+        at = str(e.get("at") or "")
+        if "年" in at and "月" in at and "日" in at:
+            try:
+                y = int(at.split("年", 1)[0])
+                m = int(at.split("年", 1)[1].split("月", 1)[0])
+                day = int(at.split("月", 1)[1].split("日", 1)[0])
+                if _iso_week_key(datetime(y, m, day)) == week_key:
+                    return True
+            except (ValueError, IndexError):
+                pass
+    return False
+
+
 def _append_cohort_log_once(data: dict[str, Any], contrib: dict[str, Any] | None) -> None:
     if not contrib:
         return
@@ -123,6 +149,58 @@ def _append_cohort_log_once(data: dict[str, Any], contrib: dict[str, Any] | None
     log = data.setdefault("query_log", [])
     log.insert(0, entry)
     data["query_log"] = log[:_MAX_LOG]
+    _append_weekly_cohort_summary_log(data)
+
+
+def _append_weekly_cohort_summary_log(data: dict[str, Any]) -> None:
+    """每周最多一条 cohort 汇总日志（不每日刷屏）。"""
+    week_key = _iso_week_key()
+    try:
+        if st.session_state.get("_cohort_weekly_log") == week_key:
+            return
+    except Exception:
+        pass
+    log = data.setdefault("query_log", [])
+    if _has_cohort_log_this_week(log, week_key):
+        try:
+            st.session_state["_cohort_weekly_log"] = week_key
+        except Exception:
+            pass
+        return
+    try:
+        from src.analysis.garden_cohort import build_cohort_strip_payload, resolve_cohort_data
+
+        cohort = resolve_cohort_data()
+        payload = build_cohort_strip_payload(cohort)
+        if not payload.get("has_data"):
+            return
+        user_count = int(payload.get("user_count") or 0)
+        if user_count < 2:
+            return
+    except Exception:
+        return
+    at = datetime.now().strftime("%Y年%m月%d日 %H:%M:%S")
+    top = "；".join(payload.get("top_lines") or [])[:120]
+    entry = {
+        "id": str(uuid.uuid4())[:8],
+        "at": at,
+        "date_key": log_date_key(at),
+        "kind": "cohort",
+        "label": f"多人选股周汇总 · {user_count}人",
+        "market": "",
+        "board": "",
+        "count": user_count,
+        "stocks": ",".join(
+            str(s).split(" · ", 1)[0] for s in (payload.get("top_lines") or [])[:3]
+        ),
+        "conclusions_summary": f"{week_key} · {payload.get('headline') or ''} · {top}",
+    }
+    log.insert(0, entry)
+    data["query_log"] = log[:_MAX_LOG]
+    try:
+        st.session_state["_cohort_weekly_log"] = week_key
+    except Exception:
+        pass
 
 
 def save_history(data: dict[str, Any]) -> None:
