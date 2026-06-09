@@ -75,6 +75,9 @@ export async function propagateSync(chain, fromLoId, toLoId, code, payload = {})
 
 /** 根据动作表自动裂变下游 */
 export async function maybePropagate(chain, loId, actionCode) {
+  const { maybeEvolvePropagate } = await import('./lot-evolve.js');
+  const evolved = await maybeEvolvePropagate(chain, loId, actionCode);
+  if (evolved) return evolved;
   const rule = SYNC_TRANSITIONS[loId]?.[actionCode];
   if (!rule) return null;
   return propagateSync(chain, loId, rule.toLoId, SYNC_CODES.HANDOFF, {

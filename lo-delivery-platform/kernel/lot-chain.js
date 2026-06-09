@@ -14,6 +14,7 @@ import {
   SEED_SPATIAL_CHAIN,
   appendEventToChain,
   createLO,
+  createChainLink,
 } from './lot-nucleus.js';
 import { maybePropagate } from './lot-network.js';
 import {
@@ -26,6 +27,7 @@ import {
 } from './lot-demo-data.js';
 import { DEMO_DOMAIN_LOS_V5, DEMO_EVENT_HISTORIES_V5, DEMO_SPATIAL_V5 } from './lot-demo-data-warehouse.js';
 import { DEMO_EQUIPMENT, bumpEquipmentOnEvent, aggregateOrders, splitOrder } from './lot-warehouse.js';
+import { CROSS_LINKS_V6 } from './lot-evolve.js';
 
 export class LotChain {
   constructor(adapters) {
@@ -66,6 +68,7 @@ export class LotChain {
       await this._ensureDomainsSeed();
       await this._ensureDomainsV4Seed();
       await this._ensureWarehouseV5Seed();
+      await this._ensureEvolveV6Seed();
       return;
     }
 
@@ -94,6 +97,7 @@ export class LotChain {
     await this._ensureDomainsSeed();
     await this._ensureDomainsV4Seed();
     await this._ensureWarehouseV5Seed();
+    await this._ensureEvolveV6Seed();
     await this.local.setMeta('nucleus_seeded', new Date().toISOString());
   }
 
@@ -207,6 +211,33 @@ export class LotChain {
     }
     await this.setEquipment(DEMO_EQUIPMENT);
     await this.local.setMeta('warehouse_v5_seeded', new Date().toISOString());
+  }
+
+  async _ensureEvolveV6Seed() {
+    const v6 = await this.local.getMeta('evolve_v6_seeded');
+    if (v6) return;
+    for (const l of CROSS_LINKS_V6) {
+      const lo = await this.local.getLO(l.from);
+      if (!lo) continue;
+      lo.links = lo.links || [];
+      if (!lo.links.some((x) => x.targetLoId === l.to)) {
+        lo.links.push(createChainLink({ rel: 'downstream', targetLoId: l.to, label: l.label }));
+        await this.local.putLO(lo);
+      }
+    }
+    if (!(await this.local.getMeta('fission_generation'))) {
+      await this.local.setMeta('fission_generation', '1');
+    }
+    await this.local.setMeta('evolve_v6_seeded', new Date().toISOString());
+  }
+
+  async getFissionGeneration() {
+    const v = await this.local.getMeta('fission_generation');
+    return parseInt(v || '1', 10) || 1;
+  }
+
+  async setFissionGeneration(n) {
+    await this.local.setMeta('fission_generation', String(n));
   }
 
   async putLODirect(lo) {

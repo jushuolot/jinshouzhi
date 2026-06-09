@@ -152,6 +152,18 @@
     .equip-card b { display: block; color: var(--text); font-size: 10px; }
     .equip-bar { height: 3px; background: #1a2d44; border-radius: 2px; margin-top: 4px; }
     .equip-bar i { display: block; height: 100%; background: var(--accent); border-radius: 2px; }
+    .net-graph {
+      display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; font-size: 9px; font-family: ui-monospace, monospace;
+    }
+    .net-edge {
+      padding: 2px 6px; border-radius: 4px; border: 1px solid #2a4a6a; color: var(--muted);
+      background: #0a1628;
+    }
+    .net-edge.hot { border-color: var(--nucleus); color: var(--nucleus); box-shadow: 0 0 8px rgba(255,92,154,0.3); }
+    .toolbar button.fission { border-color: var(--nucleus); color: var(--nucleus); background: #2a1020; }
+    .toolbar button.fission.on { background: var(--nucleus); color: #fff; animation: fissionPulse 1.2s infinite; }
+    @keyframes fissionPulse { 50% { box-shadow: 0 0 16px var(--nucleus); } }
+    body.fission-mode .logo-dot { background: var(--accent); box-shadow: 0 0 14px var(--accent); }
     .domain-desc { font-size: 10px; color: var(--muted); margin-bottom: 8px; line-height: 1.5; }
     #lo-list { max-height: 140px; overflow: auto; margin-bottom: 8px; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
     .lo-row {
@@ -234,7 +246,7 @@
     <div class="stars" id="stars"></div>
     <div class="intro-earth" aria-hidden="true"></div>
     <h1>LOT · 从宇宙到乡村</h1>
-    <p>七大物流域 + DC/RDC/FDC 仓网 · 仓内作业 · 设备模拟 · 订单聚合/拆分 · 80+ 演示 LO。零 API 费用。</p>
+    <p>七大物流域 · 仓网 · 跨域裂变进化 — 采购→DC→干线→快递 黄金链自动演示。零 API 费用。</p>
     <button type="button" id="btn-enter">进入世界</button>
   </div>
 
@@ -243,7 +255,8 @@
       <div class="logo-dot"></div>
       <h1>LOT 全球一盘棋</h1>
       <div class="toolbar">
-        <button type="button" class="primary" id="btn-play">▶ 播放全链</button>
+        <button type="button" class="fission" id="btn-fission">⚡ 裂变进化</button>
+        <button type="button" class="primary" id="btn-play">▶ 销售链</button>
         <button type="button" id="btn-reset">↺ 重置</button>
         <button type="button" id="btn-agg">⊕ 聚合</button>
         <button type="button" id="btn-split">⊖ 拆分</button>
@@ -254,6 +267,7 @@
         <span>订单 <b id="hud-los">—</b></span>
         <span class="hud-domains" id="hud-domains">—</span>
         <span class="hud-warn">事件 <b id="hud-events">—</b></span>
+        <span>裂变 <b id="hud-gen">G1</b></span>
       </div>
     </header>
 
@@ -280,7 +294,8 @@
       <div class="domain-tabs" id="domain-tabs"></div>
       <div class="tier-tabs" id="tier-tabs" hidden></div>
       <div class="domain-desc" id="domain-desc"></div>
-      <div class="pipe-title">销售链演示管道（播放全链）· 点击聚焦</div>
+      <div class="net-graph" id="net-graph"></div>
+      <div class="pipe-title">跨域裂变网络 · 销售链管道</div>
       <div class="pipe-track" id="pipe-track"></div>
     </footer>
   </div>
@@ -299,6 +314,8 @@
     import { LOGISTICS_DOMAINS } from '../kernel/lot-domains.js';
     import { countByDomain } from '../kernel/lot-demo-data.js';
     import { WAREHOUSE_TIERS } from '../kernel/lot-warehouse.js';
+    import { runFullFission, evolveHeartbeat, getEvolutionStats } from '../kernel/lot-evolve.js';
+    import { buildNetworkEdges } from '../kernel/lot-network.js';
 
     const DOMAIN_COLORS = {
       procurement: '#5eb8ff',
@@ -320,6 +337,8 @@
       map: null,
       layers: { markers: [], route: null, cargo: null },
       demoRunning: false,
+      fissionRunning: false,
+      heartbeatId: null,
       allEvents: [],
     };
 
@@ -582,6 +601,25 @@
       document.getElementById('hud-chain').textContent = on + '/' + (status || []).length;
     }
 
+    async function renderNetworkGraph() {
+      const los = await state.chain.listLOs();
+      const edges = buildNetworkEdges(los);
+      const el = document.getElementById('net-graph');
+      el.innerHTML = edges
+        .slice(0, 24)
+        .map((e) => {
+          const hot = e.from === state.activeLoId || e.to === state.activeLoId ? ' hot' : '';
+          const short = (id) => id.replace('LO-', '');
+          return `<span class="net-edge${hot}">${short(e.from)}→${short(e.to)}</span>`;
+        })
+        .join('');
+    }
+
+    async function renderEvolutionHud() {
+      const stats = await getEvolutionStats(state.chain);
+      document.getElementById('hud-gen').textContent = 'G' + stats.generation;
+    }
+
     async function renderAll() {
       renderDomainTabs();
       renderTierTabs();
@@ -590,8 +628,54 @@
       await renderStageCheck();
       await renderMap();
       await renderEquipment();
+      await renderNetworkGraph();
+      await renderEvolutionHud();
       await renderPipeline();
       await renderEventStream();
+    }
+
+    function stopFission() {
+      state.fissionRunning = false;
+      if (state.heartbeatId) {
+        clearInterval(state.heartbeatId);
+        state.heartbeatId = null;
+      }
+      document.getElementById('btn-fission').classList.remove('on');
+      document.body.classList.remove('fission-mode');
+    }
+
+    async function startFission() {
+      if (state.fissionRunning) {
+        stopFission();
+        toast('裂变进化已暂停');
+        return;
+      }
+      state.fissionRunning = true;
+      document.getElementById('btn-fission').classList.add('on');
+      document.body.classList.add('fission-mode');
+      toast('⚡ 裂变进化启动 · 三条黄金线程');
+      await runFullFission(state.chain, {
+        delayMs: 800,
+        onThread: (t) => toast('线程：' + t.labelZh),
+        onStep: async (step) => {
+          state.activeLoId = step.loId;
+          toast(step.msg || step.code);
+          await renderAll();
+        },
+      });
+      toast('线程完成 · 进入自进化心跳');
+      state.heartbeatId = setInterval(async () => {
+        if (!state.fissionRunning) return;
+        const beat = await evolveHeartbeat(state.chain);
+        if (!beat) return;
+        if (beat.loId && beat.contract?.generation) {
+          state.activeLoId = beat.loId;
+          toast('🧬 新裂变：' + beat.loId);
+        } else if (beat.lo) {
+          state.activeLoId = beat.lo.loId;
+        }
+        await renderAll();
+      }, 2500);
     }
 
     async function playDemo() {
@@ -629,6 +713,7 @@
     renderHudChain(status);
 
     document.getElementById('btn-enter').onclick = enterWorld;
+    document.getElementById('btn-fission').onclick = () => startFission();
     document.getElementById('btn-play').onclick = () => playDemo();
     document.getElementById('btn-agg').onclick = async () => {
       try {
