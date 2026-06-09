@@ -1,5 +1,5 @@
 /**
- * 大量演示数据 — 四大物流域 × 多场景 × 预置事件链
+ * 大量演示数据 — 七大物流域 × 多场景 × 预置事件链
  */
 
 import { createLO, createChainLink, createSpatialCell } from './lot-nucleus.js';
@@ -15,6 +15,19 @@ export const DEMO_SPATIAL_EXT = [
   createSpatialCell({ id: 'bj-wangjing-store', level: 'cell', parentId: 'beijing', labelZh: '望京社区店', labelEn: 'Wangjing Store', lat: 39.995, lng: 116.47 }),
   createSpatialCell({ id: 'bj-tongzhou-wh', level: 'facility', parentId: 'beijing', labelZh: '通州仓', labelEn: 'Tongzhou WH', lat: 39.91, lng: 116.66 }),
   createSpatialCell({ id: 'bj-financial-cust', level: 'cell', parentId: 'beijing', labelZh: '金融街客户', labelEn: 'Financial St. Customer', lat: 39.917, lng: 116.366 }),
+  createSpatialCell({ id: 'bj-ec-sort', level: 'facility', parentId: 'beijing', labelZh: '电商分拣中心', labelEn: 'E-com Sort Center', lat: 39.86, lng: 116.55 }),
+  createSpatialCell({ id: 'bj-express-hub', level: 'hub', parentId: 'beijing', labelZh: '快递转运中心', labelEn: 'Express Hub', lat: 39.88, lng: 116.38 }),
+  createSpatialCell({ id: 'bj-langfang-terminal', level: 'hub', parentId: 'jjj', labelZh: '廊坊干线场站', labelEn: 'Langfang Terminal', lat: 39.52, lng: 116.7 }),
+  createSpatialCell({ id: 'bj-daxing-air-cargo', level: 'hub', parentId: 'beijing', labelZh: '大兴航空货站', labelEn: 'Air Cargo Terminal', lat: 39.51, lng: 116.41 }),
+  createSpatialCell({ id: 'bj-courier-station', level: 'cell', parentId: 'beijing', labelZh: '望京快递站', labelEn: 'Wangjing Courier Sta.', lat: 39.99, lng: 116.48 }),
+];
+
+export const DEMO_SPATIAL_V4 = [
+  createSpatialCell({ id: 'bj-ec-sort', level: 'facility', parentId: 'beijing', labelZh: '电商分拣中心', labelEn: 'E-com Sort Center', lat: 39.86, lng: 116.55 }),
+  createSpatialCell({ id: 'bj-express-hub', level: 'hub', parentId: 'beijing', labelZh: '快递转运中心', labelEn: 'Express Hub', lat: 39.88, lng: 116.38 }),
+  createSpatialCell({ id: 'bj-langfang-terminal', level: 'hub', parentId: 'jjj', labelZh: '廊坊干线场站', labelEn: 'Langfang Terminal', lat: 39.52, lng: 116.7 }),
+  createSpatialCell({ id: 'bj-daxing-air-cargo', level: 'hub', parentId: 'beijing', labelZh: '大兴航空货站', labelEn: 'Air Cargo Terminal', lat: 39.51, lng: 116.41 }),
+  createSpatialCell({ id: 'bj-courier-station', level: 'cell', parentId: 'beijing', labelZh: '望京快递站', labelEn: 'Wangjing Courier Sta.', lat: 39.99, lng: 116.48 }),
 ];
 
 const PROCUREMENT_SCENARIOS = [
@@ -65,10 +78,54 @@ const REVERSE_SCENARIOS = [
   { cargo: '过期促销退回', reason: '临期下架', origin: 'bj-guomao-store', dest: 'bj-shunyi-wh' },
 ];
 
+const ECOMMERCE_SCENARIOS = [
+  { cargo: '天猫 3C 数码', platform: '天猫', shop: '旗舰店', origin: 'bj-ec-sort', dest: 'bj-wangjing-store' },
+  { cargo: '京东 POP 家电', platform: '京东', shop: 'POP 店', origin: 'bj-tongzhou-wh', dest: 'bj-yanqing-cell' },
+  { cargo: '抖音直播美妆', platform: '抖音', shop: '直播间', origin: 'bj-ec-sort', dest: 'bj-guomao-store' },
+  { cargo: '拼多多农货', platform: '拼多多', shop: '产地直发', origin: 'bj-yanqing-cell', dest: 'bj-daxing-port' },
+  { cargo: '小红书礼盒', platform: '小红书', shop: '品牌号', origin: 'bj-ec-sort', dest: 'bj-financial-cust' },
+  { cargo: '跨境电商保税', platform: '考拉', shop: '保税仓', origin: 'bj-daxing-port', dest: 'bj-zhongguancun-dc' },
+  { cargo: '微信小店生鲜', platform: '微信', shop: '社区店', origin: 'bj-shunyi-wh', dest: 'bj-wangjing-store' },
+  { cargo: '1688 批发单', platform: '1688', shop: '工厂店', origin: 'bj-yizhuang-factory', dest: 'bj-tongzhou-wh' },
+  { cargo: '唯品会特卖', platform: '唯品会', shop: '特卖仓', origin: 'bj-ec-sort', dest: 'bj-courier-station' },
+];
+
+const EXPRESS_SCENARIOS = [
+  { cargo: '顺丰标快文件', carrier: 'SF', service: '标快', origin: 'bj-guomao-store', dest: 'bj-zhongguancun-dc' },
+  { cargo: '中通电商小件', carrier: 'ZTO', service: '电商件', origin: 'bj-ec-sort', dest: 'bj-wangjing-store' },
+  { cargo: '圆通同城当日', carrier: 'YTO', service: '同城', origin: 'bj-express-hub', dest: 'bj-financial-cust' },
+  { cargo: '韵达批量包', carrier: 'Yunda', service: '集包', origin: 'bj-express-hub', dest: 'bj-daxing-port' },
+  { cargo: '申通逆向件', carrier: 'STO', service: '退货', origin: 'bj-wangjing-store', dest: 'bj-tongzhou-wh' },
+  { cargo: '极兔社区件', carrier: 'J&T', service: '驿站', origin: 'bj-courier-station', dest: 'bj-yanqing-cell' },
+  { cargo: 'EMS 政务函件', carrier: 'EMS', service: '标准', origin: 'bj-west-hub', dest: 'bj-guomao-store' },
+  { cargo: '德邦大件', carrier: 'Deppon', service: '大件', origin: 'bj-daxing-port', dest: 'bj-yizhuang-factory' },
+  { cargo: '京东快递 211', carrier: 'JD', service: '211', origin: 'bj-tongzhou-wh', dest: 'bj-zhongguancun-dc' },
+];
+
+const LINEHAUL_SCENARIOS = [
+  { cargo: '北京-上海整车', mode: '公路整车', origin: 'bj-langfang-terminal', dest: 'bj-daxing-port' },
+  { cargo: '京津廊零担', mode: '零担', origin: 'bj-shunyi-wh', dest: 'bj-langfang-terminal' },
+  { cargo: '京沪冷链干线', mode: '冷链', origin: 'bj-shunyi-wh', dest: 'bj-daxing-air-cargo' },
+  { cargo: '环京快递干线', mode: '快递干线', origin: 'bj-express-hub', dest: 'bj-west-hub' },
+  { cargo: '电商仓间调拨', mode: '仓间调拨', origin: 'bj-tongzhou-wh', dest: 'bj-ec-sort' },
+  { cargo: '铁公联运集装箱', mode: '多式联运', origin: 'bj-west-hub', dest: 'bj-daxing-port' },
+  { cargo: '航空普货出港', mode: '航空', origin: 'bj-daxing-air-cargo', dest: 'bj-daxing-port' },
+  { cargo: '华北-东北长干线', mode: '长途', origin: 'bj-langfang-terminal', dest: 'bj-tianjin-supplier' },
+  { cargo: '亦庄-顺义短驳', mode: '短驳', origin: 'bj-yizhuang-factory', dest: 'bj-shunyi-wh' },
+];
+
 const STATUS_MIX = ['active', 'active', 'active', 'exception', 'completed', 'active', 'active', 'completed', 'active'];
 
 function buildLO(domain, ix, scenario, statusIx) {
-  const prefix = { procurement: 'PUR', sales: 'SAL', production: 'MFG', reverse: 'REV' }[domain];
+  const prefix = {
+    procurement: 'PUR',
+    sales: 'SAL',
+    production: 'MFG',
+    reverse: 'REV',
+    ecommerce: 'ECM',
+    express: 'EXP',
+    linehaul: 'LHL',
+  }[domain];
   const loId = `LO-${prefix}-${String(ix + 1).padStart(3, '0')}`;
   const stages = domainStageCodes(domain);
   const status = STATUS_MIX[statusIx % STATUS_MIX.length];
@@ -88,6 +145,11 @@ function buildLO(domain, ix, scenario, statusIx) {
       wo: scenario.wo,
       reason: scenario.reason,
       channel: scenario.channel,
+      platform: scenario.platform,
+      shop: scenario.shop,
+      carrier: scenario.carrier,
+      service: scenario.service,
+      mode: scenario.mode,
       slaHours: 12 + (ix % 5) * 6,
     },
     links: [
@@ -102,6 +164,9 @@ function domainActor(domain, stageIx) {
     sales: ['shipper', 'warehouse', 'warehouse', 'warehouse', 'driver', 'driver', 'finance'],
     production: ['planner', 'warehouse', 'driver', 'production', 'production', 'warehouse', 'planner'],
     reverse: ['customer', 'cs', 'driver', 'warehouse', 'qc', 'warehouse', 'finance'],
+    ecommerce: ['platform', 'finance', 'warehouse', 'warehouse', 'warehouse', 'dispatcher', 'platform', 'platform'],
+    express: ['dispatcher', 'courier', 'warehouse', 'warehouse', 'dispatcher', 'courier', 'courier', 'finance'],
+    linehaul: ['dispatcher', 'dispatcher', 'driver', 'driver', 'driver', 'driver', 'driver', 'warehouse'],
   };
   return actors[domain]?.[stageIx] || 'dispatcher';
 }
@@ -143,10 +208,10 @@ function historyForLO(lo, depth) {
       payload: { reason: '演示异常：延误/质检待定' },
     });
   }
-  if (depth === 3 && domain === 'sales') {
+  if (depth === 3 && (domain === 'sales' || domain === 'express')) {
     events.push({
       type: 'FINANCE',
-      code: 'SETTLEMENT',
+      code: domain === 'express' ? 'COD_SETTLE' : 'SETTLEMENT',
       actor: 'finance',
       spatialCellId: lo.destCellId,
       payload: { amount: 1200 + Math.floor(Math.random() * 800) },
@@ -171,21 +236,37 @@ const pur = genDomainLos('procurement', PROCUREMENT_SCENARIOS);
 const sal = genDomainLos('sales', SALES_SCENARIOS);
 const mfg = genDomainLos('production', PRODUCTION_SCENARIOS);
 const rev = genDomainLos('reverse', REVERSE_SCENARIOS);
+const ecm = genDomainLos('ecommerce', ECOMMERCE_SCENARIOS);
+const exp = genDomainLos('express', EXPRESS_SCENARIOS);
+const lhl = genDomainLos('linehaul', LINEHAUL_SCENARIOS);
 
-export const DEMO_DOMAIN_LOS = [...pur.los, ...sal.los, ...mfg.los, ...rev.los];
+export const DEMO_DOMAIN_LOS_V3 = [...pur.los, ...sal.los, ...mfg.los, ...rev.los];
+export const DEMO_DOMAIN_LOS_V4 = [...ecm.los, ...exp.los, ...lhl.los];
+export const DEMO_DOMAIN_LOS = [...DEMO_DOMAIN_LOS_V3, ...DEMO_DOMAIN_LOS_V4];
 
-export const DEMO_EVENT_HISTORIES = new Map([
+export const DEMO_EVENT_HISTORIES_V3 = new Map([
   ...pur.histories,
   ...sal.histories,
   ...mfg.histories,
   ...rev.histories,
 ]);
+export const DEMO_EVENT_HISTORIES_V4 = new Map([...ecm.histories, ...exp.histories, ...lhl.histories]);
+export const DEMO_EVENT_HISTORIES = new Map([...DEMO_EVENT_HISTORIES_V3, ...DEMO_EVENT_HISTORIES_V4]);
 
 /** 保留 v2 销售链四段（亦归入 sales 域演示） */
 export { SEED_NETWORK_LOS } from './lot-nucleus.js';
 
 export function countByDomain(los) {
-  const c = { procurement: 0, sales: 0, production: 0, reverse: 0, other: 0 };
+  const c = {
+    procurement: 0,
+    sales: 0,
+    production: 0,
+    reverse: 0,
+    ecommerce: 0,
+    express: 0,
+    linehaul: 0,
+    other: 0,
+  };
   for (const lo of los) {
     const d = lo.logisticsDomain || lo.channel;
     if (c[d] != null) c[d]++;

@@ -1,5 +1,5 @@
 /**
- * LOT Domains — 采购 / 销售 / 生产 / 逆向 物流全要素
+ * LOT Domains — 采购 / 销售 / 生产 / 逆向 / 电商 / 快递 / 干线 物流全要素
  * 每域：环节 · 角色 · 标准事件码 · 证据要求
  */
 
@@ -73,6 +73,60 @@ export const LOGISTICS_DOMAINS = {
       { code: 'REFUND_ISSUED', labelZh: '退款/补货', actor: 'finance', evidence: ['credit_note'] },
     ],
   },
+  ecommerce: {
+    id: 'ecommerce',
+    icon: '🛍️',
+    labelZh: '电商物流',
+    labelEn: 'E-commerce Fulfillment',
+    color: '#a78bfa',
+    descZh: '平台订单 → 支付核销 → 波次释放 → 拣配 → 面单 → 交承运 → 轨迹回传 → 签收回告',
+    stages: [
+      { code: 'PLATFORM_ORDER', labelZh: '平台订单接入', actor: 'platform', evidence: ['order_json', 'shop_id'] },
+      { code: 'PAYMENT_CLEARED', labelZh: '支付/风控通过', actor: 'finance', evidence: ['payment_id'] },
+      { code: 'WMS_WAVE', labelZh: '波次/批次释放', actor: 'warehouse', evidence: ['wave_id'] },
+      { code: 'PICK_PACK', labelZh: '拣配复核', actor: 'warehouse', evidence: ['pick_list', 'weight'] },
+      { code: 'WAYBILL_PRINT', labelZh: '电子面单打印', actor: 'warehouse', evidence: ['waybill_no', 'label'] },
+      { code: 'HANDOVER_CARRIER', labelZh: '交承运商揽收', actor: 'dispatcher', evidence: ['handover_manifest'] },
+      { code: 'TRACK_PUBLISH', labelZh: '物流轨迹发布', actor: 'platform', evidence: ['track_url'] },
+      { code: 'DELIVERED_NOTIFY', labelZh: '签收回告平台', actor: 'platform', evidence: ['callback_ack'] },
+    ],
+  },
+  express: {
+    id: 'express',
+    icon: '📮',
+    labelZh: '快递物流',
+    labelEn: 'Express / Courier',
+    color: '#38bdf8',
+    descZh: '揽收请求 → 收件扫描 → 首分拨 → 分拣 → 干线发运 → 派送出站 → 签收扫描 → 代收货款',
+    stages: [
+      { code: 'PICKUP_REQ', labelZh: '揽收任务下发', actor: 'dispatcher', evidence: ['pickup_task'] },
+      { code: 'COLLECT_SCAN', labelZh: '收件扫描', actor: 'courier', evidence: ['scan', 'photo'] },
+      { code: 'SORT_HUB_IN', labelZh: '首分拨到件', actor: 'warehouse', evidence: ['hub_in_scan'] },
+      { code: 'SORT_SCAN', labelZh: '分拣扫描', actor: 'warehouse', evidence: ['chute_no', 'bag_tag'] },
+      { code: 'LINEHAUL_DISPATCH', labelZh: '干线/下一网点发运', actor: 'dispatcher', evidence: ['load_no'] },
+      { code: 'OUT_DELIVERY', labelZh: '派送出站', actor: 'courier', evidence: ['route_sheet'] },
+      { code: 'POD_SCAN', labelZh: '签收扫描', actor: 'courier', evidence: ['pod_scan', 'sign_photo'] },
+      { code: 'COD_SETTLE', labelZh: '代收货款核销', actor: 'finance', evidence: ['cod_receipt'] },
+    ],
+  },
+  linehaul: {
+    id: 'linehaul',
+    icon: '🚂',
+    labelZh: '干线物流',
+    labelEn: 'Linehaul / Trunk',
+    color: '#fb923c',
+    descZh: '配载计划 → 车辆调度 → 场站发出 → 途检查验 → 服务区 → 在途监控 → 到港/到站 → 卸货完成',
+    stages: [
+      { code: 'LOAD_PLAN', labelZh: '配载/装载计划', actor: 'dispatcher', evidence: ['load_plan', 'cube_weight'] },
+      { code: 'VEHICLE_ASSIGN', labelZh: '车辆与司机指派', actor: 'dispatcher', evidence: ['vehicle_no', 'driver_id'] },
+      { code: 'DEPART_TERMINAL', labelZh: '场站发出', actor: 'driver', evidence: ['gate_out', 'seal_no'] },
+      { code: 'TOLL_CROSS', labelZh: '途检/收费站', actor: 'driver', evidence: ['toll_receipt', 'checkpoint'] },
+      { code: 'REST_AREA', labelZh: '服务区停靠', actor: 'driver', evidence: ['gps', 'temp_log'] },
+      { code: 'TRANSIT_CHECK', labelZh: '在途监控打卡', actor: 'driver', evidence: ['gps_trace'] },
+      { code: 'ARRIVE_HUB', labelZh: '到达枢纽/港口', actor: 'driver', evidence: ['gate_in'] },
+      { code: 'UNLOAD_COMPLETE', labelZh: '卸货交接完成', actor: 'warehouse', evidence: ['unload_manifest', 'damage_note'] },
+    ],
+  },
 };
 
 export const EXTENDED_ACTORS = {
@@ -84,6 +138,8 @@ export const EXTENDED_ACTORS = {
   finance: { id: 'finance', labelZh: '财务', labelEn: 'Finance' },
   customer: { id: 'customer', labelZh: '客户', labelEn: 'Customer' },
   cs: { id: 'cs', labelZh: '客服', labelEn: 'CS' },
+  platform: { id: 'platform', labelZh: '电商平台', labelEn: 'Platform' },
+  courier: { id: 'courier', labelZh: '快递员', labelEn: 'Courier' },
 };
 
 export function getDomain(id) {

@@ -123,6 +123,9 @@
     .domain-tabs button[data-d="sales"].on { border-color: var(--accent); color: var(--accent); }
     .domain-tabs button[data-d="production"].on { border-color: var(--gold); color: var(--gold); }
     .domain-tabs button[data-d="reverse"].on { border-color: #ff7eb3; color: #ff7eb3; }
+    .domain-tabs button[data-d="ecommerce"].on { border-color: #a78bfa; color: #a78bfa; }
+    .domain-tabs button[data-d="express"].on { border-color: #38bdf8; color: #38bdf8; }
+    .domain-tabs button[data-d="linehaul"].on { border-color: #fb923c; color: #fb923c; }
     .domain-tabs button[data-d="all"].on { border-color: var(--nucleus); color: var(--nucleus); }
     .domain-desc { font-size: 10px; color: var(--muted); margin-bottom: 8px; line-height: 1.5; }
     #lo-list { max-height: 140px; overflow: auto; margin-bottom: 8px; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
@@ -206,7 +209,7 @@
     <div class="stars" id="stars"></div>
     <div class="intro-earth" aria-hidden="true"></div>
     <h1>LOT · 从宇宙到乡村</h1>
-    <p>采购 · 销售 · 生产 · 逆向 — 四大物流域，40+ 演示订单，每单含完整环节与哈希事件链。零 API 费用。</p>
+    <p>采购 · 销售 · 生产 · 逆向 · 电商 · 快递 · 干线 — 60+ 演示订单，全环节哈希事件链。零 API 费用。</p>
     <button type="button" id="btn-enter">进入世界</button>
   </div>
 
@@ -234,7 +237,7 @@
         <div class="crumb" id="spatial-crumb"></div>
       </div>
       <aside class="event-panel">
-        <h3 id="panel-title">四大物流域 · 演示订单</h3>
+        <h3 id="panel-title">七大物流域 · 演示订单</h3>
         <div id="lo-list"></div>
         <div id="stage-check"></div>
         <h3 style="border-top:1px solid var(--line)">轨道电子 · 事件流</h3>
@@ -264,12 +267,20 @@
     import { LOGISTICS_DOMAINS } from '../kernel/lot-domains.js';
     import { countByDomain } from '../kernel/lot-demo-data.js';
 
-    const DOMAIN_COLORS = { procurement: '#5eb8ff', sales: '#3dffb0', production: '#ffc14d', reverse: '#ff7eb3' };
+    const DOMAIN_COLORS = {
+      procurement: '#5eb8ff',
+      sales: '#3dffb0',
+      production: '#ffc14d',
+      reverse: '#ff7eb3',
+      ecommerce: '#a78bfa',
+      express: '#38bdf8',
+      linehaul: '#fb923c',
+    };
 
     const state = {
       chain: defaultChain,
       focusCellId: 'beijing',
-      activeLoId: 'LO-PUR-001',
+      activeLoId: 'LO-ECM-001',
       domainFilter: 'all',
       map: null,
       layers: { markers: [], route: null, cargo: null },
@@ -388,7 +399,8 @@
       const counts = countByDomain(allLos);
       document.getElementById('hud-los').textContent = allLos.length;
       document.getElementById('hud-domains').textContent =
-        `采${counts.procurement} 销${counts.sales} 产${counts.production} 逆${counts.reverse}`;
+        `采${counts.procurement} 销${counts.sales} 产${counts.production} 逆${counts.reverse} ` +
+        `电${counts.ecommerce} 快${counts.express} 干${counts.linehaul}`;
     }
 
     async function filteredLos() {
@@ -420,7 +432,7 @@
       const dom = LOGISTICS_DOMAINS[state.domainFilter];
       document.getElementById('domain-desc').textContent = dom
         ? dom.descZh
-        : `共 ${document.getElementById('hud-los').textContent || '—'} 条演示 LO，覆盖采购/销售/生产/逆向全要素`;
+        : `共 ${document.getElementById('hud-los').textContent || '—'} 条演示 LO，覆盖七大物流域全要素`;
     }
 
     async function renderLoList() {
@@ -448,7 +460,7 @@
       const dom = LOGISTICS_DOMAINS[state.domainFilter];
       document.getElementById('panel-title').textContent = dom
         ? `${dom.icon} ${dom.labelZh} · ${los.length} 单`
-        : `四大物流域 · ${los.length} 单`;
+        : `七大物流域 · ${los.length} 单`;
     }
 
     async function renderStageCheck() {

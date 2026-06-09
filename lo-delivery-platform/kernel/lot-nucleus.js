@@ -209,7 +209,7 @@ export const SEED_NETWORK_LOS = [
   }),
   createLO({
     loId: 'LO-LINE-001',
-    logisticsDomain: 'sales',
+    logisticsDomain: 'linehaul',
     channel: 'linehaul',
     primaryActor: 'driver',
     originCellId: 'bj-shunyi-wh',
@@ -247,4 +247,6 @@ export const ACTOR_LENSES = {
   finance: { id: 'finance', labelZh: '财务', labelEn: 'Finance', actions: ['match', 'settle'] },
   customer: { id: 'customer', labelZh: '客户', labelEn: 'Customer', actions: ['return'] },
   cs: { id: 'cs', labelZh: '客服', labelEn: 'CS', actions: ['approve'] },
+  platform: { id: 'platform', labelZh: '电商平台', labelEn: 'Platform', actions: ['sync', 'callback'] },
+  courier: { id: 'courier', labelZh: '快递员', labelEn: 'Courier', actions: ['collect', 'deliver'] },
 };

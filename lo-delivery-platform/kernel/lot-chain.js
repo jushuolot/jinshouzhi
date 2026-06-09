@@ -16,7 +16,14 @@ import {
   createLO,
 } from './lot-nucleus.js';
 import { maybePropagate } from './lot-network.js';
-import { DEMO_DOMAIN_LOS, DEMO_EVENT_HISTORIES, DEMO_SPATIAL_EXT } from './lot-demo-data.js';
+import {
+  DEMO_DOMAIN_LOS_V3,
+  DEMO_DOMAIN_LOS_V4,
+  DEMO_EVENT_HISTORIES_V3,
+  DEMO_EVENT_HISTORIES_V4,
+  DEMO_SPATIAL_EXT,
+  DEMO_SPATIAL_V4,
+} from './lot-demo-data.js';
 
 export class LotChain {
   constructor(adapters) {
@@ -55,6 +62,7 @@ export class LotChain {
     if (seeded) {
       await this._ensureNetworkSeed();
       await this._ensureDomainsSeed();
+      await this._ensureDomainsV4Seed();
       return;
     }
 
@@ -81,6 +89,7 @@ export class LotChain {
     }
     await this._ensureNetworkSeed();
     await this._ensureDomainsSeed();
+    await this._ensureDomainsV4Seed();
     await this.local.setMeta('nucleus_seeded', new Date().toISOString());
   }
 
@@ -116,11 +125,11 @@ export class LotChain {
     const v3 = await this.local.getMeta('domains_v3_seeded');
     if (v3) return;
     await this.local.putSpatial(DEMO_SPATIAL_EXT);
-    for (const lo of DEMO_DOMAIN_LOS) {
+    for (const lo of DEMO_DOMAIN_LOS_V3) {
       const existing = await this.local.getLO(lo.loId);
       if (existing) continue;
       await this.local.putLO(lo);
-      const partials = DEMO_EVENT_HISTORIES.get(lo.loId) || [];
+      const partials = DEMO_EVENT_HISTORIES_V3.get(lo.loId) || [];
       let chain = [];
       for (const p of partials) {
         chain = await appendEventToChain(chain, { loId: lo.loId, ...p });
@@ -136,6 +145,37 @@ export class LotChain {
       await this._replicateLO(lo);
     }
     await this.local.setMeta('domains_v3_seeded', new Date().toISOString());
+  }
+
+  async _ensureDomainsV4Seed() {
+    const v4 = await this.local.getMeta('domains_v4_seeded');
+    if (v4) return;
+    await this.local.putSpatial(DEMO_SPATIAL_V4);
+    for (const lo of DEMO_DOMAIN_LOS_V4) {
+      const existing = await this.local.getLO(lo.loId);
+      if (existing) continue;
+      await this.local.putLO(lo);
+      const partials = DEMO_EVENT_HISTORIES_V4.get(lo.loId) || [];
+      let chain = [];
+      for (const p of partials) {
+        chain = await appendEventToChain(chain, { loId: lo.loId, ...p });
+      }
+      for (const e of chain) {
+        await this.local.putEvent(e);
+        if (this.remote) {
+          try {
+            await this.remote.putEvent(e);
+          } catch (_) {}
+        }
+      }
+      await this._replicateLO(lo);
+    }
+    const line = await this.local.getLO('LO-LINE-001');
+    if (line && line.logisticsDomain !== 'linehaul') {
+      line.logisticsDomain = 'linehaul';
+      await this.local.putLO(line);
+    }
+    await this.local.setMeta('domains_v4_seeded', new Date().toISOString());
   }
 
   async listLOs(filter = {}) {
