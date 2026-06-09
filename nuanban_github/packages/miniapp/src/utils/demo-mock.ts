@@ -12,6 +12,7 @@ import {
   orgNameById,
   SERVICE_PACKAGES,
   SETTLEMENTS,
+  type SettlementRecord,
   type RichOrder,
   type RichServiceLog,
 } from './demo-rich-data';
@@ -123,8 +124,29 @@ const studentProfileState = {
   schoolName: '示范大学',
 };
 
+function currentSettlementPeriod() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function addToPendingSettlement(amountCents: number) {
+  const period = currentSettlementPeriod();
+  const pending = state.settlements.find((s) => s.period === period && s.status === 'pending');
+  if (pending) {
+    pending.amountCents += amountCents;
+    return;
+  }
+  state.settlements.push({
+    id: `stl-${period}-${Date.now()}`,
+    period,
+    amountCents,
+    status: 'pending',
+  });
+}
+
 const state = {
   orders: buildRichOrders(ELDERS) as MockOrder[],
+  settlements: [...SETTLEMENTS] as SettlementRecord[],
   serviceLogs: [] as RichServiceLog[],
   sosAlerts: [
     {
@@ -508,7 +530,7 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
   if (method === 'GET' && path === '/nuanban/student/settlements') {
     const roleErr = assertDemoActiveRole(options, path, 'student');
     if (roleErr) return Promise.reject({ message: roleErr, statusCode: 403 });
-    return delay({ list: SETTLEMENTS } as T);
+    return delay({ list: [...state.settlements].reverse() } as T);
   }
   if (method === 'POST' && path === '/nuanban/family/packages/purchase') {
     const roleErr = assertDemoActiveRole(options, path, 'family');
@@ -632,8 +654,14 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
         summary: `完成${svc.name}，服务记录已归档（演示）`,
         createdAt: new Date().toISOString(),
       });
+      addToPendingSettlement(order.amount_cents);
     }
-    return delay({ ok: true, status: order?.status || 'completed' } as T);
+    return delay({
+      ok: true,
+      status: order?.status || 'completed',
+      settlementPending: true,
+      settlementPeriod: currentSettlementPeriod(),
+    } as T);
   }
   if (method === 'GET' && path === '/nuanban/student/schedules') {
     const active = state.orders.filter(
