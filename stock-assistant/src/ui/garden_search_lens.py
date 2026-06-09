@@ -84,7 +84,23 @@ def _render_lens_card(card: GardenLensCard, hit: eastmoney.SearchHit, *, readonl
 def render_garden_search_lens(pick_log: list, *, fetch_fn) -> None:
     """花园第一屏：搜索 + 可选图片识股 → 简化体检卡。"""
     st.markdown("### 🔍 搜一只，看体检卡")
-    st.caption("输入名称/代码，或上传 K 线截图识股；展开下方可看今晚明日推荐。")
+    st.caption("输入名称/代码，或点搜索栏旁 📷 上传截图；展开下方可看今晚明日推荐。")
+    st.markdown(
+        """
+        <style>
+        div[data-testid="column"]:has(div[data-testid="stFileUploader"]) div[data-testid="stFileUploader"] section {
+            padding: 0.35rem 0.5rem; min-height: 0;
+        }
+        div[data-testid="column"]:has(div[data-testid="stFileUploader"]) div[data-testid="stFileUploader"] button {
+            padding: 0.45rem 0.65rem; font-size: 1.1rem;
+        }
+        div[data-testid="column"]:has(div[data-testid="stFileUploader"]) div[data-testid="stFileUploader"] small {
+            display: none;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
 
     st.session_state.setdefault("garden_lens_kw", "茅台")
     history = normalize_search_history(st.session_state.get("search_history"))
@@ -96,13 +112,21 @@ def render_garden_search_lens(pick_log: list, *, fetch_fn) -> None:
                     st.session_state.garden_lens_kw = term
                     st.session_state._garden_lens_pending_kw = term
 
-    col_t, col_b = st.columns([4, 1])
+    col_t, col_img, col_b = st.columns([5, 1, 1])
     with col_t:
         kw = st.text_input(
             "股票",
             key="garden_lens_kw",
             placeholder="茅台、600519、AAPL、0700…",
             label_visibility="collapsed",
+        )
+    with col_img:
+        uploaded = st.file_uploader(
+            "📷",
+            type=["png", "jpg", "jpeg", "webp"],
+            key="garden_lens_image",
+            label_visibility="collapsed",
+            help="上传 K 线截图识股（需配置 GEMINI_API_KEY）",
         )
     with col_b:
         do_search = st.button("搜索", type="primary", use_container_width=True, key="garden_lens_search")
@@ -112,27 +136,25 @@ def render_garden_search_lens(pick_log: list, *, fetch_fn) -> None:
         kw = pending
         do_search = True
 
-    uploaded = st.file_uploader(
-        "📷 截图识股（可选）",
-        type=["png", "jpg", "jpeg", "webp"],
-        key="garden_lens_image",
-        help="配置 Secrets 中 GEMINI_API_KEY 可自动识图；否则请用文字搜索。",
-    )
-    if uploaded is not None and st.button("从图片识别", key="garden_lens_img_btn"):
-        raw = uploaded.getvalue()
-        mime = str(uploaded.type or "image/png")
-        api_key = _gemini_key_from_secrets()
-        candidates, ocr_text = image_to_search_terms(raw, gemini_api_key=api_key, mime=mime)
-        if not api_key:
-            st.info("未配置 **GEMINI_API_KEY**，请在 Streamlit Secrets 添加后使用识图，或手动输入代码。")
-        if ocr_text:
-            st.caption(f"识图文字：{ocr_text[:120]}")
-        if candidates:
-            st.session_state.garden_lens_kw = candidates[0]
-            st.session_state._garden_lens_pending_kw = candidates[0]
-            st.rerun()
-        elif api_key and not candidates:
-            st.warning("未能从图片识别出代码，请换一张更清晰的截图。")
+    if uploaded is not None:
+        sig = f"{uploaded.name}:{uploaded.size}"
+        if st.session_state.get("_garden_lens_img_sig") != sig:
+            st.session_state._garden_lens_img_sig = sig
+            raw = uploaded.getvalue()
+            mime = str(uploaded.type or "image/png")
+            api_key = _gemini_key_from_secrets()
+            with st.spinner("识图中…"):
+                candidates, ocr_text = image_to_search_terms(raw, gemini_api_key=api_key, mime=mime)
+            if not api_key:
+                st.caption("识图需配置 **GEMINI_API_KEY**；也可直接在左侧输入代码搜索。")
+            elif ocr_text:
+                st.caption(f"识图：{ocr_text[:80]}")
+            if candidates:
+                st.session_state.garden_lens_kw = candidates[0]
+                st.session_state._garden_lens_pending_kw = candidates[0]
+                st.rerun()
+            elif api_key:
+                st.warning("未能识别代码，请换截图或手动输入。")
 
     readonly = is_readonly_mode()
     if do_search and kw.strip():
