@@ -265,6 +265,7 @@ export function countByDomain(los) {
     ecommerce: 0,
     express: 0,
     linehaul: 0,
+    warehouse_internal: 0,
     other: 0,
   };
   for (const lo of los) {

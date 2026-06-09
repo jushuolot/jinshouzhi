@@ -127,6 +127,29 @@ export const LOGISTICS_DOMAINS = {
       { code: 'UNLOAD_COMPLETE', labelZh: '卸货交接完成', actor: 'warehouse', evidence: ['unload_manifest', 'damage_note'] },
     ],
   },
+  warehouse_internal: {
+    id: 'warehouse_internal',
+    icon: '🏗️',
+    labelZh: '仓内物流',
+    labelEn: 'Warehouse Internal',
+    color: '#94a3b8',
+    descZh: 'DC/RDC/FDC 月台 → 上架 → 自动化取货 → 补货 → 波次 → 拣配 → 包装称重 → 分拣集货',
+    stages: [
+      { code: 'DOCK_CHECKIN', labelZh: '月台登记', actor: 'warehouse', evidence: ['dock_appt'] },
+      { code: 'UNLOAD_SCAN', labelZh: '卸货扫描', actor: 'warehouse', evidence: ['unload_scan'] },
+      { code: 'QC_GATE', labelZh: '入库质检', actor: 'qc', evidence: ['qc_gate'] },
+      { code: 'PUTAWAY_TASK', labelZh: '上架任务', actor: 'warehouse', evidence: ['putaway_task'] },
+      { code: 'ASRS_RETRIEVE', labelZh: '自动化取货', actor: 'equipment', evidence: ['asrs_cmd', 'crane_log'] },
+      { code: 'REPLENISH', labelZh: '补货至拣货区', actor: 'warehouse', evidence: ['replen_task'] },
+      { code: 'WAVE_RELEASE', labelZh: '波次释放', actor: 'warehouse', evidence: ['wave_id'] },
+      { code: 'PICK_TASK', labelZh: '拣货任务下发', actor: 'warehouse', evidence: ['pick_task'] },
+      { code: 'PICK_CONFIRM', labelZh: '拣货确认', actor: 'warehouse', evidence: ['pick_scan'] },
+      { code: 'PACK_DONE', labelZh: '包装完成', actor: 'warehouse', evidence: ['pack_scan'] },
+      { code: 'WEIGHT_SCAN', labelZh: 'DWS 称重扫描', actor: 'equipment', evidence: ['weight', 'dim'] },
+      { code: 'SORT_DROP', labelZh: '分拣投递', actor: 'equipment', evidence: ['chute', 'bag'] },
+      { code: 'STAGE_OUT', labelZh: '集货区待发', actor: 'warehouse', evidence: ['stage_lane'] },
+    ],
+  },
 };
 
 export const EXTENDED_ACTORS = {
@@ -140,6 +163,7 @@ export const EXTENDED_ACTORS = {
   cs: { id: 'cs', labelZh: '客服', labelEn: 'CS' },
   platform: { id: 'platform', labelZh: '电商平台', labelEn: 'Platform' },
   courier: { id: 'courier', labelZh: '快递员', labelEn: 'Courier' },
+  equipment: { id: 'equipment', labelZh: '自动化设备', labelEn: 'Automation' },
 };
 
 export function getDomain(id) {

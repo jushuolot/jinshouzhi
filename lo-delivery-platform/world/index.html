@@ -126,7 +126,32 @@
     .domain-tabs button[data-d="ecommerce"].on { border-color: #a78bfa; color: #a78bfa; }
     .domain-tabs button[data-d="express"].on { border-color: #38bdf8; color: #38bdf8; }
     .domain-tabs button[data-d="linehaul"].on { border-color: #fb923c; color: #fb923c; }
+    .domain-tabs button[data-d="warehouse_internal"].on { border-color: #94a3b8; color: #cbd5e1; }
     .domain-tabs button[data-d="all"].on { border-color: var(--nucleus); color: var(--nucleus); }
+    .tier-tabs { display: flex; gap: 4px; margin-bottom: 8px; }
+    .tier-tabs button {
+      padding: 4px 10px; font-size: 10px; border-radius: 6px; border: 1px solid var(--line);
+      background: #0a1422; color: var(--muted); cursor: pointer;
+    }
+    .tier-tabs button.on { font-weight: 600; }
+    .tier-tabs button[data-t="dc"].on { border-color: #60a5fa; color: #60a5fa; }
+    .tier-tabs button[data-t="rdc"].on { border-color: #34d399; color: #34d399; }
+    .tier-tabs button[data-t="fdc"].on { border-color: #fbbf24; color: #fbbf24; }
+    .equip-panel {
+      position: absolute; bottom: 12px; left: 12px; right: 320px; z-index: 400;
+      background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+      padding: 8px 10px; max-height: 120px; overflow: auto; backdrop-filter: blur(8px);
+    }
+    .equip-panel[hidden] { display: none; }
+    .equip-title { font-size: 9px; letter-spacing: 0.12em; color: var(--muted); margin-bottom: 6px; }
+    .equip-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+    .equip-card {
+      font-size: 9px; padding: 4px 8px; border-radius: 6px; border: 1px solid var(--line);
+      background: #0a1422; min-width: 100px;
+    }
+    .equip-card b { display: block; color: var(--text); font-size: 10px; }
+    .equip-bar { height: 3px; background: #1a2d44; border-radius: 2px; margin-top: 4px; }
+    .equip-bar i { display: block; height: 100%; background: var(--accent); border-radius: 2px; }
     .domain-desc { font-size: 10px; color: var(--muted); margin-bottom: 8px; line-height: 1.5; }
     #lo-list { max-height: 140px; overflow: auto; margin-bottom: 8px; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
     .lo-row {
@@ -209,7 +234,7 @@
     <div class="stars" id="stars"></div>
     <div class="intro-earth" aria-hidden="true"></div>
     <h1>LOT · 从宇宙到乡村</h1>
-    <p>采购 · 销售 · 生产 · 逆向 · 电商 · 快递 · 干线 — 60+ 演示订单，全环节哈希事件链。零 API 费用。</p>
+    <p>七大物流域 + DC/RDC/FDC 仓网 · 仓内作业 · 设备模拟 · 订单聚合/拆分 · 80+ 演示 LO。零 API 费用。</p>
     <button type="button" id="btn-enter">进入世界</button>
   </div>
 
@@ -220,6 +245,8 @@
       <div class="toolbar">
         <button type="button" class="primary" id="btn-play">▶ 播放全链</button>
         <button type="button" id="btn-reset">↺ 重置</button>
+        <button type="button" id="btn-agg">⊕ 聚合</button>
+        <button type="button" id="btn-split">⊖ 拆分</button>
         <a href="driver.html" style="text-decoration:none"><button type="button">📱 司机端</button></a>
       </div>
       <div class="hud">
@@ -236,8 +263,12 @@
         <div class="sec">ZOOM · 宇宙 → 乡村</div>
         <div class="crumb" id="spatial-crumb"></div>
       </div>
+      <div class="equip-panel" id="equip-panel" hidden>
+        <div class="equip-title">自动化设备 · 利用率模拟</div>
+        <div class="equip-grid" id="equip-grid"></div>
+      </div>
       <aside class="event-panel">
-        <h3 id="panel-title">七大物流域 · 演示订单</h3>
+        <h3 id="panel-title">物流域 · 演示订单</h3>
         <div id="lo-list"></div>
         <div id="stage-check"></div>
         <h3 style="border-top:1px solid var(--line)">轨道电子 · 事件流</h3>
@@ -247,6 +278,7 @@
 
     <footer id="pipeline">
       <div class="domain-tabs" id="domain-tabs"></div>
+      <div class="tier-tabs" id="tier-tabs" hidden></div>
       <div class="domain-desc" id="domain-desc"></div>
       <div class="pipe-title">销售链演示管道（播放全链）· 点击聚焦</div>
       <div class="pipe-track" id="pipe-track"></div>
@@ -266,6 +298,7 @@
     import { projectLOState } from '../kernel/lot-nucleus.js';
     import { LOGISTICS_DOMAINS } from '../kernel/lot-domains.js';
     import { countByDomain } from '../kernel/lot-demo-data.js';
+    import { WAREHOUSE_TIERS } from '../kernel/lot-warehouse.js';
 
     const DOMAIN_COLORS = {
       procurement: '#5eb8ff',
@@ -275,13 +308,15 @@
       ecommerce: '#a78bfa',
       express: '#38bdf8',
       linehaul: '#fb923c',
+      warehouse_internal: '#94a3b8',
     };
 
     const state = {
       chain: defaultChain,
-      focusCellId: 'beijing',
-      activeLoId: 'LO-ECM-001',
+      focusCellId: 'bj-dc-shunyi',
+      activeLoId: 'LO-WHI-001',
       domainFilter: 'all',
+      tierFilter: 'all',
       map: null,
       layers: { markers: [], route: null, cargo: null },
       demoRunning: false,
@@ -400,12 +435,54 @@
       document.getElementById('hud-los').textContent = allLos.length;
       document.getElementById('hud-domains').textContent =
         `采${counts.procurement} 销${counts.sales} 产${counts.production} 逆${counts.reverse} ` +
-        `电${counts.ecommerce} 快${counts.express} 干${counts.linehaul}`;
+        `电${counts.ecommerce} 快${counts.express} 干${counts.linehaul} 仓${counts.warehouse_internal}`;
     }
 
     async function filteredLos() {
-      if (state.domainFilter === 'all') return state.chain.listLOs();
-      return state.chain.listLOs({ domain: state.domainFilter });
+      const f = {};
+      if (state.domainFilter !== 'all') f.domain = state.domainFilter;
+      if (state.tierFilter !== 'all') f.tier = state.tierFilter;
+      return state.chain.listLOs(f);
+    }
+
+    function renderTierTabs() {
+      const el = document.getElementById('tier-tabs');
+      const show = state.domainFilter === 'warehouse_internal';
+      el.hidden = !show;
+      if (!show) return;
+      const tiers = [{ id: 'all', labelZh: '全部仓级' }, ...Object.values(WAREHOUSE_TIERS)];
+      el.innerHTML = tiers
+        .map((t) => {
+          const on = state.tierFilter === t.id ? ' on' : '';
+          return `<button type="button" data-t="${t.id}" class="${on.trim()}">${t.labelZh || t.id}</button>`;
+        })
+        .join('');
+      el.querySelectorAll('button').forEach((btn) => {
+        btn.onclick = () => {
+          state.tierFilter = btn.dataset.t;
+          renderAll();
+        };
+      });
+    }
+
+    async function renderEquipment() {
+      const panel = document.getElementById('equip-panel');
+      const show =
+        state.domainFilter === 'warehouse_internal' ||
+        state.domainFilter === 'all' ||
+        state.domainFilter === 'ecommerce';
+      panel.hidden = !show;
+      if (!show) return;
+      const eq = await state.chain.getEquipment();
+      const filtered =
+        state.tierFilter === 'all' ? eq : eq.filter((e) => e.tier === state.tierFilter);
+      document.getElementById('equip-grid').innerHTML = filtered
+        .map(
+          (e) =>
+            `<div class="equip-card"><b>${e.id}</b>${e.labelZh} · ${e.status || 'idle'}
+            <div class="equip-bar"><i style="width:${e.utilization || 0}%"></i></div></div>`
+        )
+        .join('');
     }
 
     function renderDomainTabs() {
@@ -421,18 +498,17 @@
       document.querySelectorAll('#domain-tabs button').forEach((btn) => {
         btn.onclick = () => {
           state.domainFilter = btn.dataset.d;
-          if (state.domainFilter !== 'all' && state.domainFilter !== 'sales') {
-            filteredLos().then((los) => {
-              if (los.length && !los.find((l) => l.loId === state.activeLoId)) state.activeLoId = los[0].loId;
-              renderAll();
-            });
-          } else renderAll();
+          if (state.domainFilter !== 'warehouse_internal') state.tierFilter = 'all';
+          filteredLos().then((los) => {
+            if (los.length && !los.find((l) => l.loId === state.activeLoId)) state.activeLoId = los[0].loId;
+            renderAll();
+          });
         };
       });
       const dom = LOGISTICS_DOMAINS[state.domainFilter];
       document.getElementById('domain-desc').textContent = dom
         ? dom.descZh
-        : `共 ${document.getElementById('hud-los').textContent || '—'} 条演示 LO，覆盖七大物流域全要素`;
+        : `共 ${document.getElementById('hud-los').textContent || '—'} 条 LO · 含 DC/RDC/FDC 仓网与聚合/拆分`;
     }
 
     async function renderLoList() {
@@ -445,9 +521,11 @@
           const cargo = lo.contract?.cargo || lo.channel;
           const dom = LOGISTICS_DOMAINS[lo.logisticsDomain];
           const icon = dom?.icon || '·';
+          const tier = lo.facilityTier ? `[${lo.facilityTier.toUpperCase()}] ` : '';
+          const op = lo.contract?.op ? ` · ${lo.contract.op}` : '';
           return `<div class="lo-row${on}" data-lo="${lo.loId}">
             <div class="id">${icon} ${lo.loId}</div>
-            <div class="cargo">${cargo} · ${label(lo.originCellId)}→${label(lo.destCellId)}</div>
+            <div class="cargo">${tier}${cargo}${op} · ${label(lo.originCellId)}→${label(lo.destCellId)}</div>
           </div>`;
         })
         .join('');
@@ -460,7 +538,7 @@
       const dom = LOGISTICS_DOMAINS[state.domainFilter];
       document.getElementById('panel-title').textContent = dom
         ? `${dom.icon} ${dom.labelZh} · ${los.length} 单`
-        : `七大物流域 · ${los.length} 单`;
+        : `全域 · ${los.length} 单`;
     }
 
     async function renderStageCheck() {
@@ -506,10 +584,12 @@
 
     async function renderAll() {
       renderDomainTabs();
+      renderTierTabs();
       await renderCrumb();
       await renderLoList();
       await renderStageCheck();
       await renderMap();
+      await renderEquipment();
       await renderPipeline();
       await renderEventStream();
     }
@@ -550,6 +630,26 @@
 
     document.getElementById('btn-enter').onclick = enterWorld;
     document.getElementById('btn-play').onclick = () => playDemo();
+    document.getElementById('btn-agg').onclick = async () => {
+      try {
+        const p = await state.chain.runAggregateDemo();
+        state.activeLoId = p.loId;
+        toast('订单聚合完成 · ' + p.loId);
+        await renderAll();
+      } catch (e) {
+        toast('聚合失败：' + e.message);
+      }
+    };
+    document.getElementById('btn-split').onclick = async () => {
+      try {
+        const kids = await state.chain.runSplitDemo();
+        if (kids.length) state.activeLoId = kids[0].loId;
+        toast('订单拆分完成 · ' + kids.length + ' 子单');
+        await renderAll();
+      } catch (e) {
+        toast('拆分失败：' + e.message);
+      }
+    };
     document.getElementById('btn-reset').onclick = async () => {
       if (!confirm('清空本机演示数据并重新开始？')) return;
       await state.chain.resetDemo();

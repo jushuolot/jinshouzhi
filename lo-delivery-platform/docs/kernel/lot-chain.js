@@ -24,6 +24,8 @@ import {
   DEMO_SPATIAL_EXT,
   DEMO_SPATIAL_V4,
 } from './lot-demo-data.js';
+import { DEMO_DOMAIN_LOS_V5, DEMO_EVENT_HISTORIES_V5, DEMO_SPATIAL_V5 } from './lot-demo-data-warehouse.js';
+import { DEMO_EQUIPMENT, bumpEquipmentOnEvent, aggregateOrders, splitOrder } from './lot-warehouse.js';
 
 export class LotChain {
   constructor(adapters) {
@@ -63,6 +65,7 @@ export class LotChain {
       await this._ensureNetworkSeed();
       await this._ensureDomainsSeed();
       await this._ensureDomainsV4Seed();
+      await this._ensureWarehouseV5Seed();
       return;
     }
 
@@ -90,6 +93,7 @@ export class LotChain {
     await this._ensureNetworkSeed();
     await this._ensureDomainsSeed();
     await this._ensureDomainsV4Seed();
+    await this._ensureWarehouseV5Seed();
     await this.local.setMeta('nucleus_seeded', new Date().toISOString());
   }
 
@@ -178,10 +182,86 @@ export class LotChain {
     await this.local.setMeta('domains_v4_seeded', new Date().toISOString());
   }
 
+  async _ensureWarehouseV5Seed() {
+    const v5 = await this.local.getMeta('warehouse_v5_seeded');
+    if (v5) return;
+    await this.local.putSpatial(DEMO_SPATIAL_V5);
+    for (const lo of DEMO_DOMAIN_LOS_V5) {
+      const existing = await this.local.getLO(lo.loId);
+      if (existing) continue;
+      await this.local.putLO(lo);
+      const partials = DEMO_EVENT_HISTORIES_V5.get(lo.loId) || [];
+      let chain = [];
+      for (const p of partials) {
+        chain = await appendEventToChain(chain, { loId: lo.loId, ...p });
+      }
+      for (const e of chain) {
+        await this.local.putEvent(e);
+        if (this.remote) {
+          try {
+            await this.remote.putEvent(e);
+          } catch (_) {}
+        }
+      }
+      await this._replicateLO(lo);
+    }
+    await this.setEquipment(DEMO_EQUIPMENT);
+    await this.local.setMeta('warehouse_v5_seeded', new Date().toISOString());
+  }
+
+  async putLODirect(lo) {
+    await this.local.putLO(lo);
+    await this._replicateLO(lo);
+    return lo;
+  }
+
+  async getEquipment() {
+    const raw = await this.local.getMeta('equipment_fleet');
+    if (!raw) return [...DEMO_EQUIPMENT];
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return [...DEMO_EQUIPMENT];
+    }
+  }
+
+  async setEquipment(list) {
+    await this.local.setMeta('equipment_fleet', JSON.stringify(list));
+  }
+
+  async runAggregateDemo() {
+    return aggregateOrders(this, {
+      parentLoId: 'LO-AGG-DEMO-' + Date.now(),
+      childLoIds: ['LO-ECM-004', 'LO-ECM-005', 'LO-ECM-006'],
+      tier: 'rdc',
+      facilityId: 'bj-rdc-tongzhou',
+      cargo: '动态聚合演示波次',
+    });
+  }
+
+  async runSplitDemo() {
+    const parent = await this.createLO({
+      loId: 'LO-SPLIT-DEMO-' + Date.now(),
+      logisticsDomain: 'warehouse_internal',
+      facilityTier: 'dc',
+      channel: 'split-demo',
+      originCellId: 'bj-dc-shunyi',
+      destCellId: 'bj-daxing-port',
+      contract: { cargo: '动态拆分演示母单', tier: 'dc' },
+    });
+    return splitOrder(this, parent.loId, [
+      { loId: parent.loId + '-A', cargo: '拆分子单 A', destCellId: 'bj-langfang-terminal' },
+      { loId: parent.loId + '-B', cargo: '拆分子单 B', destCellId: 'bj-express-hub' },
+    ]);
+  }
+
   async listLOs(filter = {}) {
     let los = await this.local.listLOs();
     if (filter.domain) {
       los = los.filter((lo) => (lo.logisticsDomain || lo.channel) === filter.domain);
+    }
+    if (filter.tier) {
+      los = los.filter((lo) => lo.facilityTier === filter.tier);
     }
     if (filter.status) {
       los = los.filter((lo) => lo.status === filter.status);
@@ -258,6 +338,12 @@ export class LotChain {
     const evt = next[next.length - 1];
     const saved = await this.appendEvent(evt);
     await maybePropagate(this, loId, code);
+    const lo = await this.getLO(loId);
+    if (lo?.logisticsDomain === 'warehouse_internal' || lo?.facilityTier) {
+      const eq = await this.getEquipment();
+      const next = bumpEquipmentOnEvent(eq, code, lo.originCellId);
+      await this.setEquipment(next);
+    }
     return saved;
   }
 

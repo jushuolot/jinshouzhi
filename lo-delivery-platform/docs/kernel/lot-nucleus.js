@@ -67,6 +67,7 @@ export function createLO(partial) {
     loId: partial.loId,
     channel: partial.channel || 'demo',
     logisticsDomain: partial.logisticsDomain || null,
+    facilityTier: partial.facilityTier || partial.contract?.tier || null,
     status: partial.status || 'active',
     spatialPath: partial.spatialPath || ['earth', 'cn', 'beijing'],
     originCellId: partial.originCellId || 'bj-yanqing-cell',
@@ -249,4 +250,5 @@ export const ACTOR_LENSES = {
   cs: { id: 'cs', labelZh: '客服', labelEn: 'CS', actions: ['approve'] },
   platform: { id: 'platform', labelZh: '电商平台', labelEn: 'Platform', actions: ['sync', 'callback'] },
   courier: { id: 'courier', labelZh: '快递员', labelEn: 'Courier', actions: ['collect', 'deliver'] },
+  equipment: { id: 'equipment', labelZh: '自动化设备', labelEn: 'Automation', actions: ['run', 'stop'] },
 };
