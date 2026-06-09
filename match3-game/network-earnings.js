@@ -19,6 +19,7 @@
     passiveYield: { dailyAmount: 0.006, sessionTickAmount: 0.0008, tickMs: 900000, sessionTickCap: 0.006 },
     relicBounty: { startHour: 18, endHour: 24, amount: 0.018 },
     civilizationArchive: { amount: 0.022, phases: ["复兴期", "超越期"] },
+    fieldNoteMirror: { amount: 0.016, phases: ["复兴期", "超越期"] },
     bounty: {
       label: "任务赏金(演示)",
       endpoint: "https://api.coingecko.com/api/v3/ping",
@@ -89,6 +90,12 @@
       source: "network_settlement",
       description: "文明历复兴期/超越期每日档案同步入账",
     },
+    field_note_mirror: {
+      id: "field_note_mirror",
+      label: "田野笔记镜像",
+      source: "network_settlement",
+      description: "每日首次启动时归档田野笔记镜像，只记外部结算入账",
+    },
   };
 
   var state = {
@@ -99,6 +106,7 @@
     faucetCredited: false,
     lastRelicBounty: "",
     lastCivilizationArchive: "",
+    lastFieldNoteMirror: "",
   };
 
   var tickTimer = null;
@@ -119,6 +127,7 @@
         typeof data.sessionTickTotal === "number" ? data.sessionTickTotal : 0;
       state.lastRelicBounty = data.lastRelicBounty || "";
       state.lastCivilizationArchive = data.lastCivilizationArchive || "";
+      state.lastFieldNoteMirror = data.lastFieldNoteMirror || "";
     } catch (e) {
       // ignore
     }
@@ -133,6 +142,7 @@
           sessionTickTotal: state.sessionTickTotal,
           lastRelicBounty: state.lastRelicBounty,
           lastCivilizationArchive: state.lastCivilizationArchive,
+          lastFieldNoteMirror: state.lastFieldNoteMirror,
           updatedAt: Date.now(),
         })
       );
@@ -333,6 +343,37 @@
     return credited;
   }
 
+  function tryFieldNoteMirror() {
+    var key = todayKey();
+    if (state.lastFieldNoteMirror === key) return 0;
+    var clock =
+      typeof window !== "undefined" && window.MATCH3_CIVILIZATION_CLOCK
+        ? window.MATCH3_CIVILIZATION_CLOCK
+        : null;
+    if (!clock) return 0;
+    var evo =
+      typeof window !== "undefined" && window.MATCH3_EVOLUTION
+        ? window.MATCH3_EVOLUTION
+        : {};
+    var date = clock.getCivilizationDate();
+    var cfg = CONFIG.fieldNoteMirror;
+    if (cfg.phases.indexOf(date.civilizationPhase) < 0) return 0;
+    state.lastFieldNoteMirror = key;
+    saveState();
+    return creditChannel("field_note_mirror", {
+      amount: cfg.amount,
+      meta: {
+        kind: "field_note_snapshot",
+        day: key,
+        generation: evo.generation || "",
+        universeDay: evo.universeDay || "",
+        civilizationYear: date.civilizationYear,
+        phase: date.civilizationPhase,
+        simulated: true,
+      },
+    });
+  }
+
   function startPeriodicTick() {
     if (tickTimer) return;
     var ms = CONFIG.passiveYield.tickMs;
@@ -359,6 +400,7 @@
     tryDailyPassiveYield();
     tryRelicBounty();
     tryCivilizationArchive();
+    tryFieldNoteMirror();
     tryAffiliateReferral();
     startPeriodicTick();
     deferNetworkProbes();

@@ -870,7 +870,7 @@
 
   function tryAdminLogin() {
     const input = adminPassInputEl ? adminPassInputEl.value : "";
-    const expected = (AD_CONFIG.admin && AD_CONFIG.admin.passphrase) || "萌植888";
+    const expected = (AD_CONFIG.admin && AD_CONFIG.admin.passphrase) || "Mz168";
     if (input !== expected) {
       if (adminGateErrorEl) adminGateErrorEl.hidden = false;
       return;

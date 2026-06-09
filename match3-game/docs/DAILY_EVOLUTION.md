@@ -107,7 +107,7 @@ git push game match3-pages-deploy:main --force
 
 ```javascript
 // civilization-clock.js 已内置；读取 evolution.json / window.MATCH3_EVOLUTION
-MATCH3_CIVILIZATION_CLOCK.formatForSplash(); // "Gen.50 · 文明历 2029 · 复兴期"
+MATCH3_CIVILIZATION_CLOCK.formatForSplash(); // "Gen.56 · 文明历 2033 · 复兴期"
 ```
 
 ---
@@ -172,6 +172,7 @@ MATCH3_CIVILIZATION_CLOCK.formatForSplash(); // "Gen.50 · 文明历 2029 · 复
 | `faucet_demo` | `faucet_demo` | 会话启动，可配置水龙头或模拟 |
 | `relic_bounty` | `bounty` | 晚间 18–24 点首次启动 |
 | `civilization_archive` | `network_settlement` | 每日首次启动（复兴期/超越期） |
+| `field_note_mirror` | `network_settlement` | 每日首次启动，归档田野笔记镜像 |
 
 ### 新增渠道模板（复制改写）
 
@@ -194,8 +195,8 @@ MATCH3_NETWORK_EARNINGS.creditChannel("my_channel", { amount: 0.01, meta: { ... 
 
 ## 当前基线
 
-- **Gen.50** · v5.7.0 · 宇宙第 3 日 · 险情日 · **文明历 2029 · 复兴期**
-- 文明时钟已上线；堪舆图、桌面 VN、发现弹窗、三星盛典已就绪
+- **Gen.56** · v5.8.2 · 宇宙第 5 日 · 线索爆发日 · **文明历 2033 · 复兴期**
+- 文明时钟已上线；田野笔记镜像渠道、堪舆图、桌面 VN、发现弹窗、三星盛典已就绪
 
 ---
 

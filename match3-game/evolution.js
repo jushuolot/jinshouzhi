@@ -6,15 +6,17 @@
   "use strict";
 
   var DEFAULT = {
-    version: "5.7.0",
-    generation: 50,
-    universeDay: 3,
+    version: "5.8.2",
+    generation: 56,
+    universeDay: 5,
     civilizationEpoch: "1929-07",
-    civilizationDay: 50,
-    civilizationYear: 2029,
+    civilizationDay: 52,
+    civilizationYear: 2033,
     civilizationPhase: "复兴期",
     autoTune: { enabled: true, windowSize: 8, maxMoveAdjust: 3, targetWinRate: 0.52 },
-    patchNotes: ["Gen.50 文明时钟", "复兴期 2029 · 险情日台词"],
+    dailyChronicle:
+      "第 5 日·线索爆发日。文明历 2033，复兴期——七八号坑数据被小队熬夜拼成田野笔记。",
+    patchNotes: ["Gen.56 线索爆发日", "复兴期 2033 · 田野笔记镜像渠道"],
   };
 
   window.MATCH3_EVOLUTION = DEFAULT;
