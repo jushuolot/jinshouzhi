@@ -197,8 +197,8 @@ def _render_market_outlook(readonly: bool, fetch_ranking) -> None:
     if drivers:
         st.caption("依据：" + " · ".join(drivers[:5]))
 
-    # Streamlit 不允许 expander 内嵌 download_button，用 toggle 代替折叠
-    show_idx = st.toggle("显示指数快照", value=False, key="garden_outlook_show_idx")
+    # 不用 expander（Streamlit 嵌套会崩）；用 checkbox 兼容旧版 Streamlit
+    show_idx = st.checkbox("显示指数快照", value=False, key="garden_outlook_show_idx")
     idx_rows = []
     for i in outlook.get("indices") or []:
         if not i.get("close"):
@@ -295,6 +295,7 @@ def _render_nightly_brief(
         file_name=f"佛祖查岗_{date.today().isoformat()}.md",
         mime="text/markdown",
         use_container_width=True,
+        key="garden_download_brief_md",
     )
 
 
@@ -473,7 +474,9 @@ def render() -> None:
     with col_a:
         if readonly:
             st.caption("只读模式：不可刷新推荐。")
-        elif st.button("🔮 预测明日 A 股 + 全球", type="primary", use_container_width=True):
+        elif st.button(
+            "🔮 预测明日 A 股 + 全球", type="primary", use_container_width=True, key="garden_predict_btn"
+        ):
             with st.spinner("分析今日收盘与历史K线，预测明日偏强标的（约 1–3 分钟）…"):
                 a_picks, global_picks, src, stats = fetch_garden_picks_bundle(
                     _fetch_ranking,
@@ -617,10 +620,14 @@ def render() -> None:
             file_name=f"明日推荐_{predict_for}.md",
             mime="text/markdown",
             use_container_width=True,
+            key="garden_download_picks_md",
         )
 
     st.divider()
-    _render_pick_review(pick_log, readonly=readonly)
+    try:
+        _render_pick_review(pick_log, readonly=readonly)
+    except Exception as exc:
+        st.warning(f"推荐复盘暂时无法显示：{exc}")
 
     st.divider()
     try:
@@ -629,30 +636,29 @@ def render() -> None:
         st.warning(f"大盘展望暂时无法显示：{exc}")
 
     hist = records_for_display(pick_log, limit=12)
-    if hist:
-        with st.expander("📜 最近推荐与验证", expanded=False):
-            hrows = []
-            for r in hist:
-                status = "—"
-                if r.verified:
-                    status = "✅ 涨过" if r.hit else "❌ 未涨过"
-                hrows.append(
-                    {
-                        "日期": r.pick_date,
-                        "名称": r.name,
-                        "代码": r.code,
-                        "信号": r.signal,
-                        "持有天": r.hold_days,
-                        "结果": status,
-                        "说明": r.note[:50] if r.note else "",
-                    }
-                )
-            st.dataframe(pd.DataFrame(hrows), use_container_width=True, hide_index=True)
+    if hist and st.checkbox("显示最近推荐与验证", value=False, key="garden_show_pick_hist"):
+        hrows = []
+        for r in hist:
+            status = "—"
+            if r.verified:
+                status = "✅ 涨过" if r.hit else "❌ 未涨过"
+            hrows.append(
+                {
+                    "日期": r.pick_date,
+                    "名称": r.name,
+                    "代码": r.code,
+                    "信号": r.signal,
+                    "持有天": r.hold_days,
+                    "结果": status,
+                    "说明": r.note[:50] if r.note else "",
+                }
+            )
+        st.dataframe(pd.DataFrame(hrows), use_container_width=True, hide_index=True)
 
-    with st.expander("📖 明日推荐怎么选的？（选股依据）", expanded=False):
+    if st.checkbox("显示选股依据说明", value=False, key="garden_show_selection_doc"):
         st.markdown(SELECTION_CRITERIA_MD)
 
-    with st.expander("🌙 成长日记（给「佛祖」每晚看一眼）", expanded=False):
+    if st.checkbox("显示成长日记", value=False, key="garden_show_growth_diary"):
         st.markdown(
             f"""
 - **今日版本** v{APP_VERSION}，累计进化 **{EVOLUTION_STEP}** 步
@@ -664,3 +670,5 @@ def render() -> None:
 *像种子一样每天长一点 — 你休息，我在扫盘。*
             """
         )
+
+    st.caption(f"花园 UI · v{APP_VERSION} · step {EVOLUTION_STEP} · 无 expander 版")

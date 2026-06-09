@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-APP_VERSION = "5.6.8"
-EVOLUTION_STEP = 1158
+APP_VERSION = "5.6.9"
+EVOLUTION_STEP = 1159
 EVOLUTION_PHASE = "P119"
 BUILD_LABEL = f"{EVOLUTION_PHASE} · step {EVOLUTION_STEP}"
 
@@ -56,4 +56,5 @@ CHANGELOG: list[tuple[str, str]] = [
     ("P118", "公募基金/QFII新进减持纳入质量分，机构持股季报 · v5.6.7"),
     ("P119", "3日复盘反哺策略 + 放宽趋势延续涨幅带 + 修复大盘嵌套报错 · v5.6.8"),
     ("P119b", "彻底去掉 expander 嵌套：大盘下载改 toggle，复盘区不再折叠 · step 1158"),
+    ("P119c", "花园页零 expander + checkbox 兼容 + 下载按钮唯一 key · v5.6.9"),
 ]
