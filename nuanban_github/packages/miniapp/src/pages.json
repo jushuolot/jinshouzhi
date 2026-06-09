@@ -5,9 +5,8 @@
       "path": "pages/common/login",
       "style": {
         "navigationBarTitleText": "登录",
-        "navigationBarBackgroundColor": "#fff8f0",
-        "navigationBarTextStyle": "black",
-        "backgroundColor": "#fff8f0"
+        "navigationStyle": "custom",
+        "backgroundColor": "#fff5eb"
       }
     },
     { "path": "pages/common/role-select", "style": { "navigationBarTitleText": "选择身份" } },

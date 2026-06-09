@@ -1,8 +1,13 @@
 <template>
   <view class="page">
-    <view class="bg-blob blob-a" />
-    <view class="bg-blob blob-b" />
+    <image
+      class="bg-img"
+      src="/static/images/login-bg-kawaii.png"
+      mode="aspectFill"
+    />
+    <view class="bg-mask" />
 
+    <view class="content">
     <view class="hero">
       <view class="logo-wrap">
         <text class="logo-char">暖</text>
@@ -73,6 +78,7 @@
       <text class="foot-link" @tap="goAgreement">用户协议</text>
       <text class="sep">·</text>
       <text class="foot-muted" @tap="showMore">更多</text>
+    </view>
     </view>
   </view>
 </template>
@@ -245,49 +251,60 @@ function goDemoTour() {
   position: relative;
   min-height: 100vh;
   box-sizing: border-box;
-  padding: 48rpx 40rpx 48rpx;
-  padding-top: calc(48rpx + env(safe-area-inset-top));
+  overflow: hidden;
+  background: #fff5eb;
+}
+
+.bg-img {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
+
+.bg-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 248, 240, 0.15) 0%,
+    rgba(255, 245, 235, 0.55) 38%,
+    rgba(255, 252, 248, 0.92) 62%,
+    rgba(255, 252, 248, 0.97) 100%
+  );
+}
+
+.content {
+  position: relative;
+  z-index: 2;
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding: 32rpx 40rpx 48rpx;
+  padding-top: calc(24rpx + env(safe-area-inset-top));
   padding-bottom: calc(48rpx + env(safe-area-inset-bottom));
   display: flex;
   flex-direction: column;
-  background: linear-gradient(165deg, #fff8f0 0%, #ffefe0 45%, #fff5eb 100%);
-  overflow: hidden;
-}
-
-.bg-blob {
-  position: absolute;
-  border-radius: 50%;
-  pointer-events: none;
-  opacity: 0.45;
-}
-.blob-a {
-  width: 420rpx;
-  height: 420rpx;
-  top: -120rpx;
-  right: -100rpx;
-  background: radial-gradient(circle, rgba(232, 139, 74, 0.35), transparent 70%);
-}
-.blob-b {
-  width: 360rpx;
-  height: 360rpx;
-  bottom: 80rpx;
-  left: -140rpx;
-  background: radial-gradient(circle, rgba(196, 92, 38, 0.2), transparent 70%);
 }
 
 .hero {
   position: relative;
-  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-bottom: 48rpx;
-  padding-top: 24rpx;
+  margin-bottom: 36rpx;
+  padding-top: 280rpx;
 }
 
 .logo-wrap {
-  width: 120rpx;
-  height: 120rpx;
+  width: 100rpx;
+  height: 100rpx;
   border-radius: 32rpx;
   background: linear-gradient(145deg, #e88b4a, #c45c26);
   display: flex;
@@ -308,12 +325,13 @@ function goDemoTour() {
   font-weight: 700;
   color: #3d2a1f;
   letter-spacing: 4rpx;
+  text-shadow: 0 2rpx 12rpx rgba(255, 255, 255, 0.9);
 }
 
 .sub {
   margin-top: 16rpx;
   font-size: 28rpx;
-  color: #8a7568;
+  color: #6b5748;
   text-align: center;
   line-height: 1.55;
   max-width: 520rpx;
@@ -321,8 +339,7 @@ function goDemoTour() {
 
 .card {
   position: relative;
-  z-index: 1;
-  background: rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.96);
   border-radius: 28rpx;
   padding: 40rpx 36rpx 36rpx;
   box-shadow: 0 12rpx 48rpx rgba(61, 42, 31, 0.08);
@@ -466,8 +483,6 @@ function goDemoTour() {
 }
 
 .demo-chip {
-  position: relative;
-  z-index: 1;
   margin-top: 28rpx;
   padding: 16rpx 24rpx;
   text-align: center;
@@ -479,8 +494,6 @@ function goDemoTour() {
 }
 
 .hint {
-  position: relative;
-  z-index: 1;
   display: block;
   margin-top: 24rpx;
   font-size: 22rpx;
@@ -491,8 +504,6 @@ function goDemoTour() {
 }
 
 .footer {
-  position: relative;
-  z-index: 1;
   margin-top: auto;
   padding-top: 40rpx;
   display: flex;
