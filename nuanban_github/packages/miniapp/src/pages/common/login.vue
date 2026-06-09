@@ -1,8 +1,35 @@
 <template>
   <view class="page">
-    <text class="title">暖伴勤工</text>
-    <text class="sub">附近中老年 ↔ 在校女大学生 · 有偿陪护匹配</text>
-    <button class="btn-primary" :loading="loading" @tap="onLogin">登录</button>
+    <text class="title">{{ APP_TITLE }}</text>
+    <text class="sub">{{ APP_TAGLINE }}</text>
+
+    <view class="form">
+      <input
+        class="input"
+        type="number"
+        maxlength="11"
+        :value="phone"
+        placeholder="请输入手机号"
+        @input="onPhoneInput"
+      />
+      <view class="code-row">
+        <input
+          class="input code"
+          type="number"
+          maxlength="6"
+          :value="smsCode"
+          placeholder="短信验证码"
+          @input="onCodeInput"
+        />
+        <button class="btn-code" :disabled="codeCooldown > 0" @tap="sendCode">
+          {{ codeBtnText }}
+        </button>
+      </view>
+      <button class="btn-primary" :loading="loading" @tap="onPhoneLogin">登录</button>
+    </view>
+
+    <text class="wx-link" @tap="onWxLogin">微信快捷登录（可关联）</text>
+
     <view class="hint">{{ loginHint }}</view>
     <view class="footer">
       <text @tap="goDemoTour">动画演示</text>
@@ -15,33 +42,77 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, onUnmounted, ref } from 'vue';
 import { onLoad } from '@dcloudio/uni-app';
-import { loginWithWxCode } from '../../api/auth';
+import { loginWithPhone, loginWithWxCode, type LoginResult } from '../../api/auth';
+import { APP_TAGLINE, APP_TITLE } from '../../config/brand';
 import { ROLE_HOME } from '../../config/tabs';
 import { useRoleStore } from '../../store/role';
 import { pbErrorMessage } from '../../utils/request';
 import { isDemoMockEnabled } from '../../utils/demo-mock';
 
 const loading = ref(false);
+const phone = ref('');
+const smsCode = ref('');
+const codeCooldown = ref(0);
+let cooldownTimer: ReturnType<typeof setInterval> | null = null;
 const fromTour = ref(false);
 
 onLoad((query) => {
   fromTour.value = query?.from === 'tour';
+  if (fromTour.value) {
+    phone.value = '13800000001';
+  }
 });
+
+onUnmounted(() => {
+  if (cooldownTimer) clearInterval(cooldownTimer);
+});
+
+const codeBtnText = computed(() =>
+  codeCooldown.value > 0 ? `${codeCooldown.value}s` : '获取验证码',
+);
 
 const loginHint = computed(() => {
   if (fromTour.value) {
-    return '动画演示结束 · 登录后选择身份，系统为您分配权限与首页';
+    return '动画演示结束 · 直接登录，首次将引导选择身份';
   }
   return isDemoMockEnabled()
-    ? '登录后选择身份 · 系统按设定分配角色与权限'
-    : '微信授权登录 · 首次使用将引导完善身份资料';
+    ? '登录后选择身份 · 系统按设定分配角色与权限 · 演示号 13800000001–06'
+    : '手机号登录 · 首次使用将引导完善身份资料';
 });
 
 const roleStore = useRoleStore();
 
-function afterLogin(res: Awaited<ReturnType<typeof loginWithWxCode>>) {
+function onPhoneInput(e: { detail: { value: string } }) {
+  phone.value = e.detail.value.replace(/\D/g, '').slice(0, 11);
+}
+
+function onCodeInput(e: { detail: { value: string } }) {
+  smsCode.value = e.detail.value.replace(/\D/g, '').slice(0, 6);
+}
+
+function sendCode() {
+  if (phone.value.length !== 11) {
+    uni.showToast({ title: '请输入 11 位手机号', icon: 'none' });
+    return;
+  }
+  if (codeCooldown.value > 0) return;
+  uni.showToast({
+    title: isDemoMockEnabled() ? '演示验证码已发送（任意 4 位即可）' : '验证码已发送',
+    icon: 'none',
+  });
+  codeCooldown.value = 60;
+  cooldownTimer = setInterval(() => {
+    codeCooldown.value -= 1;
+    if (codeCooldown.value <= 0 && cooldownTimer) {
+      clearInterval(cooldownTimer);
+      cooldownTimer = null;
+    }
+  }, 1000);
+}
+
+function afterLogin(res: LoginResult) {
   roleStore.setAuth({
     token: res.token,
     roles: res.roles,
@@ -70,7 +141,24 @@ function afterLogin(res: Awaited<ReturnType<typeof loginWithWxCode>>) {
   }
 }
 
-async function onLogin() {
+async function onPhoneLogin() {
+  if (phone.value.length !== 11) {
+    uni.showToast({ title: '请输入 11 位手机号', icon: 'none' });
+    return;
+  }
+  loading.value = true;
+  try {
+    const code = smsCode.value || (isDemoMockEnabled() ? '1234' : undefined);
+    const res = await loginWithPhone(phone.value, code);
+    afterLogin(res);
+  } catch (e) {
+    uni.showToast({ title: pbErrorMessage(e), icon: 'none' });
+  } finally {
+    loading.value = false;
+  }
+}
+
+async function onWxLogin() {
   loading.value = true;
   try {
     if (isDemoMockEnabled()) {
@@ -129,11 +217,50 @@ function goDemoTour() {
 }
 .sub {
   display: block;
-  margin: 20rpx 0 100rpx;
+  margin: 20rpx 0 64rpx;
   color: #666;
   font-size: 28rpx;
   text-align: center;
   line-height: 1.5;
+}
+.form {
+  margin-bottom: 16rpx;
+}
+.input {
+  width: 100%;
+  box-sizing: border-box;
+  height: 88rpx;
+  padding: 0 24rpx;
+  margin-bottom: 20rpx;
+  border: 1px solid #e0d5cc;
+  border-radius: 12rpx;
+  font-size: 30rpx;
+  background: #fff;
+}
+.code-row {
+  display: flex;
+  gap: 16rpx;
+  margin-bottom: 20rpx;
+}
+.input.code {
+  flex: 1;
+  margin-bottom: 0;
+}
+.btn-code {
+  flex-shrink: 0;
+  width: 220rpx;
+  height: 88rpx;
+  line-height: 88rpx;
+  padding: 0;
+  font-size: 26rpx;
+  color: #c45c26;
+  background: #fff;
+  border: 1px solid #c45c26;
+  border-radius: 12rpx;
+}
+.btn-code[disabled] {
+  color: #aaa;
+  border-color: #ddd;
 }
 .btn-primary {
   background: #c45c26;
@@ -142,9 +269,16 @@ function goDemoTour() {
   font-size: 32rpx;
   padding: 8rpx 0;
 }
+.wx-link {
+  display: block;
+  text-align: center;
+  font-size: 26rpx;
+  color: #888;
+  margin-bottom: 8rpx;
+}
 .hint {
   display: block;
-  margin-top: 32rpx;
+  margin-top: 24rpx;
   font-size: 24rpx;
   color: #888;
   text-align: center;
@@ -152,7 +286,7 @@ function goDemoTour() {
 }
 .footer {
   margin-top: auto;
-  padding-top: 80rpx;
+  padding-top: 64rpx;
   display: flex;
   justify-content: center;
   align-items: center;
