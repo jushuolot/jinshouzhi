@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from typing import Any
@@ -63,6 +64,12 @@ def append_today_picks(
         if (d, code) in existing:
             continue
         hold = getattr(p, "hold_days", None) or p.get("hold_days", "3")
+        reason = str(getattr(p, "reason", "") or p.get("reason", "") or "")
+        pattern = str(getattr(p, "pattern", "") or p.get("pattern", "") or "")
+        if not pattern and reason:
+            m = re.search(r"\[([^\]]+)\]", reason)
+            if m:
+                pattern = m.group(1).strip()
         out.append(
             {
                 "pick_date": d,
@@ -72,6 +79,8 @@ def append_today_picks(
                 "pick_score": getattr(p, "score", None) if hasattr(p, "score") else p.get("score"),
                 "pick_pct": getattr(p, "pct", None) if hasattr(p, "pct") else p.get("pct"),
                 "hold_days": _parse_hold_days(str(hold)),
+                "pattern": pattern,
+                "reason": reason[:200],
                 "verified": False,
                 "end_pct": None,
                 "hit": None,

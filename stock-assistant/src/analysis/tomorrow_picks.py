@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
 from datetime import date, timedelta
 from typing import Any, Callable
 
@@ -26,6 +27,7 @@ from src.analysis.daily_picks import (
     rank_global_from_ranking,
 )
 from src.analysis.signals import add_indicators, score_stock
+from src.analysis.pick_review import pattern_score_adjustments_from_log
 from src.analysis.stock_quality import evaluate_stock_quality
 
 FetchFn = Callable[..., tuple[pd.DataFrame, str]]
@@ -98,6 +100,7 @@ def analyze_tomorrow_from_kline(
     *,
     today_pct: float | None = None,
     turnover_pct: float | None = None,
+    pattern_adj: dict[str, float] | None = None,
 ) -> TomorrowAnalysis | None:
     """用历史 K 线 + 今日涨跌，估算明日偏强概率（规则可解释）。"""
     if df is None or len(df) < 25:
@@ -147,9 +150,15 @@ def analyze_tomorrow_from_kline(
         tags.append("站上MA20")
 
     if pct is not None:
-        if 0.5 <= pct <= 5.5:
-            score += 14
-            tags.append("今日温和上涨")
+        # P119：放宽趋势延续涨幅带 0~8%（原 0.5~5.5% 过窄，易偏向微涨小盘）
+        if 0 <= pct <= 8.0:
+            if 1.0 <= pct <= 6.0:
+                score += 16
+            elif pct < 1.0:
+                score += 11
+            else:
+                score += 13
+            tags.append("趋势动能")
             pattern = PATTERN_CONTINUATION
         elif -3.0 <= pct <= -0.3 and above_ma20:
             score += 16
@@ -161,8 +170,8 @@ def analyze_tomorrow_from_kline(
         elif pct <= -4:
             score -= 15
             tags.append("今日弱势")
-        elif 5.5 < pct < 9.5:
-            score += 4
+        elif 8.0 < pct < 9.5:
+            score += 5
             tags.append("涨幅偏大")
 
     if vol_r is not None:
@@ -189,6 +198,9 @@ def analyze_tomorrow_from_kline(
 
     if tech is not None:
         score += (tech - 50) * 0.22
+
+    if pattern_adj and pattern in pattern_adj:
+        score += pattern_adj[pattern]
 
     score = float(np.clip(score, 0, 92))
 
@@ -256,6 +268,7 @@ def rank_tomorrow_a_picks(
     *,
     max_scan: int = 28,
     max_picks: int = 5,
+    pick_log: list[dict[str, Any]] | None = None,
 ) -> tuple[list[DailyPick], dict[str, Any]]:
     stats: dict[str, Any] = {
         "scanned": 0,
@@ -272,22 +285,27 @@ def rank_tomorrow_a_picks(
 
     target = tomorrow_trading_date()
     work = universe.copy()
+    pattern_adj = pattern_score_adjustments_from_log(pick_log or [])
 
     def _sort_key(row: pd.Series) -> float:
         pct = _f(row.get("涨跌幅%"))
         turn = _f(row.get("换手率%"))
-        # 优先：温和上涨 + 高换手（更像「明天还能走」）
+        amt = _f(row.get("成交额"))
+        # 优先：趋势动能 + 成交额（减少小盘微涨霸榜）
         if pct is None:
-            return 0.0
-        if 0.5 <= pct <= 6:
-            base = 10 - abs(pct - 2.5)
+            base = 0.0
+        elif 0 <= pct <= 8:
+            base = 11 - abs(pct - 3.0) * 0.8
         elif -3 <= pct <= 0:
             base = 6 - abs(pct + 1.5)
         elif pct > 9:
             base = -5
         else:
             base = 2
-        return base + (turn or 0) * 0.15
+        amt_bonus = 0.0
+        if amt is not None and amt > 0:
+            amt_bonus = min(4.0, math.log10(max(amt, 1)) * 0.35)
+        return base + (turn or 0) * 0.12 + amt_bonus
 
     work["_prio"] = work.apply(_sort_key, axis=1)
     work = work.sort_values("_prio", ascending=False)
@@ -325,7 +343,9 @@ def rank_tomorrow_a_picks(
             stats["no_kline"] += 1
             continue
 
-        ta = analyze_tomorrow_from_kline(df, today_pct=list_pct, turnover_pct=turn)
+        ta = analyze_tomorrow_from_kline(
+            df, today_pct=list_pct, turnover_pct=turn, pattern_adj=pattern_adj
+        )
         if ta is None:
             stats["low_score"] += 1
             continue
@@ -370,7 +390,7 @@ def rank_tomorrow_a_picks(
         for item, list_pct, turn in candidates[:max_picks]:
             base = 52.0
             if list_pct is not None:
-                if 0.5 <= list_pct <= 6:
+                if 0 <= list_pct <= 8:
                     base += 8
                 elif -3 <= list_pct <= 0:
                     base += 6
@@ -400,6 +420,7 @@ def fetch_tomorrow_a_picks(
     fetch_fn: FetchFn,
     *,
     max_picks: int = 5,
+    pick_log: list[dict[str, Any]] | None = None,
 ) -> tuple[list[DailyPick], str, dict[str, Any]]:
     universe, src = build_a_universe(fetch_ranking)
     picks, stats = rank_tomorrow_a_picks(
@@ -407,6 +428,7 @@ def fetch_tomorrow_a_picks(
         fetch_fn,
         max_scan=30,
         max_picks=max_picks,
+        pick_log=pick_log,
     )
     stats["source"] = src
     stats["market"] = "A股"
@@ -472,9 +494,12 @@ def fetch_garden_picks_bundle(
     *,
     max_a: int = 5,
     max_global_per_market: int = 2,
+    pick_log: list[dict[str, Any]] | None = None,
 ) -> tuple[list[DailyPick], list[DailyPick], str, dict[str, Any]]:
     """花园扫盘：明日 A 股预测 + 全球明日关注。"""
-    a_picks, src, stats = fetch_tomorrow_a_picks(fetch_ranking, fetch_fn, max_picks=max_a)
+    a_picks, src, stats = fetch_tomorrow_a_picks(
+        fetch_ranking, fetch_fn, max_picks=max_a, pick_log=pick_log
+    )
     global_picks, gstats = fetch_tomorrow_global_picks(max_per_market=max_global_per_market)
     stats["global"] = gstats
     stats["global_count"] = len(global_picks)

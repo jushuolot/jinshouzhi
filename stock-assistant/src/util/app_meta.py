@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-APP_VERSION = "5.6.7"
-EVOLUTION_STEP = 1156
-EVOLUTION_PHASE = "P118"
+APP_VERSION = "5.6.8"
+EVOLUTION_STEP = 1157
+EVOLUTION_PHASE = "P119"
 BUILD_LABEL = f"{EVOLUTION_PHASE} · step {EVOLUTION_STEP}"
 
 CHANGELOG: list[tuple[str, str]] = [
@@ -54,4 +54,5 @@ CHANGELOG: list[tuple[str, str]] = [
     ("P116", "佛祖每晚一页简报：打开即见结论 + 大盘折叠 · v5.6.5"),
     ("P117", "股东+市值+PE质量过滤，收紧技术面评分 · v5.6.6"),
     ("P118", "公募基金/QFII新进减持纳入质量分，机构持股季报 · v5.6.7"),
+    ("P119", "3日复盘反哺策略 + 放宽趋势延续涨幅带 + 修复大盘嵌套报错 · v5.6.8"),
 ]

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, timedelta
 
 import pandas as pd
 import streamlit as st
@@ -18,6 +18,7 @@ from src.analysis.market_outlook import (
     enrich_picks_with_long_term,
     outlook_to_markdown,
 )
+from src.analysis.pick_review import review_recent_picks, strategy_hints_from_reviews
 from src.analysis.pick_tracker import (
     append_today_picks,
     has_due_verifications,
@@ -62,6 +63,86 @@ def _pct_map_from_ranking(df: pd.DataFrame) -> dict[str, float | None]:
         except (TypeError, ValueError):
             out[code] = None
     return out
+
+
+def _render_pick_review(pick_log: list, *, readonly: bool) -> None:
+    """昨日及近几日推荐的 3 日内涨跌对比，用于优化策略。"""
+    st.markdown("### 📊 推荐复盘 · 3日对比")
+    st.caption("对比推荐日收盘价 vs 之后 3 个交易日，统计各模式跑赢率并反哺明日扫盘。")
+
+    if not pick_log:
+        st.info("尚无推荐记录；完成一次「预测明日」后会自动记入。")
+        return
+
+    col_r1, col_r2 = st.columns([2, 1])
+    with col_r1:
+        do_refresh = not readonly and st.button("🔄 刷新 3 日复盘", use_container_width=False)
+    with col_r2:
+        pass
+
+    cached = st.session_state.get("pick_reviews")
+    if do_refresh:
+        with st.spinner("拉取推荐标的 K 线，计算 D+1~D+3…"):
+            reviews = review_recent_picks(pick_log, C._fetch_one, limit=15)
+            st.session_state.pick_reviews = [r.as_dict() for r in reviews]
+            cached = st.session_state.pick_reviews
+    elif cached is None:
+        st.info("点 **「刷新 3 日复盘」** 对比昨日推荐在之后 3 个交易日的表现。")
+        return
+
+    reviews_objs = []
+    if cached:
+        from src.analysis.pick_review import Pick3dReview
+
+        for d in cached:
+            reviews_objs.append(
+                Pick3dReview(
+                    pick_date=str(d.get("pick_date") or ""),
+                    code=str(d.get("code") or ""),
+                    name=str(d.get("name") or ""),
+                    pattern=str(d.get("pattern") or ""),
+                    pick_close=d.get("pick_close"),
+                    ret_d1_pct=d.get("ret_d1_pct"),
+                    ret_d2_pct=d.get("ret_d2_pct"),
+                    ret_d3_pct=d.get("ret_d3_pct"),
+                    max_ret_3d_pct=d.get("max_ret_3d_pct"),
+                    hit_3d=d.get("hit_3d"),
+                    note=str(d.get("note") or ""),
+                )
+            )
+
+    if not reviews_objs:
+        st.info("推荐满 **1 个交易日** 后可复盘（或点上方刷新）。")
+        return
+
+    yesterday = (date.today() - timedelta(days=1)).isoformat()
+    yrows = [r for r in reviews_objs if r.pick_date == yesterday]
+    show = yrows if yrows else reviews_objs[:8]
+
+    rows = []
+    for r in show:
+        hit = "—"
+        if r.hit_3d is True:
+            hit = "✅"
+        elif r.hit_3d is False:
+            hit = "❌"
+        rows.append(
+            {
+                "推荐日": r.pick_date,
+                "名称": r.name,
+                "代码": r.code,
+                "模式": r.pattern,
+                "D+1%": r.ret_d1_pct,
+                "D+2%": r.ret_d2_pct,
+                "D+3%": r.ret_d3_pct,
+                "3日最高%": r.max_ret_3d_pct,
+                "跑赢": hit,
+            }
+        )
+    st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+
+    for hint in strategy_hints_from_reviews(reviews_objs):
+        st.caption(f"💡 {hint}")
 
 
 def _render_market_outlook(readonly: bool, fetch_ranking) -> None:
@@ -393,6 +474,7 @@ def render() -> None:
                     C._fetch_one,
                     max_a=5,
                     max_global_per_market=2,
+                    pick_log=pick_log,
                 )
                 st.session_state.today_picks = enrich_picks_with_long_term(
                     [p.as_dict() for p in a_picks],
@@ -529,8 +611,11 @@ def render() -> None:
             use_container_width=True,
         )
 
-    with st.expander("📉 大盘长线风向标（1~2周大跌概率）", expanded=False):
-        _render_market_outlook(readonly=readonly, fetch_ranking=_fetch_ranking)
+    with st.expander("📊 推荐复盘 · 3日对比", expanded=True):
+        _render_pick_review(pick_log, readonly=readonly)
+
+    st.divider()
+    _render_market_outlook(readonly=readonly, fetch_ranking=_fetch_ranking)
 
     hist = records_for_display(pick_log, limit=12)
     if hist:
