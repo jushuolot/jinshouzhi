@@ -434,6 +434,10 @@ function lockGodView() {
   border: 1rpx solid var(--nb-primary-light);
   border-radius: var(--nb-radius-sm);
 }
+.btn-outline.muted {
+  color: #888;
+  border-color: #555;
+}
 .err {
   display: block;
   margin-top: 16rpx;

@@ -15,7 +15,8 @@
   admin-hub        运营演示入口（派单 + 学校合作）
   school-coop      学校合作配置（只读）
   student-pending  学生资质审核中拦截页
-  god-view         平台上帝视角（撮合 KPI · 无需登录）
+  god-view-gate    超级管理密码门（默认演示密码见 VITE_GOD_VIEW_PASSWORD）
+  god-view         平台上帝视角（撮合 KPI · 需超级管理员解锁）
   demo-tour        动画演示（5 幕自动轮播 · 明日验收）
 
 分包 package-elder/

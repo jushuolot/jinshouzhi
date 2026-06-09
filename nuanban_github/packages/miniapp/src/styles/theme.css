@@ -46,6 +46,7 @@ page.elder-mode {
 
 /* 深色全屏页 */
 page[data-page='pages/common/god-view'],
+page[data-page='pages/common/god-view-gate'],
 page[data-page='pages/common/demo-tour'] {
   background-color: var(--nb-dark-bg);
   color: var(--nb-dark-text);
