@@ -75,6 +75,51 @@
       "end_pct": null,
       "hit": null,
       "note": ""
+    },
+    {
+      "pick_date": "2026-06-09",
+      "code": "000725",
+      "name": "京东方Ａ",
+      "signal": "买入",
+      "pick_score": 76.0,
+      "pick_pct": 3.657,
+      "hold_days": 1,
+      "pattern": "突破在即",
+      "reason": "[突破在即] 明日看突破：均线多头、趋势动能、放量、近20日高位 · 质量：主板/中小板、基金减持、基金持股降、基金家数减",
+      "verified": false,
+      "end_pct": null,
+      "hit": null,
+      "note": ""
+    },
+    {
+      "pick_date": "2026-06-09",
+      "code": "000988",
+      "name": "华工科技",
+      "signal": "买入",
+      "pick_score": 74.0,
+      "pick_pct": 4.488,
+      "hold_days": 1,
+      "pattern": "趋势延续",
+      "reason": "[趋势延续] 明日看延续：均线多头、趋势动能、5日动量正 · 质量：主板/中小板、基金减持、基金持股降、基金家数减",
+      "verified": false,
+      "end_pct": null,
+      "hit": null,
+      "note": ""
+    },
+    {
+      "pick_date": "2026-06-09",
+      "code": "002463",
+      "name": "沪电股份",
+      "signal": "观望",
+      "pick_score": 72.0,
+      "pick_pct": 2.985,
+      "hold_days": 1,
+      "pattern": "突破在即",
+      "reason": "[突破在即] 明日看突破：均线多头、趋势动能、放量、近20日高位 · 质量：主板/中小板、基金减持、基金持股降、基金家数减",
+      "verified": false,
+      "end_pct": null,
+      "hit": null,
+      "note": ""
     }
   ],
   "hit_summary": {
