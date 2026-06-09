@@ -227,10 +227,10 @@ async function onWxLogin() {
 
 function showMore() {
   uni.showActionSheet({
-    itemList: ['上帝视角', '分享演示链接'],
+    itemList: ['超级管理', '分享演示链接'],
     success: (res) => {
       if (res.tapIndex === 0) {
-        uni.navigateTo({ url: '/pages/common/god-view' });
+        uni.navigateTo({ url: '/pages/common/god-view-gate' });
       } else if (res.tapIndex === 1) {
         uni.navigateTo({ url: '/pages/common/share-demo' });
       }

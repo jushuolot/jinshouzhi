@@ -1436,6 +1436,20 @@ routerAdd("POST", "/api/nuanban/family/packages/purchase", (e) => {
   });
 });
 
+/** 上帝视角超级管理员密码验证 */
+routerAdd("POST", "/api/nuanban/platform/god-view-auth", (e) => {
+  let body = {};
+  try {
+    body = JSON.parse($os.readAll(e.request.body));
+  } catch (_) {}
+  const pwd = String(body.password || "");
+  const expected = $os.getenv("NUANBAN_GOD_VIEW_PASSWORD") || "nuanban2025";
+  if (pwd !== expected) {
+    return e.json(403, { message: "密码错误" });
+  }
+  return e.json(200, { ok: true });
+});
+
 /** 平台上帝视角：撮合漏斗与核心指标（演示） */
 routerAdd("GET", "/api/nuanban/platform/overview", (e) => {
   let pending = 0;

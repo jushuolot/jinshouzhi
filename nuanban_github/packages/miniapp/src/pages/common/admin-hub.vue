@@ -58,7 +58,7 @@ function goDispatch() {
 }
 
 function goGodView() {
-  uni.navigateTo({ url: '/pages/common/god-view' });
+  uni.navigateTo({ url: '/pages/common/god-view-gate' });
 }
 
 function goSchoolCoop() {

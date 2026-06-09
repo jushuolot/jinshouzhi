@@ -64,6 +64,7 @@
     <button class="btn-outline" @tap="goLogin">进入演示登录</button>
     <button class="btn-outline" @tap="goShare">复制演示链接</button>
     <button class="btn-outline" @tap="reload">刷新数据</button>
+    <button class="btn-outline muted" @tap="lockGodView">退出管理视图</button>
     <text v-if="errorMsg" class="err">{{ errorMsg }}</text>
     <text v-if="lastUpdated" class="ts">最后更新 {{ formatTime(lastUpdated) }}</text>
   </view>
@@ -75,6 +76,8 @@ import { onShow } from '@dcloudio/uni-app';
 import { fetchPlatformOverview, type MatchingPathStatus } from '../../api/platform';
 import { APP_TAGLINE } from '../../config/brand';
 import { BUILD_TIME } from '../../utils/build-info';
+import { clearGodViewUnlocked } from '../../utils/god-view-auth';
+import { guardGodViewRoute } from '../../utils/nav-guard';
 import { pbErrorMessage } from '../../utils/request';
 
 const DEFAULT_PATHS: MatchingPathStatus[] = [
@@ -206,7 +209,10 @@ async function reload() {
   }
 }
 
-onShow(reload);
+onShow(() => {
+  if (!guardGodViewRoute('/pages/common/god-view')) return;
+  reload();
+});
 
 function goLogin() {
   uni.navigateTo({ url: '/pages/common/login' });
@@ -218,6 +224,11 @@ function goTour() {
 
 function goShare() {
   uni.navigateTo({ url: '/pages/common/share-demo' });
+}
+
+function lockGodView() {
+  clearGodViewUnlocked();
+  uni.redirectTo({ url: '/pages/common/god-view-gate' });
 }
 </script>
 

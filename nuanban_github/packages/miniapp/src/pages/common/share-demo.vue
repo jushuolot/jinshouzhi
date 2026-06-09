@@ -11,7 +11,7 @@
     </view>
 
     <view class="tip">
-      <text>建议顺序：动画演示 → 上帝视角 → 登录并选择学生身份 → 待接单完成</text>
+      <text>建议顺序：动画演示 → 登录并选择学生身份 → 待接单完成（上帝视角需超级管理密码）</text>
     </view>
 
     <button class="btn-outline" @tap="goBack">返回</button>
@@ -30,9 +30,9 @@ const links = [
   },
   {
     id: 'god',
-    title: '上帝视角 KPI',
-    desc: '平台进度 · 待接单/服务中/完成',
-    url: `${BASE}/#/pages/common/god-view`,
+    title: '超级管理 · 上帝视角',
+    desc: '需管理密码 · 平台 KPI 看板',
+    url: `${BASE}/#/pages/common/god-view-gate`,
   },
   {
     id: 'login',

@@ -1,4 +1,5 @@
 import { APP_TAGLINE } from '../config/brand';
+import { isGodViewUnlocked } from './god-view-auth';
 import type { RoleKey } from '../config/tabs';
 import {
   buildRichCaregivers,
@@ -907,7 +908,19 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
     return delay(pbList(SERVICE_ITEMS.map(serviceRecord)) as T);
   }
 
+  if (method === 'POST' && path === '/nuanban/platform/god-view-auth') {
+    const pwd = String(data.password || '');
+    const expected = import.meta.env.VITE_GOD_VIEW_PASSWORD || 'nuanban2025';
+    if (pwd !== expected) {
+      return Promise.reject({ message: '密码错误', statusCode: 403 });
+    }
+    return delay({ ok: true } as T);
+  }
+
   if (method === 'GET' && path === '/nuanban/platform/overview') {
+    if (!isGodViewUnlocked()) {
+      return Promise.reject({ message: '需要超级管理员授权', statusCode: 403 });
+    }
     const pending = state.orders.filter((o) => o.status === 'pending_accept').length;
     const inSvc = state.orders.filter((o) => o.status === 'in_service').length;
     const done = state.orders.filter((o) => o.status === 'completed').length;

@@ -115,7 +115,7 @@
 
     <view class="foot">
       <button class="btn" @tap="goLogin">亲自体验演示</button>
-      <button class="btn-outline" @tap="goGodView">上帝视角 KPI</button>
+      <button class="btn-outline" @tap="goGodView">超级管理</button>
     </view>
   </view>
 </template>
@@ -192,7 +192,7 @@ function goLogin() {
 }
 
 function goGodView() {
-  uni.navigateTo({ url: '/pages/common/god-view' });
+  uni.navigateTo({ url: '/pages/common/god-view-gate' });
 }
 </script>
 

@@ -17,7 +17,7 @@ onLoad((query) => {
     return;
   }
   if (query?.god === '1') {
-    uni.reLaunch({ url: '/pages/common/god-view' });
+    uni.reLaunch({ url: '/pages/common/god-view-gate' });
     return;
   }
   if (query?.share === '1') {
