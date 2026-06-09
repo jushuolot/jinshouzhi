@@ -3,482 +3,427 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>LOT 世界核 · 免费链</title>
+  <title>LOT 世界 · 全链可视</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <style>
     :root {
-      --bg: #050810;
-      --panel: #0d1524;
-      --line: #1e3a5f;
-      --text: #e8f4ff;
-      --muted: #7da8c8;
-      --accent: #3dff9a;
-      --warn: #ffb347;
-      --nucleus: #ff6b9d;
+      --bg: #030508;
+      --panel: rgba(8, 14, 28, 0.92);
+      --line: #1a3a5c;
+      --text: #eef8ff;
+      --muted: #6d9ab8;
+      --accent: #3dffb0;
+      --gold: #ffc14d;
+      --nucleus: #ff5c9a;
+      --glow: rgba(61, 255, 176, 0.35);
     }
     * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; overflow: hidden; }
     body {
-      margin: 0;
-      font-family: "SF Pro Text", "PingFang SC", system-ui, sans-serif;
-      background: radial-gradient(ellipse at 50% 0%, #0a2840 0%, var(--bg) 55%);
+      font-family: "PingFang SC", "SF Pro Display", system-ui, sans-serif;
+      background: var(--bg);
       color: var(--text);
-      min-height: 100vh;
     }
+
+    /* —— 开场：宇宙 → 地球 —— */
+    #intro {
+      position: fixed; inset: 0; z-index: 9999;
+      background: radial-gradient(ellipse at 50% 40%, #0a1a30 0%, #020408 70%);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      transition: opacity 0.8s, visibility 0.8s;
+    }
+    #intro.hide { opacity: 0; visibility: hidden; pointer-events: none; }
+    .stars { position: absolute; inset: 0; overflow: hidden; }
+    .stars i {
+      position: absolute; width: 2px; height: 2px; background: #fff; border-radius: 50%;
+      animation: twinkle 3s ease-in-out infinite;
+    }
+    @keyframes twinkle { 50% { opacity: 0.2; } }
+    .intro-earth {
+      width: 120px; height: 120px; border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #4af, #1a5a8a 45%, #0a2840 100%);
+      box-shadow: 0 0 60px rgba(74, 170, 255, 0.5), inset -10px -10px 30px rgba(0,0,0,0.4);
+      animation: earthIn 2s ease-out forwards, float 4s ease-in-out 2s infinite;
+      transform: scale(0);
+    }
+    @keyframes earthIn { to { transform: scale(1); } }
+    @keyframes float { 50% { transform: translateY(-8px) scale(1.02); } }
+    #intro h1 {
+      margin: 28px 0 8px; font-size: 22px; font-weight: 700; letter-spacing: 0.2em;
+      text-align: center; z-index: 1;
+    }
+    #intro p { color: var(--muted); font-size: 13px; margin: 0 0 24px; z-index: 1; text-align: center; max-width: 320px; line-height: 1.6; }
+    #intro button {
+      z-index: 1; padding: 14px 36px; border: none; border-radius: 999px; cursor: pointer;
+      background: linear-gradient(135deg, #1a6b4a, #0d3d2a); color: var(--accent);
+      font-size: 15px; font-weight: 700; letter-spacing: 0.08em;
+      box-shadow: 0 0 24px var(--glow);
+    }
+
+    /* —— 主布局 —— */
+    #app { display: grid; grid-template-rows: auto 1fr auto; height: 100vh; }
     header {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 10px 16px;
-      border-bottom: 1px solid var(--line);
-      background: rgba(5, 8, 16, 0.85);
-      backdrop-filter: blur(8px);
-      position: sticky;
-      top: 0;
-      z-index: 100;
+      display: flex; align-items: center; gap: 10px; padding: 8px 14px;
+      background: var(--panel); border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(12px); z-index: 500;
     }
-    header h1 { font-size: 15px; margin: 0; font-weight: 600; letter-spacing: 0.04em; }
-    .nucleus-dot {
-      width: 10px; height: 10px; border-radius: 50%;
-      background: var(--nucleus);
-      box-shadow: 0 0 12px var(--nucleus);
-      animation: pulse 2s ease-in-out infinite;
+    .logo-dot {
+      width: 9px; height: 9px; border-radius: 50%; background: var(--nucleus);
+      box-shadow: 0 0 10px var(--nucleus); animation: pulse 2s infinite;
     }
-    @keyframes pulse { 50% { opacity: 0.5; transform: scale(0.85); } }
-    .chain-pills { display: flex; flex-wrap: wrap; gap: 6px; margin-left: auto; align-items: center; }
-    .chain-pill {
-      font-size: 10px; padding: 3px 8px; border-radius: 999px;
-      border: 1px solid var(--line); color: var(--muted);
+    @keyframes pulse { 50% { opacity: 0.4; } }
+    header h1 { font-size: 14px; margin: 0; font-weight: 600; }
+    .hud { display: flex; gap: 16px; margin-left: auto; font-size: 11px; color: var(--muted); }
+    .hud b { color: var(--accent); font-size: 13px; }
+    .hud-warn b { color: var(--gold); }
+    .toolbar { display: flex; gap: 6px; margin-left: 12px; }
+    .toolbar button {
+      padding: 6px 12px; border-radius: 8px; border: 1px solid var(--line);
+      background: #0f1a2e; color: var(--text); font-size: 11px; cursor: pointer;
     }
-    .chain-pill.on { border-color: var(--accent); color: var(--accent); }
-    .chain-pill.off { opacity: 0.45; }
-    .sync-btn {
-      font-size: 10px; padding: 3px 8px; border-radius: 999px;
-      border: 1px solid var(--warn); background: transparent; color: var(--warn);
-      cursor: pointer;
+    .toolbar button.primary { border-color: var(--accent); color: var(--accent); background: #0a2a1e; }
+    .toolbar button:disabled { opacity: 0.4; cursor: wait; }
+
+    .stage-wrap { position: relative; min-height: 0; }
+    #map { position: absolute; inset: 0; background: #061018; }
+    .map-overlay {
+      position: absolute; top: 12px; left: 12px; z-index: 400;
+      background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+      padding: 10px 12px; max-width: 260px; backdrop-filter: blur(8px);
     }
-    main { display: grid; grid-template-columns: 280px 1fr 300px; min-height: calc(100vh - 48px); }
-    @media (max-width: 960px) { main { grid-template-columns: 1fr; } aside { max-height: 280px; overflow: auto; } }
-    aside, .quest {
-      background: var(--panel);
-      border-right: 1px solid var(--line);
-      padding: 12px;
-      overflow: auto;
-    }
-    .quest { border-right: none; border-left: 1px solid var(--line); }
-    .sec-title {
-      font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em;
-      color: var(--muted); margin: 0 0 8px;
-    }
-    .crumb { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 12px; }
+    .map-overlay .sec { font-size: 9px; letter-spacing: 0.15em; color: var(--muted); margin-bottom: 6px; }
+    .crumb { display: flex; flex-wrap: wrap; gap: 4px; }
     .crumb button {
-      background: transparent; border: 1px solid var(--line); color: var(--text);
-      border-radius: 6px; padding: 4px 8px; font-size: 12px; cursor: pointer;
+      padding: 3px 8px; border-radius: 6px; border: 1px solid var(--line);
+      background: transparent; color: var(--text); font-size: 11px; cursor: pointer;
     }
     .crumb button.on { border-color: var(--accent); color: var(--accent); }
-    .crumb span { color: var(--muted); align-self: center; font-size: 11px; }
-    #map { height: 100%; min-height: 420px; background: #0a1628; }
-    .net-graph {
-      font-size: 10px; font-family: ui-monospace, monospace;
-      background: #0a1220; border: 1px solid var(--line); border-radius: 8px;
-      padding: 8px; margin-bottom: 12px; line-height: 1.7; color: var(--muted);
+    .crumb span { color: var(--muted); font-size: 10px; align-self: center; }
+
+    .event-panel {
+      position: absolute; top: 12px; right: 12px; bottom: 12px; width: 280px; z-index: 400;
+      background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+      display: flex; flex-direction: column; backdrop-filter: blur(8px);
     }
-    .net-graph b { color: var(--nucleus); font-weight: 600; }
-    .net-graph .arrow { color: var(--accent); }
-    .lo-card {
-      border: 1px solid var(--line); border-radius: 10px; padding: 10px;
-      margin-bottom: 8px; cursor: pointer; transition: border-color 0.15s;
+    .event-panel h3 { margin: 0; padding: 10px 12px; font-size: 11px; color: var(--muted); border-bottom: 1px solid var(--line); }
+    #event-stream { flex: 1; overflow: auto; padding: 8px 12px; font-family: ui-monospace, monospace; font-size: 10px; }
+    .evt-row { padding: 5px 0; border-bottom: 1px solid #152238; animation: evtIn 0.35s ease; }
+    @keyframes evtIn { from { opacity: 0; transform: translateX(8px); } }
+    .evt-row b { color: var(--gold); }
+    .evt-sync { color: var(--nucleus); }
+
+    /* —— 全链管道 —— */
+    #pipeline {
+      background: var(--panel); border-top: 1px solid var(--line);
+      padding: 10px 16px 14px; backdrop-filter: blur(12px); z-index: 500;
     }
-    .lo-card.active { border-color: var(--nucleus); box-shadow: 0 0 0 1px rgba(255,107,157,0.25); }
-    .lo-id { font-size: 13px; font-weight: 600; color: var(--nucleus); }
-    .lo-meta { font-size: 11px; color: var(--muted); margin-top: 4px; }
-    .link-badges { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
-    .link-badge {
-      font-size: 9px; padding: 2px 6px; border-radius: 4px;
-      border: 1px solid var(--line); color: var(--muted);
+    .pipe-title { font-size: 9px; letter-spacing: 0.18em; color: var(--muted); margin-bottom: 10px; }
+    .pipe-track { display: flex; align-items: stretch; gap: 0; position: relative; }
+    .pipe-node {
+      flex: 1; text-align: center; padding: 10px 6px; border-radius: 10px;
+      border: 1px solid var(--line); background: #0a1422; position: relative;
+      transition: border-color 0.3s, box-shadow 0.3s, transform 0.3s;
+      cursor: pointer; min-width: 0;
     }
-    .link-badge.up { border-color: #5a8ab0; color: #9ec8e8; }
-    .link-badge.down { border-color: #2a6b4a; color: var(--accent); }
-    .progress { height: 4px; background: #1a2d44; border-radius: 2px; margin-top: 8px; overflow: hidden; }
-    .progress i { display: block; height: 100%; background: linear-gradient(90deg, var(--nucleus), var(--accent)); }
-    .actor-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
-    .actor-row button {
-      flex: 1; min-width: 70px; padding: 8px; border-radius: 8px;
-      border: 1px solid var(--line); background: #111c2e; color: var(--text);
-      font-size: 12px; cursor: pointer;
+    .pipe-node + .pipe-node { margin-left: -1px; border-top-left-radius: 0; border-bottom-left-radius: 0; }
+    .pipe-node:not(:last-child) { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+    .pipe-node.active {
+      border-color: var(--accent); box-shadow: 0 0 20px var(--glow); transform: translateY(-3px); z-index: 2;
     }
-    .actor-row button.on { border-color: var(--accent); background: #0f2a22; }
-    .actions { display: flex; flex-direction: column; gap: 6px; }
-    .actions button {
-      padding: 10px; border-radius: 8px; border: none;
-      background: linear-gradient(135deg, #1a4d3a, #0d3328);
-      color: var(--accent); font-weight: 600; font-size: 12px; cursor: pointer;
+    .pipe-node.done { border-color: #2a6b4a; opacity: 0.85; }
+    .pipe-node .icon { font-size: 22px; display: block; margin-bottom: 4px; }
+    .pipe-node .name { font-size: 11px; font-weight: 600; }
+    .pipe-node .sub { font-size: 9px; color: var(--muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pipe-bar { height: 3px; background: #1a2d44; border-radius: 2px; margin-top: 6px; overflow: hidden; }
+    .pipe-bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--nucleus), var(--accent)); transition: width 0.5s; }
+    .pipe-connector {
+      position: absolute; top: 50%; height: 2px; background: linear-gradient(90deg, var(--line), var(--accent));
+      transform: translateY(-50%); z-index: 0; pointer-events: none;
     }
-    .actions button:disabled { opacity: 0.35; cursor: not-allowed; }
-    .evt {
-      font-size: 11px; padding: 6px 0; border-bottom: 1px solid #152238;
-      font-family: ui-monospace, monospace;
+
+    #toast {
+      position: fixed; bottom: 120px; left: 50%; transform: translateX(-50%) translateY(20px);
+      background: rgba(10, 30, 22, 0.95); border: 1px solid var(--accent); color: var(--accent);
+      padding: 12px 20px; border-radius: 12px; font-size: 13px; z-index: 8000;
+      opacity: 0; transition: opacity 0.3s, transform 0.3s; pointer-events: none;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5); max-width: 90vw; text-align: center;
     }
-    .evt b { color: var(--warn); }
-    .evt.sync b { color: var(--accent); }
-    .integrity { font-size: 10px; margin-top: 8px; }
-    .integrity.ok { color: var(--accent); }
-    .integrity.bad { color: #ff6b6b; }
-    .zoom-hint { font-size: 11px; color: var(--muted); line-height: 1.5; margin-bottom: 10px; }
-    .legacy-link { font-size: 11px; margin-top: 12px; }
-    .legacy-link a { color: var(--muted); }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    .finish-banner {
+      position: fixed; inset: 0; z-index: 9000; background: rgba(2, 4, 8, 0.88);
+      display: none; align-items: center; justify-content: center; flex-direction: column;
+    }
+    .finish-banner.show { display: flex; }
+    .finish-banner h2 { font-size: 28px; margin: 0 0 8px; color: var(--accent); }
+    .finish-banner p { color: var(--muted); margin: 0 0 20px; }
+    .finish-banner button {
+      padding: 12px 28px; border-radius: 999px; border: none; cursor: pointer;
+      background: linear-gradient(135deg, #1a6b4a, #0d3d2a); color: var(--accent); font-weight: 700;
+    }
+
+    @media (max-width: 900px) {
+      .event-panel { width: 200px; font-size: 9px; }
+      .hud { display: none; }
+    }
+    @media (max-width: 640px) {
+      .event-panel { display: none; }
+      .pipe-node .sub { display: none; }
+    }
   </style>
 </head>
 <body>
-  <header>
-    <div class="nucleus-dot" title="LO 原子核"></div>
-    <h1>LOT 世界核 · 供应链裂变</h1>
-    <div class="chain-pills" id="chain-pills"></div>
-  </header>
-  <main>
-    <aside>
-      <p class="sec-title">多 LO 网络</p>
-      <div class="net-graph" id="net-graph">加载中…</div>
-      <p class="sec-title">空间 zoom · 宇宙 → 乡村</p>
-      <div class="crumb" id="spatial-crumb"></div>
-      <p class="zoom-hint" id="zoom-hint">点击面包屑逐级 zoom；地图上的节点可点。数据存在本机 IndexedDB，哈希链防篡改。</p>
-      <p class="sec-title">任务核（LO）</p>
-      <div id="lo-list"></div>
-      <p class="legacy-link">
-        <a href="driver.html">司机壳 →</a> ·
-        <a href="../index.html">← 旧版演示壳</a>
-      </p>
-    </aside>
-    <section id="map" aria-label="世界地图"></section>
-    <div class="quest">
-      <p class="sec-title">角色镜头</p>
-      <div class="actor-row" id="actors"></div>
-      <p class="sec-title">动作 · 写入事件链</p>
-      <div class="actions" id="actions"></div>
-      <p class="sec-title" style="margin-top:16px">轨道电子 · 事件账本</p>
-      <div id="event-log"></div>
-      <p class="integrity ok" id="integrity"></p>
+  <div id="intro">
+    <div class="stars" id="stars"></div>
+    <div class="intro-earth" aria-hidden="true"></div>
+    <h1>LOT · 从宇宙到乡村</h1>
+    <p>一条延庆蔬菜订单，穿越农户、仓库、干线、末端——全链可视、哈希防篡改、零 API 费用。</p>
+    <button type="button" id="btn-enter">进入世界 · 播放全链</button>
+  </div>
+
+  <div id="app" hidden>
+    <header>
+      <div class="logo-dot"></div>
+      <h1>LOT 全球一盘棋</h1>
+      <div class="toolbar">
+        <button type="button" class="primary" id="btn-play">▶ 播放全链</button>
+        <button type="button" id="btn-reset">↺ 重置</button>
+        <a href="driver.html" style="text-decoration:none"><button type="button">📱 司机端</button></a>
+      </div>
+      <div class="hud">
+        <span>链环 <b id="hud-chain">—</b></span>
+        <span>订单核 <b id="hud-los">—</b></span>
+        <span class="hud-warn">在途 <b id="hud-active">—</b></span>
+      </div>
+    </header>
+
+    <div class="stage-wrap">
+      <div id="map"></div>
+      <div class="map-overlay">
+        <div class="sec">ZOOM · 宇宙 → 乡村</div>
+        <div class="crumb" id="spatial-crumb"></div>
+      </div>
+      <aside class="event-panel">
+        <h3>轨道电子 · 实时事件流</h3>
+        <div id="event-stream"></div>
+      </aside>
     </div>
-  </main>
+
+    <footer id="pipeline">
+      <div class="pipe-title">供应链全链管道 · 点击环节聚焦</div>
+      <div class="pipe-track" id="pipe-track"></div>
+    </footer>
+  </div>
+
+  <div id="toast"></div>
+  <div class="finish-banner" id="finish">
+    <h2>全链通关</h2>
+    <p>农户揽收 → 仓 → 干线 → 末端 · 哈希链完整 · 数据零云费</p>
+    <button type="button" id="btn-finish-ok">再看一遍</button>
+  </div>
+
   <script type="module">
     import { defaultChain } from '../kernel/lot-chain.js';
-    import { projectLOState, ACTOR_LENSES, SPATIAL_LEVELS, EVENT_TYPES } from '../kernel/lot-nucleus.js';
-    import { getLinkedLOs, buildNetworkEdges } from '../kernel/lot-network.js';
+    import { getPipelineState, runFullDemo, ROUTE_COORDS, PIPELINE } from '../kernel/lot-sim.js';
+    import { SPATIAL_LEVELS } from '../kernel/lot-nucleus.js';
 
     const state = {
       chain: defaultChain,
       focusCellId: 'beijing',
-      activeLoId: null,
-      actor: 'driver',
+      activeLoId: 'LO-FARM-001',
       map: null,
-      markers: [],
-      routeLines: [],
-      lang: 'zh',
-      hasRemote: false,
+      layers: { markers: [], route: null, cargo: null },
+      demoRunning: false,
+      allEvents: [],
     };
 
-    const ACTION_TABLE = {
-      driver: [
-        { code: 'PICKUP_DONE', label: '揽收完成', cell: 'origin' },
-        { code: 'IN_TRANSIT', label: '在途', cell: null },
-        { code: 'POD_SIGNED', label: '签收', cell: 'dest' },
-      ],
-      warehouse: [
-        { code: 'INBOUND_SCAN', label: '入库扫码', cell: 'facility' },
-        { code: 'PICK_PACK', label: '拣配', cell: 'facility' },
-        { code: 'LOADED', label: '装车', cell: 'facility' },
-      ],
-      dispatcher: [
-        { code: 'DISPATCH', label: '派车', cell: null },
-        { code: 'REPLAN', label: '重算路线', cell: null },
-      ],
-      shipper: [
-        { code: 'PICKUP_DONE', label: '农户揽收', cell: 'origin' },
-        { code: 'CONFIRM', label: '货主确认', cell: 'origin' },
-      ],
-    };
-
-    function label(cell) {
-      return state.lang === 'en' ? (cell.labelEn || cell.id) : (cell.labelZh || cell.id);
-    }
-
-    function renderChainPills(status) {
-      state.hasRemote = status.some((s) => s.id === 'supabase-free' && s.ok);
-      const pills = status
-        .map((s) => `<span class="chain-pill ${s.ok ? 'on' : 'off'}" title="${s.label}">${s.id}</span>`)
-        .join('');
-      const syncBtn = state.hasRemote
-        ? '<button type="button" class="sync-btn" id="pull-remote">拉远程</button>'
-        : '';
-      document.getElementById('chain-pills').innerHTML = pills + syncBtn;
-      const btn = document.getElementById('pull-remote');
-      if (btn) {
-        btn.onclick = async () => {
-          btn.disabled = true;
-          btn.textContent = '同步中…';
-          await state.chain.pullRemote();
-          btn.textContent = '已同步';
-          await renderAll();
-          setTimeout(() => { btn.textContent = '拉远程'; btn.disabled = false; }, 1500);
-        };
+    function stars() {
+      const el = document.getElementById('stars');
+      for (let i = 0; i < 80; i++) {
+        const s = document.createElement('i');
+        s.style.left = Math.random() * 100 + '%';
+        s.style.top = Math.random() * 100 + '%';
+        s.style.animationDelay = Math.random() * 3 + 's';
+        el.appendChild(s);
       }
     }
 
-    async function renderNetworkGraph() {
-      const los = await state.chain.listLOs();
-      const edges = buildNetworkEdges(los);
-      const el = document.getElementById('net-graph');
-      if (!edges.length) {
-        el.textContent = '无链环 · 等待种子';
-        return;
-      }
-      el.innerHTML = edges
-        .map((e) => `<div><b>${e.from}</b> <span class="arrow">→</span> <b>${e.to}</b>${e.label ? ` <small>(${e.label})</small>` : ''}</div>`)
-        .join('');
-    }
-
-    async function buildCrumb() {
-      const all = await state.chain.listSpatial();
-      const map = new Map(all.map((c) => [c.id, c]));
-      const path = [];
-      let cur = map.get(state.focusCellId);
-      while (cur) {
-        path.unshift(cur);
-        cur = cur.parentId ? map.get(cur.parentId) : null;
-      }
-      const el = document.getElementById('spatial-crumb');
-      el.innerHTML = path
-        .map((c, i) => {
-          const sep = i ? '<span>›</span>' : '';
-          const on = c.id === state.focusCellId ? ' on' : '';
-          return `${sep}<button type="button" data-cell="${c.id}" class="${on.trim()}">${label(c)}</button>`;
-        })
-        .join('');
-      el.querySelectorAll('button').forEach((btn) => {
-        btn.onclick = () => {
-          state.focusCellId = btn.dataset.cell;
-          renderAll();
-        };
-      });
-      const focus = map.get(state.focusCellId);
-      const lvl = focus ? SPATIAL_LEVELS.indexOf(focus.level) + 1 : 0;
-      document.getElementById('zoom-hint').textContent =
-        `当前层级 ${lvl}/${SPATIAL_LEVELS.length}（${focus?.level || '—'}）。` +
-        ' 紫点=LO 起终点；事件 SHA-256 哈希链串联。';
+    function toast(msg, ms = 2200) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      clearTimeout(toast._t);
+      toast._t = setTimeout(() => t.classList.remove('show'), ms);
     }
 
     function ensureMap() {
       if (state.map) return;
       state.map = L.map('map', { zoomControl: true, attributionControl: true });
       L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        subdomains: 'abcd',
-        maxZoom: 19,
-        attribution: '&copy; OSM &copy; CARTO',
+        subdomains: 'abcd', maxZoom: 19, attribution: '&copy; OSM &copy; CARTO',
       }).addTo(state.map);
+      const latlngs = ROUTE_COORDS.map((c) => [c[1], c[2]]);
+      state.layers.route = L.polyline(latlngs, {
+        color: '#3dffb0', weight: 4, opacity: 0.7, dashArray: '12 8',
+      }).addTo(state.map);
+      state.layers.cargo = L.circleMarker(latlngs[0], {
+        radius: 10, color: '#ffc14d', fillColor: '#ffc14d', fillOpacity: 1, weight: 2,
+      }).addTo(state.map);
+      state.map.fitBounds(L.latLngBounds(latlngs).pad(0.2));
     }
 
     async function renderMap() {
       ensureMap();
-      state.markers.forEach((m) => state.map.removeLayer(m));
-      state.routeLines.forEach((l) => state.map.removeLayer(l));
-      state.markers = [];
-      state.routeLines = [];
-
-      const all = await state.chain.listSpatial();
-      const spatialMap = new Map(all.map((c) => [c.id, c]));
-      const focus = all.find((c) => c.id === state.focusCellId);
-      const children = all.filter((c) => c.parentId === state.focusCellId);
-      const points = children.filter((c) => c.lat != null).concat(focus?.lat != null ? [focus] : []);
-
-      for (const c of all.filter((x) => x.lat != null)) {
-        const isFocus = c.id === state.focusCellId;
-        const isChild = c.parentId === state.focusCellId;
-        if (!isFocus && !isChild && focus?.level !== 'universe' && focus?.level !== 'planet') continue;
-        const m = L.circleMarker([c.lat, c.lng], {
-          radius: isFocus ? 12 : 8,
-          color: isFocus ? '#ff6b9d' : '#3dff9a',
-          fillColor: isFocus ? '#ff6b9d' : '#1a4d3a',
-          fillOpacity: 0.85,
-          weight: 2,
-        }).addTo(state.map);
-        m.bindPopup(`<b>${label(c)}</b><br/><small>${c.level}</small>`);
-        m.on('click', () => {
-          state.focusCellId = c.id;
-          renderAll();
-        });
-        state.markers.push(m);
-      }
-
+      state.layers.markers.forEach((m) => state.map.removeLayer(m));
+      state.layers.markers = [];
+      const spatial = await state.chain.listSpatial();
       const los = await state.chain.listLOs();
-      const activeLos = state.activeLoId
-        ? los.filter((l) => l.loId === state.activeLoId)
-        : los.filter((l) => l.status === 'active');
-      const loPoints = [];
-      for (const lo of activeLos) {
-        const origin = spatialMap.get(lo.originCellId);
-        const dest = spatialMap.get(lo.destCellId);
-        if (origin?.lat != null) {
-          const m = L.circleMarker([origin.lat, origin.lng], {
-            radius: 9, color: '#c77dff', fillColor: '#c77dff', fillOpacity: 0.9, weight: 2,
-          }).addTo(state.map);
-          m.bindPopup(`<b>起点</b><br/>${lo.loId}<br/>${label(origin)}`);
-          state.markers.push(m);
-          loPoints.push([origin.lat, origin.lng]);
-        }
-        if (dest?.lat != null && dest.id !== origin?.id) {
-          const m = L.circleMarker([dest.lat, dest.lng], {
-            radius: 9, color: '#ffb347', fillColor: '#ffb347', fillOpacity: 0.9, weight: 2,
-          }).addTo(state.map);
-          m.bindPopup(`<b>终点</b><br/>${lo.loId}<br/>${label(dest)}`);
-          state.markers.push(m);
-          loPoints.push([dest.lat, dest.lng]);
-        }
-        if (origin?.lat != null && dest?.lat != null) {
-          const line = L.polyline(
-            [[origin.lat, origin.lng], [dest.lat, dest.lng]],
-            { color: '#ff6b9d', weight: 2, opacity: 0.55, dashArray: '6 8' }
-          ).addTo(state.map);
-          state.routeLines.push(line);
-        }
-      }
+      const labels = new Map(spatial.map((c) => [c.id, c.labelZh || c.id]));
 
-      const allPoints = points.concat(loPoints.map((p) => ({ lat: p[0], lng: p[1] })));
-      if (allPoints.length) {
-        const bounds = L.latLngBounds(allPoints.map((p) => [p.lat, p.lng]));
-        state.map.fitBounds(bounds.pad(0.3));
-      } else if (focus?.lat) {
-        state.map.setView([focus.lat, focus.lng], focus.level === 'nation' ? 5 : 10);
-      } else {
-        state.map.setView([20, 0], 2);
-      }
-      setTimeout(() => state.map.invalidateSize(), 50);
-    }
-
-    async function renderLOs() {
-      const los = await state.chain.listLOs();
-      if (!state.activeLoId && los.length) state.activeLoId = los[0].loId;
-      const html = [];
       for (const lo of los) {
-        const events = await state.chain.getEvents(lo.loId);
-        const proj = projectLOState(lo, events);
-        const linked = getLinkedLOs(lo.loId, los);
-        const badges = [];
-        for (const u of linked.upstream) {
-          badges.push(`<span class="link-badge up">↑ ${u.lo.loId.replace('LO-', '')}</span>`);
+        for (const cellId of [lo.originCellId, lo.destCellId]) {
+          const c = spatial.find((x) => x.id === cellId);
+          if (!c?.lat) continue;
+          const m = L.circleMarker([c.lat, c.lng], {
+            radius: lo.loId === state.activeLoId ? 11 : 7,
+            color: lo.loId === state.activeLoId ? '#ff5c9a' : '#3dffb0',
+            fillColor: lo.loId === state.activeLoId ? '#ff5c9a' : '#1a4d3a',
+            fillOpacity: 0.9, weight: 2,
+          }).addTo(state.map);
+          m.bindPopup(`<b>${labels.get(cellId)}</b><br/><small>${lo.loId}</small>`);
+          m.on('click', () => { state.activeLoId = lo.loId; state.focusCellId = cellId; renderAll(); });
+          state.layers.markers.push(m);
         }
-        for (const d of linked.downstream) {
-          badges.push(`<span class="link-badge down">↓ ${d.lo.loId.replace('LO-', '')}</span>`);
-        }
-        const active = lo.loId === state.activeLoId ? ' active' : '';
-        html.push(
-          `<div class="lo-card${active}" data-lo="${lo.loId}">` +
-            `<div class="lo-id">${lo.loId}</div>` +
-            `<div class="lo-meta">${lo.channel} · ${lo.originCellId} → ${lo.destCellId}</div>` +
-            (badges.length ? `<div class="link-badges">${badges.join('')}</div>` : '') +
-            `<div class="progress"><i style="width:${proj.progress}%"></i></div>` +
-            `</div>`
-        );
       }
-      const el = document.getElementById('lo-list');
-      el.innerHTML = html.join('') || '<p class="lo-meta">无 LO</p>';
-      el.querySelectorAll('.lo-card').forEach((card) => {
-        card.onclick = () => {
-          state.activeLoId = card.dataset.lo;
+
+      const pipe = await getPipelineState(state.chain);
+      const active = pipe.stages[pipe.activeIx];
+      if (active?.lo && state.layers.cargo) {
+        const c = spatial.find((x) => x.id === active.lo.originCellId);
+        if (c?.lat) state.layers.cargo.setLatLng([c.lat, c.lng]);
+      }
+    }
+
+    async function renderCrumb() {
+      const all = await state.chain.listSpatial();
+      const map = new Map(all.map((c) => [c.id, c]));
+      const path = [];
+      let cur = map.get(state.focusCellId);
+      while (cur) { path.unshift(cur); cur = cur.parentId ? map.get(cur.parentId) : null; }
+      document.getElementById('spatial-crumb').innerHTML = path.map((c, i) => {
+        const sep = i ? '<span>›</span>' : '';
+        const on = c.id === state.focusCellId ? ' on' : '';
+        return `${sep}<button type="button" data-cell="${c.id}" class="${on.trim()}">${c.labelZh}</button>`;
+      }).join('');
+      document.querySelectorAll('#spatial-crumb button').forEach((btn) => {
+        btn.onclick = () => { state.focusCellId = btn.dataset.cell; renderMap(); };
+      });
+    }
+
+    async function renderPipeline() {
+      const pipe = await getPipelineState(state.chain);
+      const track = document.getElementById('pipe-track');
+      track.innerHTML = pipe.stages.map((s, i) => {
+        const cls = s.status === 'done' ? 'done' : s.loId === state.activeLoId || i === pipe.activeIx ? 'active' : '';
+        return `<div class="pipe-node ${cls}" data-lo="${s.loId}" data-ix="${i}">
+          <span class="icon">${s.icon}</span>
+          <span class="name">${s.labelZh}</span>
+          <span class="sub">${s.lastCode || '待启动'} · ${s.loId}</span>
+          <div class="pipe-bar"><i style="width:${s.progress}%"></i></div>
+        </div>`;
+      }).join('');
+      track.querySelectorAll('.pipe-node').forEach((node) => {
+        node.onclick = () => {
+          state.activeLoId = node.dataset.lo;
+          const lo = pipe.stages[+node.dataset.ix]?.lo;
+          if (lo) state.focusCellId = lo.originCellId;
           renderAll();
         };
       });
+
+      const active = pipe.stages.filter((s) => s.status === 'active').length;
+      const done = pipe.stages.filter((s) => s.status === 'done').length;
+      document.getElementById('hud-active').textContent = active;
+      document.getElementById('hud-los').textContent = pipe.stages.filter((s) => s.lo).length;
     }
 
-    function renderActors() {
-      const el = document.getElementById('actors');
-      el.innerHTML = Object.values(ACTOR_LENSES)
-        .filter((a) => a.id !== 'all')
-        .map(
-          (a) =>
-            `<button type="button" data-actor="${a.id}" class="${a.id === state.actor ? 'on' : ''}">` +
-            (state.lang === 'en' ? a.labelEn : a.labelZh) +
-            '</button>'
-        )
-        .join('');
-      el.querySelectorAll('button').forEach((btn) => {
-        btn.onclick = () => {
-          state.actor = btn.dataset.actor;
-          renderActions();
-          renderActors();
-        };
-      });
-    }
-
-    async function renderActions() {
-      const lo = state.activeLoId ? await state.chain.getLO(state.activeLoId) : null;
-      const acts = ACTION_TABLE[state.actor] || [];
-      const el = document.getElementById('actions');
-      el.innerHTML = acts
-        .map(
-          (a) =>
-            `<button type="button" data-code="${a.code}" data-cell="${a.cell || ''}" ${lo ? '' : 'disabled'}>` +
-            a.label +
-            '</button>'
-        )
-        .join('');
-      el.querySelectorAll('button').forEach((btn) => {
-        btn.onclick = async () => {
-          if (!state.activeLoId) return;
-          const lo = await state.chain.getLO(state.activeLoId);
-          let cellId = state.focusCellId;
-          if (btn.dataset.cell === 'origin') cellId = lo.originCellId;
-          if (btn.dataset.cell === 'dest') cellId = lo.destCellId;
-          if (btn.dataset.cell === 'facility') cellId = lo.destCellId;
-          await state.chain.emitAction(state.activeLoId, {
-            code: btn.dataset.code,
-            actor: state.actor,
-            spatialCellId: cellId,
-            payload: { focusCell: state.focusCellId },
-          });
-          await renderAll();
-        };
-      });
-    }
-
-    async function renderEvents() {
-      if (!state.activeLoId) {
-        document.getElementById('event-log').innerHTML = '';
-        document.getElementById('integrity').textContent = '';
-        return;
+    async function renderEventStream() {
+      const los = await state.chain.listLOs();
+      const rows = [];
+      for (const lo of los) {
+        const evts = await state.chain.getEvents(lo.loId);
+        for (const e of evts) rows.push({ ...e, loId: lo.loId });
       }
-      const events = await state.chain.getEvents(state.activeLoId);
-      const lo = await state.chain.getLO(state.activeLoId);
-      const proj = projectLOState(lo, events);
-      document.getElementById('event-log').innerHTML = events
-        .map((e) => {
-          const syncCls = e.type === EVENT_TYPES.SYNC ? ' sync' : '';
-          return (
-            `<div class="evt${syncCls}"><b>#${e.seq}</b> ${e.code} <span style="color:#7da8c8">@${e.actor}</span><br/>` +
-            `<span style="color:#5a7a96">${e.hash.slice(0, 16)}…</span></div>`
-          );
-        })
-        .join('');
-      const ig = document.getElementById('integrity');
-      ig.className = 'integrity ' + (proj.integrity.ok ? 'ok' : 'bad');
-      ig.textContent = proj.integrity.ok
-        ? `哈希链完整 · ${events.length} 个轨道电子`
-        : `链断裂 @#${proj.integrity.brokenAt}: ${proj.integrity.reason}`;
+      rows.sort((a, b) => (a.ts || '').localeCompare(b.ts || ''));
+      state.allEvents = rows;
+      const tail = rows.slice(-24).reverse();
+      document.getElementById('event-stream').innerHTML = tail.map((e) => {
+        const sync = e.type === 'SYNC' ? ' evt-sync' : '';
+        return `<div class="evt-row${sync}"><b>${e.loId}</b> #${e.seq} ${e.code}<br/><span style="color:#5a7a96">${(e.hash || '').slice(0, 12)}…</span></div>`;
+      }).join('');
+    }
+
+    function renderHudChain(status) {
+      const on = (status || []).filter((s) => s.ok).length;
+      document.getElementById('hud-chain').textContent = on + '/' + (status || []).length;
     }
 
     async function renderAll() {
-      await renderNetworkGraph();
-      await buildCrumb();
+      await renderCrumb();
       await renderMap();
-      await renderLOs();
-      renderActors();
-      await renderActions();
-      await renderEvents();
+      await renderPipeline();
+      await renderEventStream();
     }
 
+    async function playDemo() {
+      if (state.demoRunning) return;
+      state.demoRunning = true;
+      document.getElementById('btn-play').disabled = true;
+      state.activeLoId = 'LO-FARM-001';
+      await runFullDemo(state.chain, {
+        delayMs: 1200,
+        onStep: async (step, i, total) => {
+          state.activeLoId = step.loId;
+          toast(step.msg);
+          await renderAll();
+          const frac = i / (total - 1);
+          const idx = Math.min(ROUTE_COORDS.length - 1, Math.floor(frac * (ROUTE_COORDS.length - 1)));
+          const pt = ROUTE_COORDS[idx];
+          if (state.layers.cargo) state.layers.cargo.setLatLng([pt[1], pt[2]]);
+        },
+      });
+      state.demoRunning = false;
+      document.getElementById('btn-play').disabled = false;
+      document.getElementById('finish').classList.add('show');
+      await renderAll();
+    }
+
+    async function enterWorld() {
+      document.getElementById('intro').classList.add('hide');
+      document.getElementById('app').hidden = false;
+      setTimeout(() => state.map?.invalidateSize(), 100);
+      await renderAll();
+      setTimeout(() => playDemo(), 600);
+    }
+
+    stars();
     const status = await state.chain.init();
-    renderChainPills(status);
-    if (state.hasRemote) await state.chain.pullRemote();
-    await renderAll();
+    renderHudChain(status);
+
+    document.getElementById('btn-enter').onclick = enterWorld;
+    document.getElementById('btn-play').onclick = () => playDemo();
+    document.getElementById('btn-reset').onclick = async () => {
+      if (!confirm('清空本机演示数据并重新开始？')) return;
+      await state.chain.resetDemo();
+      toast('已重置 · 重新裂变种子');
+      await renderAll();
+      setTimeout(() => playDemo(), 400);
+    };
+    document.getElementById('btn-finish-ok').onclick = () => {
+      document.getElementById('finish').classList.remove('show');
+      playDemo();
+    };
   </script>
 </body>
 </html>
