@@ -1,4 +1,4 @@
-"""P117 基本面 + 股东质量过滤（配合明日预测，非投资建议）。"""
+"""P117+ 基本面 + 股东 + 基金持股质量过滤（配合明日预测，非投资建议）。"""
 
 from __future__ import annotations
 
@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from src.providers.eastmoney_f10 import fetch_industry_compare
+from src.providers.eastmoney_fund_holdings import FundHoldingsSnapshot, fetch_fund_holdings_snapshot
 from src.providers.eastmoney_shareholder import ShareholderSnapshot, fetch_shareholder_snapshot
 
 # 总市值下限（元）：过滤过小、易被资金操纵的票
@@ -21,6 +22,7 @@ class QualityVerdict:
     tags: tuple[str, ...]
     reject_reason: str
     shareholder: dict[str, Any] | None
+    fund_holdings: dict[str, Any] | None
     total_cap_yuan: float | None
     pe_ttm: float | None
 
@@ -44,12 +46,71 @@ def _board_penalty(code: str) -> tuple[float, str | None]:
     return 0.0, None
 
 
+def _apply_fund_holdings(
+    delta: float,
+    tags: list[str],
+    fh: FundHoldingsSnapshot,
+) -> float:
+    """公募基金 / QFII 新进、增减持 → 加减分。"""
+    chg = fh.fund_chg
+    if chg == "新进":
+        delta += 5
+        tags.append("公募基金新进")
+    elif chg == "增仓":
+        delta += 3
+        tags.append("基金增仓")
+    elif chg == "减仓":
+        delta -= 5
+        tags.append("基金减持")
+
+    if fh.fund_ratio_chg is not None:
+        if fh.fund_ratio_chg >= 0.3:
+            delta += 2
+            if "基金增仓" not in tags:
+                tags.append("基金持股升")
+        elif fh.fund_ratio_chg <= -0.5:
+            delta -= 3
+            tags.append("基金持股降")
+
+    if fh.fund_count_chg is not None:
+        if fh.fund_count_chg >= 5:
+            delta += 2
+            tags.append("基金家数增")
+        elif fh.fund_count_chg <= -10:
+            delta -= 4
+            tags.append("基金家数减")
+
+    qchg = fh.qfii_chg
+    if qchg == "新进":
+        delta += 4
+        tags.append("QFII新进")
+    elif qchg == "增仓":
+        delta += 2
+        tags.append("QFII增仓")
+    elif qchg == "减仓":
+        delta -= 3
+        tags.append("QFII减持")
+
+    if (
+        fh.inst_net_chg_shares is not None
+        and fh.inst_net_chg_shares < -3_000_000
+        and chg in ("减仓", "—")
+        and (fh.fund_ratio_chg or 0) <= -0.3
+    ):
+        delta -= 2
+        tags.append("机构净流出")
+
+    return delta
+
+
 def evaluate_stock_quality(
     code: str,
     *,
     shareholder: ShareholderSnapshot | None = None,
+    fund_holdings: FundHoldingsSnapshot | None = None,
     f10: dict[str, Any] | None = None,
     fetch_shareholder: bool = True,
+    fetch_fund_holdings: bool = True,
     fetch_f10: bool = True,
 ) -> QualityVerdict:
     """股东 + 市值/PE/ROE 行业排名 → 是否纳入明日推荐。"""
@@ -57,6 +118,10 @@ def evaluate_stock_quality(
     sh = shareholder
     if sh is None and fetch_shareholder:
         sh = fetch_shareholder_snapshot(c)
+
+    fh = fund_holdings
+    if fh is None and fetch_fund_holdings:
+        fh = fetch_fund_holdings_snapshot(c)
 
     fin = f10
     if fin is None and fetch_f10:
@@ -129,6 +194,9 @@ def evaluate_stock_quality(
             delta -= 2
             tags.append("股东户数减少")
 
+    if fh:
+        delta = _apply_fund_holdings(delta, tags, fh)
+
     min_cap = MIN_TOTAL_CAP_GROWTH_YUAN if c.startswith(("300", "301", "688")) else MIN_TOTAL_CAP_YUAN
     if total_cap is not None:
         cap_yi = total_cap / 1e8
@@ -165,6 +233,7 @@ def evaluate_stock_quality(
         tags=tuple(tags),
         reject_reason=reject,
         shareholder=sh.as_dict() if sh else None,
+        fund_holdings=fh.as_dict() if fh else None,
         total_cap_yuan=total_cap,
         pe_ttm=pe,
     )
