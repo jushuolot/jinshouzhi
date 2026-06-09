@@ -18,7 +18,8 @@
     sponsorVisit: { bonusAmount: 0.12 },
     passiveYield: { dailyAmount: 0.006, sessionTickAmount: 0.0008, tickMs: 900000, sessionTickCap: 0.006 },
     relicBounty: { startHour: 18, endHour: 24, amount: 0.018 },
-    civilizationArchive: { amount: 0.022, phases: ["复兴期", "超越期"] },
+    civilizationArchive: { amount: 0.022, beyondAmount: 0.032, phases: ["复兴期", "超越期"] },
+    publicCommonsMirror: { amount: 0.014, phases: ["超越期"] },
     bounty: {
       label: "任务赏金(演示)",
       endpoint: "https://api.coingecko.com/api/v3/ping",
@@ -89,6 +90,12 @@
       source: "network_settlement",
       description: "文明历复兴期/超越期每日档案同步入账",
     },
+    public_commons_mirror: {
+      id: "public_commons_mirror",
+      label: "公开资料镜像",
+      source: "network_settlement",
+      description: "超越期每日公开文物档案镜像入账",
+    },
   };
 
   var state = {
@@ -99,6 +106,7 @@
     faucetCredited: false,
     lastRelicBounty: "",
     lastCivilizationArchive: "",
+    lastPublicCommonsMirror: "",
   };
 
   var tickTimer = null;
@@ -119,6 +127,7 @@
         typeof data.sessionTickTotal === "number" ? data.sessionTickTotal : 0;
       state.lastRelicBounty = data.lastRelicBounty || "";
       state.lastCivilizationArchive = data.lastCivilizationArchive || "";
+      state.lastPublicCommonsMirror = data.lastPublicCommonsMirror || "";
     } catch (e) {
       // ignore
     }
@@ -318,8 +327,9 @@
     if (cfg.phases.indexOf(phase) < 0) return 0;
     state.lastCivilizationArchive = key;
     saveState();
+    var amt = phase === "超越期" && cfg.beyondAmount ? cfg.beyondAmount : cfg.amount;
     var credited = creditChannel("civilization_archive", {
-      amount: cfg.amount,
+      amount: amt,
       meta: {
         kind: "civilization_sync",
         phase: phase,
@@ -329,6 +339,29 @@
     });
     if (credited > 0 && typeof window.showSystemToast === "function") {
       window.showSystemToast("📜 文明档案同步 · " + phase + " · 此间比人间快", 3600);
+    }
+    return credited;
+  }
+
+  function tryPublicCommonsMirror() {
+    var key = todayKey();
+    if (state.lastPublicCommonsMirror === key) return 0;
+    var clock =
+      typeof window !== "undefined" && window.MATCH3_CIVILIZATION_CLOCK
+        ? window.MATCH3_CIVILIZATION_CLOCK
+        : null;
+    if (!clock) return 0;
+    var phase = clock.getPhase();
+    var cfg = CONFIG.publicCommonsMirror;
+    if (!cfg || cfg.phases.indexOf(phase) < 0) return 0;
+    state.lastPublicCommonsMirror = key;
+    saveState();
+    var credited = creditChannel("public_commons_mirror", {
+      amount: cfg.amount,
+      meta: { kind: "commons_mirror", phase: phase, day: key },
+    });
+    if (credited > 0 && typeof window.showSystemToast === "function") {
+      window.showSystemToast("📚 公开资料镜像入账 · 超越期 · Wikimedia 档", 3400);
     }
     return credited;
   }
@@ -359,6 +392,7 @@
     tryDailyPassiveYield();
     tryRelicBounty();
     tryCivilizationArchive();
+    tryPublicCommonsMirror();
     tryAffiliateReferral();
     startPeriodicTick();
     deferNetworkProbes();

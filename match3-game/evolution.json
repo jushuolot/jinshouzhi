@@ -1,12 +1,12 @@
 {
-  "version": "5.8.1",
-  "generation": 55,
-  "universeDay": 4,
+  "version": "5.9.0",
+  "generation": 56,
+  "universeDay": 5,
   "civilizationEpoch": "1929-07",
-  "civilizationDay": 51,
-  "civilizationYear": 2031,
-  "civilizationPhase": "复兴期",
-  "dailyChronicle": "第 4 日·流畅日。文明历 2031，复兴期——造物主嫌人间网页慢，此间改成先进地图再拉立绘；王墩说终于不用干等泡面凉了。",
+  "civilizationDay": 56,
+  "civilizationYear": 2041,
+  "civilizationPhase": "超越期",
+  "dailyChronicle": "第 5 日·超越首日。文明历跨入 2041，此宇宙正式跑过人间 2021 新坑线整整一圈；杨雪说公开图鉴和层位已对齐，造物主关屏走了，古蜀还在快进。",
   "releasedAt": "2026-06-10",
   "autoTune": {
     "enabled": true,
@@ -15,14 +15,9 @@
     "targetWinRate": 0.52
   },
   "patchNotes": [
-    "图鉴六件文物换为 Wikimedia Commons 公开授权实拍（CC0 / CC BY-SA）",
-    "图鉴按实物：六件国宝实拍展柜（纵目面具/金杖/玉璋/陶盉/象牙/太阳神鸟）",
-    "图鉴 3D 文物博物馆级重做：纵目面具/金杖/玉璋/陶盉/象牙/太阳神鸟",
-    "修复图鉴 3D 文物不显示（Three 引擎延后加载竞态）",
-    "性能大改：asset-loader 分阶段加载，首屏不等立绘/Three.js",
-    "立绘改 JPEG（约 7.6MB→1.4MB），后台预载",
-    "网络赏金探测延后到 idle，不卡启动",
-    "Gen.51 · 宇宙第4日 · 流畅日 · 文明历 2031"
+    "Gen.56 · 宇宙第5日 · 超越期首日 · 文明历 2041",
+    "剧情接入超越期叙事；公开资料镜像寻金渠道",
+    "文明档案赏金超越期加码"
   ],
   "virtualAccount": {
     "module": "virtual-account.js",
