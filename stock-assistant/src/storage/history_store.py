@@ -33,6 +33,8 @@ KIND_LABELS: dict[str, str] = {
     "panorama_deep": "异动全景·深度",
     "insight": "异动溯源",
     "watchlist": "自选股",
+    "cohort": "多人选股画像",
+    "profile": "我的选股特点",
 }
 
 
@@ -81,9 +83,53 @@ def load_history() -> dict[str, Any]:
         return _empty_store()
 
 
+def _sync_cloud_contribution(data: dict[str, Any]) -> dict[str, Any] | None:
+    try:
+        from src.storage.cloud_contrib import sync_user_contribution
+
+        uid = current_user_id()
+        return sync_user_contribution(uid, data, push_github=True)
+    except Exception:
+        return None
+
+
+def _append_cohort_log_once(data: dict[str, Any], contrib: dict[str, Any] | None) -> None:
+    if not contrib:
+        return
+    try:
+        today = datetime.now().strftime("%Y-%m-%d")
+        if st.session_state.get("_cohort_log_date") == today:
+            return
+        st.session_state["_cohort_log_date"] = today
+    except Exception:
+        pass
+    profile = contrib.get("profile") or {}
+    style = profile.get("style_label") or "—"
+    hit = profile.get("hit_rate_pct")
+    hit_s = f"命中率{hit:.0f}%" if hit is not None else "命中率待验证"
+    at = datetime.now().strftime("%Y年%m月%d日 %H:%M:%S")
+    entry = {
+        "id": str(uuid.uuid4())[:8],
+        "at": at,
+        "date_key": log_date_key(at),
+        "kind": "profile",
+        "label": f"选股画像已同步云端 · {style} · {hit_s}",
+        "market": "",
+        "board": "",
+        "count": int(profile.get("pick_count") or 0),
+        "stocks": list(profile.get("top_codes") or [])[:5],
+        "conclusions_summary": f"风格 {style}；偏好模式 {','.join(profile.get('top_patterns') or []) or '—'}",
+    }
+    log = data.setdefault("query_log", [])
+    log.insert(0, entry)
+    data["query_log"] = log[:_MAX_LOG]
+
+
 def save_history(data: dict[str, Any]) -> None:
     path = history_path()
     data["version"] = _HISTORY_VERSION
+    contrib = _sync_cloud_contribution(data)
+    _append_cohort_log_once(data, contrib)
     tmp = path.with_suffix(".json.tmp")
     with tmp.open("w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2, default=str)

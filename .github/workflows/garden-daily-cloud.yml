@@ -12,6 +12,8 @@ on:
     paths:
       - ".github/workflows/garden-daily-cloud.yml"
       - "stock-assistant/scripts/garden_cloud_cron.py"
+      - "stock-assistant/scripts/cohort_cloud_cron.py"
+      - "stock-assistant/cloud_state/user_contrib/**"
 
 permissions:
   contents: write
@@ -41,6 +43,9 @@ jobs:
         env:
           STOCK_WEBHOOK_URL: ${{ secrets.STOCK_WEBHOOK_URL }}
         run: python3 scripts/garden_cloud_cron.py
+
+      - name: Cohort multi-user analytics
+        run: python3 scripts/cohort_cloud_cron.py
 
       - name: Commit cloud picks
         run: |

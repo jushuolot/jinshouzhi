@@ -24,10 +24,13 @@ from src.storage.history_store import (
 from src.analysis.trend_summary import collect_trend_points, format_trend_markdown, trend_delta
 from src.analysis.battle_plan import build_battle_plan
 from src.analysis.weekly_report import build_weekly_report
+from src.ui.cohort_panel import render_cohort_panel
 from src.util.query_time import format_query_datetime
 
 
 def render() -> None:
+    render_cohort_panel()
+    st.divider()
     st.subheader("历史记录")
     st.caption(
         f"自动记录榜单刷新、一键分析等操作。数据在 `data/{history_path().name}`，重登后自动恢复。"

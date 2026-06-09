@@ -13,9 +13,14 @@ from src.util.cloud_runtime import is_streamlit_cloud
 
 ROOT = Path(__file__).resolve().parents[2]
 LATEST = ROOT / "cloud_state" / "latest_picks.json"
+COHORT = ROOT / "cloud_state" / "cohort_insights.json"
 DEFAULT_RAW_URL = (
     "https://raw.githubusercontent.com/jushuolot/jinshouzhi/main/"
     "stock-assistant/cloud_state/latest_picks.json"
+)
+DEFAULT_COHORT_URL = (
+    "https://raw.githubusercontent.com/jushuolot/jinshouzhi/main/"
+    "stock-assistant/cloud_state/cohort_insights.json"
 )
 REMOTE_TTL_SEC = 300
 
@@ -95,6 +100,32 @@ def _cached_remote_picks(url: str) -> dict[str, Any] | None:
         return _fetch_remote_json(url)
     except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, OSError):
         return None
+
+
+def _normalize_cohort(data: Any) -> dict[str, Any] | None:
+    if not isinstance(data, dict) or not data.get("generated_at"):
+        return None
+    return data
+
+
+def load_cohort_insights(path: Path | None = None, *, prefer_remote: bool | None = None) -> dict[str, Any] | None:
+    p = path or COHORT
+    use_remote = is_streamlit_cloud() if prefer_remote is None else prefer_remote
+    if use_remote:
+        url = os.environ.get("STOCK_COHORT_URL", "").strip() or DEFAULT_COHORT_URL
+        try:
+            remote = _fetch_remote_json(url)
+            if remote and _normalize_cohort(remote):
+                return remote
+        except Exception:
+            pass
+    if p.is_file():
+        try:
+            data = json.loads(p.read_text(encoding="utf-8"))
+            return _normalize_cohort(data)
+        except (json.JSONDecodeError, OSError):
+            pass
+    return None
 
 
 def load_cloud_picks(path: Path | None = None, *, prefer_remote: bool | None = None) -> dict[str, Any] | None:
