@@ -15,6 +15,14 @@ export interface LoginResult {
   activeRole?: RoleKey;
 }
 
+export async function loginWithPhone(phone: string, code?: string): Promise<LoginResult> {
+  return request<LoginResult>({
+    url: '/nuanban/phone-login',
+    method: 'POST',
+    data: { phone, ...(code ? { code } : {}) },
+  });
+}
+
 export async function loginWithWxCode(code: string, role?: RoleKey): Promise<LoginResult> {
   return request<LoginResult>({
     url: '/nuanban/wx-login',

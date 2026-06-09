@@ -1,3 +1,4 @@
+import { APP_TAGLINE } from '../config/brand';
 import type { RoleKey } from '../config/tabs';
 import {
   buildRichCaregivers,
@@ -163,6 +164,21 @@ function roleFromEmail(email: string): RoleKey {
   if (e.includes('elder')) return 'elder';
   if (e.includes('family')) return 'family';
   return 'student';
+}
+
+/** 演示手机号 → seed 邮箱；任意 11 位未映射号默认学生演示账号 */
+const DEMO_PHONE_EMAIL: Record<string, string> = {
+  '13800000001': 'student1@test.nuanban.dev',
+  '13800000002': 'student2@test.nuanban.dev',
+  '13800000003': 'student3@test.nuanban.dev',
+  '13800000004': 'family1@test.nuanban.dev',
+  '13800000005': 'elder1@test.nuanban.dev',
+  '13800000006': 'multi1@test.nuanban.dev',
+};
+
+function emailFromPhone(phone: string): string {
+  const digits = phone.replace(/\D/g, '');
+  return DEMO_PHONE_EMAIL[digits] || 'student1@test.nuanban.dev';
 }
 
 const mockRegisterRoles: {
@@ -382,6 +398,18 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
   if (method === 'POST' && path === '/nuanban/dev-login') {
     const email = String(data.email || 'student1@test.nuanban.dev');
     return delay(loginByEmail(email) as T);
+  }
+
+  if (method === 'POST' && path === '/nuanban/phone-login') {
+    const phone = String(data.phone || '').replace(/\D/g, '');
+    if (phone.length !== 11) {
+      return Promise.reject({ message: '请输入 11 位手机号', statusCode: 400 });
+    }
+    const code = data.code != null ? String(data.code) : '';
+    if (code && code.length < 4) {
+      return Promise.reject({ message: '验证码无效', statusCode: 400 });
+    }
+    return delay(loginByEmail(emailFromPhone(phone)) as T);
   }
 
   if (method === 'POST' && path === '/nuanban/wx-login') {
@@ -803,7 +831,7 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
     const inSvc = state.orders.filter((o) => o.status === 'in_service').length;
     const done = state.orders.filter((o) => o.status === 'completed').length;
     return delay({
-      mission: '附近中老年 ↔ 在校女大学生 · 平台撮合有偿陪护',
+      mission: APP_TAGLINE,
       updatedAt: new Date().toISOString(),
       eldersTotal: ELDERS.length,
       studentsActive: CAREGIVERS.length,

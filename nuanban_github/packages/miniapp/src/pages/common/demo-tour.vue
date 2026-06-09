@@ -21,7 +21,7 @@
         <!-- 场景 0：总览 -->
         <view v-if="scene === 0" class="slide fade-in">
           <text class="slide-title">暖伴勤工</text>
-          <text class="slide-sub">附近中老年 ↔ 在校女大学生</text>
+          <text class="slide-sub">让陪伴有温度，让勤工有意义</text>
           <view class="orbit">
             <view class="node elder pulse">👵 张奶奶</view>
             <view class="link-line draw" />
@@ -29,7 +29,7 @@
             <view class="link-line draw delay" />
             <view class="node student pulse">👩‍🎓 林同学</view>
           </view>
-          <text class="caption">有偿陪护 · 明码标价 · 平台管理匹配</text>
+          <text class="caption">邻里陪伴 · 高校助学 · 平台安心撮合</text>
         </view>
 
         <!-- 场景 1：老人找同学 -->

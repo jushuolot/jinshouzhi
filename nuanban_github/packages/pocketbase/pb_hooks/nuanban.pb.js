@@ -212,6 +212,87 @@ routerAdd("POST", "/api/nuanban/dev-login", (e) => {
   });
 });
 
+/** 手机号登录（演示）：验证码可选，按演示号映射 seed 邮箱 */
+routerAdd("POST", "/api/nuanban/phone-login", (e) => {
+  const raw = toString(e.request.body);
+  const body = raw ? JSON.parse(raw) : {};
+  const phone = String(body.phone || "").replace(/\D/g, "");
+  if (phone.length !== 11) {
+    return e.json(400, { message: "请输入 11 位手机号" });
+  }
+  const code = body.code != null ? String(body.code) : "";
+  if (code && code.length < 4) {
+    return e.json(400, { message: "验证码无效" });
+  }
+
+  const phoneToEmail = {
+    "13800000001": "student1@test.nuanban.dev",
+    "13800000002": "student2@test.nuanban.dev",
+    "13800000003": "student3@test.nuanban.dev",
+    "13800000004": "family1@test.nuanban.dev",
+    "13800000005": "elder1@test.nuanban.dev",
+    "13800000006": "multi1@test.nuanban.dev",
+  };
+  const email = phoneToEmail[phone] || "student1@test.nuanban.dev";
+
+  const users = $app.findRecordsByFilter("users", "email = {:e}", "", 1, 0, { e: email });
+  if (users.length === 0) {
+    return e.json(404, { message: "用户不存在，请先执行: ./scripts/seed-demo.sh" });
+  }
+  const user = users[0];
+
+  const em = (email + "").toLowerCase();
+  let activeRole = "student";
+  if (em.indexOf("elder") >= 0) {
+    activeRole = "elder";
+  } else if (em.indexOf("family") >= 0) {
+    activeRole = "family";
+  }
+
+  const roleRecords = $app.findRecordsByFilter(
+    "user_roles",
+    "user = {:uid}",
+    "",
+    50,
+    0,
+    { uid: user.id }
+  );
+  const roles = [];
+  for (let i = 0; i < roleRecords.length; i++) {
+    const r = roleRecords[i];
+    let elderProfileId = null;
+    try {
+      const ep = r.getString("elder_profile");
+      if (ep) elderProfileId = ep;
+    } catch (_) {}
+    roles.push({
+      role: r.getString("role") || "student",
+      status: r.getString("status") || "active",
+      elderProfileId: elderProfileId,
+    });
+  }
+  if (roles.length === 0) {
+    roles.push({ role: activeRole, status: "active", elderProfileId: null });
+  }
+
+  const activeRoles = roles.filter(function (r) {
+    return r.status === "active";
+  });
+  const resolvedActive =
+    activeRoles.length === 1 ? activeRoles[0].role : activeRoles.length > 1 ? null : activeRole;
+
+  return e.json(200, {
+    token: user.newAuthToken(),
+    user: {
+      id: user.id,
+      nickname: user.getString("name") || user.getString("email"),
+      email: user.getString("email"),
+    },
+    roles: roles,
+    activeRole: resolvedActive,
+  });
+});
+
 routerAdd("GET", "/api/nuanban/auth/me", (e) => {
   const auth = e.auth;
   if (!auth) return e.json(401, { message: "需要登录" });
@@ -1368,7 +1449,7 @@ routerAdd("GET", "/api/nuanban/platform/overview", (e) => {
     elders = $app.findRecordsByFilter("elders", "enabled = true", "", 200, 0).length;
   } catch (_) {}
   return e.json(200, {
-    mission: "附近中老年 ↔ 在校女大学生 · 平台撮合有偿陪护",
+    mission: "让陪伴有温度，让勤工有意义",
     updatedAt: new Date().toISOString(),
     eldersTotal: elders,
     studentsActive: 6,

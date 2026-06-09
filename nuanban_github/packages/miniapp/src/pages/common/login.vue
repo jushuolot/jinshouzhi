@@ -8,18 +8,36 @@
       </view>
       <text class="banner-cta">观看 →</text>
     </view>
-    <text class="title">暖伴勤工</text>
-    <text class="sub">附近中老年 ↔ 在校女大学生 · 有偿陪护匹配</text>
-    <button class="btn-primary" :loading="loading" @tap="onWxLogin">微信登录</button>
-    <button
-      v-for="dev in DEV_ACCOUNTS"
-      :key="dev.email"
-      class="btn-secondary"
-      :loading="loading"
-      @tap="onDevLogin(dev.email)"
-    >
-      开发登录（{{ dev.label }}）
-    </button>
+    <text class="title">{{ APP_TITLE }}</text>
+    <text class="sub">{{ APP_TAGLINE }}</text>
+
+    <view class="form">
+      <input
+        class="input"
+        type="number"
+        maxlength="11"
+        :value="phone"
+        placeholder="请输入手机号"
+        @input="onPhoneInput"
+      />
+      <view class="code-row">
+        <input
+          class="input code"
+          type="number"
+          maxlength="6"
+          :value="smsCode"
+          placeholder="短信验证码"
+          @input="onCodeInput"
+        />
+        <button class="btn-code" :disabled="codeCooldown > 0" @tap="sendCode">
+          {{ codeBtnText }}
+        </button>
+      </view>
+      <button class="btn-primary" :loading="loading" @tap="onPhoneLogin">登录</button>
+    </view>
+
+    <text class="wx-link" @tap="onWxLogin">微信快捷登录（可关联）</text>
+
     <view class="hint">{{ loginHint }}</view>
     <view class="links">
       <text @tap="goRegister('elder')">老人注册</text>
@@ -27,6 +45,7 @@
       <text @tap="goRegister('student')">学生注册</text>
     </view>
     <view class="links secondary">
+      <text @tap="showDevPicker">演示账号</text>
       <text @tap="goDemoTour">动画演示</text>
       <text @tap="goGodView">上帝视角</text>
       <text @tap="goShareDemo">分享链接</text>
@@ -39,29 +58,45 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, onUnmounted, ref } from 'vue';
 import { onLoad } from '@dcloudio/uni-app';
-import { loginDev, loginWithWxCode } from '../../api/auth';
+import { loginDev, loginWithPhone, loginWithWxCode, type LoginResult } from '../../api/auth';
+import { APP_TAGLINE, APP_TITLE } from '../../config/brand';
 import { ROLE_HOME, type RoleKey } from '../../config/tabs';
 import { useRoleStore } from '../../store/role';
 import { pbErrorMessage } from '../../utils/request';
 import { isDemoMockEnabled } from '../../utils/demo-mock';
 
 const loading = ref(false);
+const phone = ref('');
+const smsCode = ref('');
+const codeCooldown = ref(0);
+let cooldownTimer: ReturnType<typeof setInterval> | null = null;
 const fromTour = ref(false);
 const showVisitorBanner = computed(() => isDemoMockEnabled() && !fromTour.value);
 
 onLoad((query) => {
   fromTour.value = query?.from === 'tour' || query?.hint === 'student1';
+  if (fromTour.value) {
+    phone.value = '13800000001';
+  }
 });
+
+onUnmounted(() => {
+  if (cooldownTimer) clearInterval(cooldownTimer);
+});
+
+const codeBtnText = computed(() =>
+  codeCooldown.value > 0 ? `${codeCooldown.value}s` : '获取验证码',
+);
 
 const loginHint = computed(() => {
   if (fromTour.value) {
-    return '动画演示结束 · 请点「开发登录（学生）」用 student1 体验待接单 → 完成 → 收入';
+    return '动画演示结束 · 手机号 13800000001 可体验学生主流程（验证码任意 4 位）';
   }
   return isDemoMockEnabled()
-    ? '公网演示 · 微信登录可走演示流程 · 富数据集零成本 Mock'
-    : '本地联调：先 seed-demo；富数据支持列表与压力场景测试';
+    ? '公网演示 · 任意 11 位手机号可登录 · 13800000001–06 对应不同演示角色'
+    : '本地联调：演示号 13800000001–06 映射 seed 账号；须先 seed-demo';
 });
 const roleStore = useRoleStore();
 
@@ -74,7 +109,35 @@ const DEV_ACCOUNTS = [
   { label: '多角色', email: 'multi1@test.nuanban.dev' },
 ] as const;
 
-function afterLogin(res: Awaited<ReturnType<typeof loginWithWxCode>>) {
+function onPhoneInput(e: { detail: { value: string } }) {
+  phone.value = e.detail.value.replace(/\D/g, '').slice(0, 11);
+}
+
+function onCodeInput(e: { detail: { value: string } }) {
+  smsCode.value = e.detail.value.replace(/\D/g, '').slice(0, 6);
+}
+
+function sendCode() {
+  if (phone.value.length !== 11) {
+    uni.showToast({ title: '请输入 11 位手机号', icon: 'none' });
+    return;
+  }
+  if (codeCooldown.value > 0) return;
+  uni.showToast({
+    title: isDemoMockEnabled() ? '演示验证码已发送（任意 4 位即可）' : '验证码已发送',
+    icon: 'none',
+  });
+  codeCooldown.value = 60;
+  cooldownTimer = setInterval(() => {
+    codeCooldown.value -= 1;
+    if (codeCooldown.value <= 0 && cooldownTimer) {
+      clearInterval(cooldownTimer);
+      cooldownTimer = null;
+    }
+  }, 1000);
+}
+
+function afterLogin(res: LoginResult) {
   roleStore.setAuth({
     token: res.token,
     roles: res.roles,
@@ -103,6 +166,23 @@ function afterLogin(res: Awaited<ReturnType<typeof loginWithWxCode>>) {
   }
 }
 
+async function onPhoneLogin() {
+  if (phone.value.length !== 11) {
+    uni.showToast({ title: '请输入 11 位手机号', icon: 'none' });
+    return;
+  }
+  loading.value = true;
+  try {
+    const code = smsCode.value || (isDemoMockEnabled() ? '1234' : undefined);
+    const res = await loginWithPhone(phone.value, code);
+    afterLogin(res);
+  } catch (e) {
+    uni.showToast({ title: pbErrorMessage(e), icon: 'none' });
+  } finally {
+    loading.value = false;
+  }
+}
+
 function showDemoWxRolePicker() {
   uni.showActionSheet({
     itemList: ['学生（林同学）', '家属', '老人'],
@@ -125,9 +205,9 @@ function showDemoWxRolePicker() {
 async function onWxLogin() {
   if (isDemoMockEnabled()) {
     uni.showModal({
-      title: '微信登录（演示）',
-      content: '演示模式模拟微信授权，不产生真实商户登录。请选择登录方式：',
-      confirmText: '快速登录学生',
+      title: '关联微信（演示）',
+      content: '演示模式模拟微信授权，可关联已有账号或新建。请选择：',
+      confirmText: '关联学生账号',
       cancelText: '选择身份',
       success: async (res) => {
         if (res.confirm) {
@@ -151,6 +231,16 @@ async function onWxLogin() {
   } finally {
     loading.value = false;
   }
+}
+
+function showDevPicker() {
+  uni.showActionSheet({
+    itemList: DEV_ACCOUNTS.map((d) => d.label),
+    success: (res) => {
+      const dev = DEV_ACCOUNTS[res.tapIndex];
+      if (dev) onDevLogin(dev.email);
+    },
+  });
 }
 
 async function onDevLogin(email: string) {
@@ -233,21 +323,60 @@ function goDemoTour() {
 }
 .sub {
   display: block;
-  margin: 16rpx 0 80rpx;
+  margin: 16rpx 0 48rpx;
   color: #666;
+  font-size: 28rpx;
+}
+.form {
+  margin-bottom: 24rpx;
+}
+.input {
+  width: 100%;
+  box-sizing: border-box;
+  height: 88rpx;
+  padding: 0 24rpx;
+  margin-bottom: 20rpx;
+  border: 1px solid #e0d5cc;
+  border-radius: 12rpx;
+  font-size: 30rpx;
+  background: #fff;
+}
+.code-row {
+  display: flex;
+  gap: 16rpx;
+  margin-bottom: 20rpx;
+}
+.input.code {
+  flex: 1;
+  margin-bottom: 0;
+}
+.btn-code {
+  flex-shrink: 0;
+  width: 220rpx;
+  height: 88rpx;
+  line-height: 88rpx;
+  padding: 0;
+  font-size: 26rpx;
+  color: #c45c26;
+  background: #fff;
+  border: 1px solid #c45c26;
+  border-radius: 12rpx;
+}
+.btn-code[disabled] {
+  color: #aaa;
+  border-color: #ddd;
 }
 .btn-primary {
   background: #c45c26;
   color: #fff;
   border-radius: 12rpx;
-  margin-bottom: 24rpx;
 }
-.btn-secondary {
-  background: #fff;
-  color: #c45c26;
-  border: 1px solid #c45c26;
-  border-radius: 12rpx;
-  margin-bottom: 16rpx;
+.wx-link {
+  display: block;
+  text-align: center;
+  font-size: 26rpx;
+  color: #888;
+  margin-bottom: 8rpx;
 }
 .hint {
   display: block;

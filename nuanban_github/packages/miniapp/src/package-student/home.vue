@@ -5,7 +5,7 @@
         <view>
           <text class="greeting">你好，{{ profileName }}</text>
           <text class="school">{{ schoolName }}</text>
-          <text class="mission">附近老人有偿陪护 · 平台撮合匹配</text>
+          <text class="mission">邻里陪伴 · 高校勤工 · 平台安心撮合</text>
         </view>
         <view v-if="pendingCount > 0" class="badge" @tap="goPending">
           <text>{{ pendingCount }} 单待接</text>

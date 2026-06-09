@@ -73,6 +73,7 @@
 import { computed, ref } from 'vue';
 import { onShow } from '@dcloudio/uni-app';
 import { fetchPlatformOverview, type MatchingPathStatus } from '../../api/platform';
+import { APP_TAGLINE } from '../../config/brand';
 import { BUILD_TIME } from '../../utils/build-info';
 import { pbErrorMessage } from '../../utils/request';
 
@@ -103,7 +104,7 @@ const DEFAULT_PATHS: MatchingPathStatus[] = [
   },
 ];
 
-const missionText = ref('附近中老年 ↔ 在校女大学生 · 平台撮合有偿陪护');
+const missionText = ref(APP_TAGLINE);
 const pct = ref(88);
 const auditStatus = ref('PASS');
 const eldersTotal = ref(8);
