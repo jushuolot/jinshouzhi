@@ -57,6 +57,15 @@ export const FISSION_THREADS = [
     ],
   },
   {
+    id: 'thread-tender',
+    labelZh: '招标链：评标→中标→启动干线履约',
+    steps: [
+      { loId: 'LO-TDR-001', code: 'AWARD_NOTICE', actor: 'tender_officer', msg: '干线运输中标公示' },
+      { loId: 'LO-TDR-001', code: 'CONTRACT_SIGN', actor: 'legal', msg: '运输合同签订' },
+      { loId: 'LO-TDR-001', code: 'KICKOFF_SYNC', actor: 'tender_officer', msg: '启动 LO-LHL-002 履约' },
+    ],
+  },
+  {
     id: 'thread-mfg',
     labelZh: '生产链：叫料→仓内→成品→销售',
     steps: [

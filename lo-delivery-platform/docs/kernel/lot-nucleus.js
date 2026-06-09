@@ -251,4 +251,8 @@ export const ACTOR_LENSES = {
   platform: { id: 'platform', labelZh: '电商平台', labelEn: 'Platform', actions: ['sync', 'callback'] },
   courier: { id: 'courier', labelZh: '快递员', labelEn: 'Courier', actions: ['collect', 'deliver'] },
   equipment: { id: 'equipment', labelZh: '自动化设备', labelEn: 'Automation', actions: ['run', 'stop'] },
+  tender_officer: { id: 'tender_officer', labelZh: '招标专员', labelEn: 'Tender Officer', actions: ['publish', 'award'] },
+  bidder: { id: 'bidder', labelZh: '投标人', labelEn: 'Bidder', actions: ['submit'] },
+  evaluator: { id: 'evaluator', labelZh: '评标专家', labelEn: 'Evaluator', actions: ['score'] },
+  legal: { id: 'legal', labelZh: '法务', labelEn: 'Legal', actions: ['sign'] },
 };

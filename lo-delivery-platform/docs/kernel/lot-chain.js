@@ -28,6 +28,8 @@ import {
 import { DEMO_DOMAIN_LOS_V5, DEMO_EVENT_HISTORIES_V5, DEMO_SPATIAL_V5 } from './lot-demo-data-warehouse.js';
 import { DEMO_EQUIPMENT, bumpEquipmentOnEvent, aggregateOrders, splitOrder } from './lot-warehouse.js';
 import { CROSS_LINKS_V6 } from './lot-evolve.js';
+import { DEMO_DOMAIN_LOS_V7, DEMO_EVENT_HISTORIES_V7 } from './lot-demo-data-tender.js';
+import { propagateAward } from './lot-tender.js';
 
 export class LotChain {
   constructor(adapters) {
@@ -69,6 +71,7 @@ export class LotChain {
       await this._ensureDomainsV4Seed();
       await this._ensureWarehouseV5Seed();
       await this._ensureEvolveV6Seed();
+      await this._ensureTenderV7Seed();
       return;
     }
 
@@ -98,6 +101,7 @@ export class LotChain {
     await this._ensureDomainsV4Seed();
     await this._ensureWarehouseV5Seed();
     await this._ensureEvolveV6Seed();
+    await this._ensureTenderV7Seed();
     await this.local.setMeta('nucleus_seeded', new Date().toISOString());
   }
 
@@ -229,6 +233,26 @@ export class LotChain {
       await this.local.setMeta('fission_generation', '1');
     }
     await this.local.setMeta('evolve_v6_seeded', new Date().toISOString());
+  }
+
+  async _ensureTenderV7Seed() {
+    const v7 = await this.local.getMeta('tender_v7_seeded');
+    if (v7) return;
+    for (const lo of DEMO_DOMAIN_LOS_V7) {
+      const existing = await this.local.getLO(lo.loId);
+      if (existing) continue;
+      await this.local.putLO(lo);
+      const partials = DEMO_EVENT_HISTORIES_V7.get(lo.loId) || [];
+      let chain = [];
+      for (const p of partials) {
+        chain = await appendEventToChain(chain, { loId: lo.loId, ...p });
+      }
+      for (const e of chain) {
+        await this.local.putEvent(e);
+      }
+      await this._replicateLO(lo);
+    }
+    await this.local.setMeta('tender_v7_seeded', new Date().toISOString());
   }
 
   async getFissionGeneration() {
@@ -370,6 +394,9 @@ export class LotChain {
     const saved = await this.appendEvent(evt);
     await maybePropagate(this, loId, code);
     const lo = await this.getLO(loId);
+    if (lo?.logisticsDomain === 'tender' && code === 'KICKOFF_SYNC') {
+      await propagateAward(this, loId);
+    }
     if (lo?.logisticsDomain === 'warehouse_internal' || lo?.facilityTier) {
       const eq = await this.getEquipment();
       const next = bumpEquipmentOnEvent(eq, code, lo.originCellId);

@@ -127,6 +127,10 @@
     .domain-tabs button[data-d="express"].on { border-color: #38bdf8; color: #38bdf8; }
     .domain-tabs button[data-d="linehaul"].on { border-color: #fb923c; color: #fb923c; }
     .domain-tabs button[data-d="warehouse_internal"].on { border-color: #94a3b8; color: #cbd5e1; }
+    .domain-tabs button[data-d="tender"].on { border-color: #e879f9; color: #e879f9; }
+    #tender-bids { padding: 8px 12px; border-bottom: 1px solid var(--line); font-size: 10px; }
+    #tender-bids h4 { margin: 0 0 6px; font-size: 10px; color: var(--muted); font-weight: 600; }
+    .tender-link { color: #e879f9; font-size: 9px; margin-top: 4px; }
     .domain-tabs button[data-d="all"].on { border-color: var(--nucleus); color: var(--nucleus); }
     .tier-tabs { display: flex; gap: 4px; margin-bottom: 8px; }
     .tier-tabs button {
@@ -260,6 +264,7 @@
         <button type="button" id="btn-reset">↺ 重置</button>
         <button type="button" id="btn-agg">⊕ 聚合</button>
         <button type="button" id="btn-split">⊖ 拆分</button>
+        <button type="button" id="btn-tender">📋 中标启动</button>
         <a href="driver.html" style="text-decoration:none"><button type="button">📱 司机端</button></a>
       </div>
       <div class="hud">
@@ -284,6 +289,7 @@
       <aside class="event-panel">
         <h3 id="panel-title">物流域 · 演示订单</h3>
         <div id="lo-list"></div>
+        <div id="tender-bids" hidden><h4>投标报价对比</h4><div id="tender-bids-body"></div></div>
         <div id="stage-check"></div>
         <h3 style="border-top:1px solid var(--line)">轨道电子 · 事件流</h3>
         <div id="event-stream"></div>
@@ -316,6 +322,7 @@
     import { WAREHOUSE_TIERS } from '../kernel/lot-warehouse.js';
     import { runFullFission, evolveHeartbeat, getEvolutionStats } from '../kernel/lot-evolve.js';
     import { buildNetworkEdges } from '../kernel/lot-network.js';
+    import { renderBidTableHtml, runTenderAwardDemo, TENDER_SCOPES } from '../kernel/lot-tender.js';
 
     const DOMAIN_COLORS = {
       procurement: '#5eb8ff',
@@ -326,6 +333,7 @@
       express: '#38bdf8',
       linehaul: '#fb923c',
       warehouse_internal: '#94a3b8',
+      tender: '#e879f9',
     };
 
     const state = {
@@ -454,7 +462,7 @@
       document.getElementById('hud-los').textContent = allLos.length;
       document.getElementById('hud-domains').textContent =
         `采${counts.procurement} 销${counts.sales} 产${counts.production} 逆${counts.reverse} ` +
-        `电${counts.ecommerce} 快${counts.express} 干${counts.linehaul} 仓${counts.warehouse_internal}`;
+        `电${counts.ecommerce} 快${counts.express} 干${counts.linehaul} 仓${counts.warehouse_internal} 招${counts.tender}`;
     }
 
     async function filteredLos() {
@@ -542,9 +550,10 @@
           const icon = dom?.icon || '·';
           const tier = lo.facilityTier ? `[${lo.facilityTier.toUpperCase()}] ` : '';
           const op = lo.contract?.op ? ` · ${lo.contract.op}` : '';
+          const tenderTitle = lo.logisticsDomain === 'tender' ? lo.contract?.title : cargo;
           return `<div class="lo-row${on}" data-lo="${lo.loId}">
             <div class="id">${icon} ${lo.loId}</div>
-            <div class="cargo">${tier}${cargo}${op} · ${label(lo.originCellId)}→${label(lo.destCellId)}</div>
+            <div class="cargo">${tier}${tenderTitle || cargo}${op} · ${label(lo.originCellId)}→${label(lo.destCellId)}</div>
           </div>`;
         })
         .join('');
@@ -558,6 +567,22 @@
       document.getElementById('panel-title').textContent = dom
         ? `${dom.icon} ${dom.labelZh} · ${los.length} 单`
         : `全域 · ${los.length} 单`;
+    }
+
+    async function renderTenderBids() {
+      const panel = document.getElementById('tender-bids');
+      const lo = state.activeLoId ? await state.chain.getLO(state.activeLoId) : null;
+      if (!lo || lo.logisticsDomain !== 'tender') {
+        panel.hidden = true;
+        return;
+      }
+      panel.hidden = false;
+      const scope = TENDER_SCOPES[lo.contract?.scope];
+      document.getElementById('tender-bids-body').innerHTML =
+        `<div style="margin-bottom:6px;color:var(--text)">${lo.contract?.title || ''}</div>` +
+        `<div class="lo-meta">${scope?.icon || ''} ${scope?.labelZh || ''} · 预算 ${lo.contract?.budget || '—'}</div>` +
+        renderBidTableHtml(lo) +
+        `<div class="tender-link">履约对接 → ${lo.contract?.linkedLoId || '—'} (${lo.contract?.targetDomain || ''})</div>`;
     }
 
     async function renderStageCheck() {
@@ -625,6 +650,7 @@
       renderTierTabs();
       await renderCrumb();
       await renderLoList();
+      await renderTenderBids();
       await renderStageCheck();
       await renderMap();
       await renderEquipment();
@@ -715,6 +741,17 @@
     document.getElementById('btn-enter').onclick = enterWorld;
     document.getElementById('btn-fission').onclick = () => startFission();
     document.getElementById('btn-play').onclick = () => playDemo();
+    document.getElementById('btn-tender').onclick = async () => {
+      const tid = state.activeLoId?.startsWith('LO-TDR') ? state.activeLoId : 'LO-TDR-001';
+      state.activeLoId = tid;
+      try {
+        await runTenderAwardDemo(state.chain, tid);
+        toast('中标启动 · 已裂变至履约单 ' + (await state.chain.getLO(tid))?.contract?.linkedLoId);
+        await renderAll();
+      } catch (e) {
+        toast('招标演示：' + e.message);
+      }
+    };
     document.getElementById('btn-agg').onclick = async () => {
       try {
         const p = await state.chain.runAggregateDemo();

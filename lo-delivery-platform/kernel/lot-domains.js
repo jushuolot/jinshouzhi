@@ -150,6 +150,27 @@ export const LOGISTICS_DOMAINS = {
       { code: 'STAGE_OUT', labelZh: '集货区待发', actor: 'warehouse', evidence: ['stage_lane'] },
     ],
   },
+  tender: {
+    id: 'tender',
+    icon: '📋',
+    labelZh: '物流招投标',
+    labelEn: 'Logistics Tender / Bidding',
+    color: '#e879f9',
+    descZh: '立项 → 发布公告 → 投标 → 开标评标 → 中标公示 → 签合同 → 保证金 → 启动全链履约',
+    stages: [
+      { code: 'TENDER_PLAN', labelZh: '招标计划立项', actor: 'tender_officer', evidence: ['plan_doc', 'budget'] },
+      { code: 'TENDER_PUBLISH', labelZh: '发布公告', actor: 'tender_officer', evidence: ['notice_pdf', 'platform_id'] },
+      { code: 'BID_QUESTION', labelZh: '答疑澄清', actor: 'tender_officer', evidence: ['qa_log'] },
+      { code: 'BID_SUBMIT', labelZh: '投标收标', actor: 'bidder', evidence: ['bid_package', 'seal'] },
+      { code: 'BID_OPEN', labelZh: '开标', actor: 'tender_officer', evidence: ['open_record', 'video'] },
+      { code: 'EVAL_TECH', labelZh: '技术评标', actor: 'evaluator', evidence: ['tech_score'] },
+      { code: 'EVAL_PRICE', labelZh: '商务评标', actor: 'evaluator', evidence: ['price_score'] },
+      { code: 'AWARD_NOTICE', labelZh: '中标公示', actor: 'tender_officer', evidence: ['award_notice'] },
+      { code: 'CONTRACT_SIGN', labelZh: '合同签订', actor: 'legal', evidence: ['contract_pdf'] },
+      { code: 'BOND_PAID', labelZh: '履约保证金', actor: 'finance', evidence: ['bond_receipt'] },
+      { code: 'KICKOFF_SYNC', labelZh: '启动全链履约', actor: 'tender_officer', evidence: ['kickoff_minutes'] },
+    ],
+  },
 };
 
 export const EXTENDED_ACTORS = {
@@ -164,6 +185,10 @@ export const EXTENDED_ACTORS = {
   platform: { id: 'platform', labelZh: '电商平台', labelEn: 'Platform' },
   courier: { id: 'courier', labelZh: '快递员', labelEn: 'Courier' },
   equipment: { id: 'equipment', labelZh: '自动化设备', labelEn: 'Automation' },
+  tender_officer: { id: 'tender_officer', labelZh: '招标专员', labelEn: 'Tender Officer' },
+  bidder: { id: 'bidder', labelZh: '投标人', labelEn: 'Bidder' },
+  evaluator: { id: 'evaluator', labelZh: '评标专家', labelEn: 'Evaluator' },
+  legal: { id: 'legal', labelZh: '法务', labelEn: 'Legal' },
 };
 
 export function getDomain(id) {
