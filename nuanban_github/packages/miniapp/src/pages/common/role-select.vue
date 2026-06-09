@@ -1,19 +1,20 @@
 <template>
-  <view class="page nb-page-padded">
-    <text class="title">请选择使用身份</text>
-    <text class="sub">可随时在「我的」中切换身份</text>
+  <view class="page nb-page-onboard">
+    <AuthBrandHeader compact subtitle="请选择当前使用身份" />
     <view
       v-for="r in roleStore.activeRoles"
       :key="r.role"
       class="card nb-card nb-card-interactive"
       @tap="select(r.role)"
     >
+      <text class="role-icon">{{ roleIcon[r.role] }}</text>
       <text class="card-label">{{ roleLabel[r.role] }}</text>
     </view>
   </view>
 </template>
 
 <script setup lang="ts">
+import AuthBrandHeader from '../../components/AuthBrandHeader.vue';
 import { ROLE_HOME, type RoleKey } from '../../config/tabs';
 import { useRoleStore } from '../../store/role';
 
@@ -22,6 +23,12 @@ const roleLabel: Record<RoleKey, string> = {
   elder: '我是老人',
   family: '我是家属',
   student: '我是学生',
+};
+
+const roleIcon: Record<RoleKey, string> = {
+  elder: '🌸',
+  family: '👨‍👩‍👧',
+  student: '🎓',
 };
 
 async function select(role: RoleKey) {
@@ -41,17 +48,10 @@ async function select(role: RoleKey) {
 </script>
 
 <style scoped>
-.title {
+.role-icon {
   display: block;
-  font-size: 40rpx;
-  font-weight: 600;
-  color: var(--nb-text);
-}
-.sub {
-  display: block;
-  margin: 12rpx 0 32rpx;
-  font-size: 26rpx;
-  color: var(--nb-text-secondary);
+  font-size: 44rpx;
+  margin-bottom: 8rpx;
 }
 .card-label {
   font-size: 32rpx;

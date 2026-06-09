@@ -68,6 +68,32 @@ page[data-page='pages/common/demo-tour'] {
   box-sizing: border-box;
 }
 
+.nb-page-onboard {
+  min-height: 100vh;
+  background: linear-gradient(165deg, #fff8f0 0%, #ffefe0 42%, #faf7f4 100%);
+  padding: 48rpx 40rpx;
+  padding-top: calc(32rpx + env(safe-area-inset-top));
+  padding-bottom: calc(48rpx + env(safe-area-inset-bottom));
+  box-sizing: border-box;
+}
+
+.nb-page-dark {
+  min-height: 100vh;
+  background: var(--nb-dark-gradient);
+  color: var(--nb-dark-text);
+  padding: 48rpx 40rpx;
+  padding-top: calc(48rpx + env(safe-area-inset-top));
+  box-sizing: border-box;
+}
+
+.nb-dark-card {
+  background: var(--nb-dark-surface);
+  border: 2rpx solid var(--nb-dark-surface-alt);
+  border-radius: var(--nb-radius-lg);
+  padding: 36rpx 32rpx;
+  box-shadow: 0 12rpx 40rpx rgba(0, 0, 0, 0.2);
+}
+
 .nb-hero {
   background: var(--nb-hero-gradient);
   padding: 36rpx 28rpx;

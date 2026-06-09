@@ -1,21 +1,21 @@
 <template>
-  <view class="page nb-page-padded">
+  <view class="page nb-page-onboard">
+    <AuthBrandHeader compact subtitle="选择身份 · 系统分配功能与权限" />
     <template v-if="step === 'pick'">
-      <text class="title">选择您的身份</text>
-      <text class="sub">系统将根据身份分配功能与权限，多身份可在登录后切换</text>
       <view
         v-for="opt in roleOptions"
         :key="opt.key"
         class="card nb-card nb-card-interactive"
         @tap="pickRole(opt.key)"
       >
+        <text class="role-icon">{{ opt.icon }}</text>
         <text class="card-title">{{ opt.label }}</text>
         <text class="card-desc">{{ opt.desc }}</text>
       </view>
       <text class="back" @tap="goLogin">返回登录</text>
     </template>
     <template v-else>
-      <text class="title">完善资料 · {{ roleLabel[role] }}</text>
+      <text class="step-title">完善资料 · {{ roleLabel[role] }}</text>
       <input v-model="displayName" class="input nb-input" placeholder="显示名称（可选）" />
       <button class="btn-primary nb-btn-primary" :loading="loading" @tap="submit">确认身份</button>
       <text class="back" @tap="step = 'pick'">重新选择身份</text>
@@ -27,6 +27,7 @@
 import { ref } from 'vue';
 import { onLoad } from '@dcloudio/uni-app';
 import { registerRole } from '../../api/auth';
+import AuthBrandHeader from '../../components/AuthBrandHeader.vue';
 import { ROLE_HOME, type RoleKey } from '../../config/tabs';
 import { useRoleStore } from '../../store/role';
 import { pbErrorMessage } from '../../utils/request';
@@ -44,9 +45,9 @@ const roleLabel: Record<RoleKey, string> = {
 };
 
 const roleOptions = [
-  { key: 'student' as RoleKey, label: '我是学生', desc: '在校女大学生 · 接单陪护 · 收入结算' },
-  { key: 'family' as RoleKey, label: '我是家属', desc: '绑定老人 · 代付订单 · 外出审批' },
-  { key: 'elder' as RoleKey, label: '我是老人', desc: '找附近同学 · 预约陪护 · 一键求助' },
+  { key: 'student' as RoleKey, icon: '🎓', label: '我是学生', desc: '接单陪护 · 收入结算' },
+  { key: 'family' as RoleKey, icon: '👨‍👩‍👧', label: '我是家属', desc: '绑定老人 · 代付订单 · 外出审批' },
+  { key: 'elder' as RoleKey, icon: '🌸', label: '我是老人', desc: '找附近同学 · 预约陪护 · 一键求助' },
 ];
 
 onLoad((q) => {
@@ -105,18 +106,17 @@ async function submit() {
 </script>
 
 <style scoped>
-.title {
+.step-title {
   display: block;
-  font-size: 40rpx;
+  font-size: 36rpx;
   font-weight: 600;
   color: var(--nb-text);
+  margin-bottom: 8rpx;
 }
-.sub {
+.role-icon {
   display: block;
-  margin: 16rpx 0 40rpx;
-  font-size: 26rpx;
-  color: var(--nb-text-secondary);
-  line-height: 1.5;
+  font-size: 44rpx;
+  margin-bottom: 12rpx;
 }
 .card-title {
   display: block;

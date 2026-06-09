@@ -2,7 +2,19 @@
 
 > 您休息期间已推送 GitHub，Actions 会自动更新公网演示。
 
-## 本轮（Phase 15 · 撮合叙事强化）
+## 本轮（Phase 16 · 登录与视觉进化）
+
+1. **手机号登录**为主 · 微信可关联 · 演示号 13800000001–06
+2. **卡哇伊登录背景** + 手机预览修复（import 打包路径）
+3. **全站柔和主题** `theme.css` + 三端首页暖色
+4. **上帝视角密码门控** — 入口改「超级管理」· 默认密码 `nuanban2025` · 8h 会话
+5. **AuthBrandHeader** — 注册/选身份/管理门控统一品牌头
+6. 注册与身份选择页：奶油渐变 + 角色 emoji 卡片
+
+公网登录：https://jushuolot.github.io/jinshouzhi/nuanban/#/pages/common/login  
+超级管理：`#/pages/common/god-view-gate`
+
+## 上一轮（Phase 15 · 撮合叙事强化）
 
 1. **MatchScoreBadge** — 老人看同学 / 学生看老人详情页显示「匹配度 %」
 2. **share-demo** — 一键复制动画/上帝视角/登录/深链

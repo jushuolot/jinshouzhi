@@ -1,10 +1,13 @@
 <template>
-  <view class="page">
-    <text class="eyebrow">超级管理员</text>
-    <text class="title">上帝视角</text>
-    <text class="sub">平台撮合 KPI 与进度看板 · 需授权访问</text>
+  <view class="page nb-page-dark">
+    <AuthBrandHeader
+      dark
+      compact
+      title="上帝视角"
+      subtitle="平台撮合 KPI · 超级管理员授权访问"
+    />
 
-    <view class="card">
+    <view class="card nb-dark-card">
       <text class="label">管理密码</text>
       <input
         v-model="password"
@@ -15,11 +18,11 @@
         placeholder-class="ph"
         @confirm="submit"
       />
-      <button class="btn-primary" :loading="loading" @tap="submit">验证并进入</button>
+      <button class="btn-primary nb-btn-primary" :loading="loading" @tap="submit">验证并进入</button>
     </view>
 
-    <text class="hint">仅限平台超级管理员 · 会话 8 小时内免重复输入</text>
-    <text class="back" @tap="goBack">返回</text>
+    <text class="hint">会话 8 小时内免重复输入 · 仅限平台超级管理员</text>
+    <text class="back nb-link" @tap="goBack">返回</text>
   </view>
 </template>
 
@@ -27,6 +30,7 @@
 import { ref } from 'vue';
 import { onShow } from '@dcloudio/uni-app';
 import { verifyGodViewAuth } from '../../api/platform';
+import AuthBrandHeader from '../../components/AuthBrandHeader.vue';
 import { isGodViewUnlocked, setGodViewUnlocked } from '../../utils/god-view-auth';
 import { pbErrorMessage } from '../../utils/request';
 
@@ -62,42 +66,10 @@ function goBack() {
 </script>
 
 <style scoped>
-.page {
-  min-height: 100vh;
-  background: #1a1a2e;
-  color: #eee;
-  padding: 80rpx 48rpx;
-  box-sizing: border-box;
-}
-.eyebrow {
-  display: block;
-  font-size: 22rpx;
-  color: #e88b4a;
-  letter-spacing: 2rpx;
-}
-.title {
-  display: block;
-  margin-top: 12rpx;
-  font-size: 48rpx;
-  font-weight: 700;
-}
-.sub {
-  display: block;
-  margin: 16rpx 0 48rpx;
-  font-size: 26rpx;
-  color: #aaa;
-  line-height: 1.5;
-}
-.card {
-  background: #16213e;
-  border: 2rpx solid #2a3a5c;
-  border-radius: 20rpx;
-  padding: 36rpx 32rpx;
-}
 .label {
   display: block;
   font-size: 26rpx;
-  color: #ccc;
+  color: var(--nb-dark-text-muted);
   margin-bottom: 16rpx;
 }
 .input {
@@ -106,37 +78,29 @@ function goBack() {
   height: 88rpx;
   padding: 0 24rpx;
   margin-bottom: 28rpx;
-  background: #0f1729;
-  border: 2rpx solid #2a3a5c;
-  border-radius: 12rpx;
-  color: #fff;
+  background: #1a1520;
+  border: 2rpx solid var(--nb-dark-surface-alt);
+  border-radius: var(--nb-radius-sm);
+  color: var(--nb-dark-text);
   font-size: 30rpx;
 }
 .ph {
-  color: #667;
+  color: #6a5d68;
 }
 .btn-primary {
-  background: linear-gradient(135deg, #e88b4a, #c45c26);
-  color: #fff;
-  border: none;
-  border-radius: 12rpx;
-  font-size: 30rpx;
-}
-.btn-primary::after {
-  border: none;
+  width: 100%;
 }
 .hint {
   display: block;
   margin-top: 32rpx;
   font-size: 22rpx;
-  color: #777;
+  color: #7a6e78;
   text-align: center;
+  line-height: 1.5;
 }
 .back {
   display: block;
-  margin-top: 48rpx;
+  margin-top: 40rpx;
   text-align: center;
-  font-size: 28rpx;
-  color: #e88b4a;
 }
 </style>
