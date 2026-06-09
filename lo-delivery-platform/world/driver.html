@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <title>LOT 司机 · 今日任务</title>
+  <style>
+    :root {
+      --bg: #060a12;
+      --panel: #0f1828;
+      --line: #1e3a5f;
+      --text: #e8f4ff;
+      --muted: #7da8c8;
+      --accent: #3dff9a;
+      --warn: #ffb347;
+      --nucleus: #ff6b9d;
+      --safe-b: env(safe-area-inset-bottom, 0px);
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      margin: 0;
+      font-family: "SF Pro Text", "PingFang SC", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding-bottom: calc(16px + var(--safe-b));
+    }
+    header {
+      padding: 14px 16px 10px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(6, 10, 18, 0.95);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    header h1 { margin: 0; font-size: 18px; font-weight: 700; }
+    header p { margin: 4px 0 0; font-size: 12px; color: var(--muted); }
+    .task-list { padding: 12px 16px; }
+    .task {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+    .task.active { border-color: var(--nucleus); box-shadow: 0 0 0 1px rgba(255,107,157,0.2); }
+    .task-id { font-size: 15px; font-weight: 700; color: var(--nucleus); }
+    .task-route { font-size: 13px; color: var(--muted); margin-top: 6px; line-height: 1.4; }
+    .task-stage { font-size: 11px; color: var(--warn); margin-top: 8px; }
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      padding: 0 16px 16px;
+    }
+    .actions button {
+      min-height: 56px;
+      border: none;
+      border-radius: 14px;
+      font-size: 17px;
+      font-weight: 700;
+      cursor: pointer;
+      color: #041810;
+      background: linear-gradient(135deg, #3dff9a, #2bc97a);
+      box-shadow: 0 4px 20px rgba(61, 255, 154, 0.25);
+    }
+    .actions button:active { transform: scale(0.98); }
+    .actions button:disabled {
+      opacity: 0.35;
+      box-shadow: none;
+      cursor: not-allowed;
+    }
+    .empty {
+      text-align: center;
+      padding: 48px 24px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .nav-link {
+      display: block;
+      text-align: center;
+      padding: 12px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .nav-link a { color: var(--accent); text-decoration: none; }
+    .toast {
+      position: fixed;
+      bottom: calc(20px + var(--safe-b));
+      left: 16px; right: 16px;
+      background: #0f2a22;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-size: 13px;
+      text-align: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+    }
+    .toast.show { opacity: 1; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>司机镜头</h1>
+    <p id="subtitle">今日任务 · 本地 IndexedDB</p>
+  </header>
+  <div class="task-list" id="task-list"></div>
+  <div class="actions" id="actions"></div>
+  <p class="nav-link"><a href="index.html">世界核</a> · <a href="../index.html">旧版演示</a></p>
+  <div class="toast" id="toast"></div>
+  <script type="module">
+    import { defaultChain } from '../kernel/lot-chain.js';
+    import { listDriverTasks } from '../kernel/lot-network.js';
+    import { projectLOState } from '../kernel/lot-nucleus.js';
+
+    const state = { chain: defaultChain, activeLoId: null, spatial: [] };
+
+    const DRIVER_ACTIONS = [
+      { code: 'PICKUP_DONE', label: '揽收完成', cell: 'origin' },
+      { code: 'IN_TRANSIT', label: '在途', cell: null },
+      { code: 'POD_SIGNED', label: '签收 POD', cell: 'dest' },
+    ];
+
+    function toast(msg) {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.classList.add('show');
+      setTimeout(() => el.classList.remove('show'), 2200);
+    }
+
+    function cellLabel(id) {
+      const c = state.spatial.find((x) => x.id === id);
+      return c ? (c.labelZh || id) : id;
+    }
+
+    async function renderTasks() {
+      const tasks = await listDriverTasks(state.chain);
+      state.spatial = await state.chain.listSpatial();
+      if (!state.activeLoId && tasks.length) state.activeLoId = tasks[0].lo.loId;
+
+      const el = document.getElementById('task-list');
+      if (!tasks.length) {
+        el.innerHTML = '<div class="empty">今日无待办司机任务<br/><small>完成签收的任务会自动隐藏</small></div>';
+        document.getElementById('subtitle').textContent = '今日任务 · 0 单';
+        return;
+      }
+      document.getElementById('subtitle').textContent = `今日任务 · ${tasks.length} 单`;
+      el.innerHTML = tasks
+        .map(({ lo, events }) => {
+          const proj = projectLOState(lo, events);
+          const active = lo.loId === state.activeLoId ? ' active' : '';
+          const stage = proj.lastEvent ? proj.lastEvent.code : 'ORDER_CREATED';
+          return (
+            `<div class="task${active}" data-lo="${lo.loId}">` +
+            `<div class="task-id">${lo.loId}</div>` +
+            `<div class="task-route">${cellLabel(lo.originCellId)} → ${cellLabel(lo.destCellId)}</div>` +
+            `<div class="task-route">${lo.channel} · ${lo.contract?.cargo || ''}</div>` +
+            `<div class="task-stage">当前 · ${stage}</div>` +
+            `</div>`
+          );
+        })
+        .join('');
+      el.querySelectorAll('.task').forEach((card) => {
+        card.onclick = () => {
+          state.activeLoId = card.dataset.lo;
+          renderTasks();
+          renderActions();
+        };
+      });
+    }
+
+    async function renderActions() {
+      const lo = state.activeLoId ? await state.chain.getLO(state.activeLoId) : null;
+      const el = document.getElementById('actions');
+      el.innerHTML = DRIVER_ACTIONS.map(
+        (a) =>
+          `<button type="button" data-code="${a.code}" data-cell="${a.cell || ''}" ${lo ? '' : 'disabled'}>` +
+          a.label +
+          '</button>'
+      ).join('');
+      el.querySelectorAll('button').forEach((btn) => {
+        btn.onclick = async () => {
+          if (!state.activeLoId) return;
+          const lo = await state.chain.getLO(state.activeLoId);
+          let cellId = lo.originCellId;
+          if (btn.dataset.cell === 'dest') cellId = lo.destCellId;
+          await state.chain.emitAction(state.activeLoId, {
+            code: btn.dataset.code,
+            actor: 'driver',
+            spatialCellId: cellId,
+            payload: { shell: 'driver' },
+          });
+          toast(`${btn.dataset.code} 已写入链`);
+          await renderTasks();
+          await renderActions();
+        };
+      });
+    }
+
+    await state.chain.init();
+    await renderTasks();
+    await renderActions();
+  </script>
+</body>
+</html>

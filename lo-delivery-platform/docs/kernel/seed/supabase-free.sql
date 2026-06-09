@@ -34,5 +34,7 @@ alter table lot_los enable row level security;
 alter table lot_events enable row level security;
 create policy "anon read los" on lot_los for select using (true);
 create policy "anon insert los" on lot_los for insert with check (true);
+create policy "anon update los" on lot_los for update using (true) with check (true);
 create policy "anon read events" on lot_events for select using (true);
 create policy "anon insert events" on lot_events for insert with check (true);
+create policy "anon update events" on lot_events for update using (true) with check (true);

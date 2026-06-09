@@ -45,15 +45,20 @@
       animation: pulse 2s ease-in-out infinite;
     }
     @keyframes pulse { 50% { opacity: 0.5; transform: scale(0.85); } }
-    .chain-pills { display: flex; flex-wrap: wrap; gap: 6px; margin-left: auto; }
+    .chain-pills { display: flex; flex-wrap: wrap; gap: 6px; margin-left: auto; align-items: center; }
     .chain-pill {
       font-size: 10px; padding: 3px 8px; border-radius: 999px;
       border: 1px solid var(--line); color: var(--muted);
     }
     .chain-pill.on { border-color: var(--accent); color: var(--accent); }
     .chain-pill.off { opacity: 0.45; }
+    .sync-btn {
+      font-size: 10px; padding: 3px 8px; border-radius: 999px;
+      border: 1px solid var(--warn); background: transparent; color: var(--warn);
+      cursor: pointer;
+    }
     main { display: grid; grid-template-columns: 280px 1fr 300px; min-height: calc(100vh - 48px); }
-    @media (max-width: 960px) { main { grid-template-columns: 1fr; } aside { max-height: 240px; overflow: auto; } }
+    @media (max-width: 960px) { main { grid-template-columns: 1fr; } aside { max-height: 280px; overflow: auto; } }
     aside, .quest {
       background: var(--panel);
       border-right: 1px solid var(--line);
@@ -73,6 +78,13 @@
     .crumb button.on { border-color: var(--accent); color: var(--accent); }
     .crumb span { color: var(--muted); align-self: center; font-size: 11px; }
     #map { height: 100%; min-height: 420px; background: #0a1628; }
+    .net-graph {
+      font-size: 10px; font-family: ui-monospace, monospace;
+      background: #0a1220; border: 1px solid var(--line); border-radius: 8px;
+      padding: 8px; margin-bottom: 12px; line-height: 1.7; color: var(--muted);
+    }
+    .net-graph b { color: var(--nucleus); font-weight: 600; }
+    .net-graph .arrow { color: var(--accent); }
     .lo-card {
       border: 1px solid var(--line); border-radius: 10px; padding: 10px;
       margin-bottom: 8px; cursor: pointer; transition: border-color 0.15s;
@@ -80,6 +92,13 @@
     .lo-card.active { border-color: var(--nucleus); box-shadow: 0 0 0 1px rgba(255,107,157,0.25); }
     .lo-id { font-size: 13px; font-weight: 600; color: var(--nucleus); }
     .lo-meta { font-size: 11px; color: var(--muted); margin-top: 4px; }
+    .link-badges { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+    .link-badge {
+      font-size: 9px; padding: 2px 6px; border-radius: 4px;
+      border: 1px solid var(--line); color: var(--muted);
+    }
+    .link-badge.up { border-color: #5a8ab0; color: #9ec8e8; }
+    .link-badge.down { border-color: #2a6b4a; color: var(--accent); }
     .progress { height: 4px; background: #1a2d44; border-radius: 2px; margin-top: 8px; overflow: hidden; }
     .progress i { display: block; height: 100%; background: linear-gradient(90deg, var(--nucleus), var(--accent)); }
     .actor-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
@@ -101,6 +120,7 @@
       font-family: ui-monospace, monospace;
     }
     .evt b { color: var(--warn); }
+    .evt.sync b { color: var(--accent); }
     .integrity { font-size: 10px; margin-top: 8px; }
     .integrity.ok { color: var(--accent); }
     .integrity.bad { color: #ff6b6b; }
@@ -112,17 +132,22 @@
 <body>
   <header>
     <div class="nucleus-dot" title="LO 原子核"></div>
-    <h1>LOT 世界核 · 免费资源链</h1>
+    <h1>LOT 世界核 · 供应链裂变</h1>
     <div class="chain-pills" id="chain-pills"></div>
   </header>
   <main>
     <aside>
+      <p class="sec-title">多 LO 网络</p>
+      <div class="net-graph" id="net-graph">加载中…</div>
       <p class="sec-title">空间 zoom · 宇宙 → 乡村</p>
       <div class="crumb" id="spatial-crumb"></div>
       <p class="zoom-hint" id="zoom-hint">点击面包屑逐级 zoom；地图上的节点可点。数据存在本机 IndexedDB，哈希链防篡改。</p>
       <p class="sec-title">任务核（LO）</p>
       <div id="lo-list"></div>
-      <p class="legacy-link"><a href="../index.html">← 旧版演示壳</a></p>
+      <p class="legacy-link">
+        <a href="driver.html">司机壳 →</a> ·
+        <a href="../index.html">← 旧版演示壳</a>
+      </p>
     </aside>
     <section id="map" aria-label="世界地图"></section>
     <div class="quest">
@@ -137,7 +162,8 @@
   </main>
   <script type="module">
     import { defaultChain } from '../kernel/lot-chain.js';
-    import { projectLOState, ACTOR_LENSES, SPATIAL_LEVELS } from '../kernel/lot-nucleus.js';
+    import { projectLOState, ACTOR_LENSES, SPATIAL_LEVELS, EVENT_TYPES } from '../kernel/lot-nucleus.js';
+    import { getLinkedLOs, buildNetworkEdges } from '../kernel/lot-network.js';
 
     const state = {
       chain: defaultChain,
@@ -146,7 +172,9 @@
       actor: 'driver',
       map: null,
       markers: [],
+      routeLines: [],
       lang: 'zh',
+      hasRemote: false,
     };
 
     const ACTION_TABLE = {
@@ -164,7 +192,10 @@
         { code: 'DISPATCH', label: '派车', cell: null },
         { code: 'REPLAN', label: '重算路线', cell: null },
       ],
-      shipper: [{ code: 'CONFIRM', label: '货主确认', cell: 'origin' }],
+      shipper: [
+        { code: 'PICKUP_DONE', label: '农户揽收', cell: 'origin' },
+        { code: 'CONFIRM', label: '货主确认', cell: 'origin' },
+      ],
     };
 
     function label(cell) {
@@ -172,8 +203,37 @@
     }
 
     function renderChainPills(status) {
-      document.getElementById('chain-pills').innerHTML = status
+      state.hasRemote = status.some((s) => s.id === 'supabase-free' && s.ok);
+      const pills = status
         .map((s) => `<span class="chain-pill ${s.ok ? 'on' : 'off'}" title="${s.label}">${s.id}</span>`)
+        .join('');
+      const syncBtn = state.hasRemote
+        ? '<button type="button" class="sync-btn" id="pull-remote">拉远程</button>'
+        : '';
+      document.getElementById('chain-pills').innerHTML = pills + syncBtn;
+      const btn = document.getElementById('pull-remote');
+      if (btn) {
+        btn.onclick = async () => {
+          btn.disabled = true;
+          btn.textContent = '同步中…';
+          await state.chain.pullRemote();
+          btn.textContent = '已同步';
+          await renderAll();
+          setTimeout(() => { btn.textContent = '拉远程'; btn.disabled = false; }, 1500);
+        };
+      }
+    }
+
+    async function renderNetworkGraph() {
+      const los = await state.chain.listLOs();
+      const edges = buildNetworkEdges(los);
+      const el = document.getElementById('net-graph');
+      if (!edges.length) {
+        el.textContent = '无链环 · 等待种子';
+        return;
+      }
+      el.innerHTML = edges
+        .map((e) => `<div><b>${e.from}</b> <span class="arrow">→</span> <b>${e.to}</b>${e.label ? ` <small>(${e.label})</small>` : ''}</div>`)
         .join('');
     }
 
@@ -204,7 +264,7 @@
       const lvl = focus ? SPATIAL_LEVELS.indexOf(focus.level) + 1 : 0;
       document.getElementById('zoom-hint').textContent =
         `当前层级 ${lvl}/${SPATIAL_LEVELS.length}（${focus?.level || '—'}）。` +
-        ' 点击面包屑 zoom；事件 SHA-256 哈希链串联，本地 IndexedDB 零云费。';
+        ' 紫点=LO 起终点；事件 SHA-256 哈希链串联。';
     }
 
     function ensureMap() {
@@ -220,11 +280,16 @@
     async function renderMap() {
       ensureMap();
       state.markers.forEach((m) => state.map.removeLayer(m));
+      state.routeLines.forEach((l) => state.map.removeLayer(l));
       state.markers = [];
+      state.routeLines = [];
+
       const all = await state.chain.listSpatial();
+      const spatialMap = new Map(all.map((c) => [c.id, c]));
       const focus = all.find((c) => c.id === state.focusCellId);
       const children = all.filter((c) => c.parentId === state.focusCellId);
       const points = children.filter((c) => c.lat != null).concat(focus?.lat != null ? [focus] : []);
+
       for (const c of all.filter((x) => x.lat != null)) {
         const isFocus = c.id === state.focusCellId;
         const isChild = c.parentId === state.focusCellId;
@@ -243,9 +308,44 @@
         });
         state.markers.push(m);
       }
-      if (points.length) {
-        const bounds = L.latLngBounds(points.map((p) => [p.lat, p.lng]));
-        state.map.fitBounds(bounds.pad(0.35));
+
+      const los = await state.chain.listLOs();
+      const activeLos = state.activeLoId
+        ? los.filter((l) => l.loId === state.activeLoId)
+        : los.filter((l) => l.status === 'active');
+      const loPoints = [];
+      for (const lo of activeLos) {
+        const origin = spatialMap.get(lo.originCellId);
+        const dest = spatialMap.get(lo.destCellId);
+        if (origin?.lat != null) {
+          const m = L.circleMarker([origin.lat, origin.lng], {
+            radius: 9, color: '#c77dff', fillColor: '#c77dff', fillOpacity: 0.9, weight: 2,
+          }).addTo(state.map);
+          m.bindPopup(`<b>起点</b><br/>${lo.loId}<br/>${label(origin)}`);
+          state.markers.push(m);
+          loPoints.push([origin.lat, origin.lng]);
+        }
+        if (dest?.lat != null && dest.id !== origin?.id) {
+          const m = L.circleMarker([dest.lat, dest.lng], {
+            radius: 9, color: '#ffb347', fillColor: '#ffb347', fillOpacity: 0.9, weight: 2,
+          }).addTo(state.map);
+          m.bindPopup(`<b>终点</b><br/>${lo.loId}<br/>${label(dest)}`);
+          state.markers.push(m);
+          loPoints.push([dest.lat, dest.lng]);
+        }
+        if (origin?.lat != null && dest?.lat != null) {
+          const line = L.polyline(
+            [[origin.lat, origin.lng], [dest.lat, dest.lng]],
+            { color: '#ff6b9d', weight: 2, opacity: 0.55, dashArray: '6 8' }
+          ).addTo(state.map);
+          state.routeLines.push(line);
+        }
+      }
+
+      const allPoints = points.concat(loPoints.map((p) => ({ lat: p[0], lng: p[1] })));
+      if (allPoints.length) {
+        const bounds = L.latLngBounds(allPoints.map((p) => [p.lat, p.lng]));
+        state.map.fitBounds(bounds.pad(0.3));
       } else if (focus?.lat) {
         state.map.setView([focus.lat, focus.lng], focus.level === 'nation' ? 5 : 10);
       } else {
@@ -261,11 +361,20 @@
       for (const lo of los) {
         const events = await state.chain.getEvents(lo.loId);
         const proj = projectLOState(lo, events);
+        const linked = getLinkedLOs(lo.loId, los);
+        const badges = [];
+        for (const u of linked.upstream) {
+          badges.push(`<span class="link-badge up">↑ ${u.lo.loId.replace('LO-', '')}</span>`);
+        }
+        for (const d of linked.downstream) {
+          badges.push(`<span class="link-badge down">↓ ${d.lo.loId.replace('LO-', '')}</span>`);
+        }
         const active = lo.loId === state.activeLoId ? ' active' : '';
         html.push(
           `<div class="lo-card${active}" data-lo="${lo.loId}">` +
             `<div class="lo-id">${lo.loId}</div>` +
             `<div class="lo-meta">${lo.channel} · ${lo.originCellId} → ${lo.destCellId}</div>` +
+            (badges.length ? `<div class="link-badges">${badges.join('')}</div>` : '') +
             `<div class="progress"><i style="width:${proj.progress}%"></i></div>` +
             `</div>`
         );
@@ -341,11 +450,13 @@
       const lo = await state.chain.getLO(state.activeLoId);
       const proj = projectLOState(lo, events);
       document.getElementById('event-log').innerHTML = events
-        .map(
-          (e) =>
-            `<div class="evt"><b>#${e.seq}</b> ${e.code} <span style="color:#7da8c8">@${e.actor}</span><br/>` +
+        .map((e) => {
+          const syncCls = e.type === EVENT_TYPES.SYNC ? ' sync' : '';
+          return (
+            `<div class="evt${syncCls}"><b>#${e.seq}</b> ${e.code} <span style="color:#7da8c8">@${e.actor}</span><br/>` +
             `<span style="color:#5a7a96">${e.hash.slice(0, 16)}…</span></div>`
-        )
+          );
+        })
         .join('');
       const ig = document.getElementById('integrity');
       ig.className = 'integrity ' + (proj.integrity.ok ? 'ok' : 'bad');
@@ -355,6 +466,7 @@
     }
 
     async function renderAll() {
+      await renderNetworkGraph();
       await buildCrumb();
       await renderMap();
       await renderLOs();
@@ -365,6 +477,7 @@
 
     const status = await state.chain.init();
     renderChainPills(status);
+    if (state.hasRemote) await state.chain.pullRemote();
     await renderAll();
   </script>
 </body>

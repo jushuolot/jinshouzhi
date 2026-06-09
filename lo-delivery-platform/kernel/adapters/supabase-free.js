@@ -46,7 +46,11 @@ export const supabaseFreeAdapter = {
   },
 
   async putLO(lo) {
-    await sbFetch(tbl('los'), { method: 'POST', body: JSON.stringify(lo), prefer: 'resolution=merge-duplicates' });
+    await sbFetch(tbl('los'), {
+      method: 'POST',
+      body: JSON.stringify(mapLoToRow(lo)),
+      prefer: 'resolution=merge-duplicates,return=minimal',
+    });
   },
 
   async getLO(loId) {
@@ -74,6 +78,7 @@ export const supabaseFreeAdapter = {
         prev_hash: evt.prevHash,
         hash: evt.hash,
       }),
+      prefer: 'resolution=merge-duplicates,return=minimal',
     });
   },
 
@@ -84,6 +89,22 @@ export const supabaseFreeAdapter = {
     return (rows || []).map(mapEventRow);
   },
 };
+
+function mapLoToRow(lo) {
+  return {
+    lo_id: lo.loId,
+    channel: lo.channel,
+    status: lo.status,
+    spatial_path: lo.spatialPath,
+    origin_cell_id: lo.originCellId,
+    dest_cell_id: lo.destCellId,
+    primary_actor: lo.primaryActor,
+    contract: lo.contract,
+    links: lo.links,
+    created_at: lo.createdAt,
+    updated_at: lo.updatedAt,
+  };
+}
 
 function mapLoRow(r) {
   return {

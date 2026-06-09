@@ -10,10 +10,12 @@ import { supabaseFreeAdapter } from './adapters/supabase-free.js';
 import { githubSeedAdapter } from './adapters/github-seed.js';
 import {
   SEED_LO,
+  SEED_NETWORK_LOS,
   SEED_SPATIAL_CHAIN,
   appendEventToChain,
   createLO,
 } from './lot-nucleus.js';
+import { maybePropagate } from './lot-network.js';
 
 export class LotChain {
   constructor(adapters) {
@@ -49,7 +51,10 @@ export class LotChain {
 
   async _ensureSeed() {
     const seeded = await this.local.getMeta('nucleus_seeded');
-    if (seeded) return;
+    if (seeded) {
+      await this._ensureNetworkSeed();
+      return;
+    }
 
     let spatial = SEED_SPATIAL_CHAIN;
     if (await this.seed.isAvailable()) {
@@ -72,7 +77,36 @@ export class LotChain {
       });
       for (const e of events) await this.local.putEvent(e);
     }
+    await this._ensureNetworkSeed();
     await this.local.setMeta('nucleus_seeded', new Date().toISOString());
+  }
+
+  async _ensureNetworkSeed() {
+    const v2 = await this.local.getMeta('network_v2_seeded');
+    if (v2) return;
+    for (const lo of SEED_NETWORK_LOS) {
+      const existing = await this.local.getLO(lo.loId);
+      if (existing) continue;
+      await this.local.putLO(lo);
+      const events = await appendEventToChain([], {
+        loId: lo.loId,
+        type: 'FACT',
+        code: 'ORDER_CREATED',
+        actor: lo.primaryActor,
+        spatialCellId: lo.originCellId,
+        payload: { msg: '供应链裂变种子', channel: lo.channel },
+      });
+      for (const e of events) {
+        await this.local.putEvent(e);
+        if (this.remote) {
+          try {
+            await this.remote.putEvent(e);
+          } catch (_) {}
+        }
+      }
+      await this._replicateLO(lo);
+    }
+    await this.local.setMeta('network_v2_seeded', new Date().toISOString());
   }
 
   async listLOs() {
@@ -146,7 +180,9 @@ export class LotChain {
       payload,
     });
     const evt = next[next.length - 1];
-    return this.appendEvent(evt);
+    const saved = await this.appendEvent(evt);
+    await maybePropagate(this, loId, code);
+    return saved;
   }
 
   async _replicateLO(lo) {
@@ -159,18 +195,43 @@ export class LotChain {
   async pullRemote(loId) {
     if (!this.remote) return false;
     try {
-      const remoteEvents = await this.remote.getEvents(loId);
-      const localEvents = await this.local.getEvents(loId);
-      const localSeq = new Set(localEvents.map((e) => e.seq));
-      for (const e of remoteEvents) {
-        if (!localSeq.has(e.seq)) await this.local.putEvent(e);
+      if (loId) {
+        await this._pullOneLO(loId);
+        return true;
       }
-      const remoteLo = await this.remote.getLO(loId);
-      if (remoteLo) await this.local.putLO(remoteLo);
+      const remoteLos = await this.remote.listLOs();
+      for (const rlo of remoteLos || []) await this._pullOneLO(rlo.loId);
       return true;
     } catch (_) {
       return false;
     }
+  }
+
+  async _pullOneLO(loId) {
+    const remoteEvents = await this.remote.getEvents(loId);
+    const localEvents = await this.local.getEvents(loId);
+    const localSeq = new Set(localEvents.map((e) => e.seq));
+    for (const e of remoteEvents) {
+      if (!localSeq.has(e.seq)) await this.local.putEvent(e);
+    }
+    const remoteLo = await this.remote.getLO(loId);
+    if (remoteLo) await this.local.putLO(remoteLo);
+  }
+
+  /** 重置本机演示数据并重新裂变种子 */
+  async resetDemo() {
+    await this.local.init();
+    const db = this.local._db;
+    if (db) {
+      for (const name of ['los', 'events', 'spatial', 'meta']) {
+        await new Promise((res, rej) => {
+          const r = db.transaction(name, 'readwrite').objectStore(name).clear();
+          r.onsuccess = () => res();
+          r.onerror = () => rej(r.error);
+        });
+      }
+    }
+    await this._ensureSeed();
   }
 }
 

@@ -156,6 +156,13 @@ export function projectLOState(lo, events) {
   };
 }
 
+export const SYNC_CODES = {
+  DOWNSTREAM_TRIGGER: 'SYNC_DOWNSTREAM_TRIGGER',
+  UPSTREAM_ACK: 'SYNC_UPSTREAM_ACK',
+  HANDOFF: 'SYNC_HANDOFF',
+};
+
+/** 单 LO 种子（兼容旧壳） */
 export const SEED_LO = createLO({
   loId: 'LO-NUCLEUS-001',
   channel: 'rural-last-mile',
@@ -166,6 +173,58 @@ export const SEED_LO = createLO({
   contract: { slaHours: 6, service: 'cold-chain', cargo: '农产品样本' },
   links: [createChainLink({ rel: 'upstream', externalRef: 'farmer-wechat:demo', label: '农户下单' })],
 });
+
+/** 裂变 v2：农户 → 仓 → 干线 → 末端 四段链 */
+export const SEED_NETWORK_LOS = [
+  createLO({
+    loId: 'LO-FARM-001',
+    channel: 'farmer-pickup',
+    primaryActor: 'shipper',
+    originCellId: 'bj-yanqing-cell',
+    destCellId: 'bj-shunyi-wh',
+    contract: { slaHours: 4, service: 'agri-pickup', cargo: '延庆蔬菜' },
+    links: [
+      createChainLink({ rel: 'upstream', externalRef: 'farmer-wechat:demo', label: '农户下单' }),
+      createChainLink({ rel: 'downstream', targetLoId: 'LO-WH-001', label: '送仓交接' }),
+    ],
+  }),
+  createLO({
+    loId: 'LO-WH-001',
+    channel: 'warehouse-inbound',
+    primaryActor: 'warehouse',
+    originCellId: 'bj-shunyi-wh',
+    destCellId: 'bj-shunyi-wh',
+    contract: { slaHours: 8, service: 'inbound-pick-pack', cargo: '延庆蔬菜' },
+    links: [
+      createChainLink({ rel: 'upstream', targetLoId: 'LO-FARM-001', label: '农户到货' }),
+      createChainLink({ rel: 'downstream', targetLoId: 'LO-LINE-001', label: '装车出库' }),
+    ],
+  }),
+  createLO({
+    loId: 'LO-LINE-001',
+    channel: 'linehaul',
+    primaryActor: 'driver',
+    originCellId: 'bj-shunyi-wh',
+    destCellId: 'bj-west-hub',
+    contract: { slaHours: 3, service: 'trunk', cargo: '延庆蔬菜' },
+    links: [
+      createChainLink({ rel: 'upstream', targetLoId: 'LO-WH-001', label: '仓出' }),
+      createChainLink({ rel: 'downstream', targetLoId: 'LO-LAST-001', label: '枢纽落地' }),
+    ],
+  }),
+  createLO({
+    loId: 'LO-LAST-001',
+    channel: 'rural-last-mile',
+    primaryActor: 'driver',
+    originCellId: 'bj-west-hub',
+    destCellId: 'bj-yanqing-cell',
+    contract: { slaHours: 6, service: 'cold-chain', cargo: '延庆蔬菜' },
+    links: [
+      createChainLink({ rel: 'upstream', targetLoId: 'LO-LINE-001', label: '干线到货' }),
+      createChainLink({ rel: 'downstream', externalRef: 'consumer:demo', label: '末端签收' }),
+    ],
+  }),
+];
 
 export const ACTOR_LENSES = {
   all: { id: 'all', labelZh: '全局', labelEn: 'Global', actions: ['view'] },
