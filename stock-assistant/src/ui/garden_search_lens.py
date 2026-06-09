@@ -86,23 +86,7 @@ def _render_lens_card(card: GardenLensCard, hit: eastmoney.SearchHit, *, readonl
 def render_garden_search_lens(pick_log: list, *, fetch_fn) -> None:
     """花园第一屏：搜索 + 可选图片识股 → 简化体检卡。"""
     st.markdown("### 🔍 搜一只，看体检卡")
-    st.caption("输入名称/代码，或点搜索栏旁 📷 上传截图；展开下方可看今晚明日推荐。")
-    st.markdown(
-        """
-        <style>
-        div[data-testid="column"]:has(div[data-testid="stFileUploader"]) div[data-testid="stFileUploader"] section {
-            padding: 0.35rem 0.5rem; min-height: 0;
-        }
-        div[data-testid="column"]:has(div[data-testid="stFileUploader"]) div[data-testid="stFileUploader"] button {
-            padding: 0.45rem 0.65rem; font-size: 1.1rem;
-        }
-        div[data-testid="column"]:has(div[data-testid="stFileUploader"]) div[data-testid="stFileUploader"] small {
-            display: none;
-        }
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
+    st.caption("输入名称/代码，或点 📷 上传截图识股；展开下方可看今晚明日推荐。")
 
     st.session_state.setdefault("garden_lens_kw", "茅台")
     history = normalize_search_history(st.session_state.get("search_history"))
@@ -114,7 +98,8 @@ def render_garden_search_lens(pick_log: list, *, fetch_fn) -> None:
                     st.session_state.garden_lens_kw = term
                     st.session_state._garden_lens_pending_kw = term
 
-    col_t, col_img, col_b = st.columns([5, 1, 1])
+    col_t, col_cam, col_b = st.columns([6, 1, 1])
+    uploaded = None
     with col_t:
         kw = st.text_input(
             "股票",
@@ -122,13 +107,24 @@ def render_garden_search_lens(pick_log: list, *, fetch_fn) -> None:
             placeholder="茅台、600519、AAPL、0700…",
             label_visibility="collapsed",
         )
-    with col_img:
+    with col_cam:
+        popover = getattr(st, "popover", None)
+        if popover is not None:
+            with popover("📷", use_container_width=True, help="上传 K 线截图识股（需 GEMINI_API_KEY）"):
+                st.caption("选一张行情/K 线截图，自动识别代码")
+                uploaded = st.file_uploader(
+                    "截图",
+                    type=["png", "jpg", "jpeg", "webp"],
+                    key="garden_lens_image",
+                    label_visibility="collapsed",
+                )
+        elif st.button("📷", key="garden_lens_img_toggle", use_container_width=True, help="截图识股"):
+            st.session_state.garden_lens_show_img = True
+    if uploaded is None and st.session_state.get("garden_lens_show_img"):
         uploaded = st.file_uploader(
-            "📷",
+            "上传 K 线截图识股",
             type=["png", "jpg", "jpeg", "webp"],
             key="garden_lens_image",
-            label_visibility="collapsed",
-            help="上传 K 线截图识股（需配置 GEMINI_API_KEY）",
         )
     with col_b:
         do_search = st.button("搜索", type="primary", use_container_width=True, key="garden_lens_search")
