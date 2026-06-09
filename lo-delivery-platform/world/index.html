@@ -102,7 +102,7 @@
     .crumb span { color: var(--muted); font-size: 10px; align-self: center; }
 
     .event-panel {
-      position: absolute; top: 12px; right: 12px; bottom: 12px; width: 280px; z-index: 400;
+      position: absolute; top: 12px; right: 12px; bottom: 12px; width: 300px; z-index: 400;
       background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
       display: flex; flex-direction: column; backdrop-filter: blur(8px);
     }
@@ -112,6 +112,34 @@
     @keyframes evtIn { from { opacity: 0; transform: translateX(8px); } }
     .evt-row b { color: var(--gold); }
     .evt-sync { color: var(--nucleus); }
+
+    .domain-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+    .domain-tabs button {
+      padding: 6px 12px; border-radius: 8px; border: 1px solid var(--line);
+      background: #0a1422; color: var(--muted); font-size: 11px; cursor: pointer;
+    }
+    .domain-tabs button.on { color: var(--text); font-weight: 600; }
+    .domain-tabs button[data-d="procurement"].on { border-color: #5eb8ff; color: #5eb8ff; }
+    .domain-tabs button[data-d="sales"].on { border-color: var(--accent); color: var(--accent); }
+    .domain-tabs button[data-d="production"].on { border-color: var(--gold); color: var(--gold); }
+    .domain-tabs button[data-d="reverse"].on { border-color: #ff7eb3; color: #ff7eb3; }
+    .domain-tabs button[data-d="all"].on { border-color: var(--nucleus); color: var(--nucleus); }
+    .domain-desc { font-size: 10px; color: var(--muted); margin-bottom: 8px; line-height: 1.5; }
+    #lo-list { max-height: 140px; overflow: auto; margin-bottom: 8px; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+    .lo-row {
+      padding: 5px 6px; border-radius: 6px; font-size: 10px; cursor: pointer; margin-bottom: 3px;
+      border: 1px solid transparent;
+    }
+    .lo-row:hover { background: #0f1a2e; }
+    .lo-row.on { border-color: var(--nucleus); background: #1a1020; }
+    .lo-row .id { font-weight: 600; color: var(--gold); }
+    .lo-row .cargo { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    #stage-check { padding: 8px 12px; border-bottom: 1px solid var(--line); max-height: 160px; overflow: auto; }
+    .st { display: flex; gap: 6px; align-items: flex-start; font-size: 10px; padding: 3px 0; }
+    .st i { font-style: normal; width: 14px; }
+    .st.done { color: var(--accent); }
+    .st.pending { color: #3a5068; }
+    .hud-domains { font-size: 10px; color: var(--muted); }
 
     /* —— 全链管道 —— */
     #pipeline {
@@ -178,8 +206,8 @@
     <div class="stars" id="stars"></div>
     <div class="intro-earth" aria-hidden="true"></div>
     <h1>LOT · 从宇宙到乡村</h1>
-    <p>一条延庆蔬菜订单，穿越农户、仓库、干线、末端——全链可视、哈希防篡改、零 API 费用。</p>
-    <button type="button" id="btn-enter">进入世界 · 播放全链</button>
+    <p>采购 · 销售 · 生产 · 逆向 — 四大物流域，40+ 演示订单，每单含完整环节与哈希事件链。零 API 费用。</p>
+    <button type="button" id="btn-enter">进入世界</button>
   </div>
 
   <div id="app" hidden>
@@ -193,8 +221,9 @@
       </div>
       <div class="hud">
         <span>链环 <b id="hud-chain">—</b></span>
-        <span>订单核 <b id="hud-los">—</b></span>
-        <span class="hud-warn">在途 <b id="hud-active">—</b></span>
+        <span>订单 <b id="hud-los">—</b></span>
+        <span class="hud-domains" id="hud-domains">—</span>
+        <span class="hud-warn">事件 <b id="hud-events">—</b></span>
       </div>
     </header>
 
@@ -205,13 +234,18 @@
         <div class="crumb" id="spatial-crumb"></div>
       </div>
       <aside class="event-panel">
-        <h3>轨道电子 · 实时事件流</h3>
+        <h3 id="panel-title">四大物流域 · 演示订单</h3>
+        <div id="lo-list"></div>
+        <div id="stage-check"></div>
+        <h3 style="border-top:1px solid var(--line)">轨道电子 · 事件流</h3>
         <div id="event-stream"></div>
       </aside>
     </div>
 
     <footer id="pipeline">
-      <div class="pipe-title">供应链全链管道 · 点击环节聚焦</div>
+      <div class="domain-tabs" id="domain-tabs"></div>
+      <div class="domain-desc" id="domain-desc"></div>
+      <div class="pipe-title">销售链演示管道（播放全链）· 点击聚焦</div>
       <div class="pipe-track" id="pipe-track"></div>
     </footer>
   </div>
@@ -225,13 +259,18 @@
 
   <script type="module">
     import { defaultChain } from '../kernel/lot-chain.js';
-    import { getPipelineState, runFullDemo, ROUTE_COORDS, PIPELINE } from '../kernel/lot-sim.js';
-    import { SPATIAL_LEVELS } from '../kernel/lot-nucleus.js';
+    import { getPipelineState, runFullDemo, ROUTE_COORDS } from '../kernel/lot-sim.js';
+    import { projectLOState } from '../kernel/lot-nucleus.js';
+    import { LOGISTICS_DOMAINS } from '../kernel/lot-domains.js';
+    import { countByDomain } from '../kernel/lot-demo-data.js';
+
+    const DOMAIN_COLORS = { procurement: '#5eb8ff', sales: '#3dffb0', production: '#ffc14d', reverse: '#ff7eb3' };
 
     const state = {
       chain: defaultChain,
       focusCellId: 'beijing',
-      activeLoId: 'LO-FARM-001',
+      activeLoId: 'LO-PUR-001',
+      domainFilter: 'all',
       map: null,
       layers: { markers: [], route: null, cargo: null },
       demoRunning: false,
@@ -278,20 +317,23 @@
       state.layers.markers.forEach((m) => state.map.removeLayer(m));
       state.layers.markers = [];
       const spatial = await state.chain.listSpatial();
-      const los = await state.chain.listLOs();
+      const los = await filteredLos();
       const labels = new Map(spatial.map((c) => [c.id, c.labelZh || c.id]));
 
       for (const lo of los) {
         for (const cellId of [lo.originCellId, lo.destCellId]) {
           const c = spatial.find((x) => x.id === cellId);
           if (!c?.lat) continue;
+          const dom = lo.logisticsDomain || 'sales';
+          const col = DOMAIN_COLORS[dom] || '#3dffb0';
           const m = L.circleMarker([c.lat, c.lng], {
-            radius: lo.loId === state.activeLoId ? 11 : 7,
-            color: lo.loId === state.activeLoId ? '#ff5c9a' : '#3dffb0',
-            fillColor: lo.loId === state.activeLoId ? '#ff5c9a' : '#1a4d3a',
-            fillOpacity: 0.9, weight: 2,
+            radius: lo.loId === state.activeLoId ? 11 : 5,
+            color: lo.loId === state.activeLoId ? '#ff5c9a' : col,
+            fillColor: lo.loId === state.activeLoId ? '#ff5c9a' : col,
+            fillOpacity: lo.loId === state.activeLoId ? 1 : 0.55, weight: 2,
           }).addTo(state.map);
-          m.bindPopup(`<b>${labels.get(cellId)}</b><br/><small>${lo.loId}</small>`);
+          const cargo = lo.contract?.cargo || lo.channel;
+          m.bindPopup(`<b>${labels.get(cellId)}</b><br/>${cargo}<br/><small>${lo.loId}</small>`);
           m.on('click', () => { state.activeLoId = lo.loId; state.focusCellId = cellId; renderAll(); });
           state.layers.markers.push(m);
         }
@@ -342,14 +384,94 @@
         };
       });
 
-      const active = pipe.stages.filter((s) => s.status === 'active').length;
-      const done = pipe.stages.filter((s) => s.status === 'done').length;
-      document.getElementById('hud-active').textContent = active;
-      document.getElementById('hud-los').textContent = pipe.stages.filter((s) => s.lo).length;
+      const allLos = await state.chain.listLOs();
+      const counts = countByDomain(allLos);
+      document.getElementById('hud-los').textContent = allLos.length;
+      document.getElementById('hud-domains').textContent =
+        `采${counts.procurement} 销${counts.sales} 产${counts.production} 逆${counts.reverse}`;
+    }
+
+    async function filteredLos() {
+      if (state.domainFilter === 'all') return state.chain.listLOs();
+      return state.chain.listLOs({ domain: state.domainFilter });
+    }
+
+    function renderDomainTabs() {
+      const tabs = [{ id: 'all', icon: '🌐', labelZh: '全部' }, ...Object.values(LOGISTICS_DOMAINS)];
+      document.getElementById('domain-tabs').innerHTML = tabs
+        .map((d) => {
+          const id = d.id;
+          const on = state.domainFilter === id ? ' on' : '';
+          const label = d.icon ? `${d.icon} ${d.labelZh}` : d.labelZh;
+          return `<button type="button" data-d="${id}" class="${on.trim()}">${label}</button>`;
+        })
+        .join('');
+      document.querySelectorAll('#domain-tabs button').forEach((btn) => {
+        btn.onclick = () => {
+          state.domainFilter = btn.dataset.d;
+          if (state.domainFilter !== 'all' && state.domainFilter !== 'sales') {
+            filteredLos().then((los) => {
+              if (los.length && !los.find((l) => l.loId === state.activeLoId)) state.activeLoId = los[0].loId;
+              renderAll();
+            });
+          } else renderAll();
+        };
+      });
+      const dom = LOGISTICS_DOMAINS[state.domainFilter];
+      document.getElementById('domain-desc').textContent = dom
+        ? dom.descZh
+        : `共 ${document.getElementById('hud-los').textContent || '—'} 条演示 LO，覆盖采购/销售/生产/逆向全要素`;
+    }
+
+    async function renderLoList() {
+      const los = await filteredLos();
+      const spatial = await state.chain.listSpatial();
+      const label = (id) => spatial.find((c) => c.id === id)?.labelZh || id;
+      document.getElementById('lo-list').innerHTML = los
+        .map((lo) => {
+          const on = lo.loId === state.activeLoId ? ' on' : '';
+          const cargo = lo.contract?.cargo || lo.channel;
+          const dom = LOGISTICS_DOMAINS[lo.logisticsDomain];
+          const icon = dom?.icon || '·';
+          return `<div class="lo-row${on}" data-lo="${lo.loId}">
+            <div class="id">${icon} ${lo.loId}</div>
+            <div class="cargo">${cargo} · ${label(lo.originCellId)}→${label(lo.destCellId)}</div>
+          </div>`;
+        })
+        .join('');
+      document.querySelectorAll('.lo-row').forEach((row) => {
+        row.onclick = () => {
+          state.activeLoId = row.dataset.lo;
+          renderAll();
+        };
+      });
+      const dom = LOGISTICS_DOMAINS[state.domainFilter];
+      document.getElementById('panel-title').textContent = dom
+        ? `${dom.icon} ${dom.labelZh} · ${los.length} 单`
+        : `四大物流域 · ${los.length} 单`;
+    }
+
+    async function renderStageCheck() {
+      const lo = state.activeLoId ? await state.chain.getLO(state.activeLoId) : null;
+      const el = document.getElementById('stage-check');
+      if (!lo) { el.innerHTML = ''; return; }
+      const domain = lo.logisticsDomain;
+      const def = LOGISTICS_DOMAINS[domain];
+      if (!def) { el.innerHTML = '<div class="st">销售链四段演示 · 点播放全链</div>'; return; }
+      const events = await state.chain.getEvents(lo.loId);
+      const codes = new Set(events.filter((e) => e.type === 'FACT').map((e) => e.code));
+      el.innerHTML = def.stages
+        .map((st) => {
+          const done = codes.has(st.code);
+          return `<div class="st ${done ? 'done' : 'pending'}"><i>${done ? '✓' : '○'}</i>
+            <span>${st.labelZh} <span style="color:#5a7a96">@${st.actor}</span>
+            ${st.evidence ? `<br/><span style="font-size:9px;color:#4a6a82">证据: ${st.evidence.join(', ')}</span>` : ''}</span></div>`;
+        })
+        .join('');
     }
 
     async function renderEventStream() {
-      const los = await state.chain.listLOs();
+      const los = await filteredLos();
       const rows = [];
       for (const lo of los) {
         const evts = await state.chain.getEvents(lo.loId);
@@ -357,7 +479,8 @@
       }
       rows.sort((a, b) => (a.ts || '').localeCompare(b.ts || ''));
       state.allEvents = rows;
-      const tail = rows.slice(-24).reverse();
+      document.getElementById('hud-events').textContent = rows.length;
+      const tail = rows.slice(-20).reverse();
       document.getElementById('event-stream').innerHTML = tail.map((e) => {
         const sync = e.type === 'SYNC' ? ' evt-sync' : '';
         return `<div class="evt-row${sync}"><b>${e.loId}</b> #${e.seq} ${e.code}<br/><span style="color:#5a7a96">${(e.hash || '').slice(0, 12)}…</span></div>`;
@@ -370,7 +493,10 @@
     }
 
     async function renderAll() {
+      renderDomainTabs();
       await renderCrumb();
+      await renderLoList();
+      await renderStageCheck();
       await renderMap();
       await renderPipeline();
       await renderEventStream();
@@ -404,7 +530,6 @@
       document.getElementById('app').hidden = false;
       setTimeout(() => state.map?.invalidateSize(), 100);
       await renderAll();
-      setTimeout(() => playDemo(), 600);
     }
 
     stars();

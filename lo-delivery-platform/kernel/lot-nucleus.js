@@ -4,6 +4,8 @@
  * 零依赖，可嵌入任意壳（world / legacy demo / 未来 SCM）
  */
 
+import { progressForDomain } from './lot-domains.js';
+
 export const SPATIAL_LEVELS = [
   'universe',
   'planet',
@@ -64,6 +66,7 @@ export function createLO(partial) {
   return {
     loId: partial.loId,
     channel: partial.channel || 'demo',
+    logisticsDomain: partial.logisticsDomain || null,
     status: partial.status || 'active',
     spatialPath: partial.spatialPath || ['earth', 'cn', 'beijing'],
     originCellId: partial.originCellId || 'bj-yanqing-cell',
@@ -144,7 +147,9 @@ export function projectLOState(lo, events) {
   const last = events[events.length - 1];
   const stageCodes = events.filter((e) => e.type === EVENT_TYPES.FACT).map((e) => e.code);
   const exceptions = events.filter((e) => e.type === EVENT_TYPES.EXCEPTION);
-  const progress = Math.min(100, Math.round((stageCodes.length / 8) * 100));
+  let progress = lo.logisticsDomain
+    ? progressForDomain(lo.logisticsDomain, stageCodes)
+    : Math.min(100, Math.round((stageCodes.length / 8) * 100));
   return {
     loId: lo.loId,
     status: exceptions.length ? 'exception' : lo.status,
@@ -178,6 +183,7 @@ export const SEED_LO = createLO({
 export const SEED_NETWORK_LOS = [
   createLO({
     loId: 'LO-FARM-001',
+    logisticsDomain: 'sales',
     channel: 'farmer-pickup',
     primaryActor: 'shipper',
     originCellId: 'bj-yanqing-cell',
@@ -190,6 +196,7 @@ export const SEED_NETWORK_LOS = [
   }),
   createLO({
     loId: 'LO-WH-001',
+    logisticsDomain: 'sales',
     channel: 'warehouse-inbound',
     primaryActor: 'warehouse',
     originCellId: 'bj-shunyi-wh',
@@ -202,6 +209,7 @@ export const SEED_NETWORK_LOS = [
   }),
   createLO({
     loId: 'LO-LINE-001',
+    logisticsDomain: 'sales',
     channel: 'linehaul',
     primaryActor: 'driver',
     originCellId: 'bj-shunyi-wh',
@@ -214,6 +222,7 @@ export const SEED_NETWORK_LOS = [
   }),
   createLO({
     loId: 'LO-LAST-001',
+    logisticsDomain: 'sales',
     channel: 'rural-last-mile',
     primaryActor: 'driver',
     originCellId: 'bj-west-hub',
@@ -232,4 +241,10 @@ export const ACTOR_LENSES = {
   driver: { id: 'driver', labelZh: '司机', labelEn: 'Driver', actions: ['pickup', 'transit', 'pod'] },
   warehouse: { id: 'warehouse', labelZh: '仓管', labelEn: 'Warehouse', actions: ['inbound', 'pick', 'load'] },
   shipper: { id: 'shipper', labelZh: '货主', labelEn: 'Shipper', actions: ['create', 'confirm'] },
+  purchaser: { id: 'purchaser', labelZh: '采购员', labelEn: 'Purchaser', actions: ['po', 'confirm'] },
+  planner: { id: 'planner', labelZh: '计划员', labelEn: 'Planner', actions: ['call', 'close'] },
+  qc: { id: 'qc', labelZh: '质检', labelEn: 'QC', actions: ['inspect', 'pass'] },
+  finance: { id: 'finance', labelZh: '财务', labelEn: 'Finance', actions: ['match', 'settle'] },
+  customer: { id: 'customer', labelZh: '客户', labelEn: 'Customer', actions: ['return'] },
+  cs: { id: 'cs', labelZh: '客服', labelEn: 'CS', actions: ['approve'] },
 };

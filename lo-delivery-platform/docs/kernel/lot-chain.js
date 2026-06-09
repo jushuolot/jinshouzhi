@@ -16,6 +16,7 @@ import {
   createLO,
 } from './lot-nucleus.js';
 import { maybePropagate } from './lot-network.js';
+import { DEMO_DOMAIN_LOS, DEMO_EVENT_HISTORIES, DEMO_SPATIAL_EXT } from './lot-demo-data.js';
 
 export class LotChain {
   constructor(adapters) {
@@ -53,6 +54,7 @@ export class LotChain {
     const seeded = await this.local.getMeta('nucleus_seeded');
     if (seeded) {
       await this._ensureNetworkSeed();
+      await this._ensureDomainsSeed();
       return;
     }
 
@@ -78,6 +80,7 @@ export class LotChain {
       for (const e of events) await this.local.putEvent(e);
     }
     await this._ensureNetworkSeed();
+    await this._ensureDomainsSeed();
     await this.local.setMeta('nucleus_seeded', new Date().toISOString());
   }
 
@@ -109,8 +112,41 @@ export class LotChain {
     await this.local.setMeta('network_v2_seeded', new Date().toISOString());
   }
 
-  async listLOs() {
-    return this.local.listLOs();
+  async _ensureDomainsSeed() {
+    const v3 = await this.local.getMeta('domains_v3_seeded');
+    if (v3) return;
+    await this.local.putSpatial(DEMO_SPATIAL_EXT);
+    for (const lo of DEMO_DOMAIN_LOS) {
+      const existing = await this.local.getLO(lo.loId);
+      if (existing) continue;
+      await this.local.putLO(lo);
+      const partials = DEMO_EVENT_HISTORIES.get(lo.loId) || [];
+      let chain = [];
+      for (const p of partials) {
+        chain = await appendEventToChain(chain, { loId: lo.loId, ...p });
+      }
+      for (const e of chain) {
+        await this.local.putEvent(e);
+        if (this.remote) {
+          try {
+            await this.remote.putEvent(e);
+          } catch (_) {}
+        }
+      }
+      await this._replicateLO(lo);
+    }
+    await this.local.setMeta('domains_v3_seeded', new Date().toISOString());
+  }
+
+  async listLOs(filter = {}) {
+    let los = await this.local.listLOs();
+    if (filter.domain) {
+      los = los.filter((lo) => (lo.logisticsDomain || lo.channel) === filter.domain);
+    }
+    if (filter.status) {
+      los = los.filter((lo) => lo.status === filter.status);
+    }
+    return los;
   }
 
   async getLO(loId) {
