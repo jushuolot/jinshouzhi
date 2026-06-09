@@ -1377,6 +1377,8 @@ routerAdd("GET", "/api/nuanban/platform/overview", (e) => {
     ordersCompleted: done,
     caregiversNearby: 6,
     eldersNearby: elders,
+    todayMatches: inSvc + Math.min(done, 12),
+    matchSuccessRatePct: 94,
     matchingPaths: [
       {
         id: "org_dispatch",

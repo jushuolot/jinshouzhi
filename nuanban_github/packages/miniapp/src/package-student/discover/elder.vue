@@ -2,6 +2,8 @@
   <view class="page">
     <view v-if="loading" class="state">加载中…</view>
     <template v-else>
+      <MatchScoreBadge v-if="matchScore" :score="matchScore" />
+
       <view class="profile-hero">
         <view class="avatar">{{ avatarChar }}</view>
         <view class="hero-info">
@@ -40,6 +42,8 @@
 import { onLoad } from '@dcloudio/uni-app';
 import { computed, ref } from 'vue';
 import { getElderDetail } from '../../api/student';
+import MatchScoreBadge from '../../components/MatchScoreBadge.vue';
+import { computeMatchScore, parseDistanceKm } from '../../utils/match-score';
 import { pbErrorMessage } from '../../utils/request';
 
 const elderId = ref('');
@@ -53,6 +57,12 @@ const loading = ref(true);
 const errorMsg = ref('');
 
 const avatarChar = computed(() => displayName.value.slice(0, 1) || '老');
+
+const matchScore = computed(() => {
+  const km = parseDistanceKm(distanceKm.value);
+  if (km == null) return 0;
+  return computeMatchScore({ distanceKm: km });
+});
 
 onLoad(async (q) => {
   elderId.value = (q?.id as string) || '';

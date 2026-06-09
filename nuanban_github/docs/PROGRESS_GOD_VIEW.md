@@ -41,9 +41,11 @@
 
 | 入口 | URL |
 |------|-----|
-| **动画演示**（明日验收） | [#/pages/common/demo-tour](https://jushuolot.github.io/jinshouzhi/nuanban/#/pages/common/demo-tour) |
+| **动画演示** | [#/pages/common/demo-tour](https://jushuolot.github.io/jinshouzhi/nuanban/#/pages/common/demo-tour) |
 | **上帝视角 KPI** | [#/pages/common/god-view](https://jushuolot.github.io/jinshouzhi/nuanban/#/pages/common/god-view) |
+| **演示链接分享** | [#/pages/common/share-demo](https://jushuolot.github.io/jinshouzhi/nuanban/#/pages/common/share-demo) |
 | 登录页 | [#/pages/common/login](https://jushuolot.github.io/jinshouzhi/nuanban/#/pages/common/login) |
+| 深链 | `launch?tour=1` · `launch?god=1` · `launch?share=1` |
 
 详见 [DEMO_ANIMATION.md](./DEMO_ANIMATION.md)
 

@@ -812,6 +812,8 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
       ordersCompleted: done,
       caregiversNearby: CAREGIVERS.length,
       eldersNearby: ELDERS.length,
+      todayMatches: inSvc + Math.min(done, 12),
+      matchSuccessRatePct: 94,
       matchingPaths: [
         {
           id: 'org_dispatch',

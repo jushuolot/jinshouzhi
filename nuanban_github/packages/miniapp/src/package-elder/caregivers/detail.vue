@@ -1,5 +1,7 @@
 <template>
   <view class="page elder-mode">
+    <MatchScoreBadge v-if="matchScore" :score="matchScore" />
+
     <view class="profile-hero">
       <view class="avatar">{{ avatarChar }}</view>
       <view class="hero-info">
@@ -32,6 +34,8 @@
 <script setup lang="ts">
 import { onLoad } from '@dcloudio/uni-app';
 import { computed, ref } from 'vue';
+import MatchScoreBadge from '../../components/MatchScoreBadge.vue';
+import { computeMatchScore, parseDistanceKm } from '../../utils/match-score';
 
 const studentUserId = ref('');
 const name = ref('');
@@ -43,6 +47,18 @@ const intro = ref('');
 const tags = ref<string[]>([]);
 
 const avatarChar = computed(() => decodeURIComponent(name.value || '同').slice(0, 1));
+
+const matchScore = computed(() => {
+  const km = parseDistanceKm(distance.value);
+  const ratingNum = rating.value ? parseFloat(rating.value) : undefined;
+  const orders = orderCount.value ? parseInt(orderCount.value, 10) : undefined;
+  if (km == null && ratingNum == null) return 0;
+  return computeMatchScore({
+    distanceKm: km,
+    rating: ratingNum,
+    orderCount: Number.isNaN(orders) ? undefined : orders,
+  });
+});
 
 onLoad((q) => {
   studentUserId.value = (q?.studentUserId as string) || '';

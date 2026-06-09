@@ -19,6 +19,8 @@ export interface PlatformOverview {
   ordersCompleted: number;
   caregiversNearby: number;
   eldersNearby: number;
+  todayMatches: number;
+  matchSuccessRatePct: number;
   matchingPaths: MatchingPathStatus[];
   coreCompletionPct: number;
   auditStatus: string;

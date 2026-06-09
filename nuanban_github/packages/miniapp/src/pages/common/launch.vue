@@ -16,6 +16,14 @@ onLoad((query) => {
     uni.reLaunch({ url: '/pages/common/demo-tour' });
     return;
   }
+  if (query?.god === '1') {
+    uni.reLaunch({ url: '/pages/common/god-view' });
+    return;
+  }
+  if (query?.share === '1') {
+    uni.reLaunch({ url: '/pages/common/share-demo' });
+    return;
+  }
 
   const role = query?.role as RoleKey | undefined;
   const target = query?.target as string | undefined;

@@ -14,26 +14,31 @@
     </view>
 
     <view class="completion-card">
-      <text class="pct">{{ pct }}%</text>
+      <text class="pct">{{ displayPct }}%</text>
       <text class="pct-label">核心撮合能力（演示评估）</text>
-      <text class="audit">自动化审计 {{ auditStatus }}</text>
+      <text class="audit">自动化审计 {{ auditStatus }} · 撮合成功率 {{ displayMatchRate }}%</text>
+    </view>
+
+    <view class="match-highlight">
+      <text class="match-num">{{ displayTodayMatches }}</text>
+      <text class="match-label">今日撮合成功（演示）</text>
     </view>
 
     <view class="kpi-grid">
       <view class="kpi">
-        <text class="kpi-num">{{ eldersTotal }}</text>
+        <text class="kpi-num">{{ displayElders }}</text>
         <text class="kpi-label">服务老人</text>
       </view>
       <view class="kpi">
-        <text class="kpi-num">{{ studentsActive }}</text>
+        <text class="kpi-num">{{ displayStudents }}</text>
         <text class="kpi-label">女大学生志愿者</text>
       </view>
       <view class="kpi">
-        <text class="kpi-num accent">{{ ordersPending }}</text>
+        <text class="kpi-num accent">{{ displayPending }}</text>
         <text class="kpi-label">待接单</text>
       </view>
       <view class="kpi">
-        <text class="kpi-num">{{ ordersInService }}</text>
+        <text class="kpi-num">{{ displayInService }}</text>
         <text class="kpi-label">服务中</text>
       </view>
     </view>
@@ -57,6 +62,7 @@
     </view>
 
     <button class="btn-outline" @tap="goLogin">进入演示登录</button>
+    <button class="btn-outline" @tap="goShare">复制演示链接</button>
     <button class="btn-outline" @tap="reload">刷新数据</button>
     <text v-if="errorMsg" class="err">{{ errorMsg }}</text>
     <text v-if="lastUpdated" class="ts">最后更新 {{ formatTime(lastUpdated) }}</text>
@@ -104,10 +110,58 @@ const eldersTotal = ref(8);
 const studentsActive = ref(6);
 const ordersPending = ref(10);
 const ordersInService = ref(1);
+const todayMatches = ref(13);
+const matchSuccessRatePct = ref(94);
 const paths = ref<MatchingPathStatus[]>([...DEFAULT_PATHS]);
 const updatedAt = ref('');
 const errorMsg = ref('');
 const loading = ref(false);
+
+const displayPct = ref(0);
+const displayElders = ref(0);
+const displayStudents = ref(0);
+const displayPending = ref(0);
+const displayInService = ref(0);
+const displayTodayMatches = ref(0);
+const displayMatchRate = ref(0);
+
+function animateValue(from: number, to: number, setter: (v: number) => void, ms = 700) {
+  const start = Date.now();
+  const step = () => {
+    const t = Math.min(1, (Date.now() - start) / ms);
+    const eased = 1 - (1 - t) ** 2;
+    setter(Math.round(from + (to - from) * eased));
+    if (t < 1) {
+      if (typeof requestAnimationFrame === 'function') requestAnimationFrame(step);
+      else setTimeout(step, 16);
+    }
+  };
+  step();
+}
+
+function runKpiAnimation() {
+  animateValue(displayPct.value, pct.value, (v) => {
+    displayPct.value = v;
+  });
+  animateValue(displayElders.value, eldersTotal.value, (v) => {
+    displayElders.value = v;
+  });
+  animateValue(displayStudents.value, studentsActive.value, (v) => {
+    displayStudents.value = v;
+  });
+  animateValue(displayPending.value, ordersPending.value, (v) => {
+    displayPending.value = v;
+  });
+  animateValue(displayInService.value, ordersInService.value, (v) => {
+    displayInService.value = v;
+  });
+  animateValue(displayTodayMatches.value, todayMatches.value, (v) => {
+    displayTodayMatches.value = v;
+  });
+  animateValue(displayMatchRate.value, matchSuccessRatePct.value, (v) => {
+    displayMatchRate.value = v;
+  });
+}
 
 const lastUpdated = computed(() => BUILD_TIME || updatedAt.value);
 
@@ -138,10 +192,14 @@ async function reload() {
     studentsActive.value = o.studentsActive;
     ordersPending.value = o.ordersPendingAccept;
     ordersInService.value = o.ordersInService;
+    todayMatches.value = o.todayMatches ?? ordersInService.value + 12;
+    matchSuccessRatePct.value = o.matchSuccessRatePct ?? 94;
     paths.value = o.matchingPaths?.length ? o.matchingPaths : DEFAULT_PATHS;
     updatedAt.value = o.updatedAt;
+    runKpiAnimation();
   } catch (e) {
     errorMsg.value = `实时数据未更新：${pbErrorMessage(e)}（已显示默认演示数据）`;
+    runKpiAnimation();
   } finally {
     loading.value = false;
   }
@@ -155,6 +213,10 @@ function goLogin() {
 
 function goTour() {
   uni.navigateTo({ url: '/pages/common/demo-tour' });
+}
+
+function goShare() {
+  uni.navigateTo({ url: '/pages/common/share-demo' });
 }
 </script>
 
@@ -236,6 +298,26 @@ function goTour() {
   display: block;
   font-size: 24rpx;
   color: rgba(255, 255, 255, 0.9);
+}
+.match-highlight {
+  text-align: center;
+  background: #16213e;
+  border: 2rpx solid #e88b4a;
+  border-radius: 16rpx;
+  padding: 28rpx;
+  margin-bottom: 24rpx;
+}
+.match-num {
+  display: block;
+  font-size: 56rpx;
+  font-weight: 700;
+  color: #e88b4a;
+}
+.match-label {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 24rpx;
+  color: #aaa;
 }
 .audit {
   display: block;

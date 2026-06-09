@@ -1,5 +1,13 @@
 <template>
   <view class="page">
+    <view v-if="showVisitorBanner" class="visitor-banner" @tap="goDemoTour">
+      <text class="banner-icon">🎬</text>
+      <view class="banner-body">
+        <text class="banner-title">新访客？先看 22 秒动画演示</text>
+        <text class="banner-sub">三种撮合路径 · 无需登录</text>
+      </view>
+      <text class="banner-cta">观看 →</text>
+    </view>
     <text class="title">暖伴勤工</text>
     <text class="sub">附近中老年 ↔ 在校女大学生 · 有偿陪护匹配</text>
     <button class="btn-primary" :loading="loading" @tap="onWxLogin">微信登录</button>
@@ -21,6 +29,7 @@
     <view class="links secondary">
       <text @tap="goDemoTour">动画演示</text>
       <text @tap="goGodView">上帝视角</text>
+      <text @tap="goShareDemo">分享链接</text>
       <text @tap="goAgreement">用户协议</text>
     </view>
     <view class="links tertiary">
@@ -40,6 +49,7 @@ import { isDemoMockEnabled } from '../../utils/demo-mock';
 
 const loading = ref(false);
 const fromTour = ref(false);
+const showVisitorBanner = computed(() => isDemoMockEnabled() && !fromTour.value);
 
 onLoad((query) => {
   fromTour.value = query?.from === 'tour' || query?.hint === 'student1';
@@ -171,6 +181,10 @@ function goGodView() {
   uni.navigateTo({ url: '/pages/common/god-view' });
 }
 
+function goShareDemo() {
+  uni.navigateTo({ url: '/pages/common/share-demo' });
+}
+
 function goDemoTour() {
   uni.navigateTo({ url: '/pages/common/demo-tour' });
 }
@@ -179,6 +193,38 @@ function goDemoTour() {
 <style scoped>
 .page {
   padding: 80rpx 48rpx;
+}
+.visitor-banner {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  background: linear-gradient(135deg, #fff8f0, #fff);
+  border: 2rpx solid #e88b4a;
+  border-radius: 16rpx;
+  padding: 24rpx 20rpx;
+  margin-bottom: 32rpx;
+}
+.banner-icon {
+  font-size: 40rpx;
+}
+.banner-body {
+  flex: 1;
+}
+.banner-title {
+  display: block;
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #c45c26;
+}
+.banner-sub {
+  display: block;
+  margin-top: 4rpx;
+  font-size: 22rpx;
+  color: #888;
+}
+.banner-cta {
+  font-size: 26rpx;
+  color: #e88b4a;
 }
 .title {
   font-size: 48rpx;

@@ -2,7 +2,20 @@
 
 > 您休息期间已推送 GitHub，Actions 会自动更新公网演示。
 
-## 本轮（Phase 14 · 演示抛光 · 明早验收）
+## 本轮（Phase 15 · 撮合叙事强化）
+
+1. **MatchScoreBadge** — 老人看同学 / 学生看老人详情页显示「匹配度 %」
+2. **share-demo** — 一键复制动画/上帝视角/登录/深链
+3. 登录页 **新访客横幅** → 动画演示；新增「分享链接」入口
+4. **god-view** — 今日撮合成功 KPI、撮合成功率、数字滚动动画
+5. **platform/overview** 扩展 `todayMatches` / `matchSuccessRatePct`（mock + PB）
+6. **launch** 深链 `?god=1` / `?share=1`
+
+公网：
+- 分享页：`#/pages/common/share-demo`
+- 深链上帝视角：`#/pages/common/launch?god=1`
+
+## 上一轮（Phase 14 · 演示抛光 · 明早验收）
 
 1. **demo-tour** 进度条 + 幕计数 1/5 + 更顺滑切幕动画
 2. 第五幕结束自动跳转登录，提示用 **student1** 体验接单
