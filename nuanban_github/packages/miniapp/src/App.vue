@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onLaunch } from '@dcloudio/uni-app';
+import './styles/theme.css';
 // #ifdef H5
 import { initDevicePreview } from './utils/device-preview';
 // #endif
@@ -13,16 +14,5 @@ onLaunch(() => {
 </script>
 
 <style>
-page {
-  background-color: #f5f5f5;
-  font-size: 16px;
-}
-page.elder-mode {
-  font-size: 18px;
-}
-/* god-view 桌面全屏，避免手机框内白屏/滚不动 */
-page[data-page='pages/common/god-view'],
-page[data-page='pages/common/demo-tour'] {
-  background-color: #1a1a2e;
-}
+/* 全局主题见 styles/theme.css */
 </style>

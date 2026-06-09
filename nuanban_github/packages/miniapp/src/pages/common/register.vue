@@ -1,12 +1,12 @@
 <template>
-  <view class="page">
+  <view class="page nb-page-padded">
     <template v-if="step === 'pick'">
       <text class="title">选择您的身份</text>
       <text class="sub">系统将根据身份分配功能与权限，多身份可在登录后切换</text>
       <view
         v-for="opt in roleOptions"
         :key="opt.key"
-        class="card"
+        class="card nb-card nb-card-interactive"
         @tap="pickRole(opt.key)"
       >
         <text class="card-title">{{ opt.label }}</text>
@@ -16,8 +16,8 @@
     </template>
     <template v-else>
       <text class="title">完善资料 · {{ roleLabel[role] }}</text>
-      <input v-model="displayName" class="input" placeholder="显示名称（可选）" />
-      <button class="btn-primary" :loading="loading" @tap="submit">确认身份</button>
+      <input v-model="displayName" class="input nb-input" placeholder="显示名称（可选）" />
+      <button class="btn-primary nb-btn-primary" :loading="loading" @tap="submit">确认身份</button>
       <text class="back" @tap="step = 'pick'">重新选择身份</text>
     </template>
   </view>
@@ -105,62 +105,43 @@ async function submit() {
 </script>
 
 <style scoped>
-.page {
-  padding: 48rpx;
-  min-height: 100vh;
-  box-sizing: border-box;
-}
 .title {
   display: block;
   font-size: 40rpx;
   font-weight: 600;
-  color: #333;
+  color: var(--nb-text);
 }
 .sub {
   display: block;
   margin: 16rpx 0 40rpx;
   font-size: 26rpx;
-  color: #888;
+  color: var(--nb-text-secondary);
   line-height: 1.5;
-}
-.card {
-  background: #fff;
-  border-radius: 16rpx;
-  padding: 32rpx;
-  margin-bottom: 24rpx;
-  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
-  border: 2rpx solid #f0e0d0;
 }
 .card-title {
   display: block;
   font-size: 32rpx;
   font-weight: 600;
-  color: #c45c26;
+  color: var(--nb-primary);
 }
 .card-desc {
   display: block;
   margin-top: 8rpx;
   font-size: 24rpx;
-  color: #888;
+  color: var(--nb-text-muted);
   line-height: 1.5;
 }
 .input {
   margin: 32rpx 0 24rpx;
-  padding: 20rpx;
-  border: 1px solid #ddd;
-  border-radius: 8rpx;
 }
 .btn-primary {
   margin-top: 24rpx;
-  background: #c45c26;
-  color: #fff;
-  border-radius: 12rpx;
 }
 .back {
   display: block;
   margin-top: 40rpx;
   text-align: center;
-  color: #c45c26;
+  color: var(--nb-primary);
   font-size: 28rpx;
 }
 </style>

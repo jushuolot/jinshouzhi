@@ -1,0 +1,151 @@
+/**
+ * 暖伴勤工 · 全局主题（login-bg-kawaii 柔和暖色盘）
+ * 与 config/brand.ts 保持同步
+ */
+page {
+  --nb-peach: #fff5eb;
+  --nb-cream: #fff8f0;
+  --nb-cream-deep: #ffefe0;
+  --nb-page-bg: #faf7f4;
+  --nb-surface: #ffffff;
+  --nb-surface-muted: #faf7f4;
+  --nb-primary: #c45c26;
+  --nb-primary-light: #e88b4a;
+  --nb-primary-soft: #fff5ef;
+  --nb-primary-gradient: linear-gradient(135deg, #e88b4a 0%, #c45c26 100%);
+  --nb-hero-gradient: linear-gradient(135deg, #fff8f0, #ffffff);
+  --nb-text: #3d2a1f;
+  --nb-text-secondary: #6b5748;
+  --nb-text-muted: #a89488;
+  --nb-text-placeholder: #b8a99e;
+  --nb-border: #f0e6dc;
+  --nb-border-light: #ebe0d6;
+  --nb-border-dashed: #e8c4a8;
+  --nb-shadow-card: 0 12rpx 48rpx rgba(61, 42, 31, 0.08);
+  --nb-shadow-soft: 0 4rpx 16rpx rgba(61, 42, 31, 0.06);
+  --nb-shadow-primary: 0 12rpx 32rpx rgba(196, 92, 38, 0.28);
+  --nb-radius-lg: 28rpx;
+  --nb-radius-md: 16rpx;
+  --nb-radius-sm: 12rpx;
+  --nb-radius-pill: 48rpx;
+  --nb-dark-bg: #1f1a24;
+  --nb-dark-surface: #2a2330;
+  --nb-dark-surface-alt: #352d3a;
+  --nb-dark-text: #f0ebe6;
+  --nb-dark-text-muted: #b8a99e;
+  --nb-dark-gradient: linear-gradient(160deg, #1f1a24 0%, #2a2330 50%, #352d3a 100%);
+
+  background-color: var(--nb-page-bg);
+  color: var(--nb-text);
+  font-size: 16px;
+}
+
+page.elder-mode {
+  font-size: 18px;
+}
+
+/* 深色全屏页 */
+page[data-page='pages/common/god-view'],
+page[data-page='pages/common/demo-tour'] {
+  background-color: var(--nb-dark-bg);
+  color: var(--nb-dark-text);
+}
+
+/* —— 布局与卡片 —— */
+.nb-page {
+  min-height: 100vh;
+  background: var(--nb-page-bg);
+  padding: 24rpx;
+  padding-bottom: 120rpx;
+  box-sizing: border-box;
+}
+
+.nb-page-padded {
+  min-height: 100vh;
+  background: var(--nb-page-bg);
+  padding: 48rpx;
+  box-sizing: border-box;
+}
+
+.nb-hero {
+  background: var(--nb-hero-gradient);
+  padding: 36rpx 28rpx;
+  border-radius: var(--nb-radius-md);
+  margin-bottom: 24rpx;
+  box-shadow: var(--nb-shadow-soft);
+}
+
+.nb-card {
+  background: var(--nb-surface);
+  border-radius: var(--nb-radius-md);
+  padding: 32rpx;
+  margin-bottom: 24rpx;
+  box-shadow: var(--nb-shadow-soft);
+  border: 2rpx solid var(--nb-border);
+}
+
+.nb-card-interactive:active {
+  opacity: 0.92;
+}
+
+.nb-stats-card {
+  display: flex;
+  background: var(--nb-surface);
+  border-radius: var(--nb-radius-md);
+  padding: 32rpx 0;
+  margin-bottom: 32rpx;
+  box-shadow: var(--nb-shadow-soft);
+}
+
+.nb-section-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: var(--nb-text);
+  margin-bottom: 16rpx;
+}
+
+/* —— 按钮 —— */
+.nb-btn-primary {
+  height: 96rpx;
+  line-height: 96rpx;
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #fff;
+  background: var(--nb-primary-gradient);
+  border: none;
+  border-radius: var(--nb-radius-pill);
+  box-shadow: var(--nb-shadow-primary);
+}
+
+.nb-btn-primary::after {
+  border: none;
+}
+
+.nb-btn-soft {
+  height: 88rpx;
+  line-height: 88rpx;
+  font-size: 28rpx;
+  color: var(--nb-primary);
+  background: var(--nb-primary-soft);
+  border: 2rpx solid var(--nb-border-dashed);
+  border-radius: 44rpx;
+}
+
+.nb-btn-soft::after {
+  border: none;
+}
+
+/* —— 表单 —— */
+.nb-input {
+  padding: 20rpx 24rpx;
+  background: var(--nb-surface-muted);
+  border: 2rpx solid var(--nb-border);
+  border-radius: var(--nb-radius-sm);
+  font-size: 30rpx;
+  color: var(--nb-text);
+}
+
+.nb-link {
+  color: var(--nb-primary);
+  font-size: 28rpx;
+}

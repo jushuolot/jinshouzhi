@@ -39,7 +39,7 @@ const props = withDefaults(
     ctaText?: string;
   }>(),
   {
-    avatarBg: '#c45c26',
+    avatarBg: 'var(--nb-primary)',
   }
 );
 
@@ -56,11 +56,12 @@ function onTap() {
 .person-card {
   display: flex;
   align-items: flex-start;
-  background: #fff;
+  background: var(--nb-surface);
   padding: 28rpx 24rpx;
   margin-bottom: 16rpx;
-  border-radius: 16rpx;
-  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
+  border-radius: var(--nb-radius-md);
+  box-shadow: var(--nb-shadow-soft);
+  border: 2rpx solid var(--nb-border);
 }
 .avatar {
   width: 96rpx;
@@ -89,18 +90,18 @@ function onTap() {
 .name {
   font-size: 32rpx;
   font-weight: 600;
-  color: #333;
+  color: var(--nb-text);
 }
 .rating {
   font-size: 24rpx;
-  color: #f5a623;
+  color: var(--nb-primary-light);
   font-weight: 600;
 }
 .subtitle {
   display: block;
   margin-top: 6rpx;
   font-size: 24rpx;
-  color: #888;
+  color: var(--nb-text-muted);
 }
 .tags {
   display: flex;
@@ -111,8 +112,8 @@ function onTap() {
 .tag {
   padding: 4rpx 14rpx;
   font-size: 20rpx;
-  color: #c45c26;
-  background: #fff5ef;
+  color: var(--nb-primary);
+  background: var(--nb-primary-soft);
   border-radius: 20rpx;
 }
 .row-bottom {
@@ -123,11 +124,11 @@ function onTap() {
 }
 .distance {
   font-size: 22rpx;
-  color: #666;
+  color: var(--nb-text-secondary);
 }
 .extra {
   font-size: 22rpx;
-  color: #999;
+  color: var(--nb-text-muted);
 }
 .cta-wrap {
   flex-shrink: 0;
@@ -139,7 +140,8 @@ function onTap() {
   padding: 12rpx 24rpx;
   font-size: 24rpx;
   color: #fff;
-  background: #c45c26;
+  background: var(--nb-primary-gradient);
   border-radius: 32rpx;
+  box-shadow: 0 4rpx 12rpx rgba(196, 92, 38, 0.2);
 }
 </style>

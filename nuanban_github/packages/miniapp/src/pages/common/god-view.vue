@@ -224,8 +224,8 @@ function goShare() {
 <style scoped>
 .page {
   min-height: 100vh;
-  background: #1a1a2e;
-  color: #eee;
+  background: var(--nb-dark-gradient);
+  color: var(--nb-dark-text);
   padding: 32rpx;
   padding-bottom: 80rpx;
   box-sizing: border-box;
@@ -233,7 +233,7 @@ function goShare() {
 .eyebrow {
   display: block;
   font-size: 22rpx;
-  color: #c45c26;
+  color: var(--nb-primary-light);
   letter-spacing: 2rpx;
 }
 .title {
@@ -246,16 +246,16 @@ function goShare() {
   display: block;
   margin: 16rpx 0 20rpx;
   font-size: 26rpx;
-  color: #aaa;
+  color: var(--nb-dark-text-muted);
   line-height: 1.5;
 }
 .tour-banner {
   display: flex;
   align-items: center;
   gap: 16rpx;
-  background: linear-gradient(135deg, #2d1f3d, #1a2744);
-  border: 2rpx solid #e88b4a;
-  border-radius: 16rpx;
+  background: linear-gradient(135deg, var(--nb-dark-surface-alt), var(--nb-dark-surface));
+  border: 2rpx solid var(--nb-primary-light);
+  border-radius: var(--nb-radius-md);
   padding: 28rpx 24rpx;
   margin-bottom: 24rpx;
 }
@@ -275,16 +275,16 @@ function goShare() {
   display: block;
   margin-top: 6rpx;
   font-size: 22rpx;
-  color: #e88b4a;
+  color: var(--nb-primary-light);
 }
 .tour-cta {
   font-size: 28rpx;
-  color: #e88b4a;
+  color: var(--nb-primary-light);
   font-weight: 600;
 }
 .completion-card {
-  background: linear-gradient(135deg, #c45c26, #e88b4a);
-  border-radius: 16rpx;
+  background: var(--nb-primary-gradient);
+  border-radius: var(--nb-radius-md);
   padding: 36rpx;
   text-align: center;
   margin-bottom: 24rpx;
@@ -302,9 +302,9 @@ function goShare() {
 }
 .match-highlight {
   text-align: center;
-  background: #16213e;
-  border: 2rpx solid #e88b4a;
-  border-radius: 16rpx;
+  background: var(--nb-dark-surface);
+  border: 2rpx solid var(--nb-primary-light);
+  border-radius: var(--nb-radius-md);
   padding: 28rpx;
   margin-bottom: 24rpx;
 }
@@ -312,13 +312,13 @@ function goShare() {
   display: block;
   font-size: 56rpx;
   font-weight: 700;
-  color: #e88b4a;
+  color: var(--nb-primary-light);
 }
 .match-label {
   display: block;
   margin-top: 8rpx;
   font-size: 24rpx;
-  color: #aaa;
+  color: var(--nb-dark-text-muted);
 }
 .audit {
   display: block;
@@ -334,8 +334,8 @@ function goShare() {
 }
 .kpi {
   width: calc(50% - 6rpx);
-  background: #16213e;
-  border-radius: 12rpx;
+  background: var(--nb-dark-surface);
+  border-radius: var(--nb-radius-sm);
   padding: 24rpx;
   box-sizing: border-box;
 }
@@ -345,13 +345,13 @@ function goShare() {
   font-weight: 600;
 }
 .kpi-num.accent {
-  color: #e88b4a;
+  color: var(--nb-primary-light);
 }
 .kpi-label {
   display: block;
   margin-top: 6rpx;
   font-size: 22rpx;
-  color: #888;
+  color: var(--nb-dark-text-muted);
 }
 .section {
   display: block;
@@ -360,8 +360,8 @@ function goShare() {
   margin: 24rpx 0 16rpx;
 }
 .path-card {
-  background: #16213e;
-  border-radius: 12rpx;
+  background: var(--nb-dark-surface);
+  border-radius: var(--nb-radius-sm);
   padding: 24rpx;
   margin-bottom: 12rpx;
 }
@@ -384,56 +384,56 @@ function goShare() {
   color: #95d5b2;
 }
 .badge.demo {
-  background: #3d2c1a;
-  color: #e9c46a;
+  background: #4a3528;
+  color: var(--nb-primary-light);
 }
 .badge.planned {
-  background: #333;
-  color: #999;
+  background: var(--nb-dark-surface-alt);
+  color: var(--nb-dark-text-muted);
 }
 .path-desc {
   display: block;
   margin-top: 10rpx;
   font-size: 24rpx;
-  color: #999;
+  color: var(--nb-dark-text-muted);
 }
 .path-metric {
   display: block;
   margin-top: 8rpx;
   font-size: 26rpx;
-  color: #e88b4a;
+  color: var(--nb-primary-light);
 }
 .checklist text {
   display: block;
   font-size: 24rpx;
-  color: #bbb;
+  color: var(--nb-dark-text-muted);
   margin-bottom: 12rpx;
   line-height: 1.5;
 }
 .btn {
   margin-top: 32rpx;
-  background: #c45c26;
+  background: var(--nb-primary-gradient);
   color: #fff;
-  border-radius: 12rpx;
+  border-radius: var(--nb-radius-sm);
 }
 .btn-outline {
   margin-top: 16rpx;
   background: transparent;
-  color: #e88b4a;
-  border: 1rpx solid #e88b4a;
-  border-radius: 12rpx;
+  color: var(--nb-primary-light);
+  border: 1rpx solid var(--nb-primary-light);
+  border-radius: var(--nb-radius-sm);
 }
 .err {
   display: block;
   margin-top: 16rpx;
   font-size: 22rpx;
-  color: #e9c46a;
+  color: var(--nb-primary-light);
 }
 .ts {
   display: block;
   margin-top: 24rpx;
   text-align: center;
   font-size: 22rpx;
-  color: #666;
+  color: var(--nb-dark-text-muted);
 }
 </style>

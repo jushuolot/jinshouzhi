@@ -1,5 +1,5 @@
 <template>
-  <view class="page">
+  <view class="page nb-page">
     <view class="hero">
       <view class="hero-top">
         <view>
@@ -211,17 +211,12 @@ function openElder(e: ElderPreview) {
 </script>
 
 <style scoped>
-.page {
-  min-height: 100vh;
-  background: #f5f5f5;
-  padding: 24rpx;
-  padding-bottom: 120rpx;
-}
 .hero {
-  background: linear-gradient(135deg, #fff8f0, #fff);
+  background: var(--nb-hero-gradient);
   padding: 36rpx 28rpx;
-  border-radius: 16rpx;
+  border-radius: var(--nb-radius-md);
   margin-bottom: 24rpx;
+  box-shadow: var(--nb-shadow-soft);
 }
 .hero-top {
   display: flex;
@@ -232,33 +227,34 @@ function openElder(e: ElderPreview) {
   display: block;
   font-size: 40rpx;
   font-weight: 600;
-  color: #333;
+  color: var(--nb-text);
 }
 .school {
   display: block;
   margin-top: 8rpx;
   font-size: 24rpx;
-  color: #888;
+  color: var(--nb-text-muted);
 }
 .mission {
   display: block;
   margin-top: 8rpx;
   font-size: 22rpx;
-  color: #c45c26;
+  color: var(--nb-primary);
 }
 .badge {
   padding: 8rpx 20rpx;
-  background: #c45c26;
+  background: var(--nb-primary-gradient);
   color: #fff;
   font-size: 24rpx;
   border-radius: 24rpx;
 }
 .stats-card {
   display: flex;
-  background: #fff;
-  border-radius: 16rpx;
+  background: var(--nb-surface);
+  border-radius: var(--nb-radius-md);
   padding: 32rpx 0;
   margin-bottom: 32rpx;
+  box-shadow: var(--nb-shadow-soft);
 }
 .stat-item {
   flex: 1;
@@ -267,28 +263,28 @@ function openElder(e: ElderPreview) {
 .stat-divider {
   width: 1rpx;
   height: 60rpx;
-  background: #eee;
+  background: var(--nb-border);
   align-self: center;
 }
 .stat-num {
   display: block;
   font-size: 32rpx;
   font-weight: 600;
-  color: #333;
+  color: var(--nb-text);
 }
 .stat-num.accent {
-  color: #c45c26;
+  color: var(--nb-primary);
 }
 .stat-label {
   display: block;
   margin-top: 8rpx;
   font-size: 22rpx;
-  color: #999;
+  color: var(--nb-text-muted);
 }
 .section-title {
   font-size: 28rpx;
   font-weight: 600;
-  color: #333;
+  color: var(--nb-text);
   margin-bottom: 16rpx;
 }
 .sos-banner {
@@ -314,7 +310,7 @@ function openElder(e: ElderPreview) {
   display: block;
   margin-top: 4rpx;
   font-size: 24rpx;
-  color: #888;
+  color: var(--nb-text-muted);
 }
 .quick-grid {
   display: flex;
@@ -324,9 +320,10 @@ function openElder(e: ElderPreview) {
 }
 .quick-item {
   flex: 1 1 40%;
-  background: #fff;
-  border-radius: 16rpx;
+  background: var(--nb-surface);
+  border-radius: var(--nb-radius-md);
   padding: 28rpx 16rpx;
+  box-shadow: var(--nb-shadow-soft);
   text-align: center;
   position: relative;
 }
@@ -338,7 +335,7 @@ function openElder(e: ElderPreview) {
   display: block;
   margin-top: 8rpx;
   font-size: 24rpx;
-  color: #666;
+  color: var(--nb-text-secondary);
 }
 .quick-badge {
   position: absolute;
@@ -350,8 +347,8 @@ function openElder(e: ElderPreview) {
   padding: 0 8rpx;
   font-size: 20rpx;
   color: #fff;
-  background: #c45c26;
-  border-radius: 16rpx;
+  background: var(--nb-primary);
+  border-radius: var(--nb-radius-md);
 }
 .error {
   margin-top: 24rpx;

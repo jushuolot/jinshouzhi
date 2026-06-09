@@ -32,19 +32,21 @@ function go(url: string) {
   right: 0;
   bottom: 0;
   display: flex;
-  background: #fff;
-  border-top: 1rpx solid #eee;
+  background: rgba(255, 252, 248, 0.96);
+  border-top: 1rpx solid var(--nb-border);
   padding-bottom: env(safe-area-inset-bottom);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 -4rpx 24rpx rgba(61, 42, 31, 0.06);
 }
 .item {
   flex: 1;
   text-align: center;
   padding: 20rpx 0;
   font-size: 26rpx;
-  color: #666;
+  color: var(--nb-text-secondary);
 }
 .item.active {
-  color: #c45c26;
+  color: var(--nb-primary);
   font-weight: 600;
 }
 </style>

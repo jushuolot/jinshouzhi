@@ -1,5 +1,5 @@
 <template>
-  <view class="page elder-mode" :class="fontClass">
+  <view class="page nb-page elder-mode" :class="fontClass">
     <view class="hero">
       <text class="h1">您好，{{ stats?.elderName || '长辈' }}</text>
       <text class="sub">{{ orgName }}</text>
@@ -87,36 +87,32 @@ async function sos() {
 </script>
 
 <style scoped>
-.page {
-  min-height: 100vh;
-  background: #f5f5f5;
-  padding: 24rpx;
-  padding-bottom: 120rpx;
-}
 .hero {
-  background: linear-gradient(135deg, #fff8f0, #fff);
+  background: var(--nb-hero-gradient);
   padding: 40rpx 32rpx;
-  border-radius: 16rpx;
+  border-radius: var(--nb-radius-md);
   margin-bottom: 24rpx;
+  box-shadow: var(--nb-shadow-soft);
 }
 .hero .h1 {
   display: block;
   font-size: 44rpx;
   font-weight: 600;
-  color: #333;
+  color: var(--nb-text);
 }
 .sub {
   display: block;
   margin-top: 12rpx;
   font-size: 26rpx;
-  color: #888;
+  color: var(--nb-text-muted);
 }
 .stats-card {
   display: flex;
-  background: #fff;
-  border-radius: 16rpx;
+  background: var(--nb-surface);
+  border-radius: var(--nb-radius-md);
   padding: 32rpx 0;
   margin-bottom: 32rpx;
+  box-shadow: var(--nb-shadow-soft);
 }
 .stat-item {
   flex: 1;
@@ -125,29 +121,29 @@ async function sos() {
 .stat-divider {
   width: 1rpx;
   height: 60rpx;
-  background: #eee;
+  background: var(--nb-border);
   align-self: center;
 }
 .stat-num {
   display: block;
   font-size: 36rpx;
   font-weight: 600;
-  color: #333;
+  color: var(--nb-text);
 }
 .stat-num.accent {
-  color: #c45c26;
+  color: var(--nb-primary);
 }
 .stat-label {
   display: block;
   margin-top: 8rpx;
   font-size: 22rpx;
-  color: #999;
+  color: var(--nb-text-muted);
 }
 .section-title {
   font-size: 28rpx;
   font-weight: 600;
   margin-bottom: 16rpx;
-  color: #333;
+  color: var(--nb-text);
 }
 .quick-grid {
   display: flex;
@@ -157,17 +153,19 @@ async function sos() {
 .quick-item {
   display: flex;
   align-items: center;
-  background: #fff;
+  background: var(--nb-surface);
   padding: 32rpx 28rpx;
-  border-radius: 16rpx;
+  border-radius: var(--nb-radius-md);
+  box-shadow: var(--nb-shadow-soft);
 }
 .quick-item.primary {
-  background: linear-gradient(135deg, #c45c26, #d4734a);
+  background: var(--nb-primary-gradient);
   color: #fff;
+  box-shadow: var(--nb-shadow-primary);
 }
 .quick-item.warn {
-  border: 2rpx solid #ffcdd2;
-  background: #fff8f8;
+  border: 2rpx solid #f5d0d0;
+  background: #fff8f6;
 }
 .quick-icon {
   font-size: 44rpx;

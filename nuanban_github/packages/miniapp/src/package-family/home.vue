@@ -1,5 +1,5 @@
 <template>
-  <view class="page">
+  <view class="page nb-page">
     <view class="hero">
       <text class="title">家属中心</text>
       <text class="sub">代付 · 外出审批 · 绑定老人</text>
@@ -208,35 +208,32 @@ async function goSos() {
 </script>
 
 <style scoped>
-.page {
-  min-height: 100vh;
-  background: #f5f5f5;
-  padding: 24rpx;
-  padding-bottom: 120rpx;
-}
 .hero {
-  background: linear-gradient(135deg, #fff8f0, #fff);
+  background: var(--nb-hero-gradient);
   padding: 36rpx 28rpx;
-  border-radius: 16rpx;
+  border-radius: var(--nb-radius-md);
   margin-bottom: 24rpx;
+  box-shadow: var(--nb-shadow-soft);
 }
 .title {
   display: block;
   font-size: 40rpx;
   font-weight: 600;
+  color: var(--nb-text);
 }
 .sub {
   display: block;
   margin-top: 8rpx;
   font-size: 24rpx;
-  color: #888;
+  color: var(--nb-text-muted);
 }
 .stats-card {
   display: flex;
-  background: #fff;
-  border-radius: 16rpx;
+  background: var(--nb-surface);
+  border-radius: var(--nb-radius-md);
   padding: 32rpx 0;
   margin-bottom: 32rpx;
+  box-shadow: var(--nb-shadow-soft);
 }
 .stat-item {
   flex: 1;
@@ -245,43 +242,45 @@ async function goSos() {
 .stat-divider {
   width: 1rpx;
   height: 60rpx;
-  background: #eee;
+  background: var(--nb-border);
   align-self: center;
 }
 .stat-num {
   display: block;
   font-size: 32rpx;
   font-weight: 600;
+  color: var(--nb-text);
 }
 .stat-num.accent {
-  color: #c45c26;
+  color: var(--nb-primary);
 }
 .stat-label {
   display: block;
   margin-top: 8rpx;
   font-size: 22rpx;
-  color: #999;
+  color: var(--nb-text-muted);
 }
 .section-title {
   font-size: 28rpx;
   font-weight: 600;
   margin-bottom: 16rpx;
-  color: #333;
+  color: var(--nb-text);
 }
 .elder-card {
   display: flex;
   align-items: center;
-  background: #fff;
+  background: var(--nb-surface);
   padding: 24rpx;
-  border-radius: 16rpx;
+  border-radius: var(--nb-radius-md);
   margin-bottom: 12rpx;
+  box-shadow: var(--nb-shadow-soft);
 }
 .elder-avatar {
   width: 72rpx;
   height: 72rpx;
   line-height: 72rpx;
   text-align: center;
-  background: #c45c26;
+  background: var(--nb-primary-gradient);
   color: #fff;
   border-radius: 50%;
   font-size: 32rpx;
@@ -296,16 +295,16 @@ async function goSos() {
   display: block;
   margin-top: 4rpx;
   font-size: 24rpx;
-  color: #888;
+  color: var(--nb-text-muted);
 }
 .empty-hint {
   font-size: 24rpx;
-  color: #bbb;
+  color: var(--nb-text-placeholder);
   margin-bottom: 24rpx;
 }
 .bind-link {
   text-align: center;
-  color: #c45c26;
+  color: var(--nb-primary);
   font-size: 28rpx;
   padding: 16rpx 0 24rpx;
 }
@@ -313,18 +312,19 @@ async function goSos() {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #fff;
+  background: var(--nb-surface);
   padding: 28rpx 24rpx;
-  border-radius: 16rpx;
+  border-radius: var(--nb-radius-md);
   margin-bottom: 16rpx;
+  box-shadow: var(--nb-shadow-soft);
 }
 .todo-card.highlight {
-  border: 2rpx solid #f0dcc8;
-  background: #fffaf5;
+  border: 2rpx solid var(--nb-border-dashed);
+  background: var(--nb-peach);
 }
 .todo-card.sos {
-  border: 2rpx solid #ef9a9a;
-  background: #fff8f8;
+  border: 2rpx solid #f5d0d0;
+  background: #fff8f6;
 }
 .todo-left {
   display: flex;
@@ -343,10 +343,10 @@ async function goSos() {
   display: block;
   margin-top: 4rpx;
   font-size: 24rpx;
-  color: #888;
+  color: var(--nb-text-muted);
 }
 .chevron {
   font-size: 36rpx;
-  color: #ccc;
+  color: var(--nb-text-placeholder);
 }
 </style>

@@ -1,13 +1,14 @@
 <template>
-  <view class="page">
+  <view class="page nb-page-padded">
     <text class="title">请选择使用身份</text>
+    <text class="sub">可随时在「我的」中切换身份</text>
     <view
       v-for="r in roleStore.activeRoles"
       :key="r.role"
-      class="card"
+      class="card nb-card nb-card-interactive"
       @tap="select(r.role)"
     >
-      <text>{{ roleLabel[r.role] }}</text>
+      <text class="card-label">{{ roleLabel[r.role] }}</text>
     </view>
   </view>
 </template>
@@ -40,18 +41,21 @@ async function select(role: RoleKey) {
 </script>
 
 <style scoped>
-.page {
-  padding: 48rpx;
-}
 .title {
-  font-size: 36rpx;
-  margin-bottom: 32rpx;
+  display: block;
+  font-size: 40rpx;
+  font-weight: 600;
+  color: var(--nb-text);
 }
-.card {
-  background: #fff;
-  padding: 32rpx;
-  margin-bottom: 24rpx;
-  border-radius: 12rpx;
+.sub {
+  display: block;
+  margin: 12rpx 0 32rpx;
+  font-size: 26rpx;
+  color: var(--nb-text-secondary);
+}
+.card-label {
   font-size: 32rpx;
+  font-weight: 600;
+  color: var(--nb-primary);
 }
 </style>

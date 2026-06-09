@@ -199,8 +199,8 @@ function goGodView() {
 <style scoped>
 .tour {
   min-height: 100vh;
-  background: linear-gradient(160deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-  color: #eee;
+  background: var(--nb-dark-gradient);
+  color: var(--nb-dark-text);
   padding: 24rpx;
   padding-bottom: 48rpx;
   box-sizing: border-box;
@@ -218,11 +218,11 @@ function goGodView() {
 }
 .tag {
   font-size: 22rpx;
-  color: #e88b4a;
+  color: var(--nb-primary-light);
 }
 .scene-counter {
   font-size: 20rpx;
-  color: #888;
+  color: var(--nb-dark-text-muted);
   letter-spacing: 2rpx;
 }
 .controls {
@@ -235,14 +235,14 @@ function goGodView() {
 }
 .progress-wrap {
   height: 6rpx;
-  background: #2a2a4a;
+  background: var(--nb-dark-surface-alt);
   border-radius: 6rpx;
   margin-bottom: 24rpx;
   overflow: hidden;
 }
 .progress-bar {
   height: 100%;
-  background: linear-gradient(90deg, #c45c26, #e88b4a);
+  background: var(--nb-primary-gradient);
   border-radius: 6rpx;
   transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -294,12 +294,12 @@ function goGodView() {
   display: block;
   margin: 16rpx 0 48rpx;
   font-size: 28rpx;
-  color: #aaa;
+  color: var(--nb-dark-text-muted);
 }
 .scene-label {
   display: block;
   font-size: 24rpx;
-  color: #e88b4a;
+  color: var(--nb-primary-light);
   margin-bottom: 32rpx;
 }
 .orbit {
@@ -311,19 +311,19 @@ function goGodView() {
   margin: 32rpx 0;
 }
 .node {
-  background: #16213e;
+  background: var(--nb-dark-surface);
   padding: 20rpx 28rpx;
-  border-radius: 16rpx;
+  border-radius: var(--nb-radius-md);
   font-size: 28rpx;
 }
 .node.platform {
-  background: #c45c26;
+  background: var(--nb-primary-gradient);
   color: #fff;
 }
 .link-line {
   width: 48rpx;
   height: 4rpx;
-  background: #e88b4a;
+  background: var(--nb-primary-light);
   animation: drawLine 1s ease infinite alternate;
 }
 .link-line.delay {
@@ -355,18 +355,18 @@ function goGodView() {
   display: block;
   margin-top: 40rpx;
   font-size: 24rpx;
-  color: #888;
+  color: var(--nb-dark-text-muted);
 }
 .last-hint {
   display: block;
   margin-top: 20rpx;
   font-size: 22rpx;
-  color: #e88b4a;
+  color: var(--nb-primary-light);
   animation: fadeIn 1s ease 2s both;
 }
 .card {
-  background: #fff;
-  color: #333;
+  background: var(--nb-surface);
+  color: var(--nb-text);
   border-radius: 20rpx;
   padding: 32rpx;
   margin: 0 16rpx;
@@ -397,7 +397,7 @@ function goGodView() {
   height: 72rpx;
   line-height: 72rpx;
   text-align: center;
-  background: #c45c26;
+  background: var(--nb-primary-gradient);
   color: #fff;
   border-radius: 50%;
   font-size: 32rpx;
@@ -413,11 +413,11 @@ function goGodView() {
 .meta {
   display: block;
   font-size: 22rpx;
-  color: #888;
+  color: var(--nb-text-muted);
   margin-top: 6rpx;
 }
 .cta {
-  color: #c45c26;
+  color: var(--nb-primary);
   font-weight: 600;
   font-size: 28rpx;
 }
@@ -442,7 +442,7 @@ function goGodView() {
   position: absolute;
   width: 16rpx;
   height: 16rpx;
-  background: #e88b4a;
+  background: var(--nb-primary-light);
   border-radius: 50%;
   animation: dotPulse 2s ease infinite;
 }
@@ -483,8 +483,8 @@ function goGodView() {
 }
 .badge-new {
   display: inline-block;
-  background: #ffe8dc;
-  color: #c45c26;
+  background: var(--nb-cream-deep);
+  color: var(--nb-primary);
   font-size: 20rpx;
   padding: 4rpx 12rpx;
   border-radius: 8rpx;
@@ -499,17 +499,17 @@ function goGodView() {
   flex: 1;
   text-align: center;
   padding: 16rpx;
-  border: 1rpx solid #ddd;
-  border-radius: 12rpx;
+  border: 1rpx solid var(--nb-border);
+  border-radius: var(--nb-radius-sm);
   font-size: 26rpx;
 }
 .btn-primary {
   flex: 1;
   text-align: center;
   padding: 16rpx;
-  background: #c45c26;
+  background: var(--nb-primary-gradient);
   color: #fff;
-  border-radius: 12rpx;
+  border-radius: var(--nb-radius-sm);
   font-size: 26rpx;
 }
 .glow {
@@ -527,17 +527,17 @@ function goGodView() {
 .pool-hint {
   margin-top: 32rpx;
   font-size: 26rpx;
-  color: #aaa;
+  color: var(--nb-dark-text-muted);
 }
 .count-up {
-  color: #e88b4a;
+  color: var(--nb-primary-light);
   font-size: 40rpx;
   font-weight: 700;
   margin: 0 8rpx;
 }
 .pay-card {
-  background: #fff;
-  color: #333;
+  background: var(--nb-surface);
+  color: var(--nb-text);
   border-radius: 20rpx;
   padding: 48rpx;
   margin: 0 32rpx;
@@ -623,16 +623,16 @@ function goGodView() {
 .tl-dot {
   width: 16rpx;
   height: 16rpx;
-  background: #e88b4a;
+  background: var(--nb-primary-light);
   border-radius: 50%;
 }
 .tl-text {
   font-size: 26rpx;
-  color: #ccc;
+  color: var(--nb-dark-text-muted);
 }
 .income-card {
-  background: linear-gradient(135deg, #c45c26, #e88b4a);
-  border-radius: 16rpx;
+  background: var(--nb-primary-gradient);
+  border-radius: var(--nb-radius-md);
   padding: 32rpx;
   margin: 0 32rpx;
 }
@@ -667,11 +667,11 @@ function goGodView() {
   width: 16rpx;
   height: 16rpx;
   border-radius: 50%;
-  background: #444;
+  background: var(--nb-dark-surface-alt);
   transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
 .dot-item.on {
-  background: #e88b4a;
+  background: var(--nb-primary-light);
   width: 32rpx;
   border-radius: 8rpx;
 }
@@ -679,15 +679,15 @@ function goGodView() {
   margin-top: 16rpx;
 }
 .btn {
-  background: #c45c26;
+  background: var(--nb-primary-gradient);
   color: #fff;
-  border-radius: 12rpx;
+  border-radius: var(--nb-radius-sm);
 }
 .btn-outline {
   margin-top: 16rpx;
   background: transparent;
-  color: #e88b4a;
-  border: 1rpx solid #e88b4a;
-  border-radius: 12rpx;
+  color: var(--nb-primary-light);
+  border: 1rpx solid var(--nb-primary-light);
+  border-radius: var(--nb-radius-sm);
 }
 </style>
