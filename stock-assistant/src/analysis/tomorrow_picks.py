@@ -26,6 +26,7 @@ from src.analysis.daily_picks import (
     rank_global_from_ranking,
 )
 from src.analysis.signals import add_indicators, score_stock
+from src.analysis.stock_quality import evaluate_stock_quality
 
 FetchFn = Callable[..., tuple[pd.DataFrame, str]]
 
@@ -184,17 +185,18 @@ def analyze_tomorrow_from_kline(
         score += 5
 
     if turnover_pct is not None and turnover_pct >= 3:
-        score += min(8.0, turnover_pct * 0.8)
+        score += min(5.0, turnover_pct * 0.5)
 
     if tech is not None:
-        score += (tech - 50) * 0.35
+        score += (tech - 50) * 0.22
 
-    score = float(np.clip(score, 0, 100))
+    score = float(np.clip(score, 0, 92))
 
-    if score >= 72 and pattern in (PATTERN_CONTINUATION, PATTERN_BREAKOUT):
+    buy_th = 78 if pattern == PATTERN_PULLBACK else 76
+    if score >= buy_th and pattern in (PATTERN_CONTINUATION, PATTERN_BREAKOUT, PATTERN_PULLBACK):
         signal = SIGNAL_TOMORROW_BUY
         hold = "1–3天"
-    elif score >= 58:
+    elif score >= 62:
         signal = SIGNAL_TOMORROW_WATCH
         hold = "1–2天"
     else:
@@ -262,6 +264,7 @@ def rank_tomorrow_a_picks(
         "no_kline": 0,
         "low_score": 0,
         "errors": 0,
+        "skipped_quality": 0,
         "mode": "tomorrow_predict",
     }
     if universe is None or universe.empty:
@@ -329,21 +332,39 @@ def rank_tomorrow_a_picks(
 
         price = _f(df["收盘"].iloc[-1]) if "收盘" in df.columns else None
         sig = SIGNAL_BUY if ta.signal == SIGNAL_TOMORROW_BUY else SIGNAL_WATCH
+        qv = evaluate_stock_quality(item["代码"])
+        if not qv.ok:
+            stats["skipped_quality"] = int(stats.get("skipped_quality") or 0) + 1
+            continue
+        adj = float(np.clip(ta.tomorrow_score + qv.score_delta, 0, 95))
+        if adj < 62:
+            stats["low_score"] += 1
+            continue
+        sig = SIGNAL_BUY if (ta.signal == SIGNAL_TOMORROW_BUY and adj >= 74) else SIGNAL_WATCH
+        reason = f"[{ta.pattern}] {ta.reason}{qv.reason_suffix()}"
         pick = DailyPick(
             code=item["代码"],
             name=item["名称"],
-            score=ta.tomorrow_score,
+            score=round(adj, 1),
             pct=list_pct,
             signal=sig,
             hold_days=ta.hold_days,
-            reason=f"[{ta.pattern}] {ta.reason}",
+            reason=reason,
             price=price,
             market="A股",
         )
-        scored.append((pick, ta.tomorrow_score))
+        scored.append((pick, adj, item["代码"][:3]))
 
     scored.sort(key=lambda x: -x[1])
-    picks = [p for p, _ in scored[:max_picks]]
+    picks: list[DailyPick] = []
+    prefix_count: dict[str, int] = {}
+    for pick, adj, prefix in scored:
+        if prefix_count.get(prefix, 0) >= 2:
+            continue
+        picks.append(pick)
+        prefix_count[prefix] = prefix_count.get(prefix, 0) + 1
+        if len(picks) >= max_picks:
+            break
 
     if not picks and candidates:
         for item, list_pct, turn in candidates[:max_picks]:

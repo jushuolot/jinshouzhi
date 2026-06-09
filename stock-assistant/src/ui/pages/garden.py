@@ -35,6 +35,7 @@ from src.util.cloud_runtime import cloud_mode_label, is_streamlit_cloud
 from src.util.buddha_nightly_brief import build_nightly_brief, brief_to_markdown
 from src.util.buddha_ritual import build_ritual_meta, probe_a_market, ritual_banner_lines
 from src.util.data_date_label import build_listing_caption, today_label_cn
+from src.util.garden_selection_doc import SELECTION_CRITERIA_MD
 from src.util.readonly_mode import is_readonly_mode
 
 
@@ -551,6 +552,9 @@ def render() -> None:
                     }
                 )
             st.dataframe(pd.DataFrame(hrows), use_container_width=True, hide_index=True)
+
+    with st.expander("📖 明日推荐怎么选的？（选股依据）", expanded=False):
+        st.markdown(SELECTION_CRITERIA_MD)
 
     with st.expander("🌙 成长日记（给「佛祖」每晚看一眼）", expanded=False):
         st.markdown(
