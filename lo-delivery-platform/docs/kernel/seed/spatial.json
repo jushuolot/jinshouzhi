@@ -1,0 +1,13 @@
+{
+  "spatial": [
+    { "id": "universe", "level": "universe", "parentId": null, "labelZh": "宇宙", "labelEn": "Universe" },
+    { "id": "earth", "level": "planet", "parentId": "universe", "labelZh": "地球", "labelEn": "Earth" },
+    { "id": "asia", "level": "region", "parentId": "earth", "labelZh": "亚洲", "labelEn": "Asia" },
+    { "id": "cn", "level": "nation", "parentId": "asia", "labelZh": "中国", "labelEn": "China", "lat": 35.86, "lng": 104.19 },
+    { "id": "jjj", "level": "corridor", "parentId": "cn", "labelZh": "京津冀", "labelEn": "Jing-Jin-Ji", "lat": 39.5, "lng": 116.4 },
+    { "id": "beijing", "level": "metro", "parentId": "jjj", "labelZh": "北京", "labelEn": "Beijing", "lat": 39.904, "lng": 116.407 },
+    { "id": "bj-west-hub", "level": "hub", "parentId": "beijing", "labelZh": "西站枢纽", "labelEn": "West Station Hub", "lat": 39.894, "lng": 116.322 },
+    { "id": "bj-shunyi-wh", "level": "facility", "parentId": "beijing", "labelZh": "顺义仓", "labelEn": "Shunyi WH", "lat": 40.13, "lng": 116.65 },
+    { "id": "bj-yanqing-cell", "level": "cell", "parentId": "beijing", "labelZh": "延庆乡村点", "labelEn": "Yanqing Village", "lat": 40.45, "lng": 115.97 }
+  ]
+}
