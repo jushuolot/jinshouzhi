@@ -76,7 +76,9 @@ def _render_pick_review(pick_log: list, *, readonly: bool) -> None:
 
     col_r1, col_r2 = st.columns([2, 1])
     with col_r1:
-        do_refresh = not readonly and st.button("🔄 刷新 3 日复盘", use_container_width=False)
+        do_refresh = not readonly and st.button(
+            "🔄 刷新 3 日复盘", use_container_width=False, key="garden_refresh_pick_review"
+        )
     with col_r2:
         pass
 
@@ -162,7 +164,9 @@ def _render_market_outlook(readonly: bool, fetch_ranking) -> None:
 
     col_o1, col_o2 = st.columns([2, 1])
     with col_o1:
-        if not readonly and st.button("🔄 刷新大盘长线分析", use_container_width=False):
+        if not readonly and st.button(
+            "🔄 刷新大盘长线分析", use_container_width=False, key="garden_refresh_outlook"
+        ):
             with st.spinner("拉取指数K线与市场广度…"):
                 mo = compute_market_outlook(fetch_ranking=fetch_ranking)
                 st.session_state.market_outlook = mo.as_dict()
@@ -193,46 +197,48 @@ def _render_market_outlook(readonly: bool, fetch_ranking) -> None:
     if drivers:
         st.caption("依据：" + " · ".join(drivers[:5]))
 
-    with st.expander("指数快照与下载", expanded=False):
-        idx_rows = []
-        for i in outlook.get("indices") or []:
-            if not i.get("close"):
-                continue
-            idx_rows.append(
-                {
-                    "指数": i.get("name"),
-                    "趋势": i.get("trend"),
-                    "5日%": i.get("pct_5d"),
-                    "20日%": i.get("pct_20d"),
-                    "距20日高%": i.get("drawdown_20d_pct"),
-                }
-            )
-        if idx_rows:
-            st.dataframe(pd.DataFrame(idx_rows), use_container_width=True, hide_index=True)
+    # Streamlit 不允许 expander 内嵌 download_button，用 toggle 代替折叠
+    show_idx = st.toggle("显示指数快照", value=False, key="garden_outlook_show_idx")
+    idx_rows = []
+    for i in outlook.get("indices") or []:
+        if not i.get("close"):
+            continue
+        idx_rows.append(
+            {
+                "指数": i.get("name"),
+                "趋势": i.get("trend"),
+                "5日%": i.get("pct_5d"),
+                "20日%": i.get("pct_20d"),
+                "距20日高%": i.get("drawdown_20d_pct"),
+            }
+        )
+    from src.analysis.market_outlook import MarketOutlook, IndexSnapshot
+
+    mo_obj = MarketOutlook(
+        as_of=str(outlook.get("as_of") or ""),
+        crash_prob_1_2w_pct=prob,
+        crash_label=str(outlook.get("crash_label") or ""),
+        outlook_2w=str(outlook.get("outlook_2w") or ""),
+        outlook_4_8w=str(outlook.get("outlook_4_8w") or ""),
+        breadth_adv_pct=outlook.get("breadth_adv_pct"),
+        indices=[IndexSnapshot(**{k: i.get(k) for k in (
+            "ticker", "name", "region", "close", "pct_5d", "pct_20d",
+            "drawdown_20d_pct", "above_ma20", "trend", "vol_ratio",
+        )}) for i in (outlook.get("indices") or []) if i.get("close")],
+        drivers=list(drivers),
+        advice=str(outlook.get("advice") or ""),
+    )
+    if show_idx and idx_rows:
+        st.dataframe(pd.DataFrame(idx_rows), use_container_width=True, hide_index=True)
         if outlook.get("breadth_adv_pct") is not None:
             st.caption(f"A股样本上涨占比：{outlook['breadth_adv_pct']:.0f}%")
-        from src.analysis.market_outlook import MarketOutlook, IndexSnapshot
-
-        mo_obj = MarketOutlook(
-            as_of=str(outlook.get("as_of") or ""),
-            crash_prob_1_2w_pct=prob,
-            crash_label=str(outlook.get("crash_label") or ""),
-            outlook_2w=str(outlook.get("outlook_2w") or ""),
-            outlook_4_8w=str(outlook.get("outlook_4_8w") or ""),
-            breadth_adv_pct=outlook.get("breadth_adv_pct"),
-            indices=[IndexSnapshot(**{k: i.get(k) for k in (
-                "ticker", "name", "region", "close", "pct_5d", "pct_20d",
-                "drawdown_20d_pct", "above_ma20", "trend", "vol_ratio",
-            )}) for i in (outlook.get("indices") or []) if i.get("close")],
-            drivers=list(drivers),
-            advice=str(outlook.get("advice") or ""),
-        )
-        st.download_button(
-            "📥 下载大盘展望 (.md)",
-            data=outlook_to_markdown(mo_obj).encode("utf-8"),
-            file_name=f"大盘展望_{outlook.get('as_of', today_s)}.md",
-            mime="text/markdown",
-        )
+    st.download_button(
+        "📥 下载大盘展望 (.md)",
+        data=outlook_to_markdown(mo_obj).encode("utf-8"),
+        file_name=f"大盘展望_{outlook.get('as_of', today_s)}.md",
+        mime="text/markdown",
+        key="garden_download_outlook_md",
+    )
 
 
 def _sync_ritual_meta(*, a_picks: int, global_picks: int, predict_for: str) -> None:
@@ -519,7 +525,8 @@ def render() -> None:
         st.caption(f"📅 今天：**{today_label_cn()}**")
 
     # 核对历史推荐（轻量，可手动触发）
-    if not readonly and st.button("📊 核对推荐成绩单", use_container_width=False):
+    if not readonly and st.button("📊 核对推荐成绩单", use_container_width=False, key="garden_verify_picks"):
+        verified_ok = False
         with st.spinner("拉取最新涨跌核对历史推荐…"):
             try:
                 rank_df, _ = _fetch_ranking()
@@ -527,10 +534,11 @@ def render() -> None:
                 pick_log = verify_log(pick_log, pct_map)
                 st.session_state.pick_log = pick_log
                 mark_dirty()
-                st.success("成绩单已更新。")
+                verified_ok = True
             except Exception as e:
                 st.warning(f"核对失败：{e}")
-        st.rerun()
+        if verified_ok:
+            st.rerun()
 
     today_picks = st.session_state.get("today_picks") or []
     global_picks = st.session_state.get("global_picks") or []
@@ -611,11 +619,14 @@ def render() -> None:
             use_container_width=True,
         )
 
-    with st.expander("📊 推荐复盘 · 3日对比", expanded=True):
-        _render_pick_review(pick_log, readonly=readonly)
+    st.divider()
+    _render_pick_review(pick_log, readonly=readonly)
 
     st.divider()
-    _render_market_outlook(readonly=readonly, fetch_ranking=_fetch_ranking)
+    try:
+        _render_market_outlook(readonly=readonly, fetch_ranking=_fetch_ranking)
+    except Exception as exc:
+        st.warning(f"大盘展望暂时无法显示：{exc}")
 
     hist = records_for_display(pick_log, limit=12)
     if hist:
