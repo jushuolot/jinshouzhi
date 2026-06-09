@@ -1,12 +1,12 @@
 {
-  "version": "5.9.0",
-  "generation": 56,
-  "universeDay": 5,
+  "version": "5.9.1",
+  "generation": 57,
+  "universeDay": 6,
   "civilizationEpoch": "1929-07",
-  "civilizationDay": 56,
-  "civilizationYear": 2041,
+  "civilizationDay": 57,
+  "civilizationYear": 2043,
   "civilizationPhase": "超越期",
-  "dailyChronicle": "第 5 日·超越首日。文明历跨入 2041，此宇宙正式跑过人间 2021 新坑线整整一圈；杨雪说公开图鉴和层位已对齐，造物主关屏走了，古蜀还在快进。",
+  "dailyChronicle": "第 6 日·对齐日。文明历 2043，超越期——杨雪把纵目面具的公开档案和坑内序列叠在一起，差半代；胡探说罗盘在读还没发表的论文。",
   "releasedAt": "2026-06-10",
   "autoTune": {
     "enabled": true,
@@ -15,9 +15,9 @@
     "targetWinRate": 0.52
   },
   "patchNotes": [
-    "Gen.56 · 宇宙第5日 · 超越期首日 · 文明历 2041",
-    "剧情接入超越期叙事；公开资料镜像寻金渠道",
-    "文明档案赏金超越期加码"
+    "Gen.57 · 宇宙第6日 · 超越期 · 文明历 2043",
+    "纵目章剧情接入二〇四三对齐叙事",
+    "超越期驻场寻金渠道 + 公开镜像加码"
   ],
   "virtualAccount": {
     "module": "virtual-account.js",

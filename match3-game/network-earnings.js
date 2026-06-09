@@ -19,7 +19,8 @@
     passiveYield: { dailyAmount: 0.006, sessionTickAmount: 0.0008, tickMs: 900000, sessionTickCap: 0.006 },
     relicBounty: { startHour: 18, endHour: 24, amount: 0.018 },
     civilizationArchive: { amount: 0.022, beyondAmount: 0.032, phases: ["复兴期", "超越期"] },
-    publicCommonsMirror: { amount: 0.014, phases: ["超越期"] },
+    publicCommonsMirror: { amount: 0.016, phases: ["超越期"] },
+    beyondPhaseTick: { amount: 0.0012, sessionCap: 0.008, phases: ["超越期"] },
     bounty: {
       label: "任务赏金(演示)",
       endpoint: "https://api.coingecko.com/api/v3/ping",
@@ -96,6 +97,12 @@
       source: "network_settlement",
       description: "超越期每日公开文物档案镜像入账",
     },
+    beyond_phase_presence: {
+      id: "beyond_phase_presence",
+      label: "超越期驻场",
+      source: "passive_yield",
+      description: "超越期会话网络存在感微量收益",
+    },
   };
 
   var state = {
@@ -107,6 +114,7 @@
     lastRelicBounty: "",
     lastCivilizationArchive: "",
     lastPublicCommonsMirror: "",
+    beyondSessionTickTotal: 0,
   };
 
   var tickTimer = null;
@@ -128,6 +136,8 @@
       state.lastRelicBounty = data.lastRelicBounty || "";
       state.lastCivilizationArchive = data.lastCivilizationArchive || "";
       state.lastPublicCommonsMirror = data.lastPublicCommonsMirror || "";
+      state.beyondSessionTickTotal =
+        typeof data.beyondSessionTickTotal === "number" ? data.beyondSessionTickTotal : 0;
     } catch (e) {
       // ignore
     }
@@ -218,10 +228,29 @@
     if (!(amt > 0)) return 0;
     state.sessionTickTotal = roundMoney(state.sessionTickTotal + amt);
     saveState();
-    return creditChannel("passive_yield", {
+    var credited = creditChannel("passive_yield", {
       amount: amt,
       meta: { kind: "session_tick" },
     });
+    var clock =
+      typeof window !== "undefined" && window.MATCH3_CIVILIZATION_CLOCK
+        ? window.MATCH3_CIVILIZATION_CLOCK
+        : null;
+    if (clock && clock.getPhase() === "超越期") {
+      var bcfg = CONFIG.beyondPhaseTick;
+      if (bcfg && state.beyondSessionTickTotal < bcfg.sessionCap) {
+        var bamt = Math.min(bcfg.amount, bcfg.sessionCap - state.beyondSessionTickTotal);
+        if (bamt > 0) {
+          state.beyondSessionTickTotal = roundMoney(state.beyondSessionTickTotal + bamt);
+          saveState();
+          credited += creditChannel("beyond_phase_presence", {
+            amount: bamt,
+            meta: { kind: "beyond_tick", year: clock.getCivilizationDate().civilizationYear },
+          });
+        }
+      }
+    }
+    return credited;
   }
 
   function onSponsorVisit(slotKey) {
