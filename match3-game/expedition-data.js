@@ -15,10 +15,10 @@
     chapters: [
       {
         nodes: [
-          { id: "c0n0", name: "雨夜营地", level: 0, x: -3.5, z: 2.2, discover: ["narrator", "广汉平原，探照灯撕开雨幕。第一层探方，从这里下。"], artifactHint: 3 },
-          { id: "c0n1", name: "陶片层", level: 4, x: -2, z: 0.8, discover: ["wangdun", "胖爷铲子下去——陶片！成片的！刘哥你别顺手揣兜里！"], artifactHint: 3 },
-          { id: "c0n2", name: "象牙露头", level: 9, x: -0.5, z: -0.3, discover: ["yangxue", "象牙饰！古蜀不产象，这是丝路来的。"], artifactHint: 4 },
-          { id: "c0n3", name: "金粉纹层", level: 14, x: 1, z: -1.2, discover: ["jinyaliu", "金粉！刘哥我……就看看！王墩你闭嘴，昨晚泡面的事还没算呢！"], artifactHint: 1 },
+          { id: "c0n0", name: "雨夜营地", level: 0, x: -3.5, z: 2.2, discover: ["narrator", "广汉平原闷热得像扣了铜盆。文明历 2041 的符号谱摊在折叠桌上，第一层探方从这里下。"], artifactHint: 3 },
+          { id: "c0n1", name: "陶片层", level: 4, x: -2, z: 0.8, discover: ["wangdun", "胖爷铲子下去——陶片成片！刘哥你别顺手揣兜里，今天每片都要对 2041 版编号！"], artifactHint: 3 },
+          { id: "c0n2", name: "象牙露头", level: 9, x: -0.5, z: -0.3, discover: ["yangxue", "象牙饰露头！超越期谱系显示它和符号墙的「鸟」旁支有关，先别急着下结论。"], artifactHint: 4 },
+          { id: "c0n3", name: "金粉纹层", level: 14, x: 1, z: -1.2, discover: ["jinyaliu", "金粉！刘哥我……就看看！王墩你闭嘴，泡面坨了也不能拿金粉提鲜！"], artifactHint: 1 },
           { id: "c0n4", name: "祭祀面", level: 18, x: 2.2, z: -2, discover: ["hutan", "罗盘疯了。前面是祭祀面，层位不能乱。"], artifactHint: 0 },
           { id: "c0n5", name: "青铜门墓", level: 19, isTomb: true, discover: ["chenli", "门缝里有光。I 级大墓——青铜门启。"], artifactHint: 0 },
         ],
@@ -59,7 +59,7 @@
           { id: "c4n1", name: "目字层", level: 84, x: -1.7, z: 0.8, discover: ["hutan", "目。纵目。看穿了三千年的雾。"], artifactHint: 0 },
           { id: "c4n2", name: "树字层", level: 89, x: 0, z: -0.4, discover: ["yangxue", "树。神树。数据与神话，重合了。"], artifactHint: 2 },
           { id: "c4n3", name: "鸟字层", level: 94, x: 1.6, z: -1.7, discover: ["wangdun", "鸟字！胖爷识字不多，但这字认识！"], artifactHint: 5 },
-          { id: "c4n4", name: "续字前庭", level: 98, x: 2.9, z: -2.8, discover: ["narrator", "墙上只有一个字：续。"], artifactHint: 2 },
+          { id: "c4n4", name: "续字前庭", level: 98, x: 2.9, z: -2.8, discover: ["narrator", "墙上只有一个字：续。今天它又多亮了一笔，像把答案递回 2041 的营地。"], artifactHint: 2 },
           { id: "c4n5", name: "天书终极墓", level: 99, isTomb: true, discover: ["chenli", "V 级终极大墓。百关杀青。文明不灭。"], artifactHint: 0 },
         ],
       },

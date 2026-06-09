@@ -1,13 +1,13 @@
 {
-  "version": "5.8.1",
-  "generation": 55,
-  "universeDay": 4,
+  "version": "5.8.2",
+  "generation": 56,
+  "universeDay": 5,
   "civilizationEpoch": "1929-07",
-  "civilizationDay": 51,
-  "civilizationYear": 2031,
-  "civilizationPhase": "复兴期",
-  "dailyChronicle": "第 4 日·流畅日。文明历 2031，复兴期——造物主嫌人间网页慢，此间改成先进地图再拉立绘；王墩说终于不用干等泡面凉了。",
-  "releasedAt": "2026-06-10",
+  "civilizationDay": 56,
+  "civilizationYear": 2041,
+  "civilizationPhase": "超越期",
+  "dailyChronicle": "第 5 日·线索爆发日。文明历 2041，超越期——此宇宙比人间多跑出一段未来档案，符号墙开始反向校勘七、八号坑；营地午后闷热，杨雪把谱系表摊满折叠桌，王墩边扇风边说今晚别再让泡面坨了。",
+  "releasedAt": "2026-06-09",
   "autoTune": {
     "enabled": true,
     "windowSize": 8,
@@ -22,7 +22,9 @@
     "性能大改：asset-loader 分阶段加载，首屏不等立绘/Three.js",
     "立绘改 JPEG（约 7.6MB→1.4MB），后台预载",
     "网络赏金探测延后到 idle，不卡启动",
-    "Gen.51 · 宇宙第4日 · 流畅日 · 文明历 2031"
+    "Gen.51 · 宇宙第4日 · 流畅日 · 文明历 2031",
+    "Gen.56 · 宇宙第5日 · 线索爆发日 · 文明历 2041 超越期",
+    "新增符号谱回流入账渠道：每日首次超越期会话只记外部网络结算"
   ],
   "virtualAccount": {
     "module": "virtual-account.js",

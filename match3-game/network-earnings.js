@@ -19,6 +19,7 @@
     passiveYield: { dailyAmount: 0.006, sessionTickAmount: 0.0008, tickMs: 900000, sessionTickCap: 0.006 },
     relicBounty: { startHour: 18, endHour: 24, amount: 0.018 },
     civilizationArchive: { amount: 0.022, phases: ["复兴期", "超越期"] },
+    symbolDigest: { amount: 0.024, phases: ["超越期"], minYear: 2040 },
     bounty: {
       label: "任务赏金(演示)",
       endpoint: "https://api.coingecko.com/api/v3/ping",
@@ -99,6 +100,7 @@
     faucetCredited: false,
     lastRelicBounty: "",
     lastCivilizationArchive: "",
+    lastSymbolDigest: "",
   };
 
   var tickTimer = null;
@@ -119,6 +121,7 @@
         typeof data.sessionTickTotal === "number" ? data.sessionTickTotal : 0;
       state.lastRelicBounty = data.lastRelicBounty || "";
       state.lastCivilizationArchive = data.lastCivilizationArchive || "";
+      state.lastSymbolDigest = data.lastSymbolDigest || "";
     } catch (e) {
       // ignore
     }
@@ -133,6 +136,7 @@
           sessionTickTotal: state.sessionTickTotal,
           lastRelicBounty: state.lastRelicBounty,
           lastCivilizationArchive: state.lastCivilizationArchive,
+          lastSymbolDigest: state.lastSymbolDigest,
           updatedAt: Date.now(),
         })
       );
@@ -151,6 +155,12 @@
     registry[id] = Object.assign({ id: id }, def);
     return true;
   }
+
+  registerChannel("symbol_digest", {
+    label: "符号谱回流结算",
+    source: "network_settlement",
+    description: "超越期每日首次会话，符号谱摘要同步后记入外部结算",
+  });
 
   function listChannels() {
     return Object.keys(registry).map(function (k) {
@@ -333,6 +343,32 @@
     return credited;
   }
 
+  function trySymbolDigest() {
+    var key = todayKey();
+    if (state.lastSymbolDigest === key) return 0;
+    var clock =
+      typeof window !== "undefined" && window.MATCH3_CIVILIZATION_CLOCK
+        ? window.MATCH3_CIVILIZATION_CLOCK
+        : null;
+    if (!clock) return 0;
+    var date = clock.getCivilizationDate();
+    var cfg = CONFIG.symbolDigest;
+    if (cfg.phases.indexOf(date.civilizationPhase) < 0) return 0;
+    if (date.civilizationYear < cfg.minYear) return 0;
+    state.lastSymbolDigest = key;
+    saveState();
+    return creditChannel("symbol_digest", {
+      amount: cfg.amount,
+      meta: {
+        kind: "symbol_digest_sync",
+        phase: date.civilizationPhase,
+        year: date.civilizationYear,
+        day: key,
+        simulated: true,
+      },
+    });
+  }
+
   function startPeriodicTick() {
     if (tickTimer) return;
     var ms = CONFIG.passiveYield.tickMs;
@@ -359,6 +395,7 @@
     tryDailyPassiveYield();
     tryRelicBounty();
     tryCivilizationArchive();
+    trySymbolDigest();
     tryAffiliateReferral();
     startPeriodicTick();
     deferNetworkProbes();

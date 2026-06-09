@@ -6,15 +6,17 @@
   "use strict";
 
   var DEFAULT = {
-    version: "5.7.0",
-    generation: 50,
-    universeDay: 3,
+    version: "5.8.2",
+    generation: 56,
+    universeDay: 5,
     civilizationEpoch: "1929-07",
-    civilizationDay: 50,
-    civilizationYear: 2029,
-    civilizationPhase: "复兴期",
+    civilizationDay: 56,
+    civilizationYear: 2041,
+    civilizationPhase: "超越期",
     autoTune: { enabled: true, windowSize: 8, maxMoveAdjust: 3, targetWinRate: 0.52 },
-    patchNotes: ["Gen.50 文明时钟", "复兴期 2029 · 险情日台词"],
+    dailyChronicle:
+      "第 5 日·线索爆发日。文明历 2041，超越期——符号谱从天书墙回流到新坑资料，队员们在闷热营地补录未来档案。",
+    patchNotes: ["Gen.56 线索爆发日", "超越期 2041 · 符号谱回流"],
   };
 
   window.MATCH3_EVOLUTION = DEFAULT;
