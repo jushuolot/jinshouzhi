@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-06-09",
+  "updated_at": "2026-06-10",
   "records": [
     {
       "pick_date": "2026-06-09",
@@ -11,10 +11,10 @@
       "hold_days": 1,
       "pattern": "趋势延续",
       "reason": "[趋势延续] 明日看延续：均线多头、趋势动能、放量、近高位 · 质量：主板/中小板、基金增仓、基金家数减、市值799亿",
-      "verified": false,
+      "verified": true,
       "end_pct": null,
       "hit": null,
-      "note": ""
+      "note": "暂无最新涨跌数据"
     },
     {
       "pick_date": "2026-06-09",
@@ -26,10 +26,10 @@
       "hold_days": 1,
       "pattern": "趋势延续",
       "reason": "[趋势延续] 明日看延续：均线多头、趋势动能、5日动量正 · 质量：主板/中小板、基金减持、基金持股降、基金家数减",
-      "verified": false,
+      "verified": true,
       "end_pct": null,
       "hit": null,
-      "note": ""
+      "note": "暂无最新涨跌数据"
     },
     {
       "pick_date": "2026-06-09",
@@ -41,10 +41,10 @@
       "hold_days": 1,
       "pattern": "趋势延续",
       "reason": "[趋势延续] 明日看延续：均线多头、趋势动能、5日动量正 · 质量：主板/中小板、基金增仓、基金家数减、QFII减持",
-      "verified": false,
+      "verified": true,
       "end_pct": null,
       "hit": null,
-      "note": ""
+      "note": "暂无最新涨跌数据"
     },
     {
       "pick_date": "2026-06-09",
@@ -56,10 +56,10 @@
       "hold_days": 1,
       "pattern": "趋势延续",
       "reason": "[趋势延续] 明日看延续：均线多头、趋势动能、放量 · 质量：创业板、基金增仓、基金家数减、市值173亿",
-      "verified": false,
+      "verified": true,
       "end_pct": null,
       "hit": null,
-      "note": ""
+      "note": "暂无最新涨跌数据"
     },
     {
       "pick_date": "2026-06-09",
@@ -71,10 +71,10 @@
       "hold_days": 1,
       "pattern": "趋势延续",
       "reason": "[趋势延续] 明日看延续：均线多头、趋势动能、5日动量正 · 质量：主板/中小板、基金减持、基金持股降、基金家数减",
-      "verified": false,
+      "verified": true,
       "end_pct": null,
       "hit": null,
-      "note": ""
+      "note": "暂无最新涨跌数据"
     },
     {
       "pick_date": "2026-06-09",
@@ -86,10 +86,10 @@
       "hold_days": 1,
       "pattern": "突破在即",
       "reason": "[突破在即] 明日看突破：均线多头、趋势动能、放量、近20日高位 · 质量：主板/中小板、基金减持、基金持股降、基金家数减",
-      "verified": false,
+      "verified": true,
       "end_pct": null,
       "hit": null,
-      "note": ""
+      "note": "暂无最新涨跌数据"
     },
     {
       "pick_date": "2026-06-09",
@@ -101,10 +101,10 @@
       "hold_days": 1,
       "pattern": "趋势延续",
       "reason": "[趋势延续] 明日看延续：均线多头、趋势动能、5日动量正 · 质量：主板/中小板、基金减持、基金持股降、基金家数减",
-      "verified": false,
+      "verified": true,
       "end_pct": null,
       "hit": null,
-      "note": ""
+      "note": "暂无最新涨跌数据"
     },
     {
       "pick_date": "2026-06-09",
@@ -116,6 +116,81 @@
       "hold_days": 1,
       "pattern": "突破在即",
       "reason": "[突破在即] 明日看突破：均线多头、趋势动能、放量、近20日高位 · 质量：主板/中小板、基金减持、基金持股降、基金家数减",
+      "verified": true,
+      "end_pct": null,
+      "hit": null,
+      "note": "暂无最新涨跌数据"
+    },
+    {
+      "pick_date": "2026-06-10",
+      "code": "300221",
+      "name": "银禧科技",
+      "signal": "买入",
+      "pick_score": 86.0,
+      "pick_pct": 0.118,
+      "hold_days": 1,
+      "pattern": "突破在即",
+      "reason": "[突破在即] 明日看突破：均线多头、趋势动能、放量、近20日高位 · 质量：创业板、基金增仓、基金家数增、QFII新进",
+      "verified": false,
+      "end_pct": null,
+      "hit": null,
+      "note": ""
+    },
+    {
+      "pick_date": "2026-06-10",
+      "code": "600487",
+      "name": "亨通光电",
+      "signal": "买入",
+      "pick_score": 85.0,
+      "pick_pct": 1.771,
+      "hold_days": 1,
+      "pattern": "趋势延续",
+      "reason": "[趋势延续] 明日看延续：均线多头、趋势动能、5日动量正 · 质量：主板/中小板、基金增仓、基金家数减、市值2636亿",
+      "verified": false,
+      "end_pct": null,
+      "hit": null,
+      "note": ""
+    },
+    {
+      "pick_date": "2026-06-10",
+      "code": "002962",
+      "name": "五方光电",
+      "signal": "买入",
+      "pick_score": 82.0,
+      "pick_pct": 2.349,
+      "hold_days": 1,
+      "pattern": "突破在即",
+      "reason": "[突破在即] 明日看突破：均线多头、趋势动能、放量、近20日高位 · 质量：主板/中小板、QFII新进、市值62亿、PE偏高",
+      "verified": false,
+      "end_pct": null,
+      "hit": null,
+      "note": ""
+    },
+    {
+      "pick_date": "2026-06-10",
+      "code": "000657",
+      "name": "中钨高新",
+      "signal": "买入",
+      "pick_score": 77.0,
+      "pick_pct": 2.966,
+      "hold_days": 1,
+      "pattern": "趋势延续",
+      "reason": "[趋势延续] 明日看延续：均线多头、趋势动能 · 质量：主板/中小板、基金减持、基金持股降、基金家数减",
+      "verified": false,
+      "end_pct": null,
+      "hit": null,
+      "note": ""
+    },
+    {
+      "pick_date": "2026-06-10",
+      "code": "600176",
+      "name": "中国巨石",
+      "signal": "买入",
+      "pick_score": 75.6,
+      "pick_pct": 0.639,
+      "hold_days": 1,
+      "pattern": "趋势延续",
+      "reason": "[趋势延续] 明日看延续：均线多头、趋势动能、5日动量正 · 质量：主板/中小板、基金减持、基金持股降、基金家数减",
       "verified": false,
       "end_pct": null,
       "hit": null,
