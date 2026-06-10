@@ -67,7 +67,7 @@ git pull --rebase origin main && git push origin main
 
 ## 产品核心（勿偏离）
 
-**附近中老年 ↔ 在校女大学生 · 有偿陪护 · 平台撮合。** 三种路径：机构派单、老人找同学、同学找需求。上帝视角：[PROGRESS_GOD_VIEW.md](./docs/PROGRESS_GOD_VIEW.md) · H5 `pages/common/god-view`。
+**附近中老年 ↔ 在校大学生 · 有偿陪护 · 平台撮合。** 三种路径：机构派单、老人找同学、同学找需求。上帝视角：[PROGRESS_GOD_VIEW.md](./docs/PROGRESS_GOD_VIEW.md) · H5 `pages/common/god-view`。
 
 ## 文档索引
 

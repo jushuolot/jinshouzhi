@@ -31,7 +31,7 @@
       </view>
       <view class="kpi">
         <text class="kpi-num">{{ displayStudents }}</text>
-        <text class="kpi-label">女大学生志愿者</text>
+        <text class="kpi-label">大学生志愿者</text>
       </view>
       <view class="kpi">
         <text class="kpi-num accent">{{ displayPending }}</text>
@@ -92,7 +92,7 @@ const DEFAULT_PATHS: MatchingPathStatus[] = [
   {
     id: 'elder_find_student',
     label: '老人找同学',
-    description: '老人按距离浏览女大学生志愿者并预约',
+    description: '老人按距离浏览大学生志愿者并预约',
     status: 'live',
     metric: '附近同学',
     metricValue: 6,

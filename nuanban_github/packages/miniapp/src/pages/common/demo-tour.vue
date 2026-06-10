@@ -49,7 +49,7 @@
           <view class="map-dots">
             <view v-for="i in 5" :key="i" class="dot" :class="'d' + i" />
           </view>
-          <text class="caption">老人按距离浏览女大学生志愿者并下单</text>
+          <text class="caption">老人按距离浏览大学生志愿者并下单</text>
         </view>
 
         <!-- 场景 2：学生接单 -->

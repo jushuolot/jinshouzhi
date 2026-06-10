@@ -2,7 +2,7 @@
   <view class="page elder-mode">
     <view class="header">
       <text class="title">找陪护</text>
-      <text class="subtitle">按距离推荐附近女大学生志愿者</text>
+      <text class="subtitle">按距离推荐附近大学生志愿者</text>
     </view>
     <view v-if="loading" class="state">加载中…</view>
     <ListCountBar v-if="!loading && list.length" :count="list.length" hint="6 位同学 · 列表演示" />

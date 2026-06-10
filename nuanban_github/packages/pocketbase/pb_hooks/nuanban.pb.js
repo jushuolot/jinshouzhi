@@ -2130,7 +2130,7 @@ routerAdd("GET", "/api/nuanban/platform/overview", (e) => {
       {
         id: "elder_find_student",
         label: "老人找同学",
-        description: "老人按距离浏览女大学生志愿者并预约",
+        description: "老人按距离浏览大学生志愿者并预约",
         status: "live",
         metric: "附近同学",
         metricValue: 6,

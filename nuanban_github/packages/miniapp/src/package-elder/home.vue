@@ -18,7 +18,7 @@
       <view class="stat-divider" />
       <view class="stat-item" @tap="goFind">
         <text class="stat-num">{{ stats?.caregiverNearbyCount ?? 0 }}</text>
-        <text class="stat-label">附近女大学生</text>
+        <text class="stat-label">附近大学生</text>
       </view>
     </view>
 
@@ -43,7 +43,7 @@
       <view class="quick-item primary" @tap="goFind">
         <text class="quick-icon">🤝</text>
         <text class="quick-text">找陪护</text>
-        <text class="quick-desc">附近 {{ stats?.caregiverNearbyCount ?? 0 }} 位女大学生</text>
+        <text class="quick-desc">附近 {{ stats?.caregiverNearbyCount ?? 0 }} 位大学生</text>
       </view>
       <view class="quick-item" @tap="goOrders">
         <text class="quick-icon">📋</text>
