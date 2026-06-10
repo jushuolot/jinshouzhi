@@ -15,7 +15,8 @@
 
 <script setup lang="ts">
 import AuthBrandHeader from '../../components/AuthBrandHeader.vue';
-import { ROLE_HOME, type RoleKey } from '../../config/tabs';
+import type { RoleKey } from '../../config/tabs';
+import { navigateAfterAuth } from '../../utils/profile-onboarding';
 import { useRoleStore } from '../../store/role';
 
 const roleStore = useRoleStore();
@@ -43,7 +44,7 @@ async function select(role: RoleKey) {
     activeRole: role,
     user: roleStore.user ?? undefined,
   });
-  uni.reLaunch({ url: ROLE_HOME[role] });
+  void navigateAfterAuth(role);
 }
 </script>
 
