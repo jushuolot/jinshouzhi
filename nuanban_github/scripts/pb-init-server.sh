@@ -33,22 +33,28 @@ if [[ -z "$TOKEN" ]]; then
   exit 1
 fi
 
-IMPORT_BODY="$(node -e "
-const fs=require('fs');
-const cols=JSON.parse(fs.readFileSync('packages/pocketbase/pb_schema.json','utf8'));
-console.log(JSON.stringify({collections:cols,deleteMissing:false}));
-")"
+IMPORT_BODY="$(node scripts/pb-schema-import-body.mjs)"
 
 HTTP_CODE="$(curl -sS -o /tmp/pb-import.json -w '%{http_code}' -X PUT "$BASE/api/collections/import" \
   -H "Authorization: $TOKEN" \
   -H "Content-Type: application/json" \
   -d "$IMPORT_BODY")"
 
+echo "    集合导入 HTTP $HTTP_CODE"
 if [[ "$HTTP_CODE" != "204" && "$HTTP_CODE" != "200" ]]; then
-  echo "集合导入 HTTP $HTTP_CODE:"
   cat /tmp/pb-import.json 2>/dev/null || true
-  echo "(若已导入过可忽略，继续 seed)"
+  echo "错误：集合导入失败"
+  exit 1
 fi
+
+VERIFY="$(curl -sS -o /tmp/pb-verify.json -w '%{http_code}' "$BASE/api/collections/school_dict" \
+  -H "Authorization: $TOKEN")"
+if [[ "$VERIFY" != "200" ]]; then
+  echo "错误：school_dict 集合不存在 (HTTP $VERIFY)"
+  cat /tmp/pb-verify.json 2>/dev/null || true
+  exit 1
+fi
+echo "    已确认 school_dict 集合存在"
 
 echo "==> 4/5 重启 PocketBase"
 "${COMPOSE[@]}" restart pocketbase

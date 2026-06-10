@@ -71,8 +71,14 @@ var findOrCreateUserRole = function(userId, role, extra) {
 }
 
 routerAdd("POST", "/api/nuanban/seed-demo", (e) => {
-  mustSeedKey(e);
-  const stats = { users: 0, roles: 0, schools: 0, orgs: 0, elders: 0, orders: 0, serviceItems: 0, bindings: 0 };
+  try {
+    mustSeedKey(e);
+  } catch (err) {
+    return e.json(400, { message: String(err.message || err) });
+  }
+  let stats;
+  try {
+  stats = { users: 0, roles: 0, schools: 0, orgs: 0, elders: 0, orders: 0, serviceItems: 0, bindings: 0 };
 
   // school_dict
   const existingSchool = $app.findRecordsByFilter(
@@ -109,10 +115,10 @@ routerAdd("POST", "/api/nuanban/seed-demo", (e) => {
     const usersCol = $app.findCollectionByNameOrId("users");
     const u = new Record(usersCol);
     u.set("email", email);
-    u.setRandomPassword();
+    u.setPassword(DEV_PASS);
     u.set("verified", true);
     u.set("name", name);
-    $app.saveNoValidate(u);
+    $app.save(u);
     stats.users += 1;
     return u;
   }
@@ -302,9 +308,12 @@ routerAdd("POST", "/api/nuanban/seed-demo", (e) => {
     return rec;
   }
 
-  const uStudent = findOrCreateUserByEmail("student1@test.nuanban.dev", "学生1");
+  const uStudent = findOrCreateUserByEmail("student1@test.nuanban.dev", "林同学");
+  const uStudent2 = findOrCreateUserByEmail("student2@test.nuanban.dev", "周同学");
+  const uStudent3 = findOrCreateUserByEmail("student3@test.nuanban.dev", "待审同学");
   const uFamily = findOrCreateUserByEmail("family1@test.nuanban.dev", "家属1");
   const uElder = findOrCreateUserByEmail("elder1@test.nuanban.dev", "老人1");
+  const uMulti = findOrCreateUserByEmail("multi1@test.nuanban.dev", "多角色");
 
   const org = findOrCreateOrg("暖伴示范养老院");
   const elderZhang = findOrCreateElder(org.id, "张奶奶", 31.2304, 121.4737);
@@ -312,14 +321,31 @@ routerAdd("POST", "/api/nuanban/seed-demo", (e) => {
 
   findOrCreateRole(uStudent.id, "student", {
     school: school.id,
-    display_name: "学生1",
+    display_name: "林同学",
     latitude: 31.232,
     longitude: 121.475,
+  });
+  findOrCreateRole(uStudent2.id, "student", {
+    school: school.id,
+    display_name: "周同学",
+    latitude: 31.231,
+    longitude: 121.474,
+  });
+  findOrCreateRole(uStudent3.id, "student", {
+    school: school.id,
+    display_name: "待审同学",
+    status: "pending",
   });
   findOrCreateRole(uFamily.id, "family", { display_name: "家属1" });
   findOrCreateRole(uElder.id, "elder", {
     display_name: "老人1",
     elder_profile: elderZhang.id,
+  });
+  findOrCreateRole(uMulti.id, "student", { display_name: "多角色-学生", school: school.id });
+  findOrCreateRole(uMulti.id, "family", { display_name: "多角色-家属" });
+  findOrCreateRole(uMulti.id, "elder", {
+    display_name: "多角色-老人",
+    elder_profile: elderLi.id,
   });
 
   findOrCreateFamilyBinding(uFamily.id, elderZhang.id);
@@ -377,12 +403,23 @@ routerAdd("POST", "/api/nuanban/seed-demo", (e) => {
 
   return e.json(200, {
     ok: true,
-    message: "演示账号已写入（最小集，可重复执行）",
+    message: "演示账号已写入（可重复执行）",
     stats: stats,
     accounts: {
-      student: ["student1@test.nuanban.dev"],
+      student: [
+        "student1@test.nuanban.dev",
+        "student2@test.nuanban.dev",
+        "student3@test.nuanban.dev",
+      ],
       family: ["family1@test.nuanban.dev"],
       elder: ["elder1@test.nuanban.dev"],
+      multi: ["multi1@test.nuanban.dev"],
     },
   });
+  } catch (err) {
+    return e.json(400, {
+      ok: false,
+      message: String(err && err.message ? err.message : err),
+    });
+  }
 });

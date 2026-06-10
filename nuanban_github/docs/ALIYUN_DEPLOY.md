@@ -240,6 +240,17 @@ tar czf ~/pb_data-backup-$(date +%Y%m%d).tar.gz packages/pocketbase/pb_data
 | API 404 | 客户端应为 `https://域名/api`，不是 `/api/v1` |
 | 仍走 Mock 数据 | 确认访问的是阿里云域名，不是 `github.io` |
 | 后台登不上 | `./scripts/pb-reset-admin.sh` |
+| 登录提示「用户不存在」/ seed-demo 400 | 在服务器执行 `./scripts/aliyun-fix-data.sh`（拉代码 + 导入集合 + 演示数据） |
+| pb-init 集合导入无输出 | 已修复：`fields`→`schema` 转换；失败会打印 HTTP 状态并退出 |
+
+### 一键修复演示数据（备案期间 IP 访问）
+
+```bash
+cd /opt/jinshouzhi/nuanban_github
+./scripts/aliyun-fix-data.sh
+```
+
+成功后用手机号 `13800000001`（验证码留空）登录：`http://101.200.128.82/#/pages/common/login`
 
 ---
 
