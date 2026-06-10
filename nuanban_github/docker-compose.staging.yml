@@ -1,0 +1,20 @@
+# 备案期间临时部署（HTTP · 公网 IP 访问，无 HTTPS）
+# 用法: docker compose -f docker-compose.yml -f docker-compose.staging.yml --profile staging up -d
+
+services:
+  pocketbase:
+    ports:
+      - "127.0.0.1:8090:8090"
+
+  caddy:
+    profiles: ["staging"]
+    image: caddy:2-alpine
+    container_name: nuanban-caddy-staging
+    restart: unless-stopped
+    depends_on:
+      - pocketbase
+    ports:
+      - "80:80"
+    volumes:
+      - ./Caddyfile.staging:/etc/caddy/Caddyfile:ro
+      - ./packages/miniapp/dist/build/h5:/srv/h5:ro

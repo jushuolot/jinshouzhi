@@ -4,6 +4,52 @@
 
 预计耗时：**30–60 分钟**（备案已完成、域名已解析的前提下）。
 
+> **域名 `nuanban.cc` 还在备案中？** 见下方 [备案期间先做什么](#备案期间先做什么)，用服务器 IP 临时跑通；备案通过后再切 HTTPS 正式域。
+
+---
+
+## 备案期间先做什么
+
+备案未通过前，**不能**用 `nuanban.cc` 在大陆服务器上正式对外（阿里云会拦截未备案域名访问）。
+
+| 阶段 | 能做什么 | 不能做什么 |
+|------|----------|------------|
+| 备案中 | 服务器装环境、用 **公网 IP + HTTP** 内测 | `https://nuanban.cc`、微信小程序正式版 |
+| 备案通过 | `./scripts/deploy-public.sh` 一键 HTTPS | — |
+
+### 现在就可以在服务器执行
+
+```bash
+git clone https://github.com/jushuolot/jinshouzhi.git /opt/jinshouzhi
+cd /opt/jinshouzhi/nuanban_github
+chmod +x scripts/*.sh
+sudo ./scripts/aliyun-bootstrap.sh
+
+cp config/demo.env.example config/demo.env
+nano config/demo.env
+# 填入 NUANBAN_STAGING_IP=你的公网IP
+# 预先写好 NUANBAN_DOMAIN=nuanban.cc（备案通过后直接用）
+
+./scripts/deploy-staging.sh
+```
+
+- 安全组放行 **TCP 80**（临时测试）
+- 浏览器访问：`http://你的公网IP/#/pages/common/login`
+- 管理后台：`http://你的公网IP/_/`
+
+### 备案通过后（约 1 条命令切换）
+
+1. 域名控制台：`nuanban.cc` A 记录 → 服务器 IP  
+2. 安全组确保 **80、443** 已放行  
+3. 服务器执行：
+
+```bash
+cd /opt/jinshouzhi/nuanban_github
+./scripts/deploy-public.sh
+```
+
+正式链接变为：`https://nuanban.cc/#/pages/common/login`
+
 ---
 
 ## 架构

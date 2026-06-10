@@ -1,0 +1,18 @@
+# 备案期间临时用：HTTP + 服务器公网 IP（无 HTTPS、无域名）
+# 由 deploy-staging.sh 使用，备案通过后请改 deploy-public.sh
+
+:80 {
+	handle /api/* {
+		reverse_proxy pocketbase:8090
+	}
+
+	handle /_/* {
+		reverse_proxy pocketbase:8090
+	}
+
+	handle {
+		root * /srv/h5
+		try_files {path} /index.html
+		file_server
+	}
+}
