@@ -56,6 +56,14 @@ function saveStore(store: StudentWalletStore) {
   uni.setStorageSync(STORAGE_KEY, store);
 }
 
+export function clearStudentWalletStore() {
+  try {
+    uni.removeStorageSync(STORAGE_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
 function ensureOwner(store: StudentWalletStore, userId: string): StudentWalletOwner {
   if (!store.byUser[userId]) {
     store.byUser[userId] = { withdrawals: [] };

@@ -61,3 +61,14 @@ export function clearDemoRuntimeState() {
     /* ignore */
   }
 }
+
+/** 清除全部演示运行时 localStorage（订单、储值卡、学生提现） */
+export function resetDemoRuntimeState() {
+  clearDemoRuntimeState();
+  try {
+    uni.removeStorageSync('nuanban_wallet_v1');
+    uni.removeStorageSync('nuanban_student_wallet_v1');
+  } catch {
+    /* ignore */
+  }
+}

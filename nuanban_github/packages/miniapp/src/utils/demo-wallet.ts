@@ -43,6 +43,12 @@ export function resolveDemoWalletUserId(userId: string, scope: 'family' | 'elder
   return userId;
 }
 
+/** 多角色账号走家属绑定时映射到种子家属账号 */
+export function resolveDemoFamilyUserId(userId: string): string {
+  if (userId === DEMO_USERS.multi.id) return DEMO_USERS.family.id;
+  return userId;
+}
+
 function loadStore(): WalletStore {
   try {
     const raw = uni.getStorageSync(STORAGE_KEY) as WalletStore | null;
@@ -115,6 +121,14 @@ export function topupWallet(userId: string, amountCents: number): WalletOverview
   if (owner.transactions.length > 50) owner.transactions = owner.transactions.slice(0, 50);
   saveStore(store);
   return overviewDto(owner);
+}
+
+export function clearWalletStore() {
+  try {
+    uni.removeStorageSync(STORAGE_KEY);
+  } catch {
+    /* ignore */
+  }
 }
 
 export function payOrderFromWallet(
