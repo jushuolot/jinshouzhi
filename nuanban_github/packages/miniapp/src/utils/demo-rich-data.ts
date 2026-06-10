@@ -276,6 +276,11 @@ export function buildRichOrders(elders: RichElder[]): RichOrder[] {
   push(1, 4, 'pending_service', 10800000, { student_user: student });
   push(0, 3, 'in_service', -3600000, { student_user: student, payment_status: 'unpaid' });
 
+  // 待确认 + 张奶奶待支付（老人端「我的服务」演示）
+  push(0, 0, 'pending_payment', 43200000);
+  push(0, 1, 'pending_confirm', -7200000, { student_user: student, payment_status: 'paid' });
+  push(0, 2, 'pending_confirm', -10800000, { student_user: student });
+
   // 已完成历史（收入压力：8 单）
   for (let i = 0; i < 8; i++) {
     push(i, i + 1, 'completed', -86400000 * (i + 1), { student_user: student });

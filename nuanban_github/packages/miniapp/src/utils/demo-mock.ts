@@ -984,7 +984,7 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
     const needsOutdoor = svc.requires_outdoor_approval;
     state.orders.push({
       id,
-      elder: String(data.elderId || 'elder-zhang'),
+      elder: normalizeElderId(String(data.elderId || 'elder-zhang'), ELDERS),
       service_item: svc.id,
       status: needsOutdoor ? 'outdoor_pending' : 'pending_payment',
       amount_cents: svc.price_cents,
@@ -1071,8 +1071,10 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
     } else if (filter.includes('pending_confirm')) {
       items = items.filter((o) => o.status === 'pending_confirm');
     } else if (filter.includes('elder =')) {
-      const elderId = filter.match(/elder = "([^"]+)"/)?.[1];
-      if (elderId) items = items.filter((o) => o.elder === elderId);
+      const elderIds = [...filter.matchAll(/elder = "([^"]+)"/g)].map((m) =>
+        normalizeElderId(m[1], ELDERS),
+      );
+      if (elderIds.length) items = items.filter((o) => elderIds.includes(o.elder));
     } else if (filter.includes('id =')) {
       const id = filter.match(/id = "([^"]+)"/)?.[1];
       items = items.filter((o) => o.id === id);
