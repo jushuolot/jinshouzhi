@@ -776,11 +776,13 @@ routerAdd("GET", "/api/nuanban/student/profile", function (e) {
       }
     }
     var av = nb.userAvatarFields(auth, e);
+    const profileComplete = !!(displayName && schoolName);
     return e.json(200, {
       nickname: nb.safeRecordString(auth, "name", displayName || "学生"),
       email: nb.safeRecordString(auth, "email", ""),
       schoolName: schoolName,
       displayName: displayName,
+      profileComplete: profileComplete,
       avatarUrl: av.avatarUrl,
       gender: "女",
       major: "护理学",
@@ -858,6 +860,7 @@ routerAdd("PATCH", "/api/nuanban/student/profile", function (e) {
     ok: true,
     displayName: displayName,
     schoolName: schoolName,
+    profileComplete: !!(displayName && schoolName),
     bio: body.bio || "热心公益的在校女生，擅长陪伴聊天与康复协助。",
     major: body.major || "护理学",
     grade: body.grade || "大三",
@@ -950,14 +953,18 @@ routerAdd("GET", "/api/nuanban/elder/profile", function (e) {
     } catch (_) {}
   }
   var avE = nb.userAvatarFields(auth, e);
+  const elderName = elder.getString("name") || "老人";
+  const elderDistrict = elder.getString("district") || "浦东新区";
+  const elderAddress = elder.getString("address") || "浦东新区***";
   return e.json(200, {
     id: elder.id,
-    name: elder.getString("name") || "老人",
+    name: elderName,
     avatarUrl: avE.avatarUrl,
+    profileComplete: !!(elderName && elderDistrict && elderAddress),
     age: elder.getInt("age") || 78,
     gender: elder.getString("gender") || "女",
-    district: elder.getString("district") || "浦东新区",
-    address: elder.getString("address") || "浦东新区***",
+    district: elderDistrict,
+    address: elderAddress,
     orgName: orgName || "暖伴示范养老院",
     healthStatus: elder.getString("health_status") || "总体良好",
     mobility: elder.getString("mobility") || "行动便利",
@@ -971,6 +978,57 @@ routerAdd("GET", "/api/nuanban/elder/profile", function (e) {
     },
     preferredVisitTimes: ["工作日下午 14:00–17:00", "周末上午 9:00–11:00"],
     notes: elder.getString("notes") || "请耐心沟通，营造温馨氛围。",
+  });
+});
+
+routerAdd("PATCH", "/api/nuanban/elder/profile", function (e) {
+  var nb = require(__hooks + "/nuanban_lib.js");
+  const rc = nb.assertActiveRoleHeader(e, "elder");
+  if (!rc.ok) return e.json(rc.code, rc.body);
+  const auth = e.auth;
+  if (!auth) return e.json(401, { message: "需要登录" });
+  const raw = toString(e.request.body);
+  const body = raw ? JSON.parse(raw) : {};
+  const roles = $app.findRecordsByFilter(
+    "user_roles",
+    'user = {:uid} && role = "elder"',
+    "",
+    1,
+    0,
+    { uid: auth.id }
+  );
+  let elderId = "";
+  if (roles.length > 0) {
+    try {
+      elderId = roles[0].getString("elder_profile") || "";
+    } catch (_) {}
+  }
+  let elder = null;
+  if (elderId) {
+    try {
+      elder = $app.findRecordById("elders", elderId);
+    } catch (_) {}
+  }
+  if (!elder) return e.json(404, { message: "老人档案不存在" });
+  if (body.name) elder.set("name", String(body.name));
+  if (body.age != null) elder.set("age", Number(body.age));
+  if (body.gender) elder.set("gender", String(body.gender));
+  if (body.district) elder.set("district", String(body.district));
+  if (body.address) elder.set("address", String(body.address));
+  $app.save(elder);
+  if (body.name) {
+    auth.set("name", String(body.name));
+    $app.save(auth);
+  }
+  const name = elder.getString("name") || "";
+  const district = elder.getString("district") || "";
+  const address = elder.getString("address") || "";
+  return e.json(200, {
+    ok: true,
+    name: name,
+    district: district,
+    address: address,
+    profileComplete: !!(name && district && address),
   });
 });
 
@@ -1001,17 +1059,47 @@ routerAdd("GET", "/api/nuanban/family/profile", function (e) {
     } catch (_) {}
   }
   var avF = nb.userAvatarFields(auth, e);
+  const nickname = auth.getString("name") || "家属";
+  const contactPhone = "138****8888";
+  const district = "浦东新区";
   return e.json(200, {
-    nickname: auth.getString("name") || "家属",
+    nickname: nickname,
     email: auth.getString("email"),
     avatarUrl: avF.avatarUrl,
+    profileComplete: !!(nickname && contactPhone && district),
     relationToElder: relation,
     linkedElderName: elderName,
     linkedElderId: elderId,
-    contactPhone: "138****8888",
-    district: "浦东新区",
+    contactPhone: contactPhone,
+    district: district,
     address: "浦东新区花木路***室",
     notificationPrefs: ["订单状态变更", "外出审批提醒", "SOS 紧急通知", "支付成功通知"],
+  });
+});
+
+routerAdd("PATCH", "/api/nuanban/family/profile", function (e) {
+  var nb = require(__hooks + "/nuanban_lib.js");
+  const rc = nb.assertActiveRoleHeader(e, "family");
+  if (!rc.ok) return e.json(rc.code, rc.body);
+  const auth = e.auth;
+  if (!auth) return e.json(401, { message: "需要登录" });
+  const raw = toString(e.request.body);
+  const body = raw ? JSON.parse(raw) : {};
+  if (body.nickname) {
+    auth.set("name", String(body.nickname));
+    $app.save(auth);
+  }
+  const nickname = auth.getString("name") || "";
+  const contactPhone = body.contactPhone ? String(body.contactPhone) : "138****8888";
+  const district = body.district ? String(body.district) : "浦东新区";
+  return e.json(200, {
+    ok: true,
+    nickname: nickname,
+    contactPhone: contactPhone,
+    district: district,
+    address: body.address ? String(body.address) : "浦东新区花木路***室",
+    relationToElder: body.relationToElder ? String(body.relationToElder) : "家属",
+    profileComplete: !!(nickname && contactPhone && district),
   });
 });
 
@@ -1948,11 +2036,17 @@ routerAdd("POST", "/api/nuanban/platform/god-view-auth", function (e) {
     const raw = toString(e.request.body);
     body = raw ? JSON.parse(raw) : {};
   } catch (_) {}
-  const pwd = String(body.password || "");
+  var pwd = String(body.password || "").trim();
+  if (!pwd) {
+    try {
+      var q = e.request.urlQuery().get("password");
+      if (q) pwd = String(q).trim();
+    } catch (_) {}
+  }
   let expected = "nuanban2025";
   try {
     const fromEnv = $os.getenv("NUANBAN_GOD_VIEW_PASSWORD");
-    if (fromEnv) expected = String(fromEnv);
+    if (fromEnv) expected = String(fromEnv).trim();
   } catch (_) {}
   if (pwd !== expected) {
     return e.json(403, { message: "密码错误" });

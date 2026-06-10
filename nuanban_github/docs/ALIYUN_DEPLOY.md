@@ -163,14 +163,23 @@ curl -s https://nuanban.cc/api/health
 以后在 Cursor 改完代码 push 后，在本机执行：
 
 ```bash
-cd /path/to/jinshouzhi/nuanban_github
-cp config/demo.env.example config/demo.env   # 仅首次
-# 编辑 config/demo.env 填入 NUANBAN_SSH、NUANBAN_DOMAIN 等
+# 推荐：暖伴 + 古蜀秘档 一并同步
+cp scripts/aliyun.env.example scripts/aliyun.env
+chmod +x scripts/aliyun-sync-all.sh
+./scripts/aliyun-sync-all.sh
+```
 
+或仅暖伴：
+
+```bash
+cd /path/to/jinshouzhi/nuanban_github
+cp config/demo.env.example config/demo.env
 ./scripts/sync-public.sh
 ```
 
 会自动 `git push` + SSH 到服务器 `git pull` + `deploy-public.sh`。
+
+古蜀秘档访问：`https://你的域名/game/`（静态目录 `/opt/jinshouzhi/match3-game`）。
 
 ---
 

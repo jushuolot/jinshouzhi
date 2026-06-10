@@ -10,6 +10,17 @@
 		reverse_proxy pocketbase:8090
 	}
 
+	handle /game/* {
+		uri strip_prefix /game
+		root * /srv/match3-game
+		try_files {path} /index.html
+		file_server
+	}
+
+	handle /game {
+		redir /game/ permanent
+	}
+
 	handle {
 		root * /srv/h5
 		try_files {path} /index.html

@@ -34,7 +34,8 @@
         { "path": "bind-code", "style": { "navigationBarTitleText": "家属绑定码" } },
         { "path": "settings", "style": { "navigationBarTitleText": "无障碍设置" } },
         { "path": "wallet/index", "style": { "navigationBarTitleText": "储值卡" } },
-        { "path": "profile", "style": { "navigationBarTitleText": "我的" } }
+        { "path": "profile", "style": { "navigationBarTitleText": "我的" } },
+        { "path": "profile/edit", "style": { "navigationBarTitleText": "编辑资料" } }
       ]
     },
     {
@@ -48,7 +49,8 @@
         { "path": "outdoor/approve", "style": { "navigationBarTitleText": "外出审批" } },
         { "path": "package/buy", "style": { "navigationBarTitleText": "服务包购买" } },
         { "path": "wallet/index", "style": { "navigationBarTitleText": "储值卡" } },
-        { "path": "profile", "style": { "navigationBarTitleText": "我的" } }
+        { "path": "profile", "style": { "navigationBarTitleText": "我的" } },
+        { "path": "profile/edit", "style": { "navigationBarTitleText": "编辑资料" } }
       ]
     },
     {

@@ -30,6 +30,7 @@
   settings           无障碍设置
   wallet/index       储值卡（充值 / 消费记录 · 老人大字）
   profile
+  profile/edit       编辑资料（老人基本信息）
 
 分包 package-family/
   home
@@ -41,6 +42,7 @@
   package/buy        服务包购买（mock 下单 → 待支付）
   wallet/index       储值卡（充值 / 消费记录）
   profile
+  profile/edit       编辑资料（联系信息 / 照护关系）
 
 分包 package-student/
   home

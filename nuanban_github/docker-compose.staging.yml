@@ -19,3 +19,4 @@ services:
     volumes:
       - ./Caddyfile.staging:/etc/caddy/Caddyfile:ro
       - ./packages/miniapp/dist/build/h5:/srv/h5:ro
+      - ../match3-game:/srv/match3-game:ro

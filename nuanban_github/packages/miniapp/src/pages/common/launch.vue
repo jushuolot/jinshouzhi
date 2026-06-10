@@ -7,6 +7,7 @@
 <script setup lang="ts">
 import { onLoad } from '@dcloudio/uni-app';
 import { DEEP_LINK_MAP, ROLE_HOME, type RoleKey } from '../../config/tabs';
+import { navigateAfterAuth } from '../../utils/profile-onboarding';
 import { useRoleStore } from '../../store/role';
 
 const roleStore = useRoleStore();
@@ -49,7 +50,7 @@ onLoad((query) => {
       return;
     }
     if (roleStore.activeRole) {
-      uni.reLaunch({ url: ROLE_HOME[roleStore.activeRole] });
+      void navigateAfterAuth(roleStore.activeRole);
       return;
     }
     if (roleStore.hasMultipleRoles) {
@@ -57,7 +58,7 @@ onLoad((query) => {
       return;
     }
     const r = roleStore.activeRoles[0]?.role;
-    if (r) uni.reLaunch({ url: ROLE_HOME[r] });
+    if (r) void navigateAfterAuth(r);
     else uni.reLaunch({ url: '/pages/common/register' });
   }, 300);
 });

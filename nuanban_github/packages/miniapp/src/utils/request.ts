@@ -1,8 +1,37 @@
 import { useRoleStore } from '../store/role';
 import { demoMockRequest, isDemoMockEnabled } from './demo-mock';
 
+/** 构建时 API 根；在阿里云等线上环境自动纠正 localhost / 相对路径 */
+export function resolveApiBase(): string {
+  const configured = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8090/api').replace(
+    /\/$/,
+    '',
+  );
+  if (typeof window === 'undefined') return configured;
+
+  const { hostname, origin } = window.location;
+  const onDevHost = hostname === 'localhost' || hostname === '127.0.0.1';
+
+  if (configured === '/api') {
+    return onDevHost ? configured : `${origin}/api`;
+  }
+  if (!onDevHost && /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?\/api$/i.test(configured)) {
+    return `${origin}/api`;
+  }
+  return configured;
+}
+
 /** PocketBase REST root, e.g. http://localhost:8090/api */
-export const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8090/api';
+export const API_BASE = resolveApiBase();
+
+function serializeJsonBody(method: string | undefined, data: unknown, contentType: string): unknown {
+  const m = (method || 'GET').toUpperCase();
+  if (m === 'GET' || m === 'HEAD' || data == null) return data;
+  if (!contentType.includes('application/json')) return data;
+  if (typeof data === 'string') return data;
+  if (typeof data === 'object') return JSON.stringify(data);
+  return data;
+}
 
 export function isDemoMockMode(): boolean {
   return isDemoMockEnabled();
@@ -58,12 +87,16 @@ export function request<T>(options: UniApp.RequestOptions): Promise<T> {
   if (isDemoMockEnabled()) {
     return demoMockRequest<T>({ ...options, header: headers });
   }
-  const url = options.url.startsWith('http') ? options.url : `${API_BASE}${options.url}`;
+  const apiBase = resolveApiBase();
+  const url = options.url.startsWith('http') ? options.url : `${apiBase}${options.url}`;
+  const contentType = String(headers['Content-Type'] || headers['content-type'] || '');
+  const data = serializeJsonBody(options.method, options.data, contentType);
 
   return new Promise((resolve, reject) => {
     uni.request({
       ...options,
       url,
+      data,
       timeout: 15000,
       header: headers,
       success: (res) => {

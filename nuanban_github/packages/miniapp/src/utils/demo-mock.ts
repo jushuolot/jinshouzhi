@@ -144,9 +144,169 @@ const studentProfileState = {
   serviceAreas: ['浦东新区', '黄浦区'],
 };
 
+const familyProfileState = {
+  nickname: '',
+  contactPhone: '',
+  district: '',
+  address: '',
+  relationToElder: '',
+  seeded: true,
+};
+
+const elderProfileState = {
+  name: '',
+  age: 0,
+  gender: '女',
+  district: '',
+  address: '',
+  emergencyName: '',
+  emergencyRelation: '',
+  emergencyPhone: '',
+  seeded: true,
+};
+
+function studentProfileComplete() {
+  return !!(studentProfileState.displayName.trim() && studentProfileState.schoolName.trim());
+}
+
+function familyProfileComplete() {
+  if (!familyProfileState.seeded) {
+    return !!(
+      familyProfileState.nickname.trim() &&
+      familyProfileState.contactPhone.trim() &&
+      familyProfileState.district.trim()
+    );
+  }
+  const base = getFamilyProfile();
+  return !!(base.nickname.trim() && base.contactPhone.trim() && base.district.trim());
+}
+
+function elderProfileComplete() {
+  if (!elderProfileState.seeded) {
+    return !!(
+      elderProfileState.name.trim() &&
+      elderProfileState.district.trim() &&
+      elderProfileState.address.trim()
+    );
+  }
+  const base = getElderSelfProfile();
+  return !!(base.name.trim() && base.district.trim() && base.address.trim());
+}
+
+function resetRoleProfileState(role: RoleKey, displayName?: string) {
+  if (role === 'student') {
+    studentProfileState.displayName = displayName || '';
+    studentProfileState.schoolName = '';
+    studentProfileState.major = '';
+    studentProfileState.bio = '';
+    studentProfileState.serviceAreas = [];
+    studentProfileState.availableHours = [];
+  }
+  if (role === 'family') {
+    familyProfileState.nickname = displayName || '';
+    familyProfileState.contactPhone = '';
+    familyProfileState.district = '';
+    familyProfileState.address = '';
+    familyProfileState.relationToElder = '';
+    familyProfileState.seeded = false;
+  }
+  if (role === 'elder') {
+    elderProfileState.name = displayName || '';
+    elderProfileState.age = 0;
+    elderProfileState.gender = '女';
+    elderProfileState.district = '';
+    elderProfileState.address = '';
+    elderProfileState.emergencyName = '';
+    elderProfileState.emergencyRelation = '';
+    elderProfileState.emergencyPhone = '';
+    elderProfileState.seeded = false;
+  }
+}
+
+function seedDemoRoleProfiles(email: string) {
+  const em = email.toLowerCase();
+  familyProfileState.seeded = true;
+  elderProfileState.seeded = true;
+  if (em.includes('student3')) return;
+  if (em.includes('student2')) {
+    studentProfileState.displayName = '周同学';
+    studentProfileState.schoolName = '城东师范学院';
+    return;
+  }
+  if (em.includes('family')) return;
+  if (em.includes('elder')) return;
+  if (em.includes('multi')) return;
+  studentProfileState.displayName = '林同学';
+  studentProfileState.schoolName = '示范大学';
+}
+
 function studentProfileDto() {
   const dto = getStudentFullProfile(studentProfileState);
   const url = getMockAvatarUrl(USERS.student.id);
+  const base = url ? { ...dto, avatarUrl: url } : dto;
+  return { ...base, profileComplete: studentProfileComplete() };
+}
+
+function familyProfileDto() {
+  const base = familyProfileState.seeded ? getFamilyProfile() : null;
+  const dto = {
+    nickname: familyProfileState.seeded
+      ? base!.nickname
+      : familyProfileState.nickname || '家属',
+    email: base?.email || DEMO_USERS.family.email,
+    relationToElder: familyProfileState.seeded
+      ? base!.relationToElder
+      : familyProfileState.relationToElder || '家属',
+    linkedElderName: base?.linkedElderName || '张奶奶',
+    linkedElderId: base?.linkedElderId || 'elder-1',
+    contactPhone: familyProfileState.seeded
+      ? base!.contactPhone
+      : familyProfileState.contactPhone,
+    district: familyProfileState.seeded ? base!.district : familyProfileState.district,
+    address: familyProfileState.seeded ? base!.address : familyProfileState.address,
+    notificationPrefs: base?.notificationPrefs || [
+      '订单状态变更',
+      '外出审批提醒',
+      'SOS 紧急通知',
+      '支付成功通知',
+    ],
+    profileComplete: familyProfileComplete(),
+  };
+  const url = getMockAvatarUrl(USERS.family.id);
+  return url ? { ...dto, avatarUrl: url } : dto;
+}
+
+function elderSelfProfileDto() {
+  const base = elderProfileState.seeded ? getElderSelfProfile() : null;
+  const dto = {
+    id: base?.id || 'elder-1',
+    name: elderProfileState.seeded ? base!.name : elderProfileState.name || '老人',
+    age: elderProfileState.seeded ? base!.age : elderProfileState.age || 78,
+    gender: elderProfileState.seeded ? base!.gender : elderProfileState.gender,
+    district: elderProfileState.seeded ? base!.district : elderProfileState.district,
+    address: elderProfileState.seeded ? base!.address : elderProfileState.address,
+    orgName: base?.orgName || '暖伴示范养老院',
+    healthStatus: base?.healthStatus || '总体良好',
+    mobility: base?.mobility || '行动便利',
+    hobbies: base?.hobbies || ['聊天', '散步'],
+    servicePreferences: base?.servicePreferences || ['陪伴聊天'],
+    livingSituation: base?.livingSituation || '与子女同住',
+    emergencyContact: {
+      name: elderProfileState.seeded
+        ? base!.emergencyContact.name
+        : elderProfileState.emergencyName,
+      relation: elderProfileState.seeded
+        ? base!.emergencyContact.relation
+        : elderProfileState.emergencyRelation,
+      phone: elderProfileState.seeded
+        ? base!.emergencyContact.phone
+        : elderProfileState.emergencyPhone,
+    },
+    preferredVisitTimes: base?.preferredVisitTimes || ['工作日下午 14:00–17:00'],
+    notes: base?.notes || '请耐心沟通，营造温馨氛围。',
+    profileComplete: elderProfileComplete(),
+  };
+  const url = getMockAvatarUrl(USERS.elder.id);
   return url ? { ...dto, avatarUrl: url } : dto;
 }
 
@@ -409,6 +569,7 @@ function loginByEmail(email: string, pickRole?: RoleKey) {
   const role = pickRole || roleFromEmail(email);
   let user: { id: string; email: string; nickname: string };
   let studentStatus = 'active';
+  seedDemoRoleProfiles(email);
 
   if (em.includes('multi1')) {
     return {
@@ -610,10 +771,7 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
         elderProfileId: role === 'elder' ? 'elder-zhang' : null,
       });
     }
-    if (role === 'student' && displayName) {
-      studentProfileState.displayName = displayName;
-      studentProfileState.schoolName = '示范大学';
-    }
+    resetRoleProfileState(role, displayName);
     const roles = [...mockRegisterRoles];
     const user = demoUserForRoles(roles);
     if (displayName) user.nickname = displayName;
@@ -716,7 +874,34 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
     if (Array.isArray(data.serviceAreas)) {
       studentProfileState.serviceAreas = data.serviceAreas.map(String);
     }
-    return delay({ ok: true, ...studentProfileDto() } as T);
+    return delay({ ok: true, ...studentProfileDto(), profileComplete: studentProfileComplete() } as T);
+  }
+  if (method === 'PATCH' && path === '/nuanban/family/profile') {
+    const roleErr = assertDemoActiveRole(options, path, 'family');
+    if (roleErr) return Promise.reject({ message: roleErr, statusCode: 403 });
+    if (data.nickname) familyProfileState.nickname = String(data.nickname);
+    if (data.contactPhone) familyProfileState.contactPhone = String(data.contactPhone);
+    if (data.district) familyProfileState.district = String(data.district);
+    if (data.address != null) familyProfileState.address = String(data.address);
+    if (data.relationToElder) familyProfileState.relationToElder = String(data.relationToElder);
+    familyProfileState.seeded = false;
+    return delay({ ok: true, ...familyProfileDto() } as T);
+  }
+  if (method === 'PATCH' && path === '/nuanban/elder/profile') {
+    const roleErr = assertDemoActiveRole(options, path, 'elder');
+    if (roleErr) return Promise.reject({ message: roleErr, statusCode: 403 });
+    if (data.name) elderProfileState.name = String(data.name);
+    if (data.age != null) elderProfileState.age = Number(data.age);
+    if (data.gender) elderProfileState.gender = String(data.gender);
+    if (data.district) elderProfileState.district = String(data.district);
+    if (data.address) elderProfileState.address = String(data.address);
+    if (data.emergencyContactName) elderProfileState.emergencyName = String(data.emergencyContactName);
+    if (data.emergencyContactRelation) {
+      elderProfileState.emergencyRelation = String(data.emergencyContactRelation);
+    }
+    if (data.emergencyContactPhone) elderProfileState.emergencyPhone = String(data.emergencyContactPhone);
+    elderProfileState.seeded = false;
+    return delay({ ok: true, ...elderSelfProfileDto() } as T);
   }
   const studentElderProfile = path.match(/^\/nuanban\/student\/elders\/([^/]+)\/profile$/);
   if (method === 'GET' && studentElderProfile) {
@@ -1085,16 +1270,12 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
   if (method === 'GET' && path === '/nuanban/elder/profile') {
     const roleErr = assertDemoActiveRole(options, path, 'elder');
     if (roleErr) return Promise.reject({ message: roleErr, statusCode: 403 });
-    const dto = getElderSelfProfile();
-    const url = getMockAvatarUrl(USERS.elder.id);
-    return delay((url ? { ...dto, avatarUrl: url } : dto) as T);
+    return delay(elderProfileDto() as T);
   }
   if (method === 'GET' && path === '/nuanban/family/profile') {
     const roleErr = assertDemoActiveRole(options, path, 'family');
     if (roleErr) return Promise.reject({ message: roleErr, statusCode: 403 });
-    const dto = getFamilyProfile();
-    const url = getMockAvatarUrl(USERS.family.id);
-    return delay((url ? { ...dto, avatarUrl: url } : dto) as T);
+    return delay(familyProfileDto() as T);
   }
   if (method === 'POST' && path === '/nuanban/elder/sos') {
     const elderId = String(data.elderId || 'elder-zhang');

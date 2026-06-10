@@ -10,6 +10,18 @@ __DOMAIN__ {
 		reverse_proxy pocketbase:8090
 	}
 
+	# 古蜀秘档 · 三星堆消消（monorepo match3-game 静态站）
+	handle /game/* {
+		uri strip_prefix /game
+		root * /srv/match3-game
+		try_files {path} /index.html
+		file_server
+	}
+
+	handle /game {
+		redir /game/ permanent
+	}
+
 	handle {
 		root * /srv/h5
 		try_files {path} /index.html

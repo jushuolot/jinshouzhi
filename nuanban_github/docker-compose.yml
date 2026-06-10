@@ -39,6 +39,7 @@ services:
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - ./packages/miniapp/dist/build/h5:/srv/h5:ro
+      - ../match3-game:/srv/match3-game:ro
       - caddy_data:/data
       - caddy_config:/config
 

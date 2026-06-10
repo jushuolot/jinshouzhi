@@ -32,7 +32,8 @@ import { onLoad } from '@dcloudio/uni-app';
 import { registerRole } from '../../api/auth';
 import AuthBrandHeader from '../../components/AuthBrandHeader.vue';
 import { takePendingReferralCode } from '../../utils/demo-referral';
-import { ROLE_HOME, type RoleKey } from '../../config/tabs';
+import type { RoleKey } from '../../config/tabs';
+import { navigateAfterAuth } from '../../utils/profile-onboarding';
 import { useRoleStore } from '../../store/role';
 import { pbErrorMessage } from '../../utils/request';
 
@@ -65,7 +66,7 @@ onLoad((q) => {
       uni.reLaunch({ url: '/pages/common/role-select' });
     } else {
       const r = roleStore.activeRoles[0]?.role;
-      if (r) uni.reLaunch({ url: ROLE_HOME[r] });
+      if (r) void navigateAfterAuth(r);
     }
     return;
   }
@@ -106,7 +107,7 @@ async function submit() {
       return;
     }
     uni.showToast({ title: '身份已设定', icon: 'success' });
-    uni.reLaunch({ url: ROLE_HOME[role.value] });
+    void navigateAfterAuth(role.value);
   } catch (e) {
     uni.showToast({ title: pbErrorMessage(e), icon: 'none' });
   } finally {

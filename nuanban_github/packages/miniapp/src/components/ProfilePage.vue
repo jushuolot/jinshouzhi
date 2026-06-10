@@ -211,6 +211,7 @@ const menuItems = computed(() => {
   if (props.role === 'family') {
     return [
       ...switchRole,
+      { label: '编辑资料', action: () => uni.navigateTo({ url: '/package-family/profile/edit' }) },
       {
         label: '储值卡',
         badge: `¥${walletBalanceYuan.value}`,
@@ -226,6 +227,7 @@ const menuItems = computed(() => {
   if (props.role === 'elder') {
     return [
       ...switchRole,
+      { label: '编辑资料', action: () => uni.navigateTo({ url: '/package-elder/profile/edit' }) },
       {
         label: '储值卡',
         badge: `¥${walletBalanceYuan.value}`,

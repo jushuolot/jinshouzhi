@@ -92,7 +92,7 @@ import { computed, onUnmounted, ref } from 'vue';
 import { onLoad } from '@dcloudio/uni-app';
 import { loginWithPhone, loginWithWxCode, type LoginResult } from '../../api/auth';
 import { APP_TAGLINE, APP_TITLE } from '../../config/brand';
-import { ROLE_HOME } from '../../config/tabs';
+import { navigateAfterAuth } from '../../utils/profile-onboarding';
 import { useRoleStore } from '../../store/role';
 import { pbErrorMessage } from '../../utils/request';
 import { DEMO_TEST_PHONES } from '../../utils/demo-rich-data';
@@ -198,7 +198,7 @@ function afterLogin(res: LoginResult) {
   }
   const active = res.activeRole ?? activeRoles[0]?.role;
   if (active) {
-    uni.reLaunch({ url: ROLE_HOME[active] });
+    void navigateAfterAuth(active);
   } else {
     uni.navigateTo({ url: '/pages/common/register' });
   }
