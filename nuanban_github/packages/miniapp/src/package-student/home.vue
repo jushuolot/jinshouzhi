@@ -137,23 +137,25 @@ function formatDistance(km: number) {
 
 async function reload() {
   errorMsg.value = '';
-  try {
-    const [profile, st, pendingRes, activeRes, sosRes] = await Promise.all([
-      fetchStudentProfile().catch(() => null),
-      fetchStudentStats().catch(() => null),
-      request<{ list: unknown[] }>({ url: '/nuanban/student/orders/pending', method: 'GET' }),
-      listActiveOrders().catch(() => []),
-      listActiveSosAlerts().catch(() => []),
-    ]);
-    if (profile) {
-      profileName.value = profile.displayName || profile.nickname;
-      schoolName.value = profile.schoolName;
-    }
-    stats.value = st;
-    pendingCount.value = pendingRes.list?.length ?? st?.pendingCount ?? 0;
-    activeCount.value = activeRes.length;
-    sosAlerts.value = sosRes;
+  const [profile, st, pendingRes, activeRes, sosRes] = await Promise.all([
+    fetchStudentProfile().catch(() => null),
+    fetchStudentStats().catch(() => null),
+    request<{ list?: unknown[] }>({ url: '/nuanban/student/orders/pending', method: 'GET' }).catch(
+      () => ({ list: [] as unknown[] }),
+    ),
+    listActiveOrders().catch(() => []),
+    listActiveSosAlerts().catch(() => []),
+  ]);
+  if (profile) {
+    profileName.value = profile.displayName || profile.nickname;
+    schoolName.value = profile.schoolName;
+  }
+  stats.value = st;
+  pendingCount.value = pendingRes.list?.length ?? st?.pendingCount ?? 0;
+  activeCount.value = activeRes.length;
+  sosAlerts.value = sosRes;
 
+  try {
     const loc = await getLocationWithFallback(2000);
     const rows = await listNearbyElders(loc.lat, loc.lng);
     previewElders.value = rows.slice(0, 2).map((e) => ({
@@ -164,6 +166,7 @@ async function reload() {
       tags: (e as { tags?: string[] }).tags,
     }));
   } catch (e) {
+    previewElders.value = [];
     errorMsg.value = pbErrorMessage(e);
   }
 }

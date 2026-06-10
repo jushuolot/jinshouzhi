@@ -221,6 +221,11 @@ routerAdd("POST", "/api/nuanban/seed-demo", (e) => {
     return rec;
   }
 
+  function seedDate(daysOffset) {
+    const d = new Date(Date.now() + daysOffset * 86400000);
+    return d.toISOString().slice(0, 10);
+  }
+
   function findOrCreateFamilyBinding(familyUserId, elderId) {
     const rows = $app.findRecordsByFilter(
       "family_elder_bindings",
@@ -305,34 +310,34 @@ routerAdd("POST", "/api/nuanban/seed-demo", (e) => {
     amountCents: 5000,
     paymentStatus: "paid",
     familyUserId: uFamily.id,
-    scheduledAt: new Date(Date.now() + 86400000).toISOString(),
+    scheduledAt: seedDate(1),
   });
   findOrCreateOrder(elderZhang.id, svcLife.id, "in_service", {
     amountCents: 7000,
     paymentStatus: "paid",
     familyUserId: uFamily.id,
     studentUserId: uStudent.id,
-    scheduledAt: new Date(Date.now() - 3600000).toISOString(),
+    scheduledAt: seedDate(0),
   });
   findOrCreateOrder(elderLi.id, svcWalk.id, "pending_payment", {
     amountCents: 6500,
     paymentStatus: "unpaid",
     familyUserId: uFamily.id,
-    scheduledAt: new Date(Date.now() + 172800000).toISOString(),
+    scheduledAt: seedDate(2),
   });
   findOrCreateOrder(elderZhang.id, svcRehab.id, "completed", {
     amountCents: 8000,
     paymentStatus: "paid",
     familyUserId: uFamily.id,
     studentUserId: uStudent.id,
-    scheduledAt: new Date(Date.now() - 86400000 * 3).toISOString(),
+    scheduledAt: seedDate(-3),
   });
   findOrCreateOrder(elderLi.id, svcLife.id, "completed", {
     amountCents: 7000,
     paymentStatus: "paid",
     familyUserId: uFamily.id,
     studentUserId: uStudent.id,
-    scheduledAt: new Date(Date.now() - 86400000).toISOString(),
+    scheduledAt: seedDate(-1),
   });
 
   return e.json(200, {

@@ -151,17 +151,24 @@ const profileSections = computed((): ProfileDetailSection[] => {
 
 onShow(async () => {
   if (!guardPackageRoute('/package-student/profile')) return;
-  try {
-    const [p, s, wd] = await Promise.all([
-      fetchStudentProfile(),
-      fetchStudentStats(),
-      fetchStudentWithdrawal(),
-    ]);
-    profile.value = p;
-    stats.value = s;
-    withdrawAvailable.value = wd.availableYuan;
-  } catch (e) {
-    uni.showToast({ title: pbErrorMessage(e), icon: 'none' });
+  const errors: string[] = [];
+  const p = await fetchStudentProfile().catch((e) => {
+    errors.push(pbErrorMessage(e));
+    return null;
+  });
+  const s = await fetchStudentStats().catch((e) => {
+    errors.push(pbErrorMessage(e));
+    return null;
+  });
+  const wd = await fetchStudentWithdrawal().catch((e) => {
+    errors.push(pbErrorMessage(e));
+    return null;
+  });
+  if (p) profile.value = p;
+  if (s) stats.value = s;
+  if (wd) withdrawAvailable.value = wd.availableYuan;
+  if (errors.length) {
+    uni.showToast({ title: errors[0], icon: 'none' });
   }
 });
 

@@ -759,6 +759,19 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
   if (method === 'GET' && path === '/nuanban/student/service-logs') {
     return delay({ list: state.serviceLogs } as T);
   }
+  if (method === 'GET' && path.startsWith('/nuanban/student/elders/nearby')) {
+    const list = state.elders.map((e) => ({
+      id: e.id,
+      name: e.name,
+      latitude: e.latitude,
+      longitude: e.longitude,
+      org: e.org,
+      orgName: e.expand?.org?.name || '暖伴示范养老院',
+      distanceKm: 0.8,
+      expand: e.expand,
+    }));
+    return delay({ list } as T);
+  }
   if (method === 'GET' && path === '/nuanban/student/orders/pending') {
     const roleErr = assertDemoActiveRole(options, path, 'student');
     if (roleErr) return Promise.reject({ message: roleErr, statusCode: 403 });

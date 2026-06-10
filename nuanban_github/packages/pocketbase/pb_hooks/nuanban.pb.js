@@ -8,13 +8,57 @@ function elderNameById(id) {
   }
 }
 
+function safeRecordString(rec, field, fallback) {
+  try {
+    const v = rec.getString(field);
+    return v != null && v !== "" ? v : fallback || "";
+  } catch (_) {
+    return fallback || "";
+  }
+}
+
+function safeRecordInt(rec, field, fallback) {
+  try {
+    const v = rec.getInt(field);
+    if (v != null && !isNaN(v)) return v;
+  } catch (_) {}
+  try {
+    const v = parseInt(rec.getString(field), 10);
+    if (!isNaN(v)) return v;
+  } catch (_) {}
+  return fallback != null ? fallback : 0;
+}
+
+function safeRecordBool(rec, field, fallback) {
+  try {
+    return !!rec.getBool(field);
+  } catch (_) {}
+  try {
+    const v = rec.get(field);
+    return v === true || v === 1 || v === "true";
+  } catch (_) {}
+  return !!fallback;
+}
+
+function safeRecordFloat(rec, field, fallback) {
+  try {
+    const v = rec.getFloat(field);
+    if (v != null && !isNaN(v)) return v;
+  } catch (_) {}
+  try {
+    const v = parseFloat(rec.getString(field));
+    if (!isNaN(v)) return v;
+  } catch (_) {}
+  return fallback != null ? fallback : 0;
+}
+
 function serviceInfoById(id) {
   try {
     const s = $app.findRecordById("service_items", id);
     return {
-      name: s.getString("name"),
-      durationMinutes: s.getInt("duration_minutes") || 0,
-      requiresOutdoor: s.getBool("requires_outdoor_approval"),
+      name: safeRecordString(s, "name", "陪护服务"),
+      durationMinutes: safeRecordInt(s, "duration_minutes", 0),
+      requiresOutdoor: safeRecordBool(s, "requires_outdoor_approval", false),
     };
   } catch (_) {
     return { name: "陪护服务", durationMinutes: 0, requiresOutdoor: false };
@@ -22,16 +66,16 @@ function serviceInfoById(id) {
 }
 
 function orderToStudentDto(o) {
-  const svc = serviceInfoById(o.getString("service_item"));
+  const svc = serviceInfoById(safeRecordString(o, "service_item", ""));
   return {
     id: o.id,
-    elderId: o.getString("elder"),
-    elderName: elderNameById(o.getString("elder")),
+    elderId: safeRecordString(o, "elder", ""),
+    elderName: elderNameById(safeRecordString(o, "elder", "")),
     serviceName: svc.name,
     durationMinutes: svc.durationMinutes,
-    amountCents: o.getInt("amount_cents"),
-    scheduledAt: o.getString("scheduled_at"),
-    status: o.getString("status"),
+    amountCents: safeRecordInt(o, "amount_cents", 0),
+    scheduledAt: safeRecordString(o, "scheduled_at", ""),
+    status: safeRecordString(o, "status", ""),
     requiresOutdoorApproval: svc.requiresOutdoor,
   };
 }
@@ -132,14 +176,18 @@ function finalizeOrderAfterConfirm(order) {
   completeOrderSchedule(order.id, "completed");
 }
 
-/** 演示储值卡（进程内，按 userId 隔离） */
-var walletDemoStore = {};
+/** 演示储值卡（进程内，按 userId 隔离；用 function 属性避免 hooks 路由作用域问题） */
+function walletDemoStoreMap() {
+  if (!walletDemoStoreMap._data) walletDemoStoreMap._data = {};
+  return walletDemoStoreMap._data;
+}
 
 function walletEnsureUser(userId) {
-  if (!walletDemoStore[userId]) {
-    walletDemoStore[userId] = { balanceCents: 0, transactions: [] };
+  const store = walletDemoStoreMap();
+  if (!store[userId]) {
+    store[userId] = { balanceCents: 0, transactions: [] };
   }
-  return walletDemoStore[userId];
+  return store[userId];
 }
 
 function walletOverviewDto(owner) {
@@ -894,61 +942,117 @@ routerAdd("GET", "/api/nuanban/student/orders/pending", (e) => {
     );
     const list = [];
     for (let i = 0; i < records.length; i++) {
-      list.push(orderToStudentDto(records[i]));
+      try {
+        list.push(orderToStudentDto(records[i]));
+      } catch (err) {
+        // 单条坏数据不影响整页
+      }
     }
     return e.json(200, { list: list });
   } catch (err) {
-    return e.json(200, { ok: false, error: "" + err });
+    return e.json(200, { list: [], error: String(err && err.message ? err.message : err) });
+  }
+});
+
+routerAdd("GET", "/api/nuanban/student/elders/nearby", (e) => {
+  const rc = assertActiveRoleHeader(e, "student");
+  if (!rc.ok) return e.json(rc.code, rc.body);
+  if (!e.auth) return e.json(401, { message: "需要登录" });
+  try {
+    const q = e.request.url.query();
+    const lat = parseFloat(q.get("lat") || "0");
+    const lng = parseFloat(q.get("lng") || "0");
+    const radiusKm = parseFloat(q.get("radiusKm") || "5");
+    const records = $app.findRecordsByFilter("elders", "enabled = true", "", 50, 0);
+    const list = [];
+    for (let i = 0; i < records.length; i++) {
+      const rec = records[i];
+      const elat = safeRecordFloat(rec, "latitude", 0);
+      const elng = safeRecordFloat(rec, "longitude", 0);
+      let distanceKm = 999;
+      if (lat && lng && elat && elng) {
+        distanceKm = haversineM(lat, lng, elat, elng) / 1000;
+      }
+      if (distanceKm > radiusKm) continue;
+      let orgName = "暖伴示范养老院";
+      let orgId = safeRecordString(rec, "org", "");
+      if (orgId) {
+        try {
+          const org = $app.findRecordById("organizations", orgId);
+          orgName = safeRecordString(org, "name", orgName);
+        } catch (_) {}
+      }
+      list.push({
+        id: rec.id,
+        name: safeRecordString(rec, "name", "老人"),
+        latitude: elat,
+        longitude: elng,
+        org: orgId,
+        orgName: orgName,
+        distanceKm: Math.round(distanceKm * 100) / 100,
+        expand: { org: { id: orgId, name: orgName } },
+      });
+    }
+    list.sort(function (a, b) {
+      return a.distanceKm - b.distanceKm;
+    });
+    return e.json(200, { list: list });
+  } catch (err) {
+    return e.json(400, { message: String(err && err.message ? err.message : err), list: [] });
   }
 });
 
 routerAdd("GET", "/api/nuanban/student/profile", (e) => {
-  const rc = assertActiveRoleHeader(e, "student");
-  if (!rc.ok) return e.json(rc.code, rc.body);
-  const auth = e.auth;
-  if (!auth) return e.json(401, { message: "需要登录" });
-  let schoolName = "";
-  let displayName = "";
-  const roles = $app.findRecordsByFilter(
-    "user_roles",
-    'user = {:uid} && role = "student"',
-    "",
-    1,
-    0,
-    { uid: auth.id }
-  );
-  if (roles.length > 0) {
-    const r = roles[0];
-    displayName = r.getString("display_name") || "";
-    const schoolId = r.getString("school");
-    if (schoolId) {
-      try {
-        const s = $app.findRecordById("school_dict", schoolId);
-        schoolName = s.getString("name");
-      } catch (_) {}
+  try {
+    const rc = assertActiveRoleHeader(e, "student");
+    if (!rc.ok) return e.json(rc.code, rc.body);
+    const auth = e.auth;
+    if (!auth) return e.json(401, { message: "需要登录" });
+    let schoolName = "";
+    let displayName = "";
+    const roles = $app.findRecordsByFilter(
+      "user_roles",
+      'user = {:uid} && role = "student"',
+      "",
+      1,
+      0,
+      { uid: auth.id }
+    );
+    if (roles.length > 0) {
+      const r = roles[0];
+      displayName = safeRecordString(r, "display_name", "");
+      const schoolId = safeRecordString(r, "school", "");
+      if (schoolId) {
+        try {
+          const s = $app.findRecordById("school_dict", schoolId);
+          schoolName = safeRecordString(s, "name", "");
+        } catch (_) {}
+      }
     }
+    return e.json(200, {
+      nickname: safeRecordString(auth, "name", displayName || "学生"),
+      email: safeRecordString(auth, "email", ""),
+      schoolName: schoolName,
+      displayName: displayName,
+      gender: "女",
+      major: "护理学",
+      grade: "大三",
+      age: 21,
+      phone: "138****1234",
+      bio: "热心公益的在校女生，擅长陪伴聊天与康复协助。",
+      serviceAreas: ["浦东新区", "黄浦区"],
+      availableHours: ["周一至周五 14:00–18:00", "周六 9:00–12:00"],
+      certifications: ["急救员证", "养老护理员初级"],
+      languages: ["普通话", "上海话"],
+      personalityTags: ["耐心细致", "开朗活泼"],
+      serviceTypes: ["陪伴聊天", "读报陪聊", "康复协助"],
+      completedOrderThemes: ["聊天陪伴 ×12", "康复协助 ×5"],
+      rating: 4.9,
+      orderCount: 35,
+    });
+  } catch (err) {
+    return e.json(400, { message: String(err && err.message ? err.message : err) });
   }
-  return e.json(200, {
-    nickname: auth.getString("name") || displayName || "学生",
-    email: auth.getString("email"),
-    schoolName: schoolName,
-    displayName: displayName,
-    gender: "女",
-    major: "护理学",
-    grade: "大三",
-    age: 21,
-    phone: "138****1234",
-    bio: "热心公益的在校女生，擅长陪伴聊天与康复协助。",
-    serviceAreas: ["浦东新区", "黄浦区"],
-    availableHours: ["周一至周五 14:00–18:00", "周六 9:00–12:00"],
-    certifications: ["急救员证", "养老护理员初级"],
-    languages: ["普通话", "上海话"],
-    personalityTags: ["耐心细致", "开朗活泼"],
-    serviceTypes: ["陪伴聊天", "读报陪聊", "康复协助"],
-    completedOrderThemes: ["聊天陪伴 ×12", "康复协助 ×5"],
-    rating: 4.9,
-    orderCount: 35,
-  });
 });
 
 routerAdd("PATCH", "/api/nuanban/student/profile", (e) => {
@@ -1508,19 +1612,25 @@ routerAdd("GET", "/api/nuanban/elder/stats", (e) => {
 routerAdd("GET", "/api/nuanban/student/orders/active", (e) => {
   const auth = e.auth;
   if (!auth) return e.json(401, { message: "需要登录" });
-  const records = $app.findRecordsByFilter(
-    "orders",
-    'student_user = {:uid} && (status = "pending_service" || status = "in_service")',
-    "",
-    50,
-    0,
-    { uid: auth.id }
-  );
-  const list = [];
-  for (let i = 0; i < records.length; i++) {
-    list.push(orderToStudentDto(records[i]));
+  try {
+    const records = $app.findRecordsByFilter(
+      "orders",
+      'student_user = {:uid} && (status = "pending_service" || status = "in_service")',
+      "",
+      50,
+      0,
+      { uid: auth.id }
+    );
+    const list = [];
+    for (let i = 0; i < records.length; i++) {
+      try {
+        list.push(orderToStudentDto(records[i]));
+      } catch (_) {}
+    }
+    return e.json(200, { list: list });
+  } catch (err) {
+    return e.json(200, { list: [], error: String(err && err.message ? err.message : err) });
   }
-  return e.json(200, { list: list });
 });
 
 routerAdd("GET", "/api/nuanban/student/orders/{id}", (e) => {
@@ -1964,7 +2074,10 @@ routerAdd("GET", "/api/nuanban/student/settlements", (e) => {
   });
 });
 
-var studentWithdrawalsByUser = {};
+function studentWithdrawalsMap() {
+  if (!studentWithdrawalsMap._data) studentWithdrawalsMap._data = {};
+  return studentWithdrawalsMap._data;
+}
 
 function demoStudentSettlements() {
   return [
@@ -1992,9 +2105,10 @@ function studentWithdrawalBalances(settlements, withdrawals) {
 }
 
 function studentWithdrawalOverview(uid) {
+  var store = studentWithdrawalsMap();
   var settlements = demoStudentSettlements();
-  if (!studentWithdrawalsByUser[uid]) studentWithdrawalsByUser[uid] = [];
-  var withdrawals = studentWithdrawalsByUser[uid];
+  if (!store[uid]) store[uid] = [];
+  var withdrawals = store[uid];
   var bal = studentWithdrawalBalances(settlements, withdrawals);
   return {
     availableCents: bal.availableCents,
@@ -2008,10 +2122,14 @@ function studentWithdrawalOverview(uid) {
 }
 
 routerAdd("GET", "/api/nuanban/student/withdrawal", (e) => {
-  const rc = assertActiveRoleHeader(e, "student");
-  if (!rc.ok) return e.json(rc.code, rc.body);
-  if (!e.auth) return e.json(401, { message: "需要登录" });
-  return e.json(200, studentWithdrawalOverview(e.auth.id));
+  try {
+    const rc = assertActiveRoleHeader(e, "student");
+    if (!rc.ok) return e.json(rc.code, rc.body);
+    if (!e.auth) return e.json(401, { message: "需要登录" });
+    return e.json(200, studentWithdrawalOverview(e.auth.id));
+  } catch (err) {
+    return e.json(400, { message: String(err && err.message ? err.message : err) });
+  }
 });
 
 routerAdd("POST", "/api/nuanban/student/withdrawal", (e) => {
@@ -2030,10 +2148,11 @@ routerAdd("POST", "/api/nuanban/student/withdrawal", (e) => {
   if (amountCents > overview.availableCents) {
     return e.json(400, { message: "可提现余额不足" });
   }
-  if (!studentWithdrawalsByUser[auth.id]) studentWithdrawalsByUser[auth.id] = [];
+  const wdStore = studentWithdrawalsMap();
+  if (!wdStore[auth.id]) wdStore[auth.id] = [];
   const now = new Date().toISOString();
   const instant = channel === "wechat";
-  studentWithdrawalsByUser[auth.id].unshift({
+  wdStore[auth.id].unshift({
     id: "wd-" + Date.now(),
     amountCents: amountCents,
     channel: channel,

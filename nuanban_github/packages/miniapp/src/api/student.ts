@@ -319,31 +319,14 @@ export async function getElderDetail(id: string) {
   return res.items[0] ?? null;
 }
 
-/** Nearby elders stub: active elders with coordinates */
+/** 附近老人（走后端自定义路由，避免直连 collections API 权限/expand 问题） */
 export async function listNearbyElders(lat: number, lng: number, radiusKm = 5) {
-  const res = await pbList<ElderRow>('elders', {
-    filter: 'enabled = true',
-    expand: 'org',
-    perPage: 50,
+  const res = await request<{ list: (ElderRow & { distanceKm: number; orgName?: string })[] }>({
+    url: `/nuanban/student/elders/nearby?lat=${lat}&lng=${lng}&radiusKm=${radiusKm}`,
+    method: 'GET',
   });
-  const R = 6371;
-  return res.items
-    .map((e) => {
-      const elat = e.latitude as number | undefined;
-      const elng = e.longitude as number | undefined;
-      let km = 999;
-      if (lat && lng && elat && elng) {
-        const dLat = ((elat - lat) * Math.PI) / 180;
-        const dLng = ((elng - lng) * Math.PI) / 180;
-        const a =
-          Math.sin(dLat / 2) ** 2 +
-          Math.cos((lat * Math.PI) / 180) *
-            Math.cos((elat * Math.PI) / 180) *
-            Math.sin(dLng / 2) ** 2;
-        km = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-      }
-      return { ...e, distanceKm: km };
-    })
-    .filter((e) => e.distanceKm <= radiusKm)
-    .sort((a, b) => a.distanceKm - b.distanceKm);
+  return (res.list ?? []).map((e) => ({
+    ...e,
+    expand: e.expand ?? (e.orgName ? { org: { id: String(e.org || ''), name: e.orgName } } : undefined),
+  }));
 }
