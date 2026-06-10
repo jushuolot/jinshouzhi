@@ -57,10 +57,10 @@
         ? '<div class="pc-layer pc-layer-main" data-z="3">' + (art.layers.face || "") + "</div>"
         : '<div class="pc-layer pc-layer-body" data-z="2">' +
           (art.layers.body || "") +
-          '</div><div class="pc-layer pc-layer-face" data-z="3">' +
-          (art.layers.face || "") +
-          '</div><div class="pc-layer pc-layer-hair" data-z="4">' +
+          '</div><div class="pc-layer pc-layer-hair" data-z="3">' +
           (art.layers.hair || "") +
+          '</div><div class="pc-layer pc-layer-face" data-z="4">' +
+          (art.layers.face || "") +
           '</div><div class="pc-layer pc-layer-acc" data-z="5">' +
           (art.layers.acc || "") +
           "</div>") +
