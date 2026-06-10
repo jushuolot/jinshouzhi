@@ -1,12 +1,5 @@
 import type { RoleKey } from '../config/tabs';
 import { useRoleStore } from '../store/role';
-import { guardGodViewOrRedirect } from './god-view-auth';
-
-/** 直接访问上帝视角页时校验超级管理员会话 */
-export function guardGodViewRoute(path: string): boolean {
-  if (!path.includes('god-view') || path.includes('god-view-gate')) return true;
-  return guardGodViewOrRedirect();
-}
 
 const PACKAGE_ROLE: Record<string, RoleKey> = {
   'package-elder': 'elder',

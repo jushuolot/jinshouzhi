@@ -33,11 +33,3 @@ export async function fetchPlatformOverview() {
     method: 'GET',
   });
 }
-
-export async function verifyGodViewAuth(password: string) {
-  return request<{ ok: boolean }>({
-    url: '/nuanban/platform/god-view-auth',
-    method: 'POST',
-    data: { password },
-  });
-}

@@ -1,13 +1,16 @@
-# 暖伴 · GitHub Pages 公网演示（无需服务器 / 域名 / 信用卡）
+# 暖伴 · GitHub Pages 测试版搭建
 
-客人打开 **固定 HTTPS 链接** 即可体验；数据在浏览器内模拟，**不需要 Render、Docker 或信用卡**。
+> **测试版完整文档与全部链接** → [TEST_VERSION.md](./TEST_VERSION.md)
+
+GitHub Pages 为 **最新测试版**；阿里云为 **正式发布版**（见 [RELEASE.md](./RELEASE.md)）。
 
 | 组件 | 方案 |
 |------|------|
 | 前端 | GitHub Pages（`*.github.io`） |
-| 演示数据 | 内置 **演示模式**（`VITE_DEMO_MOCK=true`） |
+| 演示数据 | 内置 Mock（`VITE_DEMO_MOCK=true`） |
+| 渠道标识 | 登录页 **「测试版」** 角标 |
 
-**客人链接：**
+**测试版主链接：**
 
 ```
 https://jushuolot.github.io/jinshouzhi/nuanban/#/pages/common/login
@@ -33,8 +36,8 @@ git pull
 ./scripts/dev-test.sh          # 本地仍用真实 PocketBase
 cd packages/miniapp && npm run dev:h5
 
-# 改完推送（Actions 自动用演示模式构建 Pages）
-./scripts/sync-github.sh
+# 改完发布测试版（Actions 自动构建 Pages）
+./scripts/release-test.sh
 ```
 
 本地开发**不用**演示模式；仅 GitHub Pages 构建时开启 Mock。

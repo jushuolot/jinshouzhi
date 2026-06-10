@@ -40,11 +40,10 @@ if grep -q 'require(__hooks + "/nuanban_lib.js")' packages/pocketbase/pb_hooks/n
 else
   warn "nuanban.pb.js 未 require nuanban_lib.js（旧 hooks，API 会报错）"
 fi
-if grep -q 'toString(e.request.body)' packages/pocketbase/pb_hooks/nuanban.pb.js 2>/dev/null \
-  && grep -q 'god-view-auth' packages/pocketbase/pb_hooks/nuanban.pb.js; then
-  ok "god-view-auth 使用 toString 解析（密码 nuanban2025）"
+if grep -q 'platform/overview' packages/pocketbase/pb_hooks/nuanban.pb.js 2>/dev/null; then
+  ok "platform/overview 运营看板 API 已注册"
 else
-  warn "god-view-auth 可能仍为旧版（密码会一直报错）"
+  warn "platform/overview 可能缺失"
 fi
 
 section "2/4 Git 与 GitHub"
@@ -107,9 +106,10 @@ else
   echo "=============================================="
   echo "存在不一致，请按上方提示修复"
   echo ""
-  echo "推荐同步流程："
-  echo "  本地:  git pull && git push"
-  echo "  阿里云: cd /opt/jinshouzhi/nuanban_github && git pull && ./scripts/aliyun-fix-data.sh"
+  echo "推荐发布流程（见 docs/RELEASE.md）："
+  echo "  测试版: ./scripts/release-test.sh"
+  echo "  正式版: ./scripts/release-prod.sh"
+  echo "  版本对比: ./scripts/release-status.sh"
   echo "=============================================="
   exit 1
 fi

@@ -261,11 +261,11 @@ export function buildRichOrders(elders: RichElder[]): RichOrder[] {
     });
   };
 
-  // 待接单池（压力：10 单）
-  for (let i = 0; i < 10; i++) push(i, i, 'pending_accept', 86400000 * (1 + i * 0.25));
+  // 待接单池（压力：15 单）
+  for (let i = 0; i < 15; i++) push(i, i, 'pending_accept', 86400000 * (1 + i * 0.25));
 
-  // 待支付（3 单）
-  for (let i = 0; i < 3; i++) push(i + 1, i + 2, 'pending_payment', 172800000 + i * 3600000);
+  // 待支付（5 单）
+  for (let i = 0; i < 5; i++) push(i + 1, i + 2, 'pending_payment', 172800000 + i * 3600000);
 
   // 外出待批（2 单）
   push(2, 7, 'outdoor_pending', 259200000);
@@ -275,14 +275,15 @@ export function buildRichOrders(elders: RichElder[]): RichOrder[] {
   push(0, 3, 'pending_service', 7200000, { student_user: student });
   push(1, 4, 'pending_service', 10800000, { student_user: student });
   push(0, 3, 'in_service', -3600000, { student_user: student, payment_status: 'unpaid' });
+  push(2, 5, 'in_service', -5400000, { student_user: student, payment_status: 'paid' });
 
   // 待确认 + 张奶奶待支付（老人端「我的服务」演示）
   push(0, 0, 'pending_payment', 43200000);
   push(0, 1, 'pending_confirm', -7200000, { student_user: student, payment_status: 'paid' });
   push(0, 2, 'pending_confirm', -10800000, { student_user: student });
 
-  // 已完成历史（收入压力：8 单）
-  for (let i = 0; i < 8; i++) {
+  // 已完成历史（收入压力：12 单）
+  for (let i = 0; i < 12; i++) {
     push(i, i + 1, 'completed', -86400000 * (i + 1), { student_user: student });
   }
 

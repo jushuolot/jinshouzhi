@@ -4,9 +4,20 @@ import {
   applyReferralOnStudentRegister,
   getReferralOverview,
 } from './demo-referral';
-import { getWalletOverview, payOrderFromWallet, topupWallet } from './demo-wallet';
+import {
+  getWalletOverview,
+  payOrderFromWallet,
+  resolveDemoWalletUserId,
+  topupWallet,
+} from './demo-wallet';
+import {
+  loadDemoRuntimeState,
+  saveDemoRuntimeState,
+  type DemoRuntimeState,
+  type MockOutdoorApproval,
+  type MockSosAlert,
+} from './demo-mock-state';
 import { getStudentWithdrawalOverview, submitStudentWithdrawal } from './demo-student-wallet';
-import { isGodViewUnlocked } from './god-view-auth';
 import type { RoleKey } from '../config/tabs';
 import { getMockAvatarUrl } from './mock-avatar-storage';
 import {
@@ -71,22 +82,7 @@ type OrderStatus =
   | 'paid'
   | 'cancelled';
 
-interface MockSosAlert {
-  id: string;
-  elder: string;
-  message: string;
-  status: 'active' | 'acknowledged';
-  created_at: string;
-}
-
 type MockOrder = RichOrder;
-
-interface MockOutdoorApproval {
-  id: string;
-  order: string;
-  status: string;
-  family_user: string;
-}
 
 function serviceById(id: string) {
   return SERVICE_ITEMS.find((s) => s.id === id) || SERVICE_ITEMS[0];
@@ -392,7 +388,12 @@ function walletPayLabel(order: MockOrder) {
   return `${svc.name} · ${elder?.name || '老人'}`;
 }
 
-function walletPayOrderForUser(userId: string, orderId: string) {
+function walletPayOrderForUser(
+  userId: string,
+  orderId: string,
+  scope: 'family' | 'elder' = 'family',
+) {
+  const walletUserId = resolveDemoWalletUserId(userId, scope);
   const order = state.orders.find((o) => o.id === orderId);
   if (!order) return { ok: false as const, message: '订单不存在' };
   if (order.payment_status === 'paid') return { ok: false as const, message: '订单已支付' };
@@ -400,10 +401,16 @@ function walletPayOrderForUser(userId: string, orderId: string) {
     order.status === 'pending_payment' ||
     (order.status === 'pending_confirm' && order.payment_status === 'unpaid');
   if (!payable) return { ok: false as const, message: '当前订单状态不可支付' };
-  const result = payOrderFromWallet(userId, orderId, order.amount_cents, walletPayLabel(order));
+  const result = payOrderFromWallet(
+    walletUserId,
+    orderId,
+    order.amount_cents,
+    walletPayLabel(order),
+  );
   if (!result.ok) return result;
   order.payment_status = 'paid';
   if (order.status === 'pending_payment') order.status = 'pending_accept';
+  persistDemoState();
   return { ok: true as const, status: order.status, overview: result.overview };
 }
 
@@ -427,41 +434,75 @@ function finalizeOrderAfterConfirm(order: MockOrder) {
   if (order.student_user) {
     applyReferralOnFirstOrderComplete(order.student_user);
   }
+  persistDemoState();
 }
 
-const state = {
-  orders: buildRichOrders(ELDERS) as MockOrder[],
-  settlements: [...SETTLEMENTS] as SettlementRecord[],
-  serviceLogs: [] as RichServiceLog[],
-  sosAlerts: [
-    {
-      id: 'sos-seed-1',
-      elder: 'elder-1',
-      message: '演示：老人昨日求助已恢复（可新建 SOS 测试）',
-      status: 'active' as const,
-      created_at: new Date(Date.now() - 600000).toISOString(),
-    },
-  ] as MockSosAlert[],
-  outdoorApprovals: [] as MockOutdoorApproval[],
-};
-
-state.serviceLogs = buildServiceLogs(state.orders, (eid) => elderById(eid)?.name || '老人').map(
-  (log) => ({
-    ...log,
-    serviceName: serviceById(log.serviceName).name,
-  }),
-);
-
-state.orders
-  .filter((o) => o.status === 'outdoor_pending')
-  .forEach((o, i) => {
-    state.outdoorApprovals.push({
+function buildSeedRuntimeState(): DemoRuntimeState {
+  const orders = buildRichOrders(ELDERS) as MockOrder[];
+  const serviceLogs = buildServiceLogs(orders, (eid) => elderById(eid)?.name || '老人').map(
+    (log) => ({
+      ...log,
+      serviceName: serviceById(log.serviceName).name,
+    }),
+  );
+  const outdoorApprovals: MockOutdoorApproval[] = orders
+    .filter((o) => o.status === 'outdoor_pending')
+    .map((o, i) => ({
       id: `outdoor-approval-${i + 1}`,
       order: o.id,
       status: 'pending_family',
       family_user: USERS.family.id,
-    });
-  });
+    }));
+  return {
+    orders,
+    settlements: [...SETTLEMENTS] as SettlementRecord[],
+    serviceLogs,
+    sosAlerts: [
+      {
+        id: 'sos-seed-1',
+        elder: 'elder-1',
+        message: '演示：老人昨日求助已恢复（可新建 SOS 测试）',
+        status: 'active',
+        created_at: new Date(Date.now() - 600000).toISOString(),
+      },
+    ],
+    outdoorApprovals,
+  };
+}
+
+const state = loadDemoRuntimeState(buildSeedRuntimeState());
+
+function persistDemoState() {
+  saveDemoRuntimeState(state);
+}
+
+function filterMockOrders(items: ReturnType<typeof orderRecord>[], filter: string) {
+  let out = items;
+  if (filter.includes('pending_payment')) {
+    out = out.filter((o) => o.status === 'pending_payment');
+  }
+  if (filter.includes('pending_confirm')) {
+    out = out.filter((o) => o.status === 'pending_confirm');
+  }
+  if (filter.includes('pending_family')) {
+    out = out.filter((o) => o.status === 'outdoor_pending');
+  }
+  if (filter.includes('family_user =')) {
+    const uid = filter.match(/family_user = "([^"]+)"/)?.[1];
+    if (uid) out = out.filter((o) => o.family_user === uid);
+  }
+  if (filter.includes('elder =')) {
+    const elderIds = [...filter.matchAll(/elder = "([^"]+)"/g)].map((m) =>
+      normalizeElderId(m[1], ELDERS),
+    );
+    if (elderIds.length) out = out.filter((o) => elderIds.includes(o.elder));
+  }
+  if (filter.includes('id =')) {
+    const id = filter.match(/id = "([^"]+)"/)?.[1];
+    if (id) out = out.filter((o) => o.id === id);
+  }
+  return out;
+}
 
 function delay<T>(data: T): Promise<T> {
   return new Promise((resolve) => setTimeout(() => resolve(data), 120));
@@ -855,6 +896,7 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
       family_user: USERS.family.id,
       scheduled_at: new Date(Date.now() + 86400000 * 3).toISOString(),
     });
+    persistDemoState();
     return delay({ ok: true, orderId: id, status: 'pending_payment', packageName: pkg.name } as T);
   }
   if (method === 'GET' && path === '/nuanban/student/profile') {
@@ -921,6 +963,7 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
     if (order && order.status === 'pending_accept') {
       order.student_user = String(data.studentUserId || USERS.student.id);
       order.status = 'pending_service';
+      persistDemoState();
     }
     return delay({ ok: true, status: order?.status || 'pending_service' } as T);
   }
@@ -948,7 +991,7 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
     return delay({ list: state.serviceLogs } as T);
   }
   if (method === 'GET' && path.startsWith('/nuanban/student/elders/nearby')) {
-    const list = state.elders.map((e) => ({
+    const list = ELDERS.map((e) => ({
       id: e.id,
       name: e.name,
       latitude: e.latitude,
@@ -982,7 +1025,10 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
   const studentOrderStart = path.match(/^\/nuanban\/student\/orders\/([^/]+)\/start$/);
   if (method === 'POST' && studentOrderStart) {
     const order = state.orders.find((o) => o.id === studentOrderStart[1]);
-    if (order && order.status === 'pending_service') order.status = 'in_service';
+    if (order && order.status === 'pending_service') {
+      order.status = 'in_service';
+      persistDemoState();
+    }
     return delay({ ok: true, status: order?.status || 'in_service' } as T);
   }
   const studentOrderCheckin = path.match(/^\/nuanban\/student\/orders\/([^/]+)\/checkin$/);
@@ -992,6 +1038,7 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
       return Promise.reject({ message: '当前状态不可签到' });
     }
     order.status = 'in_service';
+    persistDemoState();
     return delay({ ok: true, status: 'in_service' } as T);
   }
   const studentOrderComplete = path.match(/^\/nuanban\/student\/orders\/([^/]+)\/complete$/);
@@ -1000,6 +1047,7 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
     if (order && order.status === 'in_service') {
       order.status = 'pending_confirm';
       order.student_user = USERS.student.id;
+      persistDemoState();
     }
     return delay({
       ok: true,
@@ -1065,7 +1113,10 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
   const studentSosAck = path.match(/^\/nuanban\/student\/sos\/([^/]+)\/ack$/);
   if (method === 'POST' && studentSosAck) {
     const alert = state.sosAlerts.find((a) => a.id === studentSosAck[1]);
-    if (alert) alert.status = 'acknowledged';
+    if (alert) {
+      alert.status = 'acknowledged';
+      persistDemoState();
+    }
     return delay({ ok: true } as T);
   }
 
@@ -1077,6 +1128,7 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
     if (order && action === 'accept') {
       order.status = 'pending_service';
       order.student_user = USERS.student.id;
+      persistDemoState();
     }
     return delay({ ok: true, status: order?.status || 'pending_service' } as T);
   }
@@ -1085,14 +1137,16 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
     const roleErr = assertDemoActiveRole(options, path, 'family');
     if (roleErr) return Promise.reject({ message: roleErr, statusCode: 403 });
     const user = demoUserForRoles(mockRegisterRoles);
-    return delay(getWalletOverview(user.id) as T);
+    const wid = resolveDemoWalletUserId(user.id, 'family');
+    return delay(getWalletOverview(wid) as T);
   }
   if (method === 'POST' && path === '/nuanban/family/wallet/topup') {
     const roleErr = assertDemoActiveRole(options, path, 'family');
     if (roleErr) return Promise.reject({ message: roleErr, statusCode: 403 });
     const user = demoUserForRoles(mockRegisterRoles);
+    const wid = resolveDemoWalletUserId(user.id, 'family');
     try {
-      return delay(topupWallet(user.id, Number(data.amountCents)) as T);
+      return delay(topupWallet(wid, Number(data.amountCents)) as T);
     } catch (e) {
       return Promise.reject({ message: (e as Error).message, statusCode: 400 });
     }
@@ -1102,7 +1156,7 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
     if (roleErr) return Promise.reject({ message: roleErr, statusCode: 403 });
     const user = demoUserForRoles(mockRegisterRoles);
     const orderId = String(data.orderId || '');
-    const result = walletPayOrderForUser(user.id, orderId);
+    const result = walletPayOrderForUser(user.id, orderId, 'family');
     if (!result.ok) return Promise.reject({ message: result.message, statusCode: 400 });
     return delay({ ok: true, status: result.status, overview: result.overview } as T);
   }
@@ -1110,14 +1164,16 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
     const roleErr = assertDemoActiveRole(options, path, 'elder');
     if (roleErr) return Promise.reject({ message: roleErr, statusCode: 403 });
     const user = demoUserForRoles(mockRegisterRoles);
-    return delay(getWalletOverview(user.id) as T);
+    const wid = resolveDemoWalletUserId(user.id, 'elder');
+    return delay(getWalletOverview(wid) as T);
   }
   if (method === 'POST' && path === '/nuanban/elder/wallet/topup') {
     const roleErr = assertDemoActiveRole(options, path, 'elder');
     if (roleErr) return Promise.reject({ message: roleErr, statusCode: 403 });
     const user = demoUserForRoles(mockRegisterRoles);
+    const wid = resolveDemoWalletUserId(user.id, 'elder');
     try {
-      return delay(topupWallet(user.id, Number(data.amountCents)) as T);
+      return delay(topupWallet(wid, Number(data.amountCents)) as T);
     } catch (e) {
       return Promise.reject({ message: (e as Error).message, statusCode: 400 });
     }
@@ -1127,7 +1183,7 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
     if (roleErr) return Promise.reject({ message: roleErr, statusCode: 403 });
     const user = demoUserForRoles(mockRegisterRoles);
     const orderId = String(data.orderId || '');
-    const result = walletPayOrderForUser(user.id, orderId);
+    const result = walletPayOrderForUser(user.id, orderId, 'elder');
     if (!result.ok) return Promise.reject({ message: result.message, statusCode: 400 });
     return delay({ ok: true, status: result.status, overview: result.overview } as T);
   }
@@ -1160,7 +1216,10 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
   const familySosAck = path.match(/^\/nuanban\/family\/sos\/([^/]+)\/ack$/);
   if (method === 'POST' && familySosAck) {
     const alert = state.sosAlerts.find((a) => a.id === familySosAck[1]);
-    if (alert) alert.status = 'acknowledged';
+    if (alert) {
+      alert.status = 'acknowledged';
+      persistDemoState();
+    }
     return delay({ ok: true } as T);
   }
   const familyOrderGet = path.match(/^\/nuanban\/family\/orders\/([^/]+)$/);
@@ -1185,6 +1244,7 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
     if (order) {
       order.status = 'pending_accept';
       order.payment_status = 'paid';
+      persistDemoState();
     }
     return delay({ ok: true, status: order?.status || 'pending_accept' } as T);
   }
@@ -1196,7 +1256,7 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
     }
     if (order.payment_status === 'unpaid' && data.payMethod === 'wallet') {
       const user = demoUserForRoles(mockRegisterRoles);
-      const payResult = walletPayOrderForUser(user.id, order.id);
+      const payResult = walletPayOrderForUser(user.id, order.id, 'family');
       if (!payResult.ok) return Promise.reject({ message: payResult.message, statusCode: 400 });
     }
     finalizeOrderAfterConfirm(order);
@@ -1214,7 +1274,7 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
     }
     if (order.payment_status === 'unpaid' && data.payMethod === 'wallet') {
       const user = demoUserForRoles(mockRegisterRoles);
-      const payResult = walletPayOrderForUser(user.id, order.id);
+      const payResult = walletPayOrderForUser(user.id, order.id, 'elder');
       if (!payResult.ok) return Promise.reject({ message: payResult.message, statusCode: 400 });
     }
     finalizeOrderAfterConfirm(order);
@@ -1229,10 +1289,16 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
     const approved = data.approved !== false;
     const approval = state.outdoorApprovals.find((a) => a.order === id || a.id === id);
     const order = state.orders.find((o) => o.id === (approval?.order || id));
-    if (approval) approval.status = approved ? 'approved' : 'rejected';
+    let changed = false;
+    if (approval) {
+      approval.status = approved ? 'approved' : 'rejected';
+      changed = true;
+    }
     if (order) {
       order.status = approved ? 'pending_service' : 'cancelled';
+      changed = true;
     }
+    if (changed) persistDemoState();
     return delay({ ok: true, approved } as T);
   }
 
@@ -1287,6 +1353,7 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
       status: 'active',
       created_at: new Date().toISOString(),
     });
+    persistDemoState();
     return delay({ id, ok: true } as T);
   }
   if (method === 'POST' && path === '/nuanban/elder/orders') {
@@ -1311,6 +1378,7 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
         family_user: USERS.family.id,
       });
     }
+    persistDemoState();
     return delay({ id, status: needsOutdoor ? 'outdoor_pending' : 'pending_payment' } as T);
   }
 
@@ -1377,38 +1445,14 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
     }
     let items = state.orders.map(orderRecord);
     const filter = query.get('filter') || '';
-    if (filter.includes('pending_payment')) {
-      items = items.filter((o) => o.status === 'pending_payment');
-    } else if (filter.includes('pending_confirm')) {
-      items = items.filter((o) => o.status === 'pending_confirm');
-    } else if (filter.includes('elder =')) {
-      const elderIds = [...filter.matchAll(/elder = "([^"]+)"/g)].map((m) =>
-        normalizeElderId(m[1], ELDERS),
-      );
-      if (elderIds.length) items = items.filter((o) => elderIds.includes(o.elder));
-    } else if (filter.includes('id =')) {
-      const id = filter.match(/id = "([^"]+)"/)?.[1];
-      items = items.filter((o) => o.id === id);
-    }
+    items = filterMockOrders(items, filter);
     return delay(pbList(items) as T);
   }
   if (method === 'GET' && path.startsWith('/collections/service_items/records')) {
     return delay(pbList(SERVICE_ITEMS.map(serviceRecord)) as T);
   }
 
-  if (method === 'POST' && path === '/nuanban/platform/god-view-auth') {
-    const pwd = String(data.password || '');
-    const expected = import.meta.env.VITE_GOD_VIEW_PASSWORD || 'nuanban2025';
-    if (pwd !== expected) {
-      return Promise.reject({ message: '密码错误', statusCode: 403 });
-    }
-    return delay({ ok: true } as T);
-  }
-
   if (method === 'GET' && path === '/nuanban/platform/overview') {
-    if (!isGodViewUnlocked()) {
-      return Promise.reject({ message: '需要超级管理员授权', statusCode: 403 });
-    }
     const pending = state.orders.filter((o) => o.status === 'pending_accept').length;
     const inSvc = state.orders.filter((o) => o.status === 'in_service').length;
     const done = state.orders.filter((o) => o.status === 'completed').length;

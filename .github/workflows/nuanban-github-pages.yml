@@ -30,6 +30,7 @@ jobs:
         env:
           VITE_BASE: /${{ vars.GITHUB_REPO || 'jinshouzhi' }}/nuanban/
           VITE_DEMO_MOCK: 'true'
+          VITE_RELEASE_CHANNEL: test
         run: |
           npm install
           npm run build:h5

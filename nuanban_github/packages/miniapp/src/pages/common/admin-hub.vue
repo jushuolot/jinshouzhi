@@ -1,25 +1,37 @@
 <template>
   <view class="page">
     <text class="title">运营演示</text>
-    <text class="sub">小程序内零成本 Admin 替代 · 无需云后台</text>
+    <text class="sub">平台撮合数据 · 机构派单 · 学校合作</text>
 
-    <view class="stat-card">
-      <text class="stat-num">{{ pendingCount }}</text>
-      <text class="stat-label">待派单（pending_accept）</text>
+    <view class="kpi-grid">
+      <view class="kpi">
+        <text class="kpi-num accent">{{ overview?.ordersPendingAccept ?? pendingCount }}</text>
+        <text class="kpi-label">待接单</text>
+      </view>
+      <view class="kpi">
+        <text class="kpi-num">{{ overview?.ordersInService ?? '-' }}</text>
+        <text class="kpi-label">服务中</text>
+      </view>
+      <view class="kpi">
+        <text class="kpi-num">{{ overview?.ordersCompleted ?? '-' }}</text>
+        <text class="kpi-label">已完成</text>
+      </view>
+      <view class="kpi">
+        <text class="kpi-num">{{ overview?.eldersTotal ?? '-' }}</text>
+        <text class="kpi-label">服务老人</text>
+      </view>
+    </view>
+
+    <view v-if="overview" class="meta-row">
+      <text>撮合成功率 {{ overview.matchSuccessRatePct }}%</text>
+      <text>今日撮合 {{ overview.todayMatches }}</text>
     </view>
 
     <view class="section-title">功能入口</view>
-    <view class="link-card" @tap="goDispatch">
+    <view class="link-card highlight" @tap="goDispatch">
       <view class="link-main">
         <text class="link-title">机构派单</text>
-        <text class="link-desc">将待接单订单指定给学生</text>
-      </view>
-      <text class="chevron">›</text>
-    </view>
-    <view class="link-card highlight" @tap="goGodView">
-      <view class="link-main">
-        <text class="link-title">上帝视角 · 撮合进度</text>
-        <text class="link-desc">平台 KPI、三种撮合路径、验收清单</text>
+        <text class="link-desc">将待接单订单指定给学生（{{ pendingCount }} 单可派）</text>
       </view>
       <text class="chevron">›</text>
     </view>
@@ -30,21 +42,52 @@
       </view>
       <text class="chevron">›</text>
     </view>
+    <view class="link-card" @tap="goTour">
+      <view class="link-main">
+        <text class="link-title">动画演示</text>
+        <text class="link-desc">22 秒看懂三种撮合路径</text>
+      </view>
+      <text class="chevron">›</text>
+    </view>
+    <view class="link-card" @tap="goShare">
+      <view class="link-main">
+        <text class="link-title">分享演示链接</text>
+        <text class="link-desc">复制给验收人 · 零安装</text>
+      </view>
+      <text class="chevron">›</text>
+    </view>
+
+    <text v-if="overview?.updatedAt" class="ts">数据更新 {{ formatTime(overview.updatedAt) }}</text>
   </view>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue';
 import { onShow } from '@dcloudio/uni-app';
+import { fetchPlatformOverview, type PlatformOverview } from '../../api/platform';
 import { listDispatchableOrders } from '../../api/org';
 import { pbErrorMessage } from '../../utils/request';
 
 const pendingCount = ref(0);
+const overview = ref<PlatformOverview | null>(null);
+
+function formatTime(iso: string) {
+  try {
+    const d = new Date(iso);
+    return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  } catch {
+    return iso;
+  }
+}
 
 async function reload() {
   try {
-    const list = await listDispatchableOrders();
+    const [list, o] = await Promise.all([
+      listDispatchableOrders(),
+      fetchPlatformOverview().catch(() => null),
+    ]);
     pendingCount.value = list.length;
+    if (o) overview.value = o;
   } catch (e) {
     pendingCount.value = 0;
     uni.showToast({ title: pbErrorMessage(e), icon: 'none' });
@@ -57,12 +100,16 @@ function goDispatch() {
   uni.navigateTo({ url: '/pages/common/org-dispatch' });
 }
 
-function goGodView() {
-  uni.navigateTo({ url: '/pages/common/god-view-gate' });
-}
-
 function goSchoolCoop() {
   uni.navigateTo({ url: '/pages/common/school-coop' });
+}
+
+function goTour() {
+  uni.navigateTo({ url: '/pages/common/demo-tour' });
+}
+
+function goShare() {
+  uni.navigateTo({ url: '/pages/common/share-demo' });
 }
 </script>
 
@@ -71,6 +118,7 @@ function goSchoolCoop() {
   min-height: 100vh;
   background: #f5f5f5;
   padding: 24rpx;
+  padding-bottom: 48rpx;
 }
 .title {
   display: block;
@@ -83,24 +131,40 @@ function goSchoolCoop() {
   font-size: 24rpx;
   color: #888;
 }
-.stat-card {
-  background: linear-gradient(135deg, #fff8f0, #fff);
-  border-radius: 16rpx;
-  padding: 36rpx;
-  text-align: center;
-  margin-bottom: 32rpx;
+.kpi-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16rpx;
+  margin-bottom: 16rpx;
 }
-.stat-num {
+.kpi {
+  background: #fff;
+  border-radius: 12rpx;
+  padding: 24rpx;
+  text-align: center;
+}
+.kpi-num {
   display: block;
-  font-size: 56rpx;
+  font-size: 40rpx;
   font-weight: 600;
+  color: #333;
+}
+.kpi-num.accent {
   color: #c45c26;
 }
-.stat-label {
+.kpi-label {
   display: block;
-  margin-top: 8rpx;
-  font-size: 24rpx;
+  margin-top: 6rpx;
+  font-size: 22rpx;
   color: #888;
+}
+.meta-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 28rpx;
+  padding: 0 8rpx;
+  font-size: 22rpx;
+  color: #999;
 }
 .section-title {
   font-size: 28rpx;
@@ -136,5 +200,12 @@ function goSchoolCoop() {
 .chevron {
   font-size: 36rpx;
   color: #ccc;
+}
+.ts {
+  display: block;
+  margin-top: 24rpx;
+  text-align: center;
+  font-size: 22rpx;
+  color: #bbb;
 }
 </style>

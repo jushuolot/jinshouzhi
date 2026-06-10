@@ -27,6 +27,9 @@ nuanban/
 # 公网演示配置
 config/demo.env
 config/github.env
+
+# 正式版部署记录（仅服务器本地）
+.release/
 Caddyfile.prod
 
 # PocketBase backup (do not commit)

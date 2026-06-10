@@ -12,24 +12,30 @@
 
 > 仓库中的 `packages/api`、`packages/admin-web`、`database/` 为历史参考，新环境请按极简栈部署。
 
-## 公网部署
+## 发布规则（测试版 → 正式版）
 
-| 环境 | 说明 |
-|------|------|
-| **阿里云（推荐 · 正式）** | [docs/ALIYUN_DEPLOY.md](docs/ALIYUN_DEPLOY.md) — PocketBase + HTTPS，真实 API |
-| **GitHub Pages（演示）** | [docs/DEMO_LINK.md](docs/DEMO_LINK.md) — 内置 Mock，无需服务器 |
+| 环境 | 角色 | 链接 |
+|------|------|------|
+| **GitHub Pages** | **最新测试版** | https://jushuolot.github.io/jinshouzhi/nuanban/#/pages/common/login |
+| **阿里云** | **正式发布版** | http://101.200.128.82（备案后 nuanban.cc） |
 
-阿里云快速命令（服务器首次）：
+- 测试版完整文档：**[docs/TEST_VERSION.md](docs/TEST_VERSION.md)**（链接大全 · 验收路径 · 演示号）
+- 发布规则：**[docs/RELEASE.md](docs/RELEASE.md)**
 
 ```bash
-git clone https://github.com/jushuolot/jinshouzhi.git /opt/jinshouzhi
-cd /opt/jinshouzhi/nuanban_github
-chmod +x scripts/*.sh && sudo ./scripts/aliyun-bootstrap.sh
-# 编辑 config/demo.env 后
-./scripts/deploy-public.sh
+# 1. 开发完成 → 发布测试版（推 GitHub，Actions 自动更新 Pages）
+./scripts/release-test.sh
+
+# 2. 测试版验收通过 → 发布正式版（仅阿里云）
+./scripts/release-prod.sh
+
+# 查看两环境版本是否一致
+./scripts/release-status.sh
 ```
 
-本地改代码后同步：`./scripts/sync-public.sh`（需配置 `config/demo.env` 中的 SSH）。
+`./scripts/sync-all.sh`：本地=测试发布，服务器=正式发布。
+
+阿里云首次部署：[docs/ALIYUN_DEPLOY.md](docs/ALIYUN_DEPLOY.md)
 
 ## 本地测试 / GitHub 克隆测试
 

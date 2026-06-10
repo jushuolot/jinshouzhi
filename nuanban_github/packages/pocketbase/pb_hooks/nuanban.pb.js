@@ -2028,33 +2028,7 @@ routerAdd("POST", "/api/nuanban/family/packages/purchase", function (e) {
   });
 });
 
-/** 上帝视角超级管理员密码验证 */
-routerAdd("POST", "/api/nuanban/platform/god-view-auth", function (e) {
-  var nb = require(__hooks + "/nuanban_lib.js");
-  let body = {};
-  try {
-    const raw = toString(e.request.body);
-    body = raw ? JSON.parse(raw) : {};
-  } catch (_) {}
-  var pwd = String(body.password || "").trim();
-  if (!pwd) {
-    try {
-      var q = e.request.urlQuery().get("password");
-      if (q) pwd = String(q).trim();
-    } catch (_) {}
-  }
-  let expected = "nuanban2025";
-  try {
-    const fromEnv = $os.getenv("NUANBAN_GOD_VIEW_PASSWORD");
-    if (fromEnv) expected = String(fromEnv).trim();
-  } catch (_) {}
-  if (pwd !== expected) {
-    return e.json(403, { message: "密码错误" });
-  }
-  return e.json(200, { ok: true });
-});
-
-/** 平台上帝视角：撮合漏斗与核心指标（演示） */
+/** 平台运营看板：撮合漏斗与核心指标（演示） */
 routerAdd("GET", "/api/nuanban/platform/overview", function (e) {
   var nb = require(__hooks + "/nuanban_lib.js");
   let pending = 0;

@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
-# 一条命令完成「日常同步」——自动识别你在本地还是阿里云
+# 一条命令发布 — 自动识别环境（见 docs/RELEASE.md）
 #
-# 本地 Mac（改完代码并 commit 后）:
+# 本地 Mac（开发完成后）:
 #   ./scripts/sync-all.sh
-#   → 推 GitHub；若配置了 SSH 则连阿里云一起部署，否则打印 Workbench 一条命令
+#   → 发布测试版：推 GitHub，Actions 更新 Pages（不自动部署阿里云）
 #
-# 阿里云 Workbench（最常见，复制粘贴一次即可）:
+# 阿里云 Workbench（测试版验收通过后）:
 #   cd /opt/jinshouzhi/nuanban_github && ./scripts/sync-all.sh
-#   → git pull + 重启服务 + 演示数据 + 重建 H5 + 自检
+#   → 发布正式版：拉代码 + 重建 H5 + 重启服务
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -32,13 +32,7 @@ on_aliyun_server() {
 }
 
 if on_aliyun_server; then
-  echo "=============================================="
-  echo "阿里云 · 一条命令同步（GitHub → 本机部署）"
-  echo "=============================================="
-  exec "$ROOT/scripts/aliyun-fix-data.sh"
+  exec "$ROOT/scripts/release-prod.sh"
 fi
 
-echo "=============================================="
-echo "本地 · 一条命令同步（本地 → GitHub → 阿里云）"
-echo "=============================================="
-exec "$ROOT/scripts/sync-three-way.sh"
+exec "$ROOT/scripts/release-test.sh"

@@ -115,7 +115,7 @@
 
     <view class="foot">
       <button class="btn" @tap="goLogin">亲自体验演示</button>
-      <button class="btn-outline" @tap="goGodView">超级管理</button>
+      <button class="btn-outline" @tap="goAdminHub">运营演示</button>
     </view>
   </view>
 </template>
@@ -191,8 +191,8 @@ function goLogin() {
   goLoginFromTour();
 }
 
-function goGodView() {
-  uni.navigateTo({ url: '/pages/common/god-view-gate' });
+function goAdminHub() {
+  uni.navigateTo({ url: '/pages/common/admin-hub' });
 }
 </script>
 

@@ -7,7 +7,7 @@ import { initDevicePreview } from './utils/device-preview';
 
 onLaunch(() => {
   // #ifdef H5
-  // 等 Vue 挂载后再套手机框，避免白屏；god-view 路由全屏
+  // 等 Vue 挂载后再套手机框，避免白屏；demo-tour 等路由全屏
   setTimeout(() => initDevicePreview(), 300);
   // #endif
 });

@@ -1,5 +1,7 @@
 /** 演示栈 · 储值卡（家属/老人各一钱包，本地持久化） */
 
+import { DEMO_USERS } from './demo-rich-data';
+
 export interface WalletTransaction {
   id: string;
   type: 'topup' | 'pay';
@@ -27,6 +29,20 @@ interface WalletStore {
 const STORAGE_KEY = 'nuanban_wallet_v1';
 const MAX_HISTORY = 10;
 
+/** 演示账号首次打开时的默认余额（分） */
+const DEMO_SEED_BALANCE: Record<string, number> = {
+  [DEMO_USERS.family.id]: 50000,
+  [DEMO_USERS.elder.id]: 30000,
+};
+
+/** 多角色账号走家属/老人钱包时映射到种子账号 */
+export function resolveDemoWalletUserId(userId: string, scope: 'family' | 'elder'): string {
+  if (userId === DEMO_USERS.multi.id) {
+    return scope === 'elder' ? DEMO_USERS.elder.id : DEMO_USERS.family.id;
+  }
+  return userId;
+}
+
 function loadStore(): WalletStore {
   try {
     const raw = uni.getStorageSync(STORAGE_KEY) as WalletStore | null;
@@ -45,7 +61,21 @@ function saveStore(store: WalletStore) {
 
 function ensureOwner(store: WalletStore, userId: string): WalletOwnerData {
   if (!store.byUser[userId]) {
-    store.byUser[userId] = { balanceCents: 0, transactions: [] };
+    const seedCents = DEMO_SEED_BALANCE[userId] ?? 0;
+    store.byUser[userId] = {
+      balanceCents: seedCents,
+      transactions: seedCents
+        ? [
+            {
+              id: `wt-seed-${userId}`,
+              type: 'topup',
+              amountCents: seedCents,
+              label: '演示初始余额',
+              createdAt: new Date().toISOString(),
+            },
+          ]
+        : [],
+    };
   }
   return store.byUser[userId];
 }
@@ -82,7 +112,7 @@ export function topupWallet(userId: string, amountCents: number): WalletOverview
     label: '储值卡充值',
     createdAt: new Date().toISOString(),
   });
-  if (owner.transactions.length > 50) owner.transactions.length = 50;
+  if (owner.transactions.length > 50) owner.transactions = owner.transactions.slice(0, 50);
   saveStore(store);
   return overviewDto(owner);
 }
@@ -111,7 +141,7 @@ export function payOrderFromWallet(
     createdAt: new Date().toISOString(),
     orderId,
   });
-  if (owner.transactions.length > 50) owner.transactions.length = 50;
+  if (owner.transactions.length > 50) owner.transactions = owner.transactions.slice(0, 50);
   saveStore(store);
   return { ok: true, overview: overviewDto(owner) };
 }

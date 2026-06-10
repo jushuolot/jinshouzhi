@@ -11,7 +11,7 @@
     </view>
 
     <view class="tip">
-      <text>建议顺序：动画演示 → 登录并选择学生身份 → 待接单完成（上帝视角需超级管理密码）</text>
+      <text>建议顺序：动画演示 → 登录并选择学生身份 → 待接单完成 → 运营演示查看派单</text>
     </view>
 
     <button class="btn-outline" @tap="goBack">返回</button>
@@ -29,16 +29,16 @@ const links = [
     url: `${BASE}/#/pages/common/demo-tour`,
   },
   {
-    id: 'god',
-    title: '超级管理 · 上帝视角',
-    desc: '需管理密码 · 平台 KPI 看板',
-    url: `${BASE}/#/pages/common/god-view-gate`,
-  },
-  {
     id: 'login',
     title: '演示登录入口',
-    desc: '一键登录 · 登录后选择老人/家属/学生身份',
+    desc: '虚拟手机登录 · 登录后选择老人/家属/学生身份',
     url: `${BASE}/#/pages/common/login`,
+  },
+  {
+    id: 'admin',
+    title: '运营演示',
+    desc: '平台 KPI · 机构派单 · 学校合作',
+    url: `${BASE}/#/pages/common/admin-hub`,
   },
   {
     id: 'tour-deeplink',

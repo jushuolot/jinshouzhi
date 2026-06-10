@@ -13,6 +13,7 @@
         <text class="logo-char">暖</text>
       </view>
       <text class="title">{{ APP_TITLE }}</text>
+      <text v-if="releaseBadge" class="release-badge">{{ releaseBadge }}</text>
       <text class="sub">{{ APP_TAGLINE }}</text>
     </view>
 
@@ -92,6 +93,7 @@ import { computed, onUnmounted, ref } from 'vue';
 import { onLoad } from '@dcloudio/uni-app';
 import { loginWithPhone, loginWithWxCode, type LoginResult } from '../../api/auth';
 import { APP_TAGLINE, APP_TITLE } from '../../config/brand';
+import { releaseLabel } from '../../config/release';
 import { navigateAfterAuth } from '../../utils/profile-onboarding';
 import { useRoleStore } from '../../store/role';
 import { pbErrorMessage } from '../../utils/request';
@@ -101,6 +103,7 @@ import { isVirtualPhoneLoginEnabled } from '../../utils/virtual-phone-login';
 import loginBg from '@/static/images/login-bg-kawaii.png';
 
 const virtualPhoneLogin = isVirtualPhoneLoginEnabled();
+const releaseBadge = releaseLabel();
 
 const loading = ref(false);
 const phone = ref('');
@@ -247,10 +250,10 @@ async function onWxLogin() {
 
 function showMore() {
   uni.showActionSheet({
-    itemList: ['超级管理', '分享演示链接'],
+    itemList: ['运营演示', '分享演示链接'],
     success: (res) => {
       if (res.tapIndex === 0) {
-        uni.navigateTo({ url: '/pages/common/god-view-gate' });
+        uni.navigateTo({ url: '/pages/common/admin-hub' });
       } else if (res.tapIndex === 1) {
         uni.navigateTo({ url: '/pages/common/share-demo' });
       }
@@ -347,6 +350,16 @@ function goDemoTour() {
   color: var(--nb-text);
   letter-spacing: 4rpx;
   text-shadow: 0 2rpx 12rpx rgba(255, 255, 255, 0.9);
+}
+
+.release-badge {
+  margin-top: 12rpx;
+  padding: 4rpx 16rpx;
+  font-size: 20rpx;
+  color: var(--nb-primary);
+  background: rgba(255, 255, 255, 0.85);
+  border: 1rpx solid var(--nb-border);
+  border-radius: 8rpx;
 }
 
 .sub {
