@@ -27,9 +27,20 @@ echo "==> 3/4 安装 Docker CE + compose 插件"
   --exclude=docker-ce-rootless-extras \
   || "$PKG" install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
 
-echo "==> 4/4 启动 Docker"
+echo "==> 4/5 配置国内镜像加速"
+mkdir -p /etc/docker
+cat > /etc/docker/daemon.json <<'EOF'
+{
+  "registry-mirrors": [
+    "https://docker.m.daocloud.io",
+    "https://registry.cn-hangzhou.aliyuncs.com"
+  ]
+}
+EOF
+
+echo "==> 5/5 启动 Docker"
 systemctl enable docker
-systemctl start docker
+systemctl restart docker
 
 docker --version
 docker compose version

@@ -1,5 +1,7 @@
 # 官方 PocketBase 二进制，本地 HTTP 8090，无强制跳转 HTTPS
-FROM alpine:3.20
+# 国内构建默认走阿里云镜像（海外可 --build-arg BASE_IMAGE=alpine:3.20）
+ARG BASE_IMAGE=registry.cn-hangzhou.aliyuncs.com/library/alpine:3.20
+FROM ${BASE_IMAGE}
 
 ARG PB_VERSION=0.38.2
 ARG TARGETARCH=amd64
