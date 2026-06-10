@@ -215,6 +215,43 @@ export async function fetchStudentSettlements() {
   return res.list ?? [];
 }
 
+export type WithdrawalChannel = 'wechat' | 'bank';
+
+export interface StudentWithdrawalRecord {
+  id: string;
+  amountCents: number;
+  channel: WithdrawalChannel;
+  channelLabel: string;
+  status: 'pending' | 'completed';
+  createdAt: string;
+  completedAt?: string;
+}
+
+export interface StudentWithdrawalOverview {
+  availableCents: number;
+  availableYuan: string;
+  frozenCents: number;
+  frozenYuan: string;
+  boundWechat: string;
+  boundBank: string;
+  withdrawals: StudentWithdrawalRecord[];
+}
+
+export async function fetchStudentWithdrawal() {
+  return request<StudentWithdrawalOverview>({
+    url: '/nuanban/student/withdrawal',
+    method: 'GET',
+  });
+}
+
+export async function submitStudentWithdrawal(amountCents: number, channel: WithdrawalChannel) {
+  return request<StudentWithdrawalOverview>({
+    url: '/nuanban/student/withdrawal',
+    method: 'POST',
+    data: { amountCents, channel },
+  });
+}
+
 export async function listActiveSosAlerts() {
   const res = await request<{ list: SosAlert[] }>({
     url: '/nuanban/student/sos/active',

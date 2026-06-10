@@ -12,6 +12,14 @@
       </view>
     </view>
 
+    <view class="withdraw-banner" @tap="goWithdraw">
+      <view class="withdraw-main">
+        <text class="withdraw-label">可提现余额</text>
+        <text class="withdraw-amount">¥{{ withdrawal?.availableYuan ?? '—' }}</text>
+      </view>
+      <text class="withdraw-cta">去提现 ›</text>
+    </view>
+
     <view class="section-title">已完成订单</view>
     <view v-for="r in income?.records ?? []" :key="r.id" class="record">
       <view class="record-main">
@@ -47,13 +55,16 @@ import RoleTabBar from '../components/RoleTabBar.vue';
 import {
   fetchStudentIncome,
   fetchStudentSettlements,
+  fetchStudentWithdrawal,
   type SettlementRecord,
   type StudentIncome,
+  type StudentWithdrawalOverview,
 } from '../api/student';
 import { pbErrorMessage } from '../utils/request';
 
 const income = ref<StudentIncome | null>(null);
 const settlements = ref<SettlementRecord[]>([]);
+const withdrawal = ref<StudentWithdrawalOverview | null>(null);
 const loading = ref(false);
 
 function formatTime(iso: string) {
@@ -65,16 +76,26 @@ function formatTime(iso: string) {
 async function reload() {
   loading.value = true;
   try {
-    const [inc, stl] = await Promise.all([fetchStudentIncome(), fetchStudentSettlements()]);
+    const [inc, stl, wd] = await Promise.all([
+      fetchStudentIncome(),
+      fetchStudentSettlements(),
+      fetchStudentWithdrawal(),
+    ]);
     income.value = inc;
     settlements.value = stl;
+    withdrawal.value = wd;
   } catch (e) {
     income.value = null;
     settlements.value = [];
+    withdrawal.value = null;
     uni.showToast({ title: pbErrorMessage(e), icon: 'none' });
   } finally {
     loading.value = false;
   }
+}
+
+function goWithdraw() {
+  uni.navigateTo({ url: '/package-student/withdrawal/index' });
 }
 
 onShow(reload);
@@ -115,6 +136,31 @@ onShow(reload);
 }
 .sum-num.accent {
   color: #c45c26;
+}
+.withdraw-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(135deg, #c45c26, #e07a3a);
+  color: #fff;
+  padding: 28rpx 32rpx;
+  border-radius: 16rpx;
+  margin-bottom: 32rpx;
+}
+.withdraw-label {
+  display: block;
+  font-size: 24rpx;
+  opacity: 0.9;
+}
+.withdraw-amount {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 40rpx;
+  font-weight: 700;
+}
+.withdraw-cta {
+  font-size: 28rpx;
+  font-weight: 600;
 }
 .section-title {
   font-size: 28rpx;

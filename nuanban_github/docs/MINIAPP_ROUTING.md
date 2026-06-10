@@ -50,6 +50,7 @@
   order/active       服务中
   order/request      接单 / 拒单 / 签到 / 完成
   income             收入明细
+  withdrawal/index   提现（已结算余额 · 微信/银行卡 mock）
   schedule/list      排班
   schedule/checkin   到场签到
   schedule/log       服务日志

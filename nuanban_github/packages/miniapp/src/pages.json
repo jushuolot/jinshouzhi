@@ -61,6 +61,7 @@
         { "path": "order/active", "style": { "navigationBarTitleText": "服务中" } },
         { "path": "order/request", "style": { "navigationBarTitleText": "订单详情" } },
         { "path": "income", "style": { "navigationBarTitleText": "收入明细" } },
+        { "path": "withdrawal/index", "style": { "navigationBarTitleText": "提现" } },
         { "path": "schedule/list", "style": { "navigationBarTitleText": "我的排班" } },
         { "path": "schedule/checkin", "style": { "navigationBarTitleText": "到场签到" } },
         { "path": "schedule/log", "style": { "navigationBarTitleText": "服务日志" } },

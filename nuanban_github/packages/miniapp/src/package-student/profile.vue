@@ -48,6 +48,11 @@
         <text class="menu-tag">拉新 ¥15</text>
         <text class="arrow">›</text>
       </view>
+      <view class="menu-item highlight" @tap="goWithdraw">
+        <text>收入 / 提现</text>
+        <text v-if="withdrawAvailable" class="menu-tag">¥{{ withdrawAvailable }}</text>
+        <text class="arrow">›</text>
+      </view>
       <view class="menu-item" @tap="goIncome">
         <text>收入明细</text>
         <text class="arrow">›</text>
@@ -89,6 +94,7 @@ import ProfileDetailCard, { type ProfileDetailSection } from '../components/Prof
 import {
   fetchStudentProfile,
   fetchStudentStats,
+  fetchStudentWithdrawal,
   listPendingOrders,
   type StudentProfile,
   type StudentStats,
@@ -100,6 +106,7 @@ import { pbErrorMessage } from '../utils/request';
 const roleStore = useRoleStore();
 const profile = ref<StudentProfile | null>(null);
 const stats = ref<StudentStats | null>(null);
+const withdrawAvailable = ref('');
 
 const avatarChar = computed(() => {
   const n = profile.value?.nickname || roleStore.user?.nickname || '学';
@@ -145,9 +152,14 @@ const profileSections = computed((): ProfileDetailSection[] => {
 onShow(async () => {
   if (!guardPackageRoute('/package-student/profile')) return;
   try {
-    const [p, s] = await Promise.all([fetchStudentProfile(), fetchStudentStats()]);
+    const [p, s, wd] = await Promise.all([
+      fetchStudentProfile(),
+      fetchStudentStats(),
+      fetchStudentWithdrawal(),
+    ]);
     profile.value = p;
     stats.value = s;
+    withdrawAvailable.value = wd.availableYuan;
   } catch (e) {
     uni.showToast({ title: pbErrorMessage(e), icon: 'none' });
   }
@@ -176,6 +188,10 @@ function goActive() {
 
 function goReferral() {
   uni.navigateTo({ url: '/package-student/referral/index' });
+}
+
+function goWithdraw() {
+  uni.navigateTo({ url: '/package-student/withdrawal/index' });
 }
 
 function goIncome() {
