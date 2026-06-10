@@ -71,7 +71,7 @@
   var threeReady = null;
   var codexReady = null;
   var deferredStarted = false;
-  var ASSET_VERSION = "gen59-20260610";
+  var ASSET_VERSION = "gen59-20260610b";
 
   function versioned(src) {
     if (/^https?:\/\//.test(src)) return src;
