@@ -48,8 +48,8 @@ for i in $(seq 1 40); do
   sleep 1
 done
 
-echo "==> 2/4 写入演示数据"
-NUANBAN_API=http://localhost:8090 ./scripts/seed-demo.sh
+echo "==> 2/4 初始化 PocketBase（管理员 + 集合 + 演示数据）"
+NUANBAN_API=http://127.0.0.1:8090 ./scripts/pb-init-server.sh
 
 echo "==> 3/4 构建 H5（API: http://${STAGING_IP}/api）"
 cd packages/miniapp

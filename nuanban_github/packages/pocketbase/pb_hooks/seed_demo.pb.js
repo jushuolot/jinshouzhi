@@ -1,6 +1,5 @@
 /// 一键写入演示数据：POST /api/nuanban/seed-demo?key=nuanban_dev_seed
 /// 可重复执行（按名称/邮箱去重，不重复创建）
-(function () {
 
 const SEED_KEY = "nuanban_dev_seed";
 const DEV_PASS = "nuanban_dev_2025";
@@ -72,6 +71,7 @@ var findOrCreateUserRole = function(userId, role, extra) {
 }
 
 routerAdd("POST", "/api/nuanban/seed-demo", (e) => {
+  mustSeedKey(e);
   const stats = { users: 0, roles: 0, schools: 0, orgs: 0, elders: 0, orders: 0, serviceItems: 0, bindings: 0 };
 
   // school_dict
@@ -386,5 +386,3 @@ routerAdd("POST", "/api/nuanban/seed-demo", (e) => {
     },
   });
 });
-
-})();
