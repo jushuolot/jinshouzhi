@@ -1,0 +1,1 @@
+import{l as n,P as r}from"./index-DPDp67kn.js";const e="nuanban_elder_large_font";function t(){try{return"1"===n(e)}catch{return!1}}function a(n){r(e,n?"1":"0")}function o(){return t()?"elder-large":""}export{o as e,t as i,a as s};
