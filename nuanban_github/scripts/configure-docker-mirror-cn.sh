@@ -7,7 +7,8 @@ cat > /etc/docker/daemon.json <<'EOF'
 {
   "registry-mirrors": [
     "https://docker.m.daocloud.io",
-    "https://registry.cn-hangzhou.aliyuncs.com"
+    "https://docker.1panel.live",
+    "https://hub.rat.dev"
   ]
 }
 EOF
