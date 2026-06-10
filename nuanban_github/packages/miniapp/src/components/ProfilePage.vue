@@ -1,5 +1,5 @@
 <template>
-  <view class="page">
+  <view class="page" :class="{ 'elder-mode': role === 'elder', [elderFontCls]: role === 'elder' }">
     <view class="hero">
       <view class="avatar">{{ avatarChar }}</view>
       <view class="hero-info">
@@ -28,8 +28,13 @@
       </view>
     </view>
 
-    <button class="btn-outline" @tap="goLogin">切换账号 / 重新登录</button>
-    <button class="btn-danger" @tap="logout">退出登录</button>
+    <view v-if="role === 'elder'" class="action-footer">
+      <button class="btn-outline elder-relogin" @tap="reLogin">重新登录</button>
+    </view>
+    <template v-else>
+      <button class="btn-outline" @tap="goLogin">切换账号 / 重新登录</button>
+      <button class="btn-danger" @tap="logout">退出登录</button>
+    </template>
     <RoleTabBar v-if="role" :role="role" :current="currentTab" />
   </view>
 </template>
@@ -43,11 +48,13 @@ import { fetchFamilyStats, fetchFamilyProfile, type FamilyProfile } from '../api
 import { fetchElderStats, fetchElderSelfProfile, type ElderSelfProfile } from '../api/elder';
 import { listBoundElders, listPendingPaymentOrders } from '../api/family';
 import { useRoleStore } from '../store/role';
+import { elderFontClass } from '../utils/elder-accessibility';
 import { pbErrorMessage } from '../utils/request';
 import type { RoleKey } from '../config/tabs';
 
 const props = defineProps<{ role: RoleKey; currentTab: string }>();
 const roleStore = useRoleStore();
+const elderFontCls = ref(elderFontClass());
 
 const familyStats = ref<{ boundElderCount: number; pendingPaymentCount: number; paidTotalYuan: string } | null>(null);
 const elderStats = ref<{ elderName: string; orderCount: number; activeCount: number } | null>(null);
@@ -197,6 +204,7 @@ const menuItems = computed(() => {
 });
 
 onShow(async () => {
+  if (props.role === 'elder') elderFontCls.value = elderFontClass();
   try {
     if (props.role === 'family') {
       const [stats, profile] = await Promise.all([fetchFamilyStats(), fetchFamilyProfile()]);
@@ -234,6 +242,11 @@ function goRoleSelect() {
 }
 
 function goLogin() {
+  uni.reLaunch({ url: '/pages/common/login' });
+}
+
+function reLogin() {
+  roleStore.logout();
   uni.reLaunch({ url: '/pages/common/login' });
 }
 
@@ -352,5 +365,23 @@ function logout() {
 .btn-danger {
   background: #eee;
   color: #333;
+}
+.action-footer {
+  margin-top: 16rpx;
+  margin-bottom: 32rpx;
+}
+.elder-relogin {
+  width: 100%;
+  height: 96rpx;
+  line-height: 96rpx;
+  font-size: 32rpx;
+  font-weight: 600;
+  border-radius: var(--nb-radius-pill, 48rpx);
+  box-shadow: var(--nb-shadow-soft, 0 4rpx 16rpx rgba(61, 42, 31, 0.06));
+}
+.elder-large .elder-relogin {
+  height: 108rpx;
+  line-height: 108rpx;
+  font-size: 40rpx;
 }
 </style>
