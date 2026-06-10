@@ -40,6 +40,16 @@ check "pending" "$API/nuanban/student/orders/pending"
 check "elders/nearby" "$API/nuanban/student/elders/nearby?lat=31.23&lng=121.47"
 check "withdrawal" "$API/nuanban/student/withdrawal"
 
+code="$(curl -sS -o /dev/null -w '%{http_code}' -X POST "$API/nuanban/platform/god-view-auth" \
+  -H "Content-Type: application/json" \
+  -d '{"password":"nuanban2025"}')"
+if [[ "$code" == "200" ]]; then
+  echo "  OK  god-view-auth (HTTP $code)"
+else
+  echo "  FAIL god-view-auth (HTTP $code，正确密码应为 nuanban2025)"
+  FAIL=1
+fi
+
 if [[ "$FAIL" -ne 0 ]]; then
   echo "若出现 assertActiveRoleHeader is not defined：git pull 后 docker compose restart pocketbase"
   exit 1

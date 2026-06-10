@@ -1919,10 +1919,15 @@ routerAdd("POST", "/api/nuanban/platform/god-view-auth", function (e) {
   var nb = require(__hooks + "/nuanban_lib.js");
   let body = {};
   try {
-    body = JSON.parse($os.readAll(e.request.body));
+    const raw = toString(e.request.body);
+    body = raw ? JSON.parse(raw) : {};
   } catch (_) {}
   const pwd = String(body.password || "");
-  const expected = $os.getenv("NUANBAN_GOD_VIEW_PASSWORD") || "nuanban2025";
+  let expected = "nuanban2025";
+  try {
+    const fromEnv = $os.getenv("NUANBAN_GOD_VIEW_PASSWORD");
+    if (fromEnv) expected = String(fromEnv);
+  } catch (_) {}
   if (pwd !== expected) {
     return e.json(403, { message: "密码错误" });
   }
