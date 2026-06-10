@@ -20,8 +20,12 @@ if [[ ! -f /etc/yum.repos.d/docker-ce.repo ]]; then
 fi
 
 echo "==> 3/4 安装 Docker CE + compose 插件"
+"$PKG" clean packages 2>/dev/null || true
 "$PKG" makecache -y 2>/dev/null || true
-"$PKG" install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
+# rootless-extras 在部分镜像站校验失败，可安全跳过
+"$PKG" install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin \
+  --exclude=docker-ce-rootless-extras \
+  || "$PKG" install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
 
 echo "==> 4/4 启动 Docker"
 systemctl enable docker
