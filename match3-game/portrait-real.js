@@ -56,6 +56,9 @@
   }
 
   function fallbackArt(charId) {
+    if (window.PORTRAIT_ART) {
+      return window.PORTRAIT_ART[charId] || window.PORTRAIT_ART.narrator || null;
+    }
     if (fallback && fallback.getArt) return fallback.getArt(charId);
     return null;
   }
