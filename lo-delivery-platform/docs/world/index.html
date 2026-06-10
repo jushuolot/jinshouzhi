@@ -3,424 +3,237 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>LOT 世界 · 全链可视</title>
+  <title>LOT 世界核 · 生态链全链管理</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <style>
     :root {
-      --bg: #030508;
-      --panel: rgba(8, 14, 28, 0.92);
-      --line: #1a3a5c;
-      --text: #eef8ff;
-      --muted: #6d9ab8;
-      --accent: #3dffb0;
-      --gold: #ffc14d;
-      --nucleus: #ff5c9a;
-      --glow: rgba(61, 255, 176, 0.35);
+      --bg: #050810; --panel: #0d1524; --line: #1e3a5f; --text: #e8f4ff;
+      --muted: #7da8c8; --accent: #3dff9a; --warn: #ffb347; --nucleus: #ff6b9d;
+      --orange: #ff8c2a;
     }
     * { box-sizing: border-box; }
-    html, body { margin: 0; height: 100%; overflow: hidden; }
     body {
-      font-family: "PingFang SC", "SF Pro Display", system-ui, sans-serif;
-      background: var(--bg);
-      color: var(--text);
+      margin: 0; font-family: "SF Pro Text", "PingFang SC", system-ui, sans-serif;
+      background: radial-gradient(ellipse at 50% 0%, #0a2840 0%, var(--bg) 55%);
+      color: var(--text); min-height: 100vh;
     }
-
-    /* —— 开场：宇宙 → 地球 —— */
-    #intro {
-      position: fixed; inset: 0; z-index: 9999;
-      background: radial-gradient(ellipse at 50% 40%, #0a1a30 0%, #020408 70%);
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      transition: opacity 0.8s, visibility 0.8s;
-    }
-    #intro.hide { opacity: 0; visibility: hidden; pointer-events: none; }
-    .stars { position: absolute; inset: 0; overflow: hidden; }
-    .stars i {
-      position: absolute; width: 2px; height: 2px; background: #fff; border-radius: 50%;
-      animation: twinkle 3s ease-in-out infinite;
-    }
-    @keyframes twinkle { 50% { opacity: 0.2; } }
-    .intro-earth {
-      width: 120px; height: 120px; border-radius: 50%;
-      background: radial-gradient(circle at 35% 35%, #4af, #1a5a8a 45%, #0a2840 100%);
-      box-shadow: 0 0 60px rgba(74, 170, 255, 0.5), inset -10px -10px 30px rgba(0,0,0,0.4);
-      animation: earthIn 2s ease-out forwards, float 4s ease-in-out 2s infinite;
-      transform: scale(0);
-    }
-    @keyframes earthIn { to { transform: scale(1); } }
-    @keyframes float { 50% { transform: translateY(-8px) scale(1.02); } }
-    #intro h1 {
-      margin: 28px 0 8px; font-size: 22px; font-weight: 700; letter-spacing: 0.2em;
-      text-align: center; z-index: 1;
-    }
-    #intro p { color: var(--muted); font-size: 13px; margin: 0 0 24px; z-index: 1; text-align: center; max-width: 320px; line-height: 1.6; }
-    #intro button {
-      z-index: 1; padding: 14px 36px; border: none; border-radius: 999px; cursor: pointer;
-      background: linear-gradient(135deg, #1a6b4a, #0d3d2a); color: var(--accent);
-      font-size: 15px; font-weight: 700; letter-spacing: 0.08em;
-      box-shadow: 0 0 24px var(--glow);
-    }
-
-    /* —— 主布局 —— */
-    #app { display: grid; grid-template-rows: auto 1fr auto; height: 100vh; }
     header {
-      display: flex; align-items: center; gap: 10px; padding: 8px 14px;
-      background: var(--panel); border-bottom: 1px solid var(--line);
-      backdrop-filter: blur(12px); z-index: 500;
+      display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 14px;
+      border-bottom: 1px solid var(--line); background: rgba(5, 8, 16, 0.9);
+      backdrop-filter: blur(8px); position: sticky; top: 0; z-index: 100;
     }
-    .logo-dot {
-      width: 9px; height: 9px; border-radius: 50%; background: var(--nucleus);
-      box-shadow: 0 0 10px var(--nucleus); animation: pulse 2s infinite;
-    }
-    @keyframes pulse { 50% { opacity: 0.4; } }
     header h1 { font-size: 14px; margin: 0; font-weight: 600; }
-    .hud { display: flex; gap: 16px; margin-left: auto; font-size: 11px; color: var(--muted); }
-    .hud b { color: var(--accent); font-size: 13px; }
-    .hud-warn b { color: var(--gold); }
-    .toolbar { display: flex; gap: 6px; margin-left: 12px; }
-    .toolbar button {
-      padding: 6px 12px; border-radius: 8px; border: 1px solid var(--line);
-      background: #0f1a2e; color: var(--text); font-size: 11px; cursor: pointer;
+    .nucleus-dot {
+      width: 9px; height: 9px; border-radius: 50%; background: var(--nucleus);
+      box-shadow: 0 0 12px var(--nucleus); animation: pulse 2s ease-in-out infinite;
     }
-    .toolbar button.primary { border-color: var(--accent); color: var(--accent); background: #0a2a1e; }
-    .toolbar button:disabled { opacity: 0.4; cursor: wait; }
-
-    .stage-wrap { position: relative; min-height: 0; }
-    #map { position: absolute; inset: 0; background: #061018; }
-    .map-overlay {
-      position: absolute; top: 12px; left: 12px; z-index: 400;
-      background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
-      padding: 10px 12px; max-width: 260px; backdrop-filter: blur(8px);
+    @keyframes pulse { 50% { opacity: 0.5; } }
+    .hdr-tools { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 10px; }
+    .hdr-tools select { padding: 3px 6px; border-radius: 6px; border: 1px solid var(--line); background: #111c2e; color: var(--text); }
+    .hdr-tools button {
+      padding: 4px 10px; border-radius: 6px; border: 1px solid var(--line);
+      background: #111c2e; color: var(--text); font-size: 10px; cursor: pointer;
     }
-    .map-overlay .sec { font-size: 9px; letter-spacing: 0.15em; color: var(--muted); margin-bottom: 6px; }
-    .crumb { display: flex; flex-wrap: wrap; gap: 4px; }
+    .hdr-tools button.primary { border-color: var(--orange); color: var(--orange); }
+    .hdr-tools button.on { border-color: var(--accent); color: var(--accent); }
+    .chain-pills { display: flex; flex-wrap: wrap; gap: 4px; margin-left: auto; }
+    .chain-pill { font-size: 9px; padding: 2px 7px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
+    .chain-pill.on { border-color: var(--accent); color: var(--accent); }
+    .chain-pill.off { opacity: 0.45; }
+    main { display: grid; grid-template-columns: 300px 1fr 300px; height: calc(100vh - 46px); }
+    @media (max-width: 1000px) { main { grid-template-columns: 1fr; height: auto; } }
+    aside, .quest {
+      background: var(--panel); border-right: 1px solid var(--line);
+      padding: 10px; overflow: auto;
+    }
+    .quest { border-right: none; border-left: 1px solid var(--line); }
+    .sec-title { font-size: 9px; letter-spacing: 0.12em; color: var(--muted); margin: 0 0 6px; }
+    .crumb { display: flex; flex-wrap: wrap; gap: 3px; margin-bottom: 8px; }
     .crumb button {
-      padding: 3px 8px; border-radius: 6px; border: 1px solid var(--line);
-      background: transparent; color: var(--text); font-size: 11px; cursor: pointer;
+      background: transparent; border: 1px solid var(--line); color: var(--text);
+      border-radius: 6px; padding: 3px 7px; font-size: 11px; cursor: pointer;
     }
     .crumb button.on { border-color: var(--accent); color: var(--accent); }
     .crumb span { color: var(--muted); font-size: 10px; align-self: center; }
-
-    .event-panel {
-      position: absolute; top: 12px; right: 12px; bottom: 12px; width: 300px; z-index: 400;
-      background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
-      display: flex; flex-direction: column; backdrop-filter: blur(8px);
+    .zoom-hint { font-size: 10px; color: var(--muted); line-height: 1.45; margin-bottom: 10px; }
+    #map { min-height: 360px; height: 100%; background: #0a1628; }
+    .co-card, .lo-card {
+      border: 1px solid var(--line); border-radius: 8px; padding: 8px;
+      margin-bottom: 6px; cursor: pointer; font-size: 10px;
     }
-    .event-panel h3 { margin: 0; padding: 10px 12px; font-size: 11px; color: var(--muted); border-bottom: 1px solid var(--line); }
-    #event-stream { flex: 1; overflow: auto; padding: 8px 12px; font-family: ui-monospace, monospace; font-size: 10px; }
-    .evt-row { padding: 5px 0; border-bottom: 1px solid #152238; animation: evtIn 0.35s ease; }
-    @keyframes evtIn { from { opacity: 0; transform: translateX(8px); } }
-    .evt-row b { color: var(--gold); }
+    .co-card.active, .lo-card.active { border-color: var(--nucleus); box-shadow: 0 0 0 1px rgba(255,107,157,0.25); }
+    .co-card b { color: var(--orange); font-size: 11px; }
+    .lo-id { font-size: 11px; font-weight: 600; color: var(--nucleus); }
+    .lo-meta { font-size: 10px; color: var(--muted); margin-top: 2px; }
+    .progress { height: 3px; background: #1a2d44; border-radius: 2px; margin-top: 6px; }
+    .progress i { display: block; height: 100%; background: linear-gradient(90deg, var(--nucleus), var(--accent)); }
+    .badge { font-size: 8px; padding: 1px 5px; border-radius: 4px; background: #1a2d44; color: var(--warn); }
+    .badge.ex { background: #3a1020; color: #ff6b9d; }
+    .next-hint.warn { border-color: #ff6b9d; background: #1a0a12; color: #ff9eb8; }
+    .evt-ex { color: #ff6b9d; }
+    .actor-row { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 10px; }
+    .actor-row button {
+      flex: 1; min-width: 60px; padding: 6px; border-radius: 6px;
+      border: 1px solid var(--line); background: #111c2e; color: var(--text); font-size: 11px; cursor: pointer;
+    }
+    .actor-row button.on { border-color: var(--accent); background: #0f2a22; }
+    .next-hint {
+      font-size: 10px; padding: 8px; border-radius: 8px; border: 1px solid var(--orange);
+      background: #1a1408; color: var(--orange); margin-bottom: 10px;
+    }
+    .actions { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }
+    .actions button {
+      padding: 9px; border-radius: 8px; border: none;
+      background: linear-gradient(135deg, #1a4d3a, #0d3328);
+      color: var(--accent); font-weight: 600; font-size: 11px; cursor: pointer;
+    }
+    .actions button.biz { background: linear-gradient(135deg, #4d2a0a, #2a1808); color: var(--orange); }
+    .actions button:disabled { opacity: 0.35; cursor: not-allowed; }
+    .evt {
+      font-size: 10px; padding: 5px 0; border-bottom: 1px solid #152238;
+      font-family: ui-monospace, monospace;
+    }
+    .evt b { color: var(--warn); }
     .evt-sync { color: var(--nucleus); }
-
-    .domain-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
-    .domain-tabs button {
-      padding: 6px 12px; border-radius: 8px; border: 1px solid var(--line);
-      background: #0a1422; color: var(--muted); font-size: 11px; cursor: pointer;
+    .integrity { font-size: 10px; margin-top: 6px; }
+    .integrity.ok { color: var(--accent); }
+    .stl { font-size: 9px; padding: 6px; border: 1px solid var(--line); border-radius: 6px; margin-top: 6px; }
+    .stl button { font-size: 9px; margin-left: 4px; padding: 2px 6px; cursor: pointer; border-radius: 4px; border: 1px solid var(--line); background: #111c2e; color: var(--text); }
+    .foot-links { font-size: 10px; margin-top: 10px; display: flex; gap: 10px; }
+    .foot-links a { color: var(--muted); }
+    .evolve-log {
+      font-size: 9px; color: var(--muted); margin-top: 8px; padding: 6px;
+      border-top: 1px solid var(--line); max-height: 48px; overflow: auto;
     }
-    .domain-tabs button.on { color: var(--text); font-weight: 600; }
-    .domain-tabs button[data-d="procurement"].on { border-color: #5eb8ff; color: #5eb8ff; }
-    .domain-tabs button[data-d="sales"].on { border-color: var(--accent); color: var(--accent); }
-    .domain-tabs button[data-d="production"].on { border-color: var(--gold); color: var(--gold); }
-    .domain-tabs button[data-d="reverse"].on { border-color: #ff7eb3; color: #ff7eb3; }
-    .domain-tabs button[data-d="ecommerce"].on { border-color: #a78bfa; color: #a78bfa; }
-    .domain-tabs button[data-d="express"].on { border-color: #38bdf8; color: #38bdf8; }
-    .domain-tabs button[data-d="linehaul"].on { border-color: #fb923c; color: #fb923c; }
-    .domain-tabs button[data-d="warehouse_internal"].on { border-color: #94a3b8; color: #cbd5e1; }
-    .domain-tabs button[data-d="tender"].on { border-color: #e879f9; color: #e879f9; }
-    #tender-bids { padding: 8px 12px; border-bottom: 1px solid var(--line); font-size: 10px; }
-    #tender-bids h4 { margin: 0 0 6px; font-size: 10px; color: var(--muted); font-weight: 600; }
-    .tender-link { color: #e879f9; font-size: 9px; margin-top: 4px; }
-    .domain-tabs button[data-d="all"].on { border-color: var(--nucleus); color: var(--nucleus); }
-    .tier-tabs { display: flex; gap: 4px; margin-bottom: 8px; }
-    .tier-tabs button {
-      padding: 4px 10px; font-size: 10px; border-radius: 6px; border: 1px solid var(--line);
-      background: #0a1422; color: var(--muted); cursor: pointer;
-    }
-    .tier-tabs button.on { font-weight: 600; }
-    .tier-tabs button[data-t="dc"].on { border-color: #60a5fa; color: #60a5fa; }
-    .tier-tabs button[data-t="rdc"].on { border-color: #34d399; color: #34d399; }
-    .tier-tabs button[data-t="fdc"].on { border-color: #fbbf24; color: #fbbf24; }
-    .equip-panel {
-      position: absolute; bottom: 12px; left: 12px; right: 320px; z-index: 400;
-      background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
-      padding: 8px 10px; max-height: 120px; overflow: auto; backdrop-filter: blur(8px);
-    }
-    .equip-panel[hidden] { display: none; }
-    .equip-title { font-size: 9px; letter-spacing: 0.12em; color: var(--muted); margin-bottom: 6px; }
-    .equip-grid { display: flex; flex-wrap: wrap; gap: 6px; }
-    .equip-card {
-      font-size: 9px; padding: 4px 8px; border-radius: 6px; border: 1px solid var(--line);
-      background: #0a1422; min-width: 100px;
-    }
-    .equip-card b { display: block; color: var(--text); font-size: 10px; }
-    .equip-bar { height: 3px; background: #1a2d44; border-radius: 2px; margin-top: 4px; }
-    .equip-bar i { display: block; height: 100%; background: var(--accent); border-radius: 2px; }
-    .net-graph {
-      display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; font-size: 9px; font-family: ui-monospace, monospace;
-    }
-    .net-edge {
-      padding: 2px 6px; border-radius: 4px; border: 1px solid #2a4a6a; color: var(--muted);
-      background: #0a1628;
-    }
-    .net-edge.hot { border-color: var(--nucleus); color: var(--nucleus); box-shadow: 0 0 8px rgba(255,92,154,0.3); }
-    .toolbar button.fission { border-color: var(--nucleus); color: var(--nucleus); background: #2a1020; }
-    .toolbar button.fission.on { background: var(--nucleus); color: #fff; animation: fissionPulse 1.2s infinite; }
-    @keyframes fissionPulse { 50% { box-shadow: 0 0 16px var(--nucleus); } }
-    body.fission-mode .logo-dot { background: var(--accent); box-shadow: 0 0 14px var(--accent); }
-    .domain-desc { font-size: 10px; color: var(--muted); margin-bottom: 8px; line-height: 1.5; }
-    #lo-list { max-height: 140px; overflow: auto; margin-bottom: 8px; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
-    .lo-row {
-      padding: 5px 6px; border-radius: 6px; font-size: 10px; cursor: pointer; margin-bottom: 3px;
-      border: 1px solid transparent;
-    }
-    .lo-row:hover { background: #0f1a2e; }
-    .lo-row.on { border-color: var(--nucleus); background: #1a1020; }
-    .lo-row .id { font-weight: 600; color: var(--gold); }
-    .lo-row .cargo { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    #stage-check { padding: 8px 12px; border-bottom: 1px solid var(--line); max-height: 160px; overflow: auto; }
-    .st { display: flex; gap: 6px; align-items: flex-start; font-size: 10px; padding: 3px 0; }
-    .st i { font-style: normal; width: 14px; }
-    .st.done { color: var(--accent); }
-    .st.pending { color: #3a5068; }
-    .hud-domains { font-size: 10px; color: var(--muted); }
-
-    /* —— 全链管道 —— */
-    #pipeline {
-      background: var(--panel); border-top: 1px solid var(--line);
-      padding: 10px 16px 14px; backdrop-filter: blur(12px); z-index: 500;
-    }
-    .pipe-title { font-size: 9px; letter-spacing: 0.18em; color: var(--muted); margin-bottom: 10px; }
-    .pipe-track { display: flex; align-items: stretch; gap: 0; position: relative; }
-    .pipe-node {
-      flex: 1; text-align: center; padding: 10px 6px; border-radius: 10px;
-      border: 1px solid var(--line); background: #0a1422; position: relative;
-      transition: border-color 0.3s, box-shadow 0.3s, transform 0.3s;
-      cursor: pointer; min-width: 0;
-    }
-    .pipe-node + .pipe-node { margin-left: -1px; border-top-left-radius: 0; border-bottom-left-radius: 0; }
-    .pipe-node:not(:last-child) { border-top-right-radius: 0; border-bottom-right-radius: 0; }
-    .pipe-node.active {
-      border-color: var(--accent); box-shadow: 0 0 20px var(--glow); transform: translateY(-3px); z-index: 2;
-    }
-    .pipe-node.done { border-color: #2a6b4a; opacity: 0.85; }
-    .pipe-node .icon { font-size: 22px; display: block; margin-bottom: 4px; }
-    .pipe-node .name { font-size: 11px; font-weight: 600; }
-    .pipe-node .sub { font-size: 9px; color: var(--muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .pipe-bar { height: 3px; background: #1a2d44; border-radius: 2px; margin-top: 6px; overflow: hidden; }
-    .pipe-bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--nucleus), var(--accent)); transition: width 0.5s; }
-    .pipe-connector {
-      position: absolute; top: 50%; height: 2px; background: linear-gradient(90deg, var(--line), var(--accent));
-      transform: translateY(-50%); z-index: 0; pointer-events: none;
-    }
-
-    #toast {
-      position: fixed; bottom: 120px; left: 50%; transform: translateX(-50%) translateY(20px);
-      background: rgba(10, 30, 22, 0.95); border: 1px solid var(--accent); color: var(--accent);
-      padding: 12px 20px; border-radius: 12px; font-size: 13px; z-index: 8000;
-      opacity: 0; transition: opacity 0.3s, transform 0.3s; pointer-events: none;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.5); max-width: 90vw; text-align: center;
-    }
-    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-
-    .finish-banner {
-      position: fixed; inset: 0; z-index: 9000; background: rgba(2, 4, 8, 0.88);
-      display: none; align-items: center; justify-content: center; flex-direction: column;
-    }
-    .finish-banner.show { display: flex; }
-    .finish-banner h2 { font-size: 28px; margin: 0 0 8px; color: var(--accent); }
-    .finish-banner p { color: var(--muted); margin: 0 0 20px; }
-    .finish-banner button {
-      padding: 12px 28px; border-radius: 999px; border: none; cursor: pointer;
-      background: linear-gradient(135deg, #1a6b4a, #0d3d2a); color: var(--accent); font-weight: 700;
-    }
-
-    @media (max-width: 900px) {
-      .event-panel { width: 200px; font-size: 9px; }
-      .hud { display: none; }
-    }
-    @media (max-width: 640px) {
-      .event-panel { display: none; }
-      .pipe-node .sub { display: none; }
-    }
+    .evolve-log b { color: var(--orange); }
   </style>
 </head>
 <body>
-  <div id="intro">
-    <div class="stars" id="stars"></div>
-    <div class="intro-earth" aria-hidden="true"></div>
-    <h1>LOT · 从宇宙到乡村</h1>
-    <p>七大物流域 · 仓网 · 跨域裂变进化 — 采购→DC→干线→快递 黄金链自动演示。零 API 费用。</p>
-    <button type="button" id="btn-enter">进入世界</button>
-  </div>
-
-  <div id="app" hidden>
-    <header>
-      <div class="logo-dot"></div>
-      <h1>LOT 全球一盘棋</h1>
-      <div class="toolbar">
-        <button type="button" class="fission" id="btn-fission">⚡ 裂变进化</button>
-        <button type="button" class="primary" id="btn-play">▶ 销售链</button>
-        <button type="button" id="btn-reset">↺ 重置</button>
-        <button type="button" id="btn-agg">⊕ 聚合</button>
-        <button type="button" id="btn-split">⊖ 拆分</button>
-        <button type="button" id="btn-tender">📋 中标启动</button>
-        <a href="driver.html" style="text-decoration:none"><button type="button">📱 司机端</button></a>
-      </div>
-      <div class="hud">
-        <span>链环 <b id="hud-chain">—</b></span>
-        <span>订单 <b id="hud-los">—</b></span>
-        <span class="hud-domains" id="hud-domains">—</span>
-        <span class="hud-warn">事件 <b id="hud-events">—</b></span>
-        <span>裂变 <b id="hud-gen">G1</b></span>
-      </div>
-    </header>
-
-    <div class="stage-wrap">
-      <div id="map"></div>
-      <div class="map-overlay">
-        <div class="sec">ZOOM · 宇宙 → 乡村</div>
-        <div class="crumb" id="spatial-crumb"></div>
-      </div>
-      <div class="equip-panel" id="equip-panel" hidden>
-        <div class="equip-title">自动化设备 · 利用率模拟</div>
-        <div class="equip-grid" id="equip-grid"></div>
-      </div>
-      <aside class="event-panel">
-        <h3 id="panel-title">物流域 · 演示订单</h3>
-        <div id="lo-list"></div>
-        <div id="tender-bids" hidden><h4>投标报价对比</h4><div id="tender-bids-body"></div></div>
-        <div id="stage-check"></div>
-        <h3 style="border-top:1px solid var(--line)">轨道电子 · 事件流</h3>
-        <div id="event-stream"></div>
-      </aside>
+  <header>
+    <div class="nucleus-dot"></div>
+    <h1>LOT 世界核 · 免费资源链</h1>
+    <div class="hdr-tools">
+      <select id="sel-ent" title="企业视角"></select>
+      <button type="button" class="primary" id="btn-new">＋货主下单</button>
+      <button type="button" class="primary" id="btn-advance">推进业务</button>
+      <button type="button" id="btn-auto">自动裂变</button>
     </div>
-
-    <footer id="pipeline">
-      <div class="domain-tabs" id="domain-tabs"></div>
-      <div class="tier-tabs" id="tier-tabs" hidden></div>
-      <div class="domain-desc" id="domain-desc"></div>
-      <div class="net-graph" id="net-graph"></div>
-      <div class="pipe-title">跨域裂变网络 · 销售链管道</div>
-      <div class="pipe-track" id="pipe-track"></div>
-    </footer>
-  </div>
-
-  <div id="toast"></div>
-  <div class="finish-banner" id="finish">
-    <h2>全链通关</h2>
-    <p>农户揽收 → 仓 → 干线 → 末端 · 哈希链完整 · 数据零云费</p>
-    <button type="button" id="btn-finish-ok">再看一遍</button>
-  </div>
-
+    <div class="chain-pills" id="chain-pills"></div>
+  </header>
+  <main>
+    <aside>
+      <p class="sec-title">空间 zoom · 宇宙 → 乡村</p>
+      <div class="crumb" id="spatial-crumb"></div>
+      <p class="zoom-hint" id="zoom-hint"></p>
+      <p class="sec-title">链订单 · 采购原料 → 用户签收</p>
+      <div id="co-list"></div>
+      <p class="sec-title">任务核（LO）</p>
+      <div id="lo-list"></div>
+      <div class="foot-links">
+        <a href="../web/index.html">← 旧版演示壳</a>
+        <a href="driver.html">司机端 →</a>
+      </div>
+    </aside>
+    <section id="map" aria-label="世界地图"></section>
+    <div class="quest">
+      <p class="sec-title">角色镜头</p>
+      <div class="actor-row" id="actors"></div>
+      <div id="next-hint" hidden class="next-hint"></div>
+      <p class="sec-title">动作 · 写入事件链</p>
+      <div class="actions" id="actions"></div>
+      <p class="sec-title">轨道电子 · 事件账本</p>
+      <div id="event-log"></div>
+      <p class="integrity ok" id="integrity"></p>
+      <div id="stl-panel"></div>
+      <div class="evolve-log" id="evolve-log">系统进化：关闭</div>
+    </div>
+  </main>
   <script type="module">
     import { defaultChain } from '../kernel/lot-chain.js';
-    import { getPipelineState, runFullDemo, ROUTE_COORDS } from '../kernel/lot-sim.js';
-    import { projectLOState } from '../kernel/lot-nucleus.js';
-    import { LOGISTICS_DOMAINS } from '../kernel/lot-domains.js';
-    import { countByDomain } from '../kernel/lot-demo-data.js';
-    import { WAREHOUSE_TIERS } from '../kernel/lot-warehouse.js';
-    import { runFullFission, evolveHeartbeat, getEvolutionStats } from '../kernel/lot-evolve.js';
-    import { buildNetworkEdges } from '../kernel/lot-network.js';
-    import { renderBidTableHtml, runTenderAwardDemo, TENDER_SCOPES } from '../kernel/lot-tender.js';
-
-    const DOMAIN_COLORS = {
-      procurement: '#5eb8ff',
-      sales: '#3dffb0',
-      production: '#ffc14d',
-      reverse: '#ff7eb3',
-      ecommerce: '#a78bfa',
-      express: '#38bdf8',
-      linehaul: '#fb923c',
-      warehouse_internal: '#94a3b8',
-      tender: '#e879f9',
-    };
+    import { projectLOState, ACTOR_LENSES, SPATIAL_LEVELS } from '../kernel/lot-nucleus.js';
+    import { CHAIN_STATUS, legMeta } from '../kernel/lot-chain-order.js';
+    import { ENTERPRISES, getEnterprise } from '../kernel/lot-ecosystem.js';
+    import { SETTLEMENT_STATUS } from '../kernel/lot-settlement.js';
+    import { settlementActionsForViewer } from '../kernel/lot-business.js';
+    import { getDomain } from '../kernel/lot-domains.js';
 
     const state = {
       chain: defaultChain,
-      focusCellId: 'bj-dc-shunyi',
-      activeLoId: 'LO-WHI-001',
-      domainFilter: 'all',
-      tierFilter: 'all',
+      focusCellId: 'beijing',
+      activeLoId: null,
+      activeCoId: null,
+      actor: 'driver',
+      viewerEnterpriseId: localStorage.getItem('lot_viewer_ent') || 'ENT-LUWEI-BRAND',
       map: null,
-      layers: { markers: [], route: null, cargo: null },
-      demoRunning: false,
-      fissionRunning: false,
-      heartbeatId: null,
-      allEvents: [],
+      markers: [],
+      autoFission: false,
+      autoTimer: null,
+      evolveLog: [],
     };
 
-    function stars() {
-      const el = document.getElementById('stars');
-      for (let i = 0; i < 80; i++) {
-        const s = document.createElement('i');
-        s.style.left = Math.random() * 100 + '%';
-        s.style.top = Math.random() * 100 + '%';
-        s.style.animationDelay = Math.random() * 3 + 's';
-        el.appendChild(s);
-      }
+    const ACTION_TABLE = {
+      driver: [
+        { code: 'PICKUP_DONE', label: '揽收完成', cell: 'origin' },
+        { code: 'IN_TRANSIT', label: '在途', cell: null },
+        { code: 'POD_SIGNED', label: '签收', cell: 'dest' },
+      ],
+      warehouse: [
+        { code: 'INBOUND_SCAN', label: '入库扫码', cell: 'facility' },
+        { code: 'PICK_PACK', label: '拣配', cell: 'facility' },
+        { code: 'LOADED', label: '装车', cell: 'facility' },
+      ],
+      dispatcher: [
+        { code: 'DISPATCH', label: '派车', cell: null },
+        { code: 'LOAD_PLAN', label: '配载计划', cell: null },
+        { code: 'IN_TRANSIT', label: '在途', cell: null },
+      ],
+      shipper: [
+        { code: 'ORDER_CREATED', label: '销售建单', cell: 'origin' },
+        { code: 'CONFIRM', label: '货主确认', cell: 'origin' },
+      ],
+      purchaser: [
+        { code: 'PO_ISSUED', label: '下达采购', cell: 'origin' },
+        { code: 'SUPPLIER_CONFIRM', label: '供应商确认', cell: 'origin' },
+        { code: 'PUTAWAY_DONE', label: '上架完成', cell: 'dest' },
+      ],
+      planner: [
+        { code: 'MATERIAL_CALL', label: '生产叫料', cell: 'facility' },
+        { code: 'FG_STOCK_IN', label: '成品入库', cell: 'facility' },
+      ],
+      finance: [
+        { code: 'SETTLEMENT', label: '运费结算', cell: null },
+        { code: 'INVOICE_MATCHED', label: '三单匹配', cell: null },
+      ],
+    };
+
+    const ROLE_FILTER = {
+      'ENT-LUWEI-BRAND': ['shipper', 'purchaser', 'planner', 'finance', 'dispatcher'],
+      'ENT-LOT-3PL': ['warehouse', 'dispatcher'],
+      'ENT-ZHOU-CARRIER': ['driver', 'dispatcher'],
+      'ENT-YANQING-SUP': ['purchaser'],
+    };
+
+    function renderChainPills(status) {
+      document.getElementById('chain-pills').innerHTML = status
+        .map((s) => `<span class="chain-pill ${s.ok ? 'on' : 'off'}">${s.id}</span>`)
+        .join('');
     }
 
-    function toast(msg, ms = 2200) {
-      const t = document.getElementById('toast');
-      t.textContent = msg;
-      t.classList.add('show');
-      clearTimeout(toast._t);
-      toast._t = setTimeout(() => t.classList.remove('show'), ms);
+    function initEnt() {
+      const sel = document.getElementById('sel-ent');
+      sel.innerHTML = ENTERPRISES.map((e) => `<option value="${e.id}">${e.nameZh}</option>`).join('');
+      sel.value = state.viewerEnterpriseId;
+      sel.onchange = () => {
+        state.viewerEnterpriseId = sel.value;
+        localStorage.setItem('lot_viewer_ent', sel.value);
+        const roles = ROLE_FILTER[state.viewerEnterpriseId];
+        if (roles && !roles.includes(state.actor)) state.actor = roles[0] || 'driver';
+        renderAll();
+      };
     }
 
-    function ensureMap() {
-      if (state.map) return;
-      state.map = L.map('map', { zoomControl: true, attributionControl: true });
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        subdomains: 'abcd', maxZoom: 19, attribution: '&copy; OSM &copy; CARTO',
-      }).addTo(state.map);
-      const latlngs = ROUTE_COORDS.map((c) => [c[1], c[2]]);
-      state.layers.route = L.polyline(latlngs, {
-        color: '#3dffb0', weight: 4, opacity: 0.7, dashArray: '12 8',
-      }).addTo(state.map);
-      state.layers.cargo = L.circleMarker(latlngs[0], {
-        radius: 10, color: '#ffc14d', fillColor: '#ffc14d', fillOpacity: 1, weight: 2,
-      }).addTo(state.map);
-      state.map.fitBounds(L.latLngBounds(latlngs).pad(0.2));
-    }
-
-    async function renderMap() {
-      ensureMap();
-      state.layers.markers.forEach((m) => state.map.removeLayer(m));
-      state.layers.markers = [];
-      const spatial = await state.chain.listSpatial();
-      const los = await filteredLos();
-      const labels = new Map(spatial.map((c) => [c.id, c.labelZh || c.id]));
-
-      for (const lo of los) {
-        for (const cellId of [lo.originCellId, lo.destCellId]) {
-          const c = spatial.find((x) => x.id === cellId);
-          if (!c?.lat) continue;
-          const dom = lo.logisticsDomain || 'sales';
-          const col = DOMAIN_COLORS[dom] || '#3dffb0';
-          const m = L.circleMarker([c.lat, c.lng], {
-            radius: lo.loId === state.activeLoId ? 11 : 5,
-            color: lo.loId === state.activeLoId ? '#ff5c9a' : col,
-            fillColor: lo.loId === state.activeLoId ? '#ff5c9a' : col,
-            fillOpacity: lo.loId === state.activeLoId ? 1 : 0.55, weight: 2,
-          }).addTo(state.map);
-          const cargo = lo.contract?.cargo || lo.channel;
-          m.bindPopup(`<b>${labels.get(cellId)}</b><br/>${cargo}<br/><small>${lo.loId}</small>`);
-          m.on('click', () => { state.activeLoId = lo.loId; state.focusCellId = cellId; renderAll(); });
-          state.layers.markers.push(m);
-        }
-      }
-
-      const pipe = await getPipelineState(state.chain);
-      const active = pipe.stages[pipe.activeIx];
-      if (active?.lo && state.layers.cargo) {
-        const c = spatial.find((x) => x.id === active.lo.originCellId);
-        if (c?.lat) state.layers.cargo.setLatLng([c.lat, c.lng]);
-      }
-    }
-
-    async function renderCrumb() {
+    async function buildCrumb() {
       const all = await state.chain.listSpatial();
       const map = new Map(all.map((c) => [c.id, c]));
       const path = [];
@@ -434,355 +247,301 @@
       document.querySelectorAll('#spatial-crumb button').forEach((btn) => {
         btn.onclick = () => { state.focusCellId = btn.dataset.cell; renderMap(); };
       });
+      const focus = map.get(state.focusCellId);
+      const lvl = focus ? SPATIAL_LEVELS.indexOf(focus.level) + 1 : 0;
+      document.getElementById('zoom-hint').textContent =
+        `当前层级 ${lvl}/${SPATIAL_LEVELS.length} · 事件 SHA-256 哈希链 · 本地 IndexedDB 零云费 · 业务推进实时投影`;
     }
 
-    async function renderPipeline() {
-      const pipe = await getPipelineState(state.chain);
-      const track = document.getElementById('pipe-track');
-      track.innerHTML = pipe.stages.map((s, i) => {
-        const cls = s.status === 'done' ? 'done' : s.loId === state.activeLoId || i === pipe.activeIx ? 'active' : '';
-        return `<div class="pipe-node ${cls}" data-lo="${s.loId}" data-ix="${i}">
-          <span class="icon">${s.icon}</span>
-          <span class="name">${s.labelZh}</span>
-          <span class="sub">${s.lastCode || '待启动'} · ${s.loId}</span>
-          <div class="pipe-bar"><i style="width:${s.progress}%"></i></div>
-        </div>`;
-      }).join('');
-      track.querySelectorAll('.pipe-node').forEach((node) => {
-        node.onclick = () => {
-          state.activeLoId = node.dataset.lo;
-          const lo = pipe.stages[+node.dataset.ix]?.lo;
-          if (lo) state.focusCellId = lo.originCellId;
-          renderAll();
-        };
-      });
-
-      const allLos = await state.chain.listLOs();
-      const counts = countByDomain(allLos);
-      document.getElementById('hud-los').textContent = allLos.length;
-      document.getElementById('hud-domains').textContent =
-        `采${counts.procurement} 销${counts.sales} 产${counts.production} 逆${counts.reverse} ` +
-        `电${counts.ecommerce} 快${counts.express} 干${counts.linehaul} 仓${counts.warehouse_internal} 招${counts.tender}`;
+    function ensureMap() {
+      if (state.map) return;
+      state.map = L.map('map', { zoomControl: true, attributionControl: true });
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        subdomains: 'abcd', maxZoom: 19, attribution: '&copy; OSM &copy; CARTO',
+      }).addTo(state.map);
     }
 
-    async function filteredLos() {
-      const f = {};
-      if (state.domainFilter !== 'all') f.domain = state.domainFilter;
-      if (state.tierFilter !== 'all') f.tier = state.tierFilter;
-      return state.chain.listLOs(f);
-    }
-
-    function renderTierTabs() {
-      const el = document.getElementById('tier-tabs');
-      const show = state.domainFilter === 'warehouse_internal';
-      el.hidden = !show;
-      if (!show) return;
-      const tiers = [{ id: 'all', labelZh: '全部仓级' }, ...Object.values(WAREHOUSE_TIERS)];
-      el.innerHTML = tiers
-        .map((t) => {
-          const on = state.tierFilter === t.id ? ' on' : '';
-          return `<button type="button" data-t="${t.id}" class="${on.trim()}">${t.labelZh || t.id}</button>`;
-        })
-        .join('');
-      el.querySelectorAll('button').forEach((btn) => {
-        btn.onclick = () => {
-          state.tierFilter = btn.dataset.t;
-          renderAll();
-        };
-      });
-    }
-
-    async function renderEquipment() {
-      const panel = document.getElementById('equip-panel');
-      const show =
-        state.domainFilter === 'warehouse_internal' ||
-        state.domainFilter === 'all' ||
-        state.domainFilter === 'ecommerce';
-      panel.hidden = !show;
-      if (!show) return;
-      const eq = await state.chain.getEquipment();
-      const filtered =
-        state.tierFilter === 'all' ? eq : eq.filter((e) => e.tier === state.tierFilter);
-      document.getElementById('equip-grid').innerHTML = filtered
-        .map(
-          (e) =>
-            `<div class="equip-card"><b>${e.id}</b>${e.labelZh} · ${e.status || 'idle'}
-            <div class="equip-bar"><i style="width:${e.utilization || 0}%"></i></div></div>`
-        )
-        .join('');
-    }
-
-    function renderDomainTabs() {
-      const tabs = [{ id: 'all', icon: '🌐', labelZh: '全部' }, ...Object.values(LOGISTICS_DOMAINS)];
-      document.getElementById('domain-tabs').innerHTML = tabs
-        .map((d) => {
-          const id = d.id;
-          const on = state.domainFilter === id ? ' on' : '';
-          const label = d.icon ? `${d.icon} ${d.labelZh}` : d.labelZh;
-          return `<button type="button" data-d="${id}" class="${on.trim()}">${label}</button>`;
-        })
-        .join('');
-      document.querySelectorAll('#domain-tabs button').forEach((btn) => {
-        btn.onclick = () => {
-          state.domainFilter = btn.dataset.d;
-          if (state.domainFilter !== 'warehouse_internal') state.tierFilter = 'all';
-          filteredLos().then((los) => {
-            if (los.length && !los.find((l) => l.loId === state.activeLoId)) state.activeLoId = los[0].loId;
-            renderAll();
-          });
-        };
-      });
-      const dom = LOGISTICS_DOMAINS[state.domainFilter];
-      document.getElementById('domain-desc').textContent = dom
-        ? dom.descZh
-        : `共 ${document.getElementById('hud-los').textContent || '—'} 条 LO · 含 DC/RDC/FDC 仓网与聚合/拆分`;
-    }
-
-    async function renderLoList() {
-      const los = await filteredLos();
+    async function renderMap() {
+      ensureMap();
+      state.markers.forEach((m) => state.map.removeLayer(m));
+      state.markers = [];
+      const los = await visibleLos();
       const spatial = await state.chain.listSpatial();
-      const label = (id) => spatial.find((c) => c.id === id)?.labelZh || id;
-      document.getElementById('lo-list').innerHTML = los
-        .map((lo) => {
-          const on = lo.loId === state.activeLoId ? ' on' : '';
-          const cargo = lo.contract?.cargo || lo.channel;
-          const dom = LOGISTICS_DOMAINS[lo.logisticsDomain];
-          const icon = dom?.icon || '·';
-          const tier = lo.facilityTier ? `[${lo.facilityTier.toUpperCase()}] ` : '';
-          const op = lo.contract?.op ? ` · ${lo.contract.op}` : '';
-          const tenderTitle = lo.logisticsDomain === 'tender' ? lo.contract?.title : cargo;
-          return `<div class="lo-row${on}" data-lo="${lo.loId}">
-            <div class="id">${icon} ${lo.loId}</div>
-            <div class="cargo">${tier}${tenderTitle || cargo}${op} · ${label(lo.originCellId)}→${label(lo.destCellId)}</div>
-          </div>`;
-        })
-        .join('');
-      document.querySelectorAll('.lo-row').forEach((row) => {
-        row.onclick = () => {
-          state.activeLoId = row.dataset.lo;
+      const labels = new Map(spatial.map((c) => [c.id, c.labelZh]));
+
+      for (const lo of los) {
+        for (const cellId of [lo.originCellId, lo.destCellId]) {
+          const c = spatial.find((x) => x.id === cellId);
+          if (!c?.lat) continue;
+          const active = lo.loId === state.activeLoId;
+          const m = L.circleMarker([c.lat, c.lng], {
+            radius: active ? 11 : 7,
+            color: active ? '#ff6b9d' : '#3dff9a',
+            fillColor: active ? '#ff6b9d' : '#1a4d3a',
+            fillOpacity: 0.9, weight: 2,
+          }).addTo(state.map);
+          m.bindPopup(`<b>${labels.get(cellId)}</b><br/>${lo.loId}<br/>${lo.chainOrderId || ''}`);
+          m.on('click', () => { state.activeLoId = lo.loId; renderAll(); });
+          state.markers.push(m);
+        }
+      }
+
+      const focus = spatial.find((c) => c.id === state.focusCellId);
+      const children = spatial.filter((c) => c.parentId === state.focusCellId && c.lat);
+      const pts = [...children, ...(focus?.lat ? [focus] : [])];
+      if (pts.length) state.map.fitBounds(L.latLngBounds(pts.map((p) => [p.lat, p.lng])).pad(0.3));
+      else if (focus?.lat) state.map.setView([focus.lat, focus.lng], 10);
+      setTimeout(() => state.map.invalidateSize(), 40);
+    }
+
+    async function visibleLos() {
+      if (state.activeCoId) {
+        const view = await state.chain.getChainOrderView(state.activeCoId);
+        const ids = new Set((view?.legs || []).map((l) => l.loId));
+        const all = await state.chain.listLOs();
+        const filtered = all.filter((l) => ids.has(l.loId));
+        if (filtered.length) return filtered;
+      }
+      return state.chain.listLOs();
+    }
+
+    async function renderChainOrders() {
+      const rows = await state.chain.listChainOrders({ viewerEnterpriseId: state.viewerEnterpriseId });
+      if (!state.activeCoId && rows[0]) state.activeCoId = rows[0].chainOrderId;
+      const views = await Promise.all(rows.map((r) => state.chain.getChainOrderView(r.chainOrderId)));
+      document.getElementById('co-list').innerHTML = views.filter(Boolean).map((v) => {
+        const on = v.chainOrderId === state.activeCoId ? ' active' : '';
+        const st = CHAIN_STATUS[v.status]?.labelZh || v.status;
+        const exCls = v.status === 'exception' ? ' ex' : '';
+        return `<div class="co-card${on}" data-co="${v.chainOrderId}">
+          <b>${v.title}</b> <span class="badge${exCls}">${st}</span>
+          <div class="lo-meta">${v.chainOrderId} · ${v.progress}%</div></div>`;
+      }).join('') || '<p class="lo-meta">无链订单 · 点顶栏「货主下单」</p>';
+      document.querySelectorAll('.co-card').forEach((c) => {
+        c.onclick = async () => {
+          state.activeCoId = c.dataset.co;
+          const view = await state.chain.getChainOrderView(state.activeCoId);
+          if (view?.legs?.[0]) state.activeLoId = view.legs[0].loId;
           renderAll();
         };
       });
-      const dom = LOGISTICS_DOMAINS[state.domainFilter];
-      document.getElementById('panel-title').textContent = dom
-        ? `${dom.icon} ${dom.labelZh} · ${los.length} 单`
-        : `全域 · ${los.length} 单`;
     }
 
-    async function renderTenderBids() {
-      const panel = document.getElementById('tender-bids');
-      const lo = state.activeLoId ? await state.chain.getLO(state.activeLoId) : null;
-      if (!lo || lo.logisticsDomain !== 'tender') {
-        panel.hidden = true;
+    async function renderLOs() {
+      const los = await visibleLos();
+      if (!state.activeLoId && los.length) state.activeLoId = los[0].loId;
+      const html = [];
+      for (const lo of los.slice(0, 40)) {
+        const events = await state.chain.getEvents(lo.loId);
+        const proj = projectLOState(lo, events);
+        const active = lo.loId === state.activeLoId ? ' active' : '';
+        const leg = legMeta(lo.legType || lo.logisticsDomain);
+        html.push(
+          `<div class="lo-card${active}" data-lo="${lo.loId}">` +
+          `<div class="lo-id">${leg.icon} ${lo.loId}</div>` +
+          `<div class="lo-meta">${lo.channel} · ${lo.originCellId}→${lo.destCellId}</div>` +
+          `<div class="progress"><i style="width:${proj.progress}%"></i></div></div>`
+        );
+      }
+      const el = document.getElementById('lo-list');
+      el.innerHTML = html.join('') || '<p class="lo-meta">无 LO</p>';
+      el.querySelectorAll('.lo-card').forEach((card) => {
+        card.onclick = () => { state.activeLoId = card.dataset.lo; renderAll(); };
+      });
+    }
+
+    function renderActors() {
+      const allowed = ROLE_FILTER[state.viewerEnterpriseId];
+      const actors = Object.values(ACTOR_LENSES).filter((a) => a.id !== 'all' && (!allowed || allowed.includes(a.id)));
+      document.getElementById('actors').innerHTML = actors.map((a) =>
+        `<button type="button" data-actor="${a.id}" class="${a.id === state.actor ? 'on' : ''}">${a.labelZh}</button>`
+      ).join('');
+      document.querySelectorAll('#actors button').forEach((btn) => {
+        btn.onclick = () => { state.actor = btn.dataset.actor; renderActions(); renderActors(); };
+      });
+    }
+
+    async function renderNextHint() {
+      const el = document.getElementById('next-hint');
+      if (!state.activeCoId) { el.hidden = true; return; }
+      const block = await state.chain.getStageBlock(state.activeCoId);
+      const next = await state.chain.getNextStep(state.activeCoId);
+      if (!next && !block) { el.hidden = true; el.className = 'next-hint'; return; }
+      el.hidden = false;
+      if (block?.kind === 'exception') {
+        el.className = 'next-hint warn';
+        el.innerHTML = block.labelZh;
         return;
       }
-      panel.hidden = false;
-      const scope = TENDER_SCOPES[lo.contract?.scope];
-      document.getElementById('tender-bids-body').innerHTML =
-        `<div style="margin-bottom:6px;color:var(--text)">${lo.contract?.title || ''}</div>` +
-        `<div class="lo-meta">${scope?.icon || ''} ${scope?.labelZh || ''} · 预算 ${lo.contract?.budget || '—'}</div>` +
-        renderBidTableHtml(lo) +
-        `<div class="tender-link">履约对接 → ${lo.contract?.linkedLoId || '—'} (${lo.contract?.targetDomain || ''})</div>`;
-    }
-
-    async function renderStageCheck() {
-      const lo = state.activeLoId ? await state.chain.getLO(state.activeLoId) : null;
-      const el = document.getElementById('stage-check');
-      if (!lo) { el.innerHTML = ''; return; }
-      const domain = lo.logisticsDomain;
-      const def = LOGISTICS_DOMAINS[domain];
-      if (!def) { el.innerHTML = '<div class="st">销售链四段演示 · 点播放全链</div>'; return; }
-      const events = await state.chain.getEvents(lo.loId);
-      const codes = new Set(events.filter((e) => e.type === 'FACT').map((e) => e.code));
-      el.innerHTML = def.stages
-        .map((st) => {
-          const done = codes.has(st.code);
-          return `<div class="st ${done ? 'done' : 'pending'}"><i>${done ? '✓' : '○'}</i>
-            <span>${st.labelZh} <span style="color:#5a7a96">@${st.actor}</span>
-            ${st.evidence ? `<br/><span style="font-size:9px;color:#4a6a82">证据: ${st.evidence.join(', ')}</span>` : ''}</span></div>`;
-        })
-        .join('');
-    }
-
-    async function renderEventStream() {
-      const los = await filteredLos();
-      const rows = [];
-      for (const lo of los) {
-        const evts = await state.chain.getEvents(lo.loId);
-        for (const e of evts) rows.push({ ...e, loId: lo.loId });
+      if (block?.kind === 'doc') {
+        el.className = 'next-hint warn';
+        el.innerHTML = block.labelZh;
+        return;
       }
-      rows.sort((a, b) => (a.ts || '').localeCompare(b.ts || ''));
-      state.allEvents = rows;
-      document.getElementById('hud-events').textContent = rows.length;
-      const tail = rows.slice(-20).reverse();
-      document.getElementById('event-stream').innerHTML = tail.map((e) => {
+      if (!next) { el.hidden = true; return; }
+      el.className = 'next-hint';
+      el.innerHTML = `下一业务步：<b>${next.labelZh}</b> · ${next.loId} · @${next.actor}`;
+    }
+
+    async function renderActions() {
+      const lo = state.activeLoId ? await state.chain.getLO(state.activeLoId) : null;
+      const acts = [...(ACTION_TABLE[state.actor] || [])];
+      if (lo?.logisticsDomain) {
+        const dom = getDomain(lo.logisticsDomain);
+        const events = lo ? await state.chain.getEvents(lo.loId) : [];
+        const done = new Set(events.filter((e) => e.type === 'FACT').map((e) => e.code));
+        const stage = dom?.stages?.find((s) => !done.has(s.code) && s.actor === state.actor);
+        if (stage && !acts.find((a) => a.code === stage.code)) {
+          acts.unshift({ code: stage.code, label: stage.labelZh, cell: 'facility' });
+        }
+      }
+      const el = document.getElementById('actions');
+      let html = '';
+      if (state.activeCoId) {
+        html += `<button type="button" class="biz" id="btn-biz-step" ${lo ? '' : 'disabled'}>⚡ 推进链上下一步</button>`;
+      }
+      html += acts.map((a) =>
+        `<button type="button" data-code="${a.code}" data-cell="${a.cell || ''}" ${lo ? '' : 'disabled'}>${a.label}</button>`
+      ).join('');
+      el.innerHTML = html;
+      const bizBtn = document.getElementById('btn-biz-step');
+      if (bizBtn) bizBtn.onclick = async () => {
+        const r = await state.chain.advanceChain(state.activeCoId);
+        if (r.step) state.activeLoId = r.step.loId;
+        await renderAll();
+      };
+      el.querySelectorAll('button[data-code]').forEach((btn) => {
+        btn.onclick = async () => {
+          if (!state.activeLoId) return;
+          const lo = await state.chain.getLO(state.activeLoId);
+          let cellId = state.focusCellId;
+          if (btn.dataset.cell === 'origin') cellId = lo.originCellId;
+          if (btn.dataset.cell === 'dest' || btn.dataset.cell === 'facility') cellId = lo.destCellId || lo.originCellId;
+          await state.chain.emitAction(state.activeLoId, {
+            code: btn.dataset.code,
+            actor: state.actor,
+            spatialCellId: cellId,
+            payload: { viewer: state.viewerEnterpriseId },
+          });
+          await renderAll();
+        };
+      });
+    }
+
+    async function renderEvents() {
+      if (!state.activeLoId) {
+        document.getElementById('event-log').innerHTML = '';
+        document.getElementById('integrity').textContent = '';
+        return;
+      }
+      const events = await state.chain.getEvents(state.activeLoId);
+      const lo = await state.chain.getLO(state.activeLoId);
+      const proj = projectLOState(lo, events);
+      document.getElementById('event-log').innerHTML = events.map((e) => {
         const sync = e.type === 'SYNC' ? ' evt-sync' : '';
-        return `<div class="evt-row${sync}"><b>${e.loId}</b> #${e.seq} ${e.code}<br/><span style="color:#5a7a96">${(e.hash || '').slice(0, 12)}…</span></div>`;
+        const ex = e.type === 'EXCEPTION' ? ' evt-ex' : '';
+        return `<div class="evt${sync}${ex}"><b>#${e.seq}</b> ${e.code} <span style="color:#7da8c8">@${e.actor}</span><br/>
+          <span style="color:#5a7a96">${(e.hash || '').slice(0, 16)}…</span></div>`;
       }).join('');
+      const ig = document.getElementById('integrity');
+      ig.className = 'integrity ' + (proj.integrity.ok ? 'ok' : 'bad');
+      ig.textContent = proj.integrity.ok
+        ? `哈希链完整 · ${events.length} 个轨道电子`
+        : `链断裂 @#${proj.integrity.brokenAt}`;
     }
 
-    function renderHudChain(status) {
-      const on = (status || []).filter((s) => s.ok).length;
-      document.getElementById('hud-chain').textContent = on + '/' + (status || []).length;
-    }
-
-    async function renderNetworkGraph() {
-      const los = await state.chain.listLOs();
-      const edges = buildNetworkEdges(los);
-      const el = document.getElementById('net-graph');
-      el.innerHTML = edges
-        .slice(0, 24)
-        .map((e) => {
-          const hot = e.from === state.activeLoId || e.to === state.activeLoId ? ' hot' : '';
-          const short = (id) => id.replace('LO-', '');
-          return `<span class="net-edge${hot}">${short(e.from)}→${short(e.to)}</span>`;
-        })
-        .join('');
-    }
-
-    async function renderEvolutionHud() {
-      const stats = await getEvolutionStats(state.chain);
-      document.getElementById('hud-gen').textContent = 'G' + stats.generation;
+    async function renderSettlements() {
+      const panel = document.getElementById('stl-panel');
+      if (!state.activeCoId) { panel.innerHTML = ''; return; }
+      const stls = await state.chain.listSettlements({
+        chainOrderId: state.activeCoId,
+        viewerEnterpriseId: state.viewerEnterpriseId,
+      });
+      if (!stls.length) { panel.innerHTML = ''; return; }
+      panel.innerHTML = '<p class="sec-title" style="margin-top:12px">点对点结算</p>' + stls.map((s) => {
+        const st = SETTLEMENT_STATUS[s.status]?.labelZh || s.status;
+        const acts = settlementActionsForViewer(state.viewerEnterpriseId, s)
+          .map((a) => `<button type="button" data-stl="${s.settlementId}" data-act="${a.id}">${a.label}</button>`).join('');
+        return `<div class="stl">${s.title} · ¥${s.amount} · ${st}${acts}</div>`;
+      }).join('');
+      panel.querySelectorAll('button[data-stl]').forEach((btn) => {
+        btn.onclick = async () => {
+          await state.chain.advanceSettlementStatus(btn.dataset.stl, btn.dataset.act);
+          await renderAll();
+        };
+      });
     }
 
     async function renderAll() {
-      renderDomainTabs();
-      renderTierTabs();
-      await renderCrumb();
-      await renderLoList();
-      await renderTenderBids();
-      await renderStageCheck();
+      await buildCrumb();
+      await renderChainOrders();
+      await renderLOs();
       await renderMap();
-      await renderEquipment();
-      await renderNetworkGraph();
-      await renderEvolutionHud();
-      await renderPipeline();
-      await renderEventStream();
+      renderActors();
+      await renderNextHint();
+      await renderActions();
+      await renderEvents();
+      await renderSettlements();
     }
 
-    function stopFission() {
-      state.fissionRunning = false;
-      if (state.heartbeatId) {
-        clearInterval(state.heartbeatId);
-        state.heartbeatId = null;
-      }
-      document.getElementById('btn-fission').classList.remove('on');
-      document.body.classList.remove('fission-mode');
-    }
-
-    async function startFission() {
-      if (state.fissionRunning) {
-        stopFission();
-        toast('裂变进化已暂停');
-        return;
-      }
-      state.fissionRunning = true;
-      document.getElementById('btn-fission').classList.add('on');
-      document.body.classList.add('fission-mode');
-      toast('⚡ 裂变进化启动 · 三条黄金线程');
-      await runFullFission(state.chain, {
-        delayMs: 800,
-        onThread: (t) => toast('线程：' + t.labelZh),
-        onStep: async (step) => {
-          state.activeLoId = step.loId;
-          toast(step.msg || step.code);
-          await renderAll();
-        },
+    document.getElementById('btn-new').onclick = async () => {
+      const r = await state.chain.createChainFromSales({
+        anchorEnterpriseId: state.viewerEnterpriseId,
+        title: '链订单 ' + new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }),
+        cargoSummary: '采购原料→生产→仓运配→签收',
       });
-      toast('线程完成 · 进入自进化心跳');
-      state.heartbeatId = setInterval(async () => {
-        if (!state.fissionRunning) return;
-        const beat = await evolveHeartbeat(state.chain);
-        if (!beat) return;
-        if (beat.loId && beat.contract?.generation) {
-          state.activeLoId = beat.loId;
-          toast('🧬 新裂变：' + beat.loId);
-        } else if (beat.lo) {
-          state.activeLoId = beat.lo.loId;
-        }
-        await renderAll();
-      }, 2500);
+      state.activeCoId = r.chainOrder.chainOrderId;
+      state.activeLoId = r.salesLoId;
+      await renderAll();
+    };
+
+    document.getElementById('btn-advance').onclick = async () => {
+      if (!state.activeCoId) return;
+      const r = await state.chain.advanceChain(state.activeCoId);
+      if (r.step) state.activeLoId = r.step.loId;
+      await renderAll();
+    };
+
+    function logEvolve(msg) {
+      const t = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      state.evolveLog.unshift(`[${t}] ${msg}`);
+      state.evolveLog = state.evolveLog.slice(0, 6);
+      document.getElementById('evolve-log').innerHTML = state.evolveLog
+        .map((l) => `<div>${l}</div>`).join('') || '系统进化：待机';
     }
 
-    async function playDemo() {
-      if (state.demoRunning) return;
-      state.demoRunning = true;
-      document.getElementById('btn-play').disabled = true;
-      state.activeLoId = 'LO-FARM-001';
-      await runFullDemo(state.chain, {
-        delayMs: 1200,
-        onStep: async (step, i, total) => {
-          state.activeLoId = step.loId;
-          toast(step.msg);
-          await renderAll();
-          const frac = i / (total - 1);
-          const idx = Math.min(ROUTE_COORDS.length - 1, Math.floor(frac * (ROUTE_COORDS.length - 1)));
-          const pt = ROUTE_COORDS[idx];
-          if (state.layers.cargo) state.layers.cargo.setLatLng([pt[1], pt[2]]);
-        },
-      });
-      state.demoRunning = false;
-      document.getElementById('btn-play').disabled = false;
-      document.getElementById('finish').classList.add('show');
+    async function tickEvolution() {
+      const r = await state.chain.runEvolutionTick({ viewerEnterpriseId: state.viewerEnterpriseId });
+      if (r?.step) {
+        state.activeCoId = r.chainOrderId;
+        if (r.step.loId) state.activeLoId = r.step.loId;
+        const phaseMap = { settlement: '结算', exception: '异常闭环', exception_inject: '异常注入', fulfillment: '履约' };
+        const phase = phaseMap[r.phase] || '履约';
+        logEvolve(`<b>${phase}</b> ${r.step.labelZh || r.step.code} · ${r.chainOrderId}`);
+      }
       await renderAll();
     }
 
-    async function enterWorld() {
-      document.getElementById('intro').classList.add('hide');
-      document.getElementById('app').hidden = false;
-      setTimeout(() => state.map?.invalidateSize(), 100);
-      await renderAll();
-    }
+    document.getElementById('btn-auto').onclick = () => {
+      state.autoFission = !state.autoFission;
+      const btn = document.getElementById('btn-auto');
+      btn.classList.toggle('on', state.autoFission);
+      btn.textContent = state.autoFission ? '进化ON' : '自动进化';
+      if (state.autoFission) {
+        logEvolve('自动进化启动 · 闸门/三单/异常闭环');
+        tickEvolution();
+        state.autoTimer = setInterval(tickEvolution, 6000);
+      } else {
+        clearInterval(state.autoTimer);
+        logEvolve('自动进化已暂停');
+      }
+    };
 
-    stars();
+    initEnt();
     const status = await state.chain.init();
-    renderHudChain(status);
-
-    document.getElementById('btn-enter').onclick = enterWorld;
-    document.getElementById('btn-fission').onclick = () => startFission();
-    document.getElementById('btn-play').onclick = () => playDemo();
-    document.getElementById('btn-tender').onclick = async () => {
-      const tid = state.activeLoId?.startsWith('LO-TDR') ? state.activeLoId : 'LO-TDR-001';
-      state.activeLoId = tid;
-      try {
-        await runTenderAwardDemo(state.chain, tid);
-        toast('中标启动 · 已裂变至履约单 ' + (await state.chain.getLO(tid))?.contract?.linkedLoId);
-        await renderAll();
-      } catch (e) {
-        toast('招标演示：' + e.message);
-      }
-    };
-    document.getElementById('btn-agg').onclick = async () => {
-      try {
-        const p = await state.chain.runAggregateDemo();
-        state.activeLoId = p.loId;
-        toast('订单聚合完成 · ' + p.loId);
-        await renderAll();
-      } catch (e) {
-        toast('聚合失败：' + e.message);
-      }
-    };
-    document.getElementById('btn-split').onclick = async () => {
-      try {
-        const kids = await state.chain.runSplitDemo();
-        if (kids.length) state.activeLoId = kids[0].loId;
-        toast('订单拆分完成 · ' + kids.length + ' 子单');
-        await renderAll();
-      } catch (e) {
-        toast('拆分失败：' + e.message);
-      }
-    };
-    document.getElementById('btn-reset').onclick = async () => {
-      if (!confirm('清空本机演示数据并重新开始？')) return;
-      await state.chain.resetDemo();
-      toast('已重置 · 重新裂变种子');
-      await renderAll();
-      setTimeout(() => playDemo(), 400);
-    };
-    document.getElementById('btn-finish-ok').onclick = () => {
-      document.getElementById('finish').classList.remove('show');
-      playDemo();
-    };
+    renderChainPills(status);
+    await renderAll();
+    setInterval(() => { if (!state.autoFission) renderAll(); }, 15000);
   </script>
 </body>
 </html>

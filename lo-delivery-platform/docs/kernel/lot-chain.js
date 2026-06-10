@@ -29,7 +29,28 @@ import { DEMO_DOMAIN_LOS_V5, DEMO_EVENT_HISTORIES_V5, DEMO_SPATIAL_V5 } from './
 import { DEMO_EQUIPMENT, bumpEquipmentOnEvent, aggregateOrders, splitOrder } from './lot-warehouse.js';
 import { CROSS_LINKS_V6 } from './lot-evolve.js';
 import { DEMO_DOMAIN_LOS_V7, DEMO_EVENT_HISTORIES_V7 } from './lot-demo-data-tender.js';
+import { DEMO_DOCUMENTS } from './lot-demo-data-docs.js';
 import { propagateAward } from './lot-tender.js';
+import { domainsForSubsystem } from './lot-org.js';
+import { docMatchesSubsystem } from './lot-documents.js';
+import {
+  DEMO_CHAIN_ORDER,
+  DEMO_CHAIN_ORDER_SETTLING,
+  DEMO_ECO_LOS,
+  DEMO_ECO_EVENTS,
+  DEMO_SETTLEMENTS,
+} from './lot-demo-data-eco.js';
+import { projectChainOrder as computeChainProjection, syncChainOrderOnEvent } from './lot-chain-order.js';
+import { defaultPeerSettlements } from './lot-settlement.js';
+import {
+  onBusinessEvent,
+  advanceChainOrderStep,
+  getNextBusinessStep,
+  describeStageBlock,
+  createChainFromSales,
+  advanceSettlement,
+  runBusinessEvolutionTick,
+} from './lot-business.js';
 
 export class LotChain {
   constructor(adapters) {
@@ -72,6 +93,8 @@ export class LotChain {
       await this._ensureWarehouseV5Seed();
       await this._ensureEvolveV6Seed();
       await this._ensureTenderV7Seed();
+      await this._ensureDocsV8Seed();
+      await this._ensureEcoV9Seed();
       return;
     }
 
@@ -102,7 +125,46 @@ export class LotChain {
     await this._ensureWarehouseV5Seed();
     await this._ensureEvolveV6Seed();
     await this._ensureTenderV7Seed();
+    await this._ensureDocsV8Seed();
+    await this._ensureEcoV9Seed();
     await this.local.setMeta('nucleus_seeded', new Date().toISOString());
+  }
+
+  async _ensureEcoV9Seed() {
+    const v9 = await this.local.getMeta('eco_v9_seeded');
+    if (v9) return;
+    for (const co of [DEMO_CHAIN_ORDER, DEMO_CHAIN_ORDER_SETTLING]) {
+      if (!(await this.local.getChainOrder(co.chainOrderId))) {
+        await this.local.putChainOrder(co);
+      }
+    }
+    for (const lo of DEMO_ECO_LOS) {
+      if (await this.local.getLO(lo.loId)) continue;
+      await this.local.putLO(lo);
+      const partials = DEMO_ECO_EVENTS.get(lo.loId) || [];
+      let chain = [];
+      for (const p of partials) {
+        chain = await appendEventToChain(chain, { loId: lo.loId, ...p });
+      }
+      for (const e of chain) await this.local.putEvent(e);
+    }
+    for (const stl of DEMO_SETTLEMENTS) {
+      if (!(await this.local.getChainOrder(stl.chainOrderId))) continue;
+      const exists = (await this.local.listSettlements()).some((s) => s.settlementId === stl.settlementId);
+      if (!exists) await this.local.putSettlement(stl);
+    }
+    await this.local.setMeta('eco_v9_seeded', new Date().toISOString());
+  }
+
+  async _ensureDocsV8Seed() {
+    const v8 = await this.local.getMeta('docs_v8_seeded');
+    if (v8) return;
+    for (const doc of DEMO_DOCUMENTS) {
+      const existing = await this.local.getDocument(doc.docId);
+      if (existing) continue;
+      await this.local.putDocument(doc);
+    }
+    await this.local.setMeta('docs_v8_seeded', new Date().toISOString());
   }
 
   async _ensureNetworkSeed() {
@@ -312,6 +374,12 @@ export class LotChain {
 
   async listLOs(filter = {}) {
     let los = await this.local.listLOs();
+    if (filter.subsystem && filter.subsystem !== 'all') {
+      const domains = domainsForSubsystem(filter.subsystem);
+      if (domains?.length) {
+        los = los.filter((lo) => domains.includes(lo.logisticsDomain || lo.channel));
+      }
+    }
     if (filter.domain) {
       los = los.filter((lo) => (lo.logisticsDomain || lo.channel) === filter.domain);
     }
@@ -322,6 +390,83 @@ export class LotChain {
       los = los.filter((lo) => lo.status === filter.status);
     }
     return los;
+  }
+
+  async listDocuments(filter = {}) {
+    let docs = await this.local.listDocuments();
+    if (filter.loId) docs = docs.filter((d) => d.loId === filter.loId);
+    if (filter.subsystem && filter.subsystem !== 'all') {
+      docs = docs.filter((d) => docMatchesSubsystem(d, filter.subsystem));
+    }
+    if (filter.docType) docs = docs.filter((d) => d.docType === filter.docType);
+    return docs;
+  }
+
+  async getDocument(docId) {
+    return this.local.getDocument(docId);
+  }
+
+  async putChainOrder(co) {
+    await this.local.putChainOrder(co);
+    return co;
+  }
+
+  async getChainOrder(chainOrderId) {
+    return this.local.getChainOrder(chainOrderId);
+  }
+
+  async listChainOrders(filter = {}) {
+    let rows = await this.local.listChainOrders();
+    if (filter.viewerEnterpriseId) {
+      const vid = filter.viewerEnterpriseId;
+      rows = rows.filter((co) => {
+        if (co.anchorEnterpriseId === vid) return true;
+        return (co.participants || []).some((p) => p.enterpriseId === vid);
+      });
+    }
+    if (filter.status) rows = rows.filter((co) => co.status === filter.status);
+    return rows.sort((a, b) => (b.lastEventAt || '').localeCompare(a.lastEventAt || ''));
+  }
+
+  async getChainOrderView(chainOrderId) {
+    const co = await this.getChainOrder(chainOrderId);
+    if (!co) return null;
+    return computeChainProjection(this, co);
+  }
+
+  async listSettlements(filter = {}) {
+    let rows = await this.local.listSettlements();
+    if (filter.chainOrderId) rows = rows.filter((s) => s.chainOrderId === filter.chainOrderId);
+    if (filter.viewerEnterpriseId) {
+      const vid = filter.viewerEnterpriseId;
+      rows = rows.filter((s) => s.payerEnterpriseId === vid || s.payeeEnterpriseId === vid);
+    }
+    return rows;
+  }
+
+  async spawnPeerSettlements(chainOrderId, triggerLoId) {
+    const co = await this.getChainOrder(chainOrderId);
+    if (!co) return [];
+    const projected = await computeChainProjection(this, co);
+    const existing = await this.listSettlements({ chainOrderId });
+    if (existing.length) return existing;
+    const stls = defaultPeerSettlements(chainOrderId, co.anchorEnterpriseId, projected.legs);
+    for (const s of stls) {
+      s.legLoId = s.legLoId || triggerLoId;
+      await this.local.putSettlement(s);
+    }
+    co.status = 'settling';
+    await this.putChainOrder(co);
+    return stls;
+  }
+
+  async getDocumentsForLo(loId) {
+    const direct = await this.local.listDocumentsByLo(loId);
+    const all = await this.local.listDocuments();
+    const linked = all.filter((d) => d.links?.some((l) => l.loId === loId));
+    const map = new Map();
+    for (const d of [...direct, ...linked]) map.set(d.docId, d);
+    return [...map.values()];
   }
 
   async getLO(loId) {
@@ -402,7 +547,35 @@ export class LotChain {
       const next = bumpEquipmentOnEvent(eq, code, lo.originCellId);
       await this.setEquipment(next);
     }
+    if (lo?.chainOrderId) {
+      await syncChainOrderOnEvent(this, loId, code);
+      await onBusinessEvent(this, loId, code);
+    }
     return saved;
+  }
+
+  async getNextStep(chainOrderId) {
+    return getNextBusinessStep(this, chainOrderId);
+  }
+
+  async getStageBlock(chainOrderId) {
+    return describeStageBlock(this, chainOrderId);
+  }
+
+  async advanceChain(chainOrderId) {
+    return advanceChainOrderStep(this, chainOrderId);
+  }
+
+  async createChainFromSales(partial) {
+    return createChainFromSales(this, partial);
+  }
+
+  async advanceSettlementStatus(settlementId, action) {
+    return advanceSettlement(this, settlementId, action);
+  }
+
+  async runEvolutionTick(opts) {
+    return runBusinessEvolutionTick(this, opts);
   }
 
   async _replicateLO(lo) {
@@ -443,7 +616,7 @@ export class LotChain {
     await this.local.init();
     const db = this.local._db;
     if (db) {
-      for (const name of ['los', 'events', 'spatial', 'meta']) {
+      for (const name of ['los', 'events', 'spatial', 'meta', 'documents', 'chain_orders', 'settlements']) {
         await new Promise((res, rej) => {
           const r = db.transaction(name, 'readwrite').objectStore(name).clear();
           r.onsuccess = () => res();

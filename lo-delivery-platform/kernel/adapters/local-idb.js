@@ -3,7 +3,7 @@
  */
 
 const DB_NAME = 'lot_nucleus_v1';
-const DB_VER = 1;
+const DB_VER = 3;
 
 function openDb() {
   return new Promise((resolve, reject) => {
@@ -19,6 +19,20 @@ function openDb() {
       }
       if (!db.objectStoreNames.contains('spatial')) db.createObjectStore('spatial', { keyPath: 'id' });
       if (!db.objectStoreNames.contains('meta')) db.createObjectStore('meta', { keyPath: 'key' });
+      if (!db.objectStoreNames.contains('documents')) {
+        const ds = db.createObjectStore('documents', { keyPath: 'docId' });
+        ds.createIndex('loId', 'loId', { unique: false });
+        ds.createIndex('docType', 'docType', { unique: false });
+      }
+      if (!db.objectStoreNames.contains('chain_orders')) {
+        const cs = db.createObjectStore('chain_orders', { keyPath: 'chainOrderId' });
+        cs.createIndex('anchorEnterpriseId', 'anchorEnterpriseId', { unique: false });
+        cs.createIndex('status', 'status', { unique: false });
+      }
+      if (!db.objectStoreNames.contains('settlements')) {
+        const ss = db.createObjectStore('settlements', { keyPath: 'settlementId' });
+        ss.createIndex('chainOrderId', 'chainOrderId', { unique: false });
+      }
     };
   });
 }
@@ -124,6 +138,79 @@ export const localIdbAdapter = {
     await new Promise((res, rej) => {
       const r = txStore(this._db, 'meta', 'readwrite').put({ key, value });
       r.onsuccess = () => res();
+      r.onerror = () => rej(r.error);
+    });
+  },
+
+  async putDocument(doc) {
+    await new Promise((res, rej) => {
+      const r = txStore(this._db, 'documents', 'readwrite').put(doc);
+      r.onsuccess = () => res();
+      r.onerror = () => rej(r.error);
+    });
+  },
+
+  async getDocument(docId) {
+    return new Promise((res, rej) => {
+      const r = txStore(this._db, 'documents', 'readonly').get(docId);
+      r.onsuccess = () => res(r.result || null);
+      r.onerror = () => rej(r.error);
+    });
+  },
+
+  async listDocuments() {
+    return new Promise((res, rej) => {
+      const r = txStore(this._db, 'documents', 'readonly').getAll();
+      r.onsuccess = () => res(r.result || []);
+      r.onerror = () => rej(r.error);
+    });
+  },
+
+  async listDocumentsByLo(loId) {
+    return new Promise((res, rej) => {
+      const idx = txStore(this._db, 'documents', 'readonly').index('loId');
+      const r = idx.getAll(loId);
+      r.onsuccess = () => res(r.result || []);
+      r.onerror = () => rej(r.error);
+    });
+  },
+
+  async putChainOrder(row) {
+    await new Promise((res, rej) => {
+      const r = txStore(this._db, 'chain_orders', 'readwrite').put(row);
+      r.onsuccess = () => res();
+      r.onerror = () => rej(r.error);
+    });
+  },
+
+  async getChainOrder(chainOrderId) {
+    return new Promise((res, rej) => {
+      const r = txStore(this._db, 'chain_orders', 'readonly').get(chainOrderId);
+      r.onsuccess = () => res(r.result || null);
+      r.onerror = () => rej(r.error);
+    });
+  },
+
+  async listChainOrders() {
+    return new Promise((res, rej) => {
+      const r = txStore(this._db, 'chain_orders', 'readonly').getAll();
+      r.onsuccess = () => res(r.result || []);
+      r.onerror = () => rej(r.error);
+    });
+  },
+
+  async putSettlement(row) {
+    await new Promise((res, rej) => {
+      const r = txStore(this._db, 'settlements', 'readwrite').put(row);
+      r.onsuccess = () => res();
+      r.onerror = () => rej(r.error);
+    });
+  },
+
+  async listSettlements() {
+    return new Promise((res, rej) => {
+      const r = txStore(this._db, 'settlements', 'readonly').getAll();
+      r.onsuccess = () => res(r.result || []);
       r.onerror = () => rej(r.error);
     });
   },

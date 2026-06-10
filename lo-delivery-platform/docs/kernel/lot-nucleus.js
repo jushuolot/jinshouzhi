@@ -75,6 +75,10 @@ export function createLO(partial) {
     primaryActor: partial.primaryActor || 'driver',
     contract: partial.contract || { slaHours: 24, service: 'standard' },
     links: partial.links || [],
+    chainOrderId: partial.chainOrderId || null,
+    legType: partial.legType || null,
+    ownerEnterpriseId: partial.ownerEnterpriseId || null,
+    counterpartyEnterpriseId: partial.counterpartyEnterpriseId || null,
     createdAt: partial.createdAt || now,
     updatedAt: partial.updatedAt || now,
   };

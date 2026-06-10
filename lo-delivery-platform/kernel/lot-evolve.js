@@ -132,36 +132,36 @@ export async function spawnFissionChild(chain, parentLoId, partial) {
   return child;
 }
 
-/** 对活跃 LO 推进一步（自动进化心跳） */
+/** 系统进化心跳：优先链订单真实业务推进，无链订单时回退设备模拟 */
 export async function evolveHeartbeat(chain) {
-  const los = (await chain.listLOs()).filter((l) => l.status === 'active');
+  const { runBusinessEvolutionTick } = await import('./lot-business.js');
+  const biz = await runBusinessEvolutionTick(chain);
+  if (biz?.step) {
+    const lo = biz.step.loId ? await chain.getLO(biz.step.loId) : null;
+    return { lo, code: biz.step.code, evt: biz.evt, phase: biz.phase, autoEvolve: true };
+  }
+
+  const orders = await chain.listChainOrders();
+  if (orders.some((o) => o.status !== 'settled')) return null;
+
+  const los = (await chain.listLOs()).filter((l) => l.status === 'active' && l.logisticsDomain);
   if (!los.length) return null;
-  const lo = los[Math.floor(Math.random() * los.length)];
-  const domain = lo.logisticsDomain;
-  if (!domain) return null;
-  const stageDefs = getDomain(domain)?.stages || [];
+  const lo = los[0];
+  const stageDefs = getDomain(lo.logisticsDomain)?.stages || [];
   const events = await chain.getEvents(lo.loId);
   const doneCodes = events.filter((e) => e.type === 'FACT').map((e) => e.code);
   const nextDef = stageDefs.find((s) => !doneCodes.includes(s.code));
-  if (!nextDef) {
-    if (Math.random() > 0.7) {
-      return spawnFissionChild(chain, lo.loId, {
-        domain,
-        cargo: `自进化子单 · ${lo.contract?.cargo || lo.loId}`,
-      });
-    }
-    return null;
-  }
+  if (!nextDef) return null;
   const evt = await chain.emitAction(lo.loId, {
     code: nextDef.code,
     actor: nextDef.actor || 'warehouse',
     spatialCellId: lo.originCellId,
-    payload: { autoEvolve: true },
+    payload: { autoEvolve: true, fallback: true },
   });
   await maybeEvolvePropagate(chain, lo.loId, nextDef.code);
   const eq = await chain.getEquipment();
   await chain.setEquipment(bumpEquipmentOnEvent(eq, nextDef.code, lo.originCellId));
-  return { lo, code: nextDef.code, evt };
+  return { lo, code: nextDef.code, evt, fallback: true };
 }
 
 export async function runFissionThread(chain, thread, { onStep, delayMs = 1000 } = {}) {

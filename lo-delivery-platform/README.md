@@ -9,7 +9,14 @@
 | `docs/` | 产品概述、架构要点、API 纲要、游戏化视角、发布说明 |
 | `web/index.html` | **运营类模拟**界面：顶栏资金/声望、日时钟与倍速、订单队列（需求压力/满意度）、部门页签、数据中心看板、区域示意、收件箱、底部滚动日报、Toast |
 | `docs/index.html` | 与 `web/index.html` 同步，供 GitHub Pages（`/docs`） |
+| `docs/world/` | **生态链世界核**（v11）：采购→生产→仓运配→签收，自动进化 / 三单匹配 / 异常闭环 |
+| `kernel/` | LOT 内核（链订单、业务裂变、点对点结算、IndexedDB） |
 | `LICENSE` | MIT |
+
+## 在线演示（v11.0）
+
+- **世界核管理台**：https://jushuolot.github.io/lotplatform/world/
+- **运营模拟壳（旧版）**：https://jushuolot.github.io/lotplatform/
 
 ## 从单仓克隆
 
