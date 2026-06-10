@@ -71,23 +71,31 @@
   var threeReady = null;
   var codexReady = null;
   var deferredStarted = false;
+  var ASSET_VERSION = "gen59-20260610";
+
+  function versioned(src) {
+    if (/^https?:\/\//.test(src)) return src;
+    return src + (src.indexOf("?") >= 0 ? "&" : "?") + "v=" + ASSET_VERSION;
+  }
 
   function loadStylesheet(href) {
-    if (document.querySelector('link[href="' + href + '"]')) return;
+    var url = versioned(href);
+    if (document.querySelector('link[href="' + href + '"],link[href="' + url + '"]')) return;
     var l = document.createElement("link");
     l.rel = "stylesheet";
-    l.href = href;
+    l.href = url;
     document.head.appendChild(l);
   }
 
   function loadScript(src) {
     return new Promise(function (resolve, reject) {
-      if (document.querySelector('script[src="' + src + '"]')) {
+      var url = versioned(src);
+      if (document.querySelector('script[src="' + src + '"],script[src="' + url + '"]')) {
         resolve();
         return;
       }
       var s = document.createElement("script");
-      s.src = src;
+      s.src = url;
       s.async = false;
       s.onload = function () {
         resolve();
