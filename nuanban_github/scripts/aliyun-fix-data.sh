@@ -11,8 +11,7 @@ if [[ -f config/demo.env ]]; then
 fi
 
 GIT_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || echo "$ROOT")"
-echo "==> 拉取最新代码"
-git -C "$GIT_ROOT" pull --ff-only || git -C "$GIT_ROOT" pull
+"$ROOT/scripts/git-pull-cn.sh" "$GIT_ROOT"
 
 chmod +x scripts/*.sh
 
