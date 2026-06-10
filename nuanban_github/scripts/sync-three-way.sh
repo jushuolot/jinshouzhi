@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# 本地 → GitHub → 阿里云 一键同步（改代码后执行）
+# 本地 → GitHub → 阿里云（由 sync-all.sh 调用；也可单独运行）
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"

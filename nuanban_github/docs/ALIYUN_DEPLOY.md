@@ -253,21 +253,23 @@ cd /opt/jinshouzhi/nuanban_github
 
 成功后用手机号 `13800000001`（验证码留空）登录：`http://101.200.128.82/#/pages/common/login`
 
-### 三地一致性检测（本地 / GitHub / 阿里云）
+### 日常同步：一条命令（不用分三处手动跑）
 
-| 环境 | 作用 | 命令 |
-|------|------|------|
-| 本地 Mac | 对比 Git + 测 API | `cd nuanban_github && ./scripts/sync-check.sh` |
-| GitHub | 代码源 | `git fetch && git log origin/main -1` |
-| 阿里云 | 拉代码 + 部署 + 自检 | `git pull && ./scripts/aliyun-fix-data.sh` |
+GitHub 是中间枢纽：**本地 push → 阿里云 pull 部署**。你只需在**当前所在机器**执行一次：
 
-本地改完推送到阿里云（已配 SSH 时）：
+| 你在哪里 | 一条命令 |
+|----------|----------|
+| **阿里云 Workbench**（推荐，最省事） | `cd /opt/jinshouzhi/nuanban_github && ./scripts/sync-all.sh` |
+| **本地 Mac**（改完代码并已 `git commit`） | `cd nuanban_github && ./scripts/sync-all.sh` |
+
+- **Workbench 上**：自动 `git pull` → 重启 PocketBase → 种子数据 → 重建 H5 → API 自检  
+- **Mac 上**：自动 `git push` 到 GitHub；若 `config/demo.env` 配了 `NUANBAN_SSH`，会 SSH 连服务器部署；**没配 SSH** 时脚本会打印 Workbench 里要粘贴的那一条命令  
+
+仅检查三地是否一致（不部署）：
 
 ```bash
-./scripts/sync-three-way.sh
+./scripts/sync-check.sh
 ```
-
-检测通过时应看到 `profile / pending / elders/nearby / withdrawal` 四项 **OK**。
 
 ---
 
