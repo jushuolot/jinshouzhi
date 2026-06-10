@@ -1,4 +1,7 @@
 /// V1 custom routes: wx-login stub, order accept/reject, family pay, outdoor approve
+/// 整文件 IIFE：PocketBase 会单独编译每个 routerAdd 回调，顶层 helper 在箭头函数内不可见。
+
+(function () {
 
 function elderNameById(id) {
   try {
@@ -293,17 +296,17 @@ function assertActiveRoleHeader(e, expectedRole) {
   return { ok: true };
 }
 
-routerAdd("GET", "/api/nuanban/ping", (e) => {
+routerAdd("GET", "/api/nuanban/ping", function (e) {
   return e.json(200, { ok: true, hooks: true, hasToString: typeof toString });
 });
 
-routerAdd("POST", "/api/nuanban/body", (e) => {
+routerAdd("POST", "/api/nuanban/body", function (e) {
   const raw = toString(e.request.body);
   const obj = JSON.parse(raw);
   return e.json(200, { obj: obj });
 });
 
-routerAdd("GET", "/api/nuanban/debug/roles", (e) => {
+routerAdd("GET", "/api/nuanban/debug/roles", function (e) {
   const users = $app.findRecordsByFilter(
     "users",
     "email = {:e}",
@@ -325,7 +328,7 @@ routerAdd("GET", "/api/nuanban/debug/roles", (e) => {
   return e.json(200, { ok: true, uid: uid, rolesLen: roles.length });
 });
 
-routerAdd("POST", "/api/nuanban/wx-login", (e) => {
+routerAdd("POST", "/api/nuanban/wx-login", function (e) {
   const col = $app.findCollectionByNameOrId("users");
   const u = new Record(col);
   const email = "wx_" + String(Date.now()) + "@nuanban.dev";
@@ -338,7 +341,7 @@ routerAdd("POST", "/api/nuanban/wx-login", (e) => {
 });
 
 /** 本地 H5 开发登录：不校验密码，仅按邮箱发 token（须先 seed-demo） */
-routerAdd("POST", "/api/nuanban/dev-login", (e) => {
+routerAdd("POST", "/api/nuanban/dev-login", function (e) {
   const raw = toString(e.request.body);
   const body = raw ? JSON.parse(raw) : {};
   const email = ((body.email || "student1@test.nuanban.dev") + "").trim();
@@ -402,7 +405,7 @@ routerAdd("POST", "/api/nuanban/dev-login", (e) => {
 });
 
 /** 手机号登录（演示）：验证码可选，按演示号映射 seed 邮箱 */
-routerAdd("POST", "/api/nuanban/phone-login", (e) => {
+routerAdd("POST", "/api/nuanban/phone-login", function (e) {
   const raw = toString(e.request.body);
   const body = raw ? JSON.parse(raw) : {};
   const phone = String(body.phone || "").replace(/\D/g, "");
@@ -483,7 +486,7 @@ routerAdd("POST", "/api/nuanban/phone-login", (e) => {
   });
 });
 
-routerAdd("GET", "/api/nuanban/auth/me", (e) => {
+routerAdd("GET", "/api/nuanban/auth/me", function (e) {
   const auth = e.auth;
   if (!auth) return e.json(401, { message: "需要登录" });
   const roleRecords = $app.findRecordsByFilter(
@@ -514,7 +517,7 @@ routerAdd("GET", "/api/nuanban/auth/me", (e) => {
   });
 });
 
-routerAdd("POST", "/api/nuanban/auth/register", (e) => {
+routerAdd("POST", "/api/nuanban/auth/register", function (e) {
   const auth = e.auth;
   if (!auth) return e.json(401, { message: "需要登录" });
   const raw = toString(e.request.body);
@@ -585,7 +588,7 @@ routerAdd("POST", "/api/nuanban/auth/register", (e) => {
   return e.json(200, { ok: true, roles: roles2 });
 });
 
-routerAdd("GET", "/api/nuanban/elder/caregivers/nearby", (e) => {
+routerAdd("GET", "/api/nuanban/elder/caregivers/nearby", function (e) {
   if (!e.auth) return e.json(401, { message: "需要登录" });
   const q = e.request.url.query();
   const lat = parseFloat(q.get("lat") || "0");
@@ -643,7 +646,7 @@ routerAdd("GET", "/api/nuanban/elder/caregivers/nearby", (e) => {
   return e.json(200, { list });
 });
 
-routerAdd("GET", "/api/nuanban/elder/caregivers/{id}", (e) => {
+routerAdd("GET", "/api/nuanban/elder/caregivers/{id}", function (e) {
   if (!e.auth) return e.json(401, { message: "需要登录" });
   const id = e.request.pathValue("id");
   let roleRec = null;
@@ -700,7 +703,7 @@ routerAdd("GET", "/api/nuanban/elder/caregivers/{id}", (e) => {
   });
 });
 
-routerAdd("POST", "/api/nuanban/elder/orders", (e) => {
+routerAdd("POST", "/api/nuanban/elder/orders", function (e) {
   const auth = e.auth;
   if (!auth) return e.json(401, { message: "需要登录" });
   const raw = toString(e.request.body);
@@ -753,7 +756,7 @@ routerAdd("POST", "/api/nuanban/elder/orders", (e) => {
   return e.json(200, { id: order.id, status: order.getString("status") });
 });
 
-routerAdd("POST", "/api/nuanban/student/order-requests/{id}/accept", (e) => {
+routerAdd("POST", "/api/nuanban/student/order-requests/{id}/accept", function (e) {
   const auth = e.auth;
   if (!auth) return e.json(401, { message: "需要登录" });
   const orderId = e.request.pathValue("id");
@@ -810,7 +813,7 @@ routerAdd("POST", "/api/nuanban/student/order-requests/{id}/accept", (e) => {
   return e.json(200, { ok: true, status: order.getString("status") });
 });
 
-routerAdd("POST", "/api/nuanban/student/order-requests/{id}/reject", (e) => {
+routerAdd("POST", "/api/nuanban/student/order-requests/{id}/reject", function (e) {
   if (!e.auth) return e.json(401, { message: "需要登录" });
   const orderId = e.request.pathValue("id");
   const raw = toString(e.request.body);
@@ -828,7 +831,7 @@ routerAdd("POST", "/api/nuanban/student/order-requests/{id}/reject", (e) => {
   return e.json(200, { ok: true });
 });
 
-routerAdd("POST", "/api/nuanban/family/orders/{id}/pay", (e) => {
+routerAdd("POST", "/api/nuanban/family/orders/{id}/pay", function (e) {
   const rc = assertActiveRoleHeader(e, "family");
   if (!rc.ok) return e.json(rc.code, rc.body);
   if (!e.auth) return e.json(401, { message: "需要登录" });
@@ -866,7 +869,7 @@ routerAdd("POST", "/api/nuanban/family/orders/{id}/pay", (e) => {
   return e.json(200, { ok: true, status: order.getString("status") });
 });
 
-routerAdd("POST", "/api/nuanban/family/outdoor/{id}/approve", (e) => {
+routerAdd("POST", "/api/nuanban/family/outdoor/{id}/approve", function (e) {
   const auth = e.auth;
   if (!auth) return e.json(401, { message: "需要登录" });
   const orderId = e.request.pathValue("id");
@@ -929,7 +932,7 @@ routerAdd("POST", "/api/nuanban/family/outdoor/{id}/approve", (e) => {
   return e.json(200, { ok: true, approved });
 });
 
-routerAdd("GET", "/api/nuanban/student/orders/pending", (e) => {
+routerAdd("GET", "/api/nuanban/student/orders/pending", function (e) {
   const rc = assertActiveRoleHeader(e, "student");
   if (!rc.ok) return e.json(rc.code, rc.body);
   try {
@@ -954,7 +957,7 @@ routerAdd("GET", "/api/nuanban/student/orders/pending", (e) => {
   }
 });
 
-routerAdd("GET", "/api/nuanban/student/elders/nearby", (e) => {
+routerAdd("GET", "/api/nuanban/student/elders/nearby", function (e) {
   const rc = assertActiveRoleHeader(e, "student");
   if (!rc.ok) return e.json(rc.code, rc.body);
   if (!e.auth) return e.json(401, { message: "需要登录" });
@@ -1002,7 +1005,7 @@ routerAdd("GET", "/api/nuanban/student/elders/nearby", (e) => {
   }
 });
 
-routerAdd("GET", "/api/nuanban/student/profile", (e) => {
+routerAdd("GET", "/api/nuanban/student/profile", function (e) {
   try {
     const rc = assertActiveRoleHeader(e, "student");
     if (!rc.ok) return e.json(rc.code, rc.body);
@@ -1055,7 +1058,7 @@ routerAdd("GET", "/api/nuanban/student/profile", (e) => {
   }
 });
 
-routerAdd("PATCH", "/api/nuanban/student/profile", (e) => {
+routerAdd("PATCH", "/api/nuanban/student/profile", function (e) {
   const auth = e.auth;
   if (!auth) return e.json(401, { message: "需要登录" });
   const raw = toString(e.request.body);
@@ -1117,7 +1120,7 @@ routerAdd("PATCH", "/api/nuanban/student/profile", (e) => {
   });
 });
 
-routerAdd("GET", "/api/nuanban/student/elders/{id}/profile", (e) => {
+routerAdd("GET", "/api/nuanban/student/elders/{id}/profile", function (e) {
   const rc = assertActiveRoleHeader(e, "student");
   if (!rc.ok) return e.json(rc.code, rc.body);
   const elderId = e.request.pathValue("id");
@@ -1160,7 +1163,7 @@ routerAdd("GET", "/api/nuanban/student/elders/{id}/profile", (e) => {
   });
 });
 
-routerAdd("GET", "/api/nuanban/elder/profile", (e) => {
+routerAdd("GET", "/api/nuanban/elder/profile", function (e) {
   const rc = assertActiveRoleHeader(e, "elder");
   if (!rc.ok) return e.json(rc.code, rc.body);
   const auth = e.auth;
@@ -1221,7 +1224,7 @@ routerAdd("GET", "/api/nuanban/elder/profile", (e) => {
   });
 });
 
-routerAdd("GET", "/api/nuanban/family/profile", (e) => {
+routerAdd("GET", "/api/nuanban/family/profile", function (e) {
   const rc = assertActiveRoleHeader(e, "family");
   if (!rc.ok) return e.json(rc.code, rc.body);
   const auth = e.auth;
@@ -1259,7 +1262,7 @@ routerAdd("GET", "/api/nuanban/family/profile", (e) => {
   });
 });
 
-routerAdd("GET", "/api/nuanban/org/orders/dispatchable", (e) => {
+routerAdd("GET", "/api/nuanban/org/orders/dispatchable", function (e) {
   if (!e.auth) return e.json(401, { message: "需要登录" });
   const records = $app.findRecordsByFilter(
     "orders",
@@ -1275,7 +1278,7 @@ routerAdd("GET", "/api/nuanban/org/orders/dispatchable", (e) => {
   return e.json(200, { list: list });
 });
 
-routerAdd("POST", "/api/nuanban/org/orders/{id}/dispatch", (e) => {
+routerAdd("POST", "/api/nuanban/org/orders/{id}/dispatch", function (e) {
   if (!e.auth) return e.json(401, { message: "需要登录" });
   const orderId = e.request.pathValue("id");
   const raw = toString(e.request.body);
@@ -1328,7 +1331,7 @@ routerAdd("POST", "/api/nuanban/org/orders/{id}/dispatch", (e) => {
   return e.json(200, { ok: true, status: order.getString("status") });
 });
 
-routerAdd("GET", "/api/nuanban/student/stats", (e) => {
+routerAdd("GET", "/api/nuanban/student/stats", function (e) {
   const auth = e.auth;
   if (!auth) return e.json(401, { message: "需要登录" });
   const now = new Date();
@@ -1385,14 +1388,14 @@ routerAdd("GET", "/api/nuanban/student/stats", (e) => {
   });
 });
 
-routerAdd("GET", "/api/nuanban/family/wallet", (e) => {
+routerAdd("GET", "/api/nuanban/family/wallet", function (e) {
   const rc = assertActiveRoleHeader(e, "family");
   if (!rc.ok) return e.json(rc.code, rc.body);
   if (!e.auth) return e.json(401, { message: "需要登录" });
   return e.json(200, walletOverviewDto(walletEnsureUser(e.auth.id)));
 });
 
-routerAdd("POST", "/api/nuanban/family/wallet/topup", (e) => {
+routerAdd("POST", "/api/nuanban/family/wallet/topup", function (e) {
   const rc = assertActiveRoleHeader(e, "family");
   if (!rc.ok) return e.json(rc.code, rc.body);
   if (!e.auth) return e.json(401, { message: "需要登录" });
@@ -1403,7 +1406,7 @@ routerAdd("POST", "/api/nuanban/family/wallet/topup", (e) => {
   return e.json(200, result.overview);
 });
 
-routerAdd("POST", "/api/nuanban/family/wallet/pay-order", (e) => {
+routerAdd("POST", "/api/nuanban/family/wallet/pay-order", function (e) {
   const rc = assertActiveRoleHeader(e, "family");
   if (!rc.ok) return e.json(rc.code, rc.body);
   if (!e.auth) return e.json(401, { message: "需要登录" });
@@ -1424,14 +1427,14 @@ routerAdd("POST", "/api/nuanban/family/wallet/pay-order", (e) => {
   return e.json(200, { ok: true, status: result.status, overview: result.overview });
 });
 
-routerAdd("GET", "/api/nuanban/elder/wallet", (e) => {
+routerAdd("GET", "/api/nuanban/elder/wallet", function (e) {
   const rc = assertActiveRoleHeader(e, "elder");
   if (!rc.ok) return e.json(rc.code, rc.body);
   if (!e.auth) return e.json(401, { message: "需要登录" });
   return e.json(200, walletOverviewDto(walletEnsureUser(e.auth.id)));
 });
 
-routerAdd("POST", "/api/nuanban/elder/wallet/topup", (e) => {
+routerAdd("POST", "/api/nuanban/elder/wallet/topup", function (e) {
   const rc = assertActiveRoleHeader(e, "elder");
   if (!rc.ok) return e.json(rc.code, rc.body);
   if (!e.auth) return e.json(401, { message: "需要登录" });
@@ -1442,7 +1445,7 @@ routerAdd("POST", "/api/nuanban/elder/wallet/topup", (e) => {
   return e.json(200, result.overview);
 });
 
-routerAdd("POST", "/api/nuanban/elder/wallet/pay-order", (e) => {
+routerAdd("POST", "/api/nuanban/elder/wallet/pay-order", function (e) {
   const rc = assertActiveRoleHeader(e, "elder");
   if (!rc.ok) return e.json(rc.code, rc.body);
   if (!e.auth) return e.json(401, { message: "需要登录" });
@@ -1465,7 +1468,7 @@ routerAdd("POST", "/api/nuanban/elder/wallet/pay-order", (e) => {
   return e.json(200, { ok: true, status: result.status, overview: result.overview });
 });
 
-routerAdd("GET", "/api/nuanban/family/stats", (e) => {
+routerAdd("GET", "/api/nuanban/family/stats", function (e) {
   const rc = assertActiveRoleHeader(e, "family");
   if (!rc.ok) return e.json(rc.code, rc.body);
   const auth = e.auth;
@@ -1555,7 +1558,7 @@ routerAdd("GET", "/api/nuanban/family/stats", (e) => {
   });
 });
 
-routerAdd("GET", "/api/nuanban/elder/stats", (e) => {
+routerAdd("GET", "/api/nuanban/elder/stats", function (e) {
   const rc = assertActiveRoleHeader(e, "elder");
   if (!rc.ok) return e.json(rc.code, rc.body);
   const auth = e.auth;
@@ -1609,7 +1612,7 @@ routerAdd("GET", "/api/nuanban/elder/stats", (e) => {
   });
 });
 
-routerAdd("GET", "/api/nuanban/student/orders/active", (e) => {
+routerAdd("GET", "/api/nuanban/student/orders/active", function (e) {
   const auth = e.auth;
   if (!auth) return e.json(401, { message: "需要登录" });
   try {
@@ -1633,7 +1636,7 @@ routerAdd("GET", "/api/nuanban/student/orders/active", (e) => {
   }
 });
 
-routerAdd("GET", "/api/nuanban/student/orders/{id}", (e) => {
+routerAdd("GET", "/api/nuanban/student/orders/{id}", function (e) {
   const auth = e.auth;
   if (!auth) return e.json(401, { message: "需要登录" });
   const orderId = e.request.pathValue("id");
@@ -1646,7 +1649,7 @@ routerAdd("GET", "/api/nuanban/student/orders/{id}", (e) => {
   return e.json(200, orderToStudentDto(order));
 });
 
-routerAdd("POST", "/api/nuanban/student/orders/{id}/start", (e) => {
+routerAdd("POST", "/api/nuanban/student/orders/{id}/start", function (e) {
   const auth = e.auth;
   if (!auth) return e.json(401, { message: "需要登录" });
   const orderId = e.request.pathValue("id");
@@ -1676,7 +1679,7 @@ routerAdd("POST", "/api/nuanban/student/orders/{id}/start", (e) => {
   return e.json(200, { ok: true, status: "in_service" });
 });
 
-routerAdd("POST", "/api/nuanban/student/orders/{id}/complete", (e) => {
+routerAdd("POST", "/api/nuanban/student/orders/{id}/complete", function (e) {
   const auth = e.auth;
   if (!auth) return e.json(401, { message: "需要登录" });
   const orderId = e.request.pathValue("id");
@@ -1695,7 +1698,7 @@ routerAdd("POST", "/api/nuanban/student/orders/{id}/complete", (e) => {
   return e.json(200, { ok: true, status: "pending_confirm" });
 });
 
-routerAdd("POST", "/api/nuanban/family/orders/{id}/confirm-complete", (e) => {
+routerAdd("POST", "/api/nuanban/family/orders/{id}/confirm-complete", function (e) {
   const rc = assertActiveRoleHeader(e, "family");
   if (!rc.ok) return e.json(rc.code, rc.body);
   if (!e.auth) return e.json(401, { message: "需要登录" });
@@ -1729,7 +1732,7 @@ routerAdd("POST", "/api/nuanban/family/orders/{id}/confirm-complete", (e) => {
   });
 });
 
-routerAdd("POST", "/api/nuanban/elder/orders/{id}/confirm-complete", (e) => {
+routerAdd("POST", "/api/nuanban/elder/orders/{id}/confirm-complete", function (e) {
   const rc = assertActiveRoleHeader(e, "elder");
   if (!rc.ok) return e.json(rc.code, rc.body);
   if (!e.auth) return e.json(401, { message: "需要登录" });
@@ -1765,7 +1768,7 @@ routerAdd("POST", "/api/nuanban/elder/orders/{id}/confirm-complete", (e) => {
   });
 });
 
-routerAdd("GET", "/api/nuanban/student/income", (e) => {
+routerAdd("GET", "/api/nuanban/student/income", function (e) {
   const auth = e.auth;
   if (!auth) return e.json(401, { message: "需要登录" });
   const now = new Date();
@@ -1807,7 +1810,7 @@ routerAdd("GET", "/api/nuanban/student/income", (e) => {
   });
 });
 
-routerAdd("GET", "/api/nuanban/student/schedules", (e) => {
+routerAdd("GET", "/api/nuanban/student/schedules", function (e) {
   const auth = e.auth;
   if (!auth) return e.json(401, { message: "需要登录" });
   const records = $app.findRecordsByFilter(
@@ -1841,7 +1844,7 @@ routerAdd("GET", "/api/nuanban/student/schedules", (e) => {
   return e.json(200, { list: list });
 });
 
-routerAdd("POST", "/api/nuanban/elder/sos", (e) => {
+routerAdd("POST", "/api/nuanban/elder/sos", function (e) {
   const auth = e.auth;
   if (!auth) return e.json(401, { message: "需要登录" });
   const raw = toString(e.request.body);
@@ -1862,7 +1865,7 @@ routerAdd("POST", "/api/nuanban/elder/sos", (e) => {
   return e.json(200, { id: rec.id, ok: true });
 });
 
-routerAdd("GET", "/api/nuanban/family/sos/active", (e) => {
+routerAdd("GET", "/api/nuanban/family/sos/active", function (e) {
   if (!e.auth) return e.json(401, { message: "需要登录" });
   let records = [];
   try {
@@ -1883,7 +1886,7 @@ routerAdd("GET", "/api/nuanban/family/sos/active", (e) => {
   return e.json(200, { list: list });
 });
 
-routerAdd("POST", "/api/nuanban/family/sos/{id}/ack", (e) => {
+routerAdd("POST", "/api/nuanban/family/sos/{id}/ack", function (e) {
   if (!e.auth) return e.json(401, { message: "需要登录" });
   const id = e.request.pathValue("id");
   let rec;
@@ -1897,7 +1900,7 @@ routerAdd("POST", "/api/nuanban/family/sos/{id}/ack", (e) => {
   return e.json(200, { ok: true });
 });
 
-routerAdd("GET", "/api/nuanban/student/sos/active", (e) => {
+routerAdd("GET", "/api/nuanban/student/sos/active", function (e) {
   if (!e.auth) return e.json(401, { message: "需要登录" });
   let records = [];
   try {
@@ -1918,7 +1921,7 @@ routerAdd("GET", "/api/nuanban/student/sos/active", (e) => {
   return e.json(200, { list: list });
 });
 
-routerAdd("POST", "/api/nuanban/student/sos/{id}/ack", (e) => {
+routerAdd("POST", "/api/nuanban/student/sos/{id}/ack", function (e) {
   if (!e.auth) return e.json(401, { message: "需要登录" });
   const id = e.request.pathValue("id");
   let rec;
@@ -1932,7 +1935,7 @@ routerAdd("POST", "/api/nuanban/student/sos/{id}/ack", (e) => {
   return e.json(200, { ok: true });
 });
 
-routerAdd("POST", "/api/nuanban/student/orders/{id}/checkin", (e) => {
+routerAdd("POST", "/api/nuanban/student/orders/{id}/checkin", function (e) {
   const auth = e.auth;
   if (!auth) return e.json(401, { message: "需要登录" });
   const orderId = e.request.pathValue("id");
@@ -1976,7 +1979,7 @@ routerAdd("POST", "/api/nuanban/student/orders/{id}/checkin", (e) => {
   return e.json(200, { ok: true, status: "in_service" });
 });
 
-routerAdd("GET", "/api/nuanban/student/service-logs", (e) => {
+routerAdd("GET", "/api/nuanban/student/service-logs", function (e) {
   const auth = e.auth;
   if (!auth) return e.json(401, { message: "需要登录" });
   const records = $app.findRecordsByFilter(
@@ -2011,7 +2014,7 @@ routerAdd("GET", "/api/nuanban/student/service-logs", (e) => {
   return e.json(200, { list: list });
 });
 
-routerAdd("GET", "/api/nuanban/family/orders/{id}", (e) => {
+routerAdd("GET", "/api/nuanban/family/orders/{id}", function (e) {
   const rc = assertActiveRoleHeader(e, "family");
   if (!rc.ok) return e.json(rc.code, rc.body);
   const auth = e.auth;
@@ -2026,7 +2029,7 @@ routerAdd("GET", "/api/nuanban/family/orders/{id}", (e) => {
   return e.json(200, orderToFamilyDto(order));
 });
 
-routerAdd("GET", "/api/nuanban/student/referral", (e) => {
+routerAdd("GET", "/api/nuanban/student/referral", function (e) {
   const rc = assertActiveRoleHeader(e, "student");
   if (!rc.ok) return e.json(rc.code, rc.body);
   if (!e.auth) return e.json(401, { message: "需要登录" });
@@ -2061,7 +2064,7 @@ routerAdd("GET", "/api/nuanban/student/referral", (e) => {
   });
 });
 
-routerAdd("GET", "/api/nuanban/student/settlements", (e) => {
+routerAdd("GET", "/api/nuanban/student/settlements", function (e) {
   const rc = assertActiveRoleHeader(e, "student");
   if (!rc.ok) return e.json(rc.code, rc.body);
   if (!e.auth) return e.json(401, { message: "需要登录" });
@@ -2121,7 +2124,7 @@ function studentWithdrawalOverview(uid) {
   };
 }
 
-routerAdd("GET", "/api/nuanban/student/withdrawal", (e) => {
+routerAdd("GET", "/api/nuanban/student/withdrawal", function (e) {
   try {
     const rc = assertActiveRoleHeader(e, "student");
     if (!rc.ok) return e.json(rc.code, rc.body);
@@ -2132,7 +2135,7 @@ routerAdd("GET", "/api/nuanban/student/withdrawal", (e) => {
   }
 });
 
-routerAdd("POST", "/api/nuanban/student/withdrawal", (e) => {
+routerAdd("POST", "/api/nuanban/student/withdrawal", function (e) {
   const rc = assertActiveRoleHeader(e, "student");
   if (!rc.ok) return e.json(rc.code, rc.body);
   const auth = e.auth;
@@ -2164,7 +2167,7 @@ routerAdd("POST", "/api/nuanban/student/withdrawal", (e) => {
   return e.json(200, studentWithdrawalOverview(auth.id));
 });
 
-routerAdd("POST", "/api/nuanban/family/packages/purchase", (e) => {
+routerAdd("POST", "/api/nuanban/family/packages/purchase", function (e) {
   const rc = assertActiveRoleHeader(e, "family");
   if (!rc.ok) return e.json(rc.code, rc.body);
   const auth = e.auth;
@@ -2200,7 +2203,7 @@ routerAdd("POST", "/api/nuanban/family/packages/purchase", (e) => {
 });
 
 /** 上帝视角超级管理员密码验证 */
-routerAdd("POST", "/api/nuanban/platform/god-view-auth", (e) => {
+routerAdd("POST", "/api/nuanban/platform/god-view-auth", function (e) {
   let body = {};
   try {
     body = JSON.parse($os.readAll(e.request.body));
@@ -2214,7 +2217,7 @@ routerAdd("POST", "/api/nuanban/platform/god-view-auth", (e) => {
 });
 
 /** 平台上帝视角：撮合漏斗与核心指标（演示） */
-routerAdd("GET", "/api/nuanban/platform/overview", (e) => {
+routerAdd("GET", "/api/nuanban/platform/overview", function (e) {
   let pending = 0;
   let inSvc = 0;
   let done = 0;
@@ -2268,3 +2271,5 @@ routerAdd("GET", "/api/nuanban/platform/overview", (e) => {
     demoUrl: "https://jushuolot.github.io/jinshouzhi/nuanban/#/pages/common/login",
   });
 });
+
+})();

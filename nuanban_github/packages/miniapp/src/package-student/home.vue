@@ -165,9 +165,8 @@ async function reload() {
       distanceKm: e.distanceKm,
       tags: (e as { tags?: string[] }).tags,
     }));
-  } catch (e) {
+  } catch {
     previewElders.value = [];
-    errorMsg.value = pbErrorMessage(e);
   }
 }
 

@@ -24,6 +24,9 @@ sleep 3
 NUANBAN_API=http://127.0.0.1:8090 ./scripts/pb-init-server.sh
 
 STAGING_IP="${NUANBAN_STAGING_IP:-}"
+if [[ -z "$STAGING_IP" ]]; then
+  STAGING_IP="$(curl -fsS --max-time 5 ifconfig.me 2>/dev/null || curl -fsS --max-time 5 icanhazip.com 2>/dev/null || true)"
+fi
 if [[ -n "$STAGING_IP" ]]; then
   echo "==> 重建 H5（API: http://${STAGING_IP}/api）"
   cd packages/miniapp
