@@ -34,6 +34,16 @@
     <view class="bind-link" @tap="goBind">+ 绑定更多老人</view>
 
     <view class="section-title">待办事项</view>
+    <view class="todo-card highlight" @tap="goWallet">
+      <view class="todo-left">
+        <text class="todo-icon">💰</text>
+        <view>
+          <text class="todo-title">储值卡</text>
+          <text class="todo-desc">余额 ¥{{ walletBalanceYuan }}</text>
+        </view>
+      </view>
+      <text class="chevron">›</text>
+    </view>
     <view class="todo-card" @tap="goPay">
       <view class="todo-left">
         <text class="todo-icon">💳</text>
@@ -103,6 +113,7 @@ import {
   listPendingPaymentOrders,
   type FamilyStats,
 } from '../api/family';
+import { fetchFamilyWallet } from '../api/wallet';
 import { useRoleStore } from '../store/role';
 import { guardPackageRoute } from '../utils/nav-guard';
 import { pbErrorMessage } from '../utils/request';
@@ -115,6 +126,7 @@ const bindings = ref<
 >([]);
 const loading = ref(false);
 const outdoorList = ref<{ order: string }[]>([]);
+const walletBalanceYuan = ref('0.00');
 
 function elderName(b: (typeof bindings.value)[0]) {
   return b.expand?.elder?.name || '老人';
@@ -128,14 +140,16 @@ async function reload() {
   loading.value = true;
   try {
     const uid = roleStore.user.id;
-    const [st, binds, outdoor] = await Promise.all([
+    const [st, binds, outdoor, wallet] = await Promise.all([
       fetchFamilyStats(),
       listBoundElders(uid),
       listPendingOutdoorApprovals(uid).catch(() => []),
+      fetchFamilyWallet().catch(() => null),
     ]);
     stats.value = st;
     bindings.value = binds;
     outdoorList.value = outdoor;
+    if (wallet) walletBalanceYuan.value = wallet.balanceYuan;
   } catch (e) {
     uni.showToast({ title: pbErrorMessage(e), icon: 'none' });
   } finally {
@@ -205,6 +219,10 @@ async function goOutdoor() {
 
 function goBind() {
   uni.navigateTo({ url: '/package-family/bind' });
+}
+
+function goWallet() {
+  uni.navigateTo({ url: '/package-family/wallet/index' });
 }
 
 function goPackageBuy() {

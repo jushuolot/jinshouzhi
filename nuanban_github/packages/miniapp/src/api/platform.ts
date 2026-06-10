@@ -15,8 +15,11 @@ export interface PlatformOverview {
   eldersTotal: number;
   studentsActive: number;
   ordersPendingAccept: number;
+  ordersPendingPayment?: number;
   ordersInService: number;
   ordersCompleted: number;
+  walletPaidTotalCents?: number;
+  walletPaidTotalYuan?: string;
   caregiversNearby: number;
   eldersNearby: number;
   todayMatches: number;

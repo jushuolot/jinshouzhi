@@ -106,12 +106,13 @@ import {
   listActiveOrders,
   listActiveSosAlerts,
   listNearbyElders,
+  listPendingOrders,
   type SosAlert,
   type StudentStats,
 } from '../api/student';
 import { guardPackageRoute } from '../utils/nav-guard';
 import { getLocationWithFallback } from '../utils/location';
-import { pbErrorMessage, request } from '../utils/request';
+import { pbErrorMessage } from '../utils/request';
 
 interface ElderPreview {
   id: string;
@@ -137,12 +138,10 @@ function formatDistance(km: number) {
 
 async function reload() {
   errorMsg.value = '';
-  const [profile, st, pendingRes, activeRes, sosRes] = await Promise.all([
+  const [profile, st, pendingList, activeRes, sosRes] = await Promise.all([
     fetchStudentProfile().catch(() => null),
     fetchStudentStats().catch(() => null),
-    request<{ list?: unknown[] }>({ url: '/nuanban/student/orders/pending', method: 'GET' }).catch(
-      () => ({ list: [] as unknown[] }),
-    ),
+    listPendingOrders().catch(() => []),
     listActiveOrders().catch(() => []),
     listActiveSosAlerts().catch(() => []),
   ]);
@@ -151,7 +150,7 @@ async function reload() {
     schoolName.value = profile.schoolName;
   }
   stats.value = st;
-  pendingCount.value = pendingRes.list?.length ?? st?.pendingCount ?? 0;
+  pendingCount.value = pendingList.length || st?.pendingCount || 0;
   activeCount.value = activeRes.length;
   sosAlerts.value = sosRes;
 

@@ -22,6 +22,17 @@
       </view>
     </view>
 
+    <view v-if="overview" class="kpi-grid kpi-secondary">
+      <view class="kpi">
+        <text class="kpi-num accent">{{ overview.ordersPendingPayment ?? 0 }}</text>
+        <text class="kpi-label">待支付</text>
+      </view>
+      <view class="kpi">
+        <text class="kpi-num">¥{{ overview.walletPaidTotalYuan ?? '0.00' }}</text>
+        <text class="kpi-label">已付总额</text>
+      </view>
+    </view>
+
     <view v-if="overview" class="meta-row">
       <text>撮合成功率 {{ overview.matchSuccessRatePct }}%</text>
       <text>今日撮合 {{ overview.todayMatches }}</text>
@@ -57,6 +68,11 @@
       <text class="chevron">›</text>
     </view>
 
+    <view v-if="demoMode" class="reset-card" @tap="confirmReset">
+      <text class="reset-title">重置演示数据</text>
+      <text class="reset-desc">清除本地订单/储值卡状态，恢复种子数据</text>
+    </view>
+
     <text v-if="overview?.updatedAt" class="ts">数据更新 {{ formatTime(overview.updatedAt) }}</text>
   </view>
 </template>
@@ -66,7 +82,10 @@ import { ref } from 'vue';
 import { onShow } from '@dcloudio/uni-app';
 import { fetchPlatformOverview, type PlatformOverview } from '../../api/platform';
 import { listDispatchableOrders } from '../../api/org';
+import { isDemoMockEnabled, resetDemoRuntimeState } from '../../utils/demo-mock';
 import { pbErrorMessage } from '../../utils/request';
+
+const demoMode = isDemoMockEnabled();
 
 const pendingCount = ref(0);
 const overview = ref<PlatformOverview | null>(null);
@@ -111,6 +130,17 @@ function goTour() {
 function goShare() {
   uni.navigateTo({ url: '/pages/common/share-demo' });
 }
+
+function confirmReset() {
+  uni.showModal({
+    title: '重置演示数据',
+    content: '将清除订单、储值卡、提现等本地状态并刷新页面，是否继续？',
+    confirmText: '重置',
+    success: (res) => {
+      if (res.confirm) resetDemoRuntimeState();
+    },
+  });
+}
 </script>
 
 <style scoped>
@@ -136,6 +166,9 @@ function goShare() {
   grid-template-columns: 1fr 1fr;
   gap: 16rpx;
   margin-bottom: 16rpx;
+}
+.kpi-secondary {
+  margin-bottom: 20rpx;
 }
 .kpi {
   background: #fff;
@@ -200,6 +233,27 @@ function goShare() {
 .chevron {
   font-size: 36rpx;
   color: #ccc;
+}
+.reset-card {
+  margin-top: 8rpx;
+  margin-bottom: 16rpx;
+  padding: 24rpx;
+  background: #fff3f0;
+  border: 1rpx solid #f0c8b8;
+  border-radius: 12rpx;
+  text-align: center;
+}
+.reset-title {
+  display: block;
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #c45c26;
+}
+.reset-desc {
+  display: block;
+  margin-top: 6rpx;
+  font-size: 22rpx;
+  color: #999;
 }
 .ts {
   display: block;

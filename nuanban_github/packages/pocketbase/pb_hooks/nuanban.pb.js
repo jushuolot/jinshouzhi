@@ -2032,24 +2032,34 @@ routerAdd("POST", "/api/nuanban/family/packages/purchase", function (e) {
 routerAdd("GET", "/api/nuanban/platform/overview", function (e) {
   var nb = require(__hooks + "/nuanban_lib.js");
   let pending = 0;
+  let pendingPay = 0;
   let inSvc = 0;
   let done = 0;
   let elders = 0;
+  let walletPaidCents = 0;
   try {
     pending = $app.findRecordsByFilter("orders", 'status = "pending_accept"', "", 200, 0).length;
+    pendingPay = $app.findRecordsByFilter("orders", 'status = "pending_payment"', "", 200, 0).length;
     inSvc = $app.findRecordsByFilter("orders", 'status = "in_service"', "", 200, 0).length;
     done = $app.findRecordsByFilter("orders", 'status = "completed"', "", 200, 0).length;
     elders = $app.findRecordsByFilter("elders", "enabled = true", "", 200, 0).length;
+    var paidOrders = $app.findRecordsByFilter("orders", 'payment_status = "paid"', "", 500, 0);
+    for (var pi = 0; pi < paidOrders.length; pi++) {
+      walletPaidCents += paidOrders[pi].getInt("amount_cents") || 0;
+    }
   } catch (_) {}
   return e.json(200, {
     mission: "让陪伴有温度，让勤工有意义",
     updatedAt: new Date().toISOString(),
     eldersTotal: elders,
-    studentsActive: 6,
+    studentsActive: 8,
     ordersPendingAccept: pending,
+    ordersPendingPayment: pendingPay,
     ordersInService: inSvc,
     ordersCompleted: done,
-    caregiversNearby: 6,
+    walletPaidTotalCents: walletPaidCents,
+    walletPaidTotalYuan: (walletPaidCents / 100).toFixed(2),
+    caregiversNearby: 8,
     eldersNearby: elders,
     todayMatches: inSvc + Math.min(done, 12),
     matchSuccessRatePct: 94,
@@ -2068,7 +2078,7 @@ routerAdd("GET", "/api/nuanban/platform/overview", function (e) {
         description: "老人按距离浏览大学生志愿者并预约",
         status: "live",
         metric: "附近同学",
-        metricValue: 6,
+        metricValue: 8,
       },
       {
         id: "student_find_elder",
