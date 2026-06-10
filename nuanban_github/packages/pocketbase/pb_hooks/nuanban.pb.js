@@ -201,6 +201,21 @@ routerAdd("POST", "/api/nuanban/phone-login", function (e) {
   });
 });
 
+/** 头像上传：uni.uploadFile 仅支持 POST，不能直接 PATCH PB users 记录 */
+routerAdd("POST", "/api/nuanban/auth/avatar", function (e) {
+  var nb = require(__hooks + "/nuanban_lib.js");
+  const auth = e.auth;
+  if (!auth) return e.json(401, { message: "需要登录" });
+  const files = e.findUploadedFiles("avatar");
+  if (!files || files.length === 0 || !files[0]) {
+    return e.json(400, { message: "请选择图片" });
+  }
+  auth.set("avatar", files[0]);
+  $app.save(auth);
+  var av = nb.userAvatarFields(auth, e);
+  return e.json(200, { avatar: av.avatar, avatarUrl: av.avatarUrl });
+});
+
 routerAdd("GET", "/api/nuanban/auth/me", function (e) {
   var nb = require(__hooks + "/nuanban_lib.js");
   const auth = e.auth;

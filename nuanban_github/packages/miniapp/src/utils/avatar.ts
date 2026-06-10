@@ -38,17 +38,21 @@ export async function chooseAndUploadAvatar(): Promise<string> {
   }
 
   const url = await new Promise<string>((resolve, reject) => {
+    // uni.uploadFile 在 H5/小程序侧实际走 POST；PB 更新记录需 PATCH，故走自定义路由
     uni.uploadFile({
-      url: `${API_BASE}/collections/users/records/${userId}`,
+      url: `${API_BASE}/nuanban/auth/avatar`,
       filePath,
       name: 'avatar',
-      method: 'PATCH',
-      header: { Authorization: `Bearer ${token}` },
+      header: {
+        Authorization: `Bearer ${token}`,
+        ...(role.activeRole ? { 'X-Active-Role': role.activeRole } : {}),
+      },
       success: (res) => {
         if (res.statusCode >= 200 && res.statusCode < 300) {
           try {
-            const data = JSON.parse(res.data as string) as { avatar?: string };
-            const avatarUrl = buildUserAvatarUrl(userId, data.avatar || '', token);
+            const data = JSON.parse(res.data as string) as { avatarUrl?: string; avatar?: string };
+            const avatarUrl =
+              data.avatarUrl || buildUserAvatarUrl(userId, data.avatar || '', token);
             role.setUserAvatar(avatarUrl);
             resolve(avatarUrl);
           } catch (err) {
