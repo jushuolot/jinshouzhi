@@ -16,6 +16,9 @@
     </template>
     <template v-else>
       <text class="step-title">完善资料 · {{ roleLabel[role] }}</text>
+      <view v-if="referralCode && role === 'student'" class="ref-tip">
+        已绑定推荐码 {{ referralCode }} · 注册成功推荐人得奖励
+      </view>
       <input v-model="displayName" class="input nb-input" placeholder="显示名称（可选）" />
       <button class="btn-primary nb-btn-primary" :loading="loading" @tap="submit">确认身份</button>
       <text class="back" @tap="step = 'pick'">重新选择身份</text>
@@ -28,6 +31,7 @@ import { ref } from 'vue';
 import { onLoad } from '@dcloudio/uni-app';
 import { registerRole } from '../../api/auth';
 import AuthBrandHeader from '../../components/AuthBrandHeader.vue';
+import { takePendingReferralCode } from '../../utils/demo-referral';
 import { ROLE_HOME, type RoleKey } from '../../config/tabs';
 import { useRoleStore } from '../../store/role';
 import { pbErrorMessage } from '../../utils/request';
@@ -36,6 +40,7 @@ const role = ref<RoleKey>('student');
 const displayName = ref('');
 const loading = ref(false);
 const step = ref<'pick' | 'form'>('pick');
+const referralCode = ref('');
 const roleStore = useRoleStore();
 
 const roleLabel: Record<RoleKey, string> = {
@@ -64,6 +69,7 @@ onLoad((q) => {
     }
     return;
   }
+  referralCode.value = takePendingReferralCode();
   if (q?.role) {
     role.value = q.role as RoleKey;
     step.value = 'form';
@@ -82,7 +88,11 @@ function goLogin() {
 async function submit() {
   loading.value = true;
   try {
-    const roles = await registerRole(role.value, displayName.value || undefined);
+    const roles = await registerRole(
+      role.value,
+      displayName.value || undefined,
+      role.value === 'student' ? referralCode.value || undefined : undefined,
+    );
     roleStore.setAuth({
       token: roleStore.token,
       roles,
@@ -130,6 +140,16 @@ async function submit() {
   font-size: 24rpx;
   color: var(--nb-text-muted);
   line-height: 1.5;
+}
+.ref-tip {
+  display: block;
+  margin: 16rpx 0 8rpx;
+  padding: 16rpx 20rpx;
+  font-size: 24rpx;
+  color: var(--nb-primary);
+  background: var(--nb-primary-soft);
+  border-radius: var(--nb-radius-sm);
+  border: 2rpx dashed var(--nb-border-dashed);
 }
 .input {
   margin: 32rpx 0 24rpx;

@@ -21,6 +21,65 @@ export const DEMO_USERS = {
   multi: { id: 'user-multi', email: 'multi1@test.nuanban.dev', nickname: '多角色演示' },
 } as const;
 
+/** 演示手机号 → 角色测试账号（与 pb_hooks phoneToEmail 对齐） */
+export interface DemoTestPhone {
+  phone: string;
+  email: string;
+  role: 'student' | 'family' | 'elder' | 'multi';
+  label: string;
+  /** 可测场景简述 */
+  testHint: string;
+}
+
+export const DEMO_TEST_PHONES: DemoTestPhone[] = [
+  {
+    phone: '13800000001',
+    email: DEMO_USERS.student.email,
+    role: 'student',
+    label: '林同学 · 学生主流程',
+    testHint: '接单、签到、收入、推荐有奖',
+  },
+  {
+    phone: '13800000002',
+    email: 'student2@test.nuanban.dev',
+    role: 'student',
+    label: '周同学 · 城东师范',
+    testHint: '学校合作筛选、合作机构老人',
+  },
+  {
+    phone: '13800000003',
+    email: DEMO_USERS.studentPending.email,
+    role: 'student',
+    label: '待审同学',
+    testHint: '审核中页、无法接单',
+  },
+  {
+    phone: '13800000004',
+    email: DEMO_USERS.family.email,
+    role: 'family',
+    label: '家属1',
+    testHint: '代付、外出审批、SOS、服务包',
+  },
+  {
+    phone: '13800000005',
+    email: DEMO_USERS.elder.email,
+    role: 'elder',
+    label: '老人1',
+    testHint: '找陪护、预约、一键求助',
+  },
+  {
+    phone: '13800000006',
+    email: DEMO_USERS.multi.email,
+    role: 'multi',
+    label: '多角色演示',
+    testHint: '学生/家属/老人身份切换',
+  },
+];
+
+export const DEMO_PHONE_EMAIL: Record<string, string> = Object.fromEntries(
+  DEMO_TEST_PHONES.map((p) => [p.phone, p.email]),
+);
+
 /** 家属可购服务包 — 演示数据 */
 export interface ServicePackage {
   id: string;
@@ -263,4 +322,317 @@ export function buildServiceLogs(orders: RichOrder[], elderName: (id: string) =>
 export function orgNameById(orgId: string): string {
   if (orgId === DEMO_ORG_EAST.id) return DEMO_ORG_EAST.name;
   return DEMO_ORG_MAIN.name;
+}
+
+/** —— Phase 19：详尽个人资料 —— */
+
+export interface EmergencyContact {
+  name: string;
+  relation: string;
+  phone: string;
+}
+
+export interface RichElderProfile extends RichElder {
+  gender: string;
+  district: string;
+  address: string;
+  healthStatus: string;
+  mobility: string;
+  hobbies: string[];
+  servicePreferences: string[];
+  livingSituation: string;
+  emergencyContact: EmergencyContact;
+  preferredVisitTimes: string[];
+  notes: string;
+}
+
+export interface RichCaregiverProfile extends RichCaregiver {
+  gender: string;
+  major: string;
+  grade: string;
+  age: number;
+  phone: string;
+  bio: string;
+  serviceAreas: string[];
+  availableHours: string[];
+  certifications: string[];
+  languages: string[];
+  personalityTags: string[];
+  serviceTypes: string[];
+  completedOrderThemes: string[];
+  reviewSummary: string;
+}
+
+export interface StudentFullProfile {
+  nickname: string;
+  email: string;
+  displayName: string;
+  schoolName: string;
+  gender: string;
+  major: string;
+  grade: string;
+  age: number;
+  phone: string;
+  bio: string;
+  serviceAreas: string[];
+  availableHours: string[];
+  certifications: string[];
+  languages: string[];
+  personalityTags: string[];
+  serviceTypes: string[];
+  completedOrderThemes: string[];
+  rating: number;
+  orderCount: number;
+}
+
+export interface FamilyProfile {
+  nickname: string;
+  email: string;
+  relationToElder: string;
+  linkedElderName: string;
+  linkedElderId: string;
+  contactPhone: string;
+  district: string;
+  address: string;
+  notificationPrefs: string[];
+}
+
+export interface ElderSelfProfile {
+  id: string;
+  name: string;
+  age: number;
+  gender: string;
+  district: string;
+  address: string;
+  orgName: string;
+  healthStatus: string;
+  mobility: string;
+  hobbies: string[];
+  servicePreferences: string[];
+  livingSituation: string;
+  emergencyContact: EmergencyContact;
+  preferredVisitTimes: string[];
+  notes: string;
+}
+
+const DISTRICTS = ['浦东新区', '黄浦区', '静安区', '徐汇区', '杨浦区', '虹口区', '长宁区', '普陀区'];
+const HOBBIES_POOL = [
+  ['听戏', '养花', '看报纸'],
+  ['下棋', '听广播', '散步'],
+  ['看电视', '编织', '聊天'],
+  ['书法', '太极拳', '摄影'],
+  ['唱歌', '烹饪', '园艺'],
+  ['读书', '听评书', '做手工'],
+  ['广场舞', '剪纸', '看老电影'],
+  ['钓鱼', '集邮', '养鸟'],
+];
+const SERVICE_PREFS = [
+  ['聊天陪伴', '读报陪聊'],
+  ['康复协助', '陪同散步'],
+  ['生活陪护', '用药提醒'],
+  ['棋牌陪伴', '聊天陪伴'],
+  ['康复协助', '生活陪护'],
+  ['耐心陪伴', '读报陪聊'],
+  ['陪同散步', '聊天陪伴'],
+  ['听戏陪聊', '生活陪护'],
+];
+const LIVING = ['与子女同住', '独居（有保姆）', '独居', '与配偶同住', '机构养老', '与子女同住', '独居', '与配偶同住'];
+const HEALTH = ['总体良好', '需康复协助', '高血压需监测', '听力下降', '术后恢复中', '认知轻度减退', '行动自如', '慢性病稳定'];
+const MOBILITY = ['行动便利', '需搀扶', '可短距离步行', '行动便利', '需轮椅辅助', '行动较慢', '行动便利', '需搀扶'];
+
+const MAJORS = ['护理学', '社会工作', '心理学', '康复治疗', '老年服务与管理', '临床医学'];
+const GRADES = ['大二', '大三', '大四', '研一', '研二', '大三'];
+const PERSONALITY = [
+  ['耐心细致', '开朗活泼'],
+  ['温柔体贴', '认真负责'],
+  ['活泼健谈', '细心周到'],
+  ['沉稳可靠', '善于倾听'],
+  ['热情开朗', '有耐心'],
+  ['文静内敛', '做事踏实'],
+];
+const SERVICE_TYPES = [
+  ['陪伴聊天', '读报陪聊', '康复协助'],
+  ['生活陪护', '用药提醒'],
+  ['棋牌陪伴', '聊天陪伴'],
+  ['外出陪同', '陪同散步'],
+  ['读报陪聊', '生活陪护'],
+  ['康复协助', '用药提醒'],
+];
+const ORDER_THEMES = [
+  ['聊天陪伴 ×12', '康复协助 ×5', '读报陪聊 ×8'],
+  ['生活陪护 ×10', '用药提醒 ×6'],
+  ['棋牌陪伴 ×7', '聊天陪伴 ×9'],
+  ['外出陪同 ×4', '陪同散步 ×6'],
+  ['读报陪聊 ×11', '生活陪护 ×3'],
+  ['康复协助 ×8', '用药提醒 ×5'],
+];
+const REVIEW_SUMMARIES = [
+  '老人评价「很有耐心，聊天很开心」',
+  '家属反馈「用药提醒很及时，放心」',
+  '机构备注「康复协助动作规范」',
+  '老人说「下棋很开心，下次还想约」',
+  '家属称赞「读报声音好听，老人爱听」',
+  '多次复购，服务稳定可靠',
+];
+
+function maskPhone(seed: number): string {
+  const tail = String(1000 + (seed % 9000));
+  return `138****${tail}`;
+}
+
+function maskAddress(district: string, seed: number): string {
+  const roads = ['花木路', '张杨路', '南京东路', '淮海中路', '四平路', '四川北路'];
+  return `${district}${roads[seed % roads.length]}${(seed % 200) + 1}号***室`;
+}
+
+const ELDER_PROFILE_CACHE = new Map<string, RichElderProfile>();
+
+function buildElderProfile(base: RichElder, idx: number): RichElderProfile {
+  const district = DISTRICTS[idx % DISTRICTS.length];
+  return {
+    ...base,
+    gender: idx % 2 === 0 ? '女' : '男',
+    district,
+    address: maskAddress(district, idx + 1),
+    healthStatus: HEALTH[idx % HEALTH.length],
+    mobility: MOBILITY[idx % MOBILITY.length],
+    hobbies: [...HOBBIES_POOL[idx % HOBBIES_POOL.length]],
+    servicePreferences: [...SERVICE_PREFS[idx % SERVICE_PREFS.length]],
+    livingSituation: LIVING[idx % LIVING.length],
+    emergencyContact: {
+      name: idx % 2 === 0 ? '王女士' : '李先生',
+      relation: idx % 3 === 0 ? '女儿' : idx % 3 === 1 ? '儿子' : '儿媳',
+      phone: maskPhone(idx + 10),
+    },
+    preferredVisitTimes: ['工作日下午 14:00–17:00', '周末上午 9:00–11:00'],
+    notes: `${base.name}喜欢温馨氛围，初次见面可先聊家常再开展服务。`,
+  };
+}
+
+export function getRichElderProfile(id: string): RichElderProfile | null {
+  const elders = buildRichElders();
+  const nid = normalizeElderId(id, elders);
+  if (ELDER_PROFILE_CACHE.has(nid)) return ELDER_PROFILE_CACHE.get(nid)!;
+  const base = elders.find((e) => e.id === nid);
+  if (!base) return null;
+  const idx = elders.findIndex((e) => e.id === nid);
+  const profile = buildElderProfile(base, idx);
+  ELDER_PROFILE_CACHE.set(nid, profile);
+  return profile;
+}
+
+const CAREGIVER_PROFILE_CACHE = new Map<string, RichCaregiverProfile>();
+
+function buildCaregiverProfile(base: RichCaregiver, idx: number): RichCaregiverProfile {
+  return {
+    ...base,
+    gender: '女',
+    major: MAJORS[idx % MAJORS.length],
+    grade: GRADES[idx % GRADES.length],
+    age: 20 + (idx % 4),
+    phone: maskPhone(idx + 20),
+    bio: `${base.name}，${base.school}${GRADES[idx % GRADES.length]}学生。热心公益，累计服务 ${base.orderCount} 次，擅长${base.tags.join('、')}。`,
+    serviceAreas: ['浦东新区', '黄浦区'].slice(0, 1 + (idx % 2)),
+    availableHours: ['周一至周五 14:00–18:00', '周六 9:00–12:00'],
+    certifications: idx % 2 === 0 ? ['急救员证', '养老护理员初级'] : ['红十字救护员'],
+    languages: ['普通话', idx % 3 === 0 ? '上海话' : '英语基础'],
+    personalityTags: [...PERSONALITY[idx % PERSONALITY.length]],
+    serviceTypes: [...SERVICE_TYPES[idx % SERVICE_TYPES.length]],
+    completedOrderThemes: [...ORDER_THEMES[idx % ORDER_THEMES.length]],
+    reviewSummary: REVIEW_SUMMARIES[idx % REVIEW_SUMMARIES.length],
+  };
+}
+
+export function getRichCaregiverProfile(idOrUserId: string): RichCaregiverProfile | null {
+  const caregivers = buildRichCaregivers();
+  const key = idOrUserId;
+  if (CAREGIVER_PROFILE_CACHE.has(key)) return CAREGIVER_PROFILE_CACHE.get(key)!;
+  const base =
+    caregivers.find((c) => c.id === idOrUserId || c.userId === idOrUserId) || caregivers[0];
+  const idx = caregivers.findIndex((c) => c.id === base.id);
+  const profile = buildCaregiverProfile(base, idx >= 0 ? idx : 0);
+  CAREGIVER_PROFILE_CACHE.set(key, profile);
+  CAREGIVER_PROFILE_CACHE.set(base.id, profile);
+  CAREGIVER_PROFILE_CACHE.set(base.userId, profile);
+  return profile;
+}
+
+const DEFAULT_STUDENT_EXTRAS = {
+  gender: '女',
+  major: '护理学',
+  grade: '大三',
+  age: 21,
+  phone: maskPhone(1),
+  bio: '热心公益的在校女生，擅长陪伴聊天与康复协助，希望用课余时间为附近老人送去温暖。',
+  serviceAreas: ['浦东新区', '黄浦区'],
+  availableHours: ['周一至周五 14:00–18:00', '周六 9:00–12:00'],
+  certifications: ['急救员证', '养老护理员初级'],
+  languages: ['普通话', '上海话'],
+  personalityTags: ['耐心细致', '开朗活泼'],
+  serviceTypes: ['陪伴聊天', '读报陪聊', '康复协助'],
+  completedOrderThemes: ['聊天陪伴 ×12', '康复协助 ×5', '读报陪聊 ×8'],
+};
+
+export function getStudentFullProfile(
+  overrides?: Partial<StudentFullProfile & { displayName?: string; schoolName?: string }>,
+): StudentFullProfile {
+  const cg = getRichCaregiverProfile(DEMO_USERS.student.id)!;
+  return {
+    nickname: overrides?.displayName || DEMO_USERS.student.nickname,
+    email: DEMO_USERS.student.email,
+    displayName: overrides?.displayName || DEMO_USERS.student.nickname,
+    schoolName: overrides?.schoolName || cg.school,
+    gender: overrides?.gender ?? DEFAULT_STUDENT_EXTRAS.gender,
+    major: overrides?.major ?? DEFAULT_STUDENT_EXTRAS.major,
+    grade: overrides?.grade ?? DEFAULT_STUDENT_EXTRAS.grade,
+    age: overrides?.age ?? DEFAULT_STUDENT_EXTRAS.age,
+    phone: overrides?.phone ?? DEFAULT_STUDENT_EXTRAS.phone,
+    bio: overrides?.bio ?? DEFAULT_STUDENT_EXTRAS.bio,
+    serviceAreas: overrides?.serviceAreas ?? DEFAULT_STUDENT_EXTRAS.serviceAreas,
+    availableHours: overrides?.availableHours ?? DEFAULT_STUDENT_EXTRAS.availableHours,
+    certifications: overrides?.certifications ?? DEFAULT_STUDENT_EXTRAS.certifications,
+    languages: overrides?.languages ?? DEFAULT_STUDENT_EXTRAS.languages,
+    personalityTags: overrides?.personalityTags ?? DEFAULT_STUDENT_EXTRAS.personalityTags,
+    serviceTypes: overrides?.serviceTypes ?? DEFAULT_STUDENT_EXTRAS.serviceTypes,
+    completedOrderThemes:
+      overrides?.completedOrderThemes ?? DEFAULT_STUDENT_EXTRAS.completedOrderThemes,
+    rating: cg.rating,
+    orderCount: cg.orderCount,
+  };
+}
+
+export function getFamilyProfile(): FamilyProfile {
+  const elder = getRichElderProfile('elder-1')!;
+  return {
+    nickname: DEMO_USERS.family.nickname,
+    email: DEMO_USERS.family.email,
+    relationToElder: '女儿',
+    linkedElderName: elder.name,
+    linkedElderId: elder.id,
+    contactPhone: maskPhone(99),
+    district: elder.district,
+    address: maskAddress(elder.district, 99),
+    notificationPrefs: ['订单状态变更', '外出审批提醒', 'SOS 紧急通知', '支付成功通知'],
+  };
+}
+
+export function getElderSelfProfile(): ElderSelfProfile {
+  const profile = getRichElderProfile('elder-1')!;
+  return {
+    id: profile.id,
+    name: profile.name,
+    age: profile.age,
+    gender: profile.gender,
+    district: profile.district,
+    address: profile.address,
+    orgName: orgNameById(profile.org),
+    healthStatus: profile.healthStatus,
+    mobility: profile.mobility,
+    hobbies: profile.hobbies,
+    servicePreferences: profile.servicePreferences,
+    livingSituation: profile.livingSituation,
+    emergencyContact: profile.emergencyContact,
+    preferredVisitTimes: profile.preferredVisitTimes,
+    notes: profile.notes,
+  };
 }

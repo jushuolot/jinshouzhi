@@ -225,6 +225,7 @@ routerAdd("POST", "/api/nuanban/phone-login", (e) => {
     return e.json(400, { message: "验证码无效" });
   }
 
+  // 与 miniapp demo-rich-data.ts DEMO_TEST_PHONES 对齐
   const phoneToEmail = {
     "13800000001": "student1@test.nuanban.dev",
     "13800000002": "student2@test.nuanban.dev",
@@ -451,6 +452,63 @@ routerAdd("GET", "/api/nuanban/elder/caregivers/nearby", (e) => {
   }
   list.sort((a, b) => a.distanceKm - b.distanceKm);
   return e.json(200, { list });
+});
+
+routerAdd("GET", "/api/nuanban/elder/caregivers/{id}", (e) => {
+  if (!e.auth) return e.json(401, { message: "需要登录" });
+  const id = e.request.pathValue("id");
+  let roleRec = null;
+  try {
+    roleRec = $app.findRecordById("user_roles", id);
+  } catch (_) {
+    const byUser = $app.findRecordsByFilter(
+      "user_roles",
+      'user = {:uid} && role = "student"',
+      "",
+      1,
+      0,
+      { uid: id }
+    );
+    if (byUser.length > 0) roleRec = byUser[0];
+  }
+  if (!roleRec) {
+    return e.json(404, { message: "陪护同学不存在" });
+  }
+  const schoolId = roleRec.getString("school");
+  let schoolName = "高校志愿者";
+  if (schoolId) {
+    try {
+      const s = $app.findRecordById("school_dict", schoolId);
+      schoolName = s.getString("name") || schoolName;
+    } catch (_) {}
+  }
+  const name = roleRec.getString("display_name") || "同学";
+  return e.json(200, {
+    id: roleRec.id,
+    userId: roleRec.getString("user"),
+    name: name,
+    school: schoolName,
+    distanceKm: 1.2,
+    distance: "1.2km",
+    rating: 4.9,
+    orderCount: 28,
+    intro: name + "——暖伴勤工志愿者",
+    tags: ["陪伴聊天", "康复协助"],
+    gender: "女",
+    major: "护理学",
+    grade: "大三",
+    age: 21,
+    phone: "138****5678",
+    bio: name + "，热心公益，擅长陪伴聊天与康复协助。",
+    serviceAreas: ["浦东新区", "黄浦区"],
+    availableHours: ["周一至周五 14:00–18:00", "周六 9:00–12:00"],
+    certifications: ["急救员证", "养老护理员初级"],
+    languages: ["普通话", "上海话"],
+    personalityTags: ["耐心细致", "开朗活泼"],
+    serviceTypes: ["陪伴聊天", "读报陪聊", "康复协助"],
+    completedOrderThemes: ["聊天陪伴 ×12", "康复协助 ×5"],
+    reviewSummary: "老人评价「很有耐心，聊天很开心」",
+  });
 });
 
 routerAdd("POST", "/api/nuanban/elder/orders", (e) => {
@@ -734,6 +792,21 @@ routerAdd("GET", "/api/nuanban/student/profile", (e) => {
     email: auth.getString("email"),
     schoolName: schoolName,
     displayName: displayName,
+    gender: "女",
+    major: "护理学",
+    grade: "大三",
+    age: 21,
+    phone: "138****1234",
+    bio: "热心公益的在校女生，擅长陪伴聊天与康复协助。",
+    serviceAreas: ["浦东新区", "黄浦区"],
+    availableHours: ["周一至周五 14:00–18:00", "周六 9:00–12:00"],
+    certifications: ["急救员证", "养老护理员初级"],
+    languages: ["普通话", "上海话"],
+    personalityTags: ["耐心细致", "开朗活泼"],
+    serviceTypes: ["陪伴聊天", "读报陪聊", "康复协助"],
+    completedOrderThemes: ["聊天陪伴 ×12", "康复协助 ×5"],
+    rating: 4.9,
+    orderCount: 35,
   });
 });
 
@@ -787,7 +860,158 @@ routerAdd("PATCH", "/api/nuanban/student/profile", (e) => {
     auth.set("name", displayName);
     $app.save(auth);
   }
-  return e.json(200, { ok: true, displayName: displayName, schoolName: schoolName });
+  return e.json(200, {
+    ok: true,
+    displayName: displayName,
+    schoolName: schoolName,
+    bio: body.bio || "热心公益的在校女生，擅长陪伴聊天与康复协助。",
+    major: body.major || "护理学",
+    grade: body.grade || "大三",
+    availableHours: body.availableHours || ["周一至周五 14:00–18:00", "周六 9:00–12:00"],
+    serviceAreas: body.serviceAreas || ["浦东新区", "黄浦区"],
+  });
+});
+
+routerAdd("GET", "/api/nuanban/student/elders/{id}/profile", (e) => {
+  const rc = assertActiveRoleHeader(e, "student");
+  if (!rc.ok) return e.json(rc.code, rc.body);
+  const elderId = e.request.pathValue("id");
+  let elder;
+  try {
+    elder = $app.findRecordById("elders", elderId);
+  } catch (_) {
+    return e.json(404, { message: "老人档案不存在" });
+  }
+  let orgName = "";
+  const orgId = elder.getString("org");
+  if (orgId) {
+    try {
+      const o = $app.findRecordById("orgs", orgId);
+      orgName = o.getString("name");
+    } catch (_) {}
+  }
+  return e.json(200, {
+    id: elder.id,
+    name: elder.getString("name") || "老人",
+    age: elder.getInt("age") || 78,
+    gender: elder.getString("gender") || "女",
+    district: elder.getString("district") || "浦东新区",
+    address: elder.getString("address") || "浦东新区***",
+    orgName: orgName || "暖伴示范养老院",
+    tags: elder.get("tags") || ["行动便利"],
+    intro: elder.getString("intro") || "",
+    healthStatus: elder.getString("health_status") || "总体良好",
+    mobility: elder.getString("mobility") || "行动便利",
+    hobbies: elder.get("hobbies") || ["聊天", "散步"],
+    servicePreferences: elder.get("service_preferences") || ["陪伴聊天"],
+    livingSituation: elder.getString("living_situation") || "与子女同住",
+    emergencyContact: {
+      name: "家属",
+      relation: "女儿",
+      phone: "138****9999",
+    },
+    preferredVisitTimes: ["工作日下午 14:00–17:00", "周末上午 9:00–11:00"],
+    notes: elder.getString("notes") || "请耐心沟通，营造温馨氛围。",
+  });
+});
+
+routerAdd("GET", "/api/nuanban/elder/profile", (e) => {
+  const rc = assertActiveRoleHeader(e, "elder");
+  if (!rc.ok) return e.json(rc.code, rc.body);
+  const auth = e.auth;
+  if (!auth) return e.json(401, { message: "需要登录" });
+  const roles = $app.findRecordsByFilter(
+    "user_roles",
+    'user = {:uid} && role = "elder"',
+    "",
+    1,
+    0,
+    { uid: auth.id }
+  );
+  let elderId = "";
+  if (roles.length > 0) {
+    try {
+      elderId = roles[0].getString("elder_profile") || "";
+    } catch (_) {}
+  }
+  let elder = null;
+  if (elderId) {
+    try {
+      elder = $app.findRecordById("elders", elderId);
+    } catch (_) {}
+  }
+  if (!elder) {
+    const found = $app.findRecordsByFilter("elders", 'enabled = true', "", 1, 0);
+    if (found.length > 0) elder = found[0];
+  }
+  if (!elder) return e.json(404, { message: "老人档案不存在" });
+  let orgName = "";
+  const orgId = elder.getString("org");
+  if (orgId) {
+    try {
+      const o = $app.findRecordById("orgs", orgId);
+      orgName = o.getString("name");
+    } catch (_) {}
+  }
+  return e.json(200, {
+    id: elder.id,
+    name: elder.getString("name") || "老人",
+    age: elder.getInt("age") || 78,
+    gender: elder.getString("gender") || "女",
+    district: elder.getString("district") || "浦东新区",
+    address: elder.getString("address") || "浦东新区***",
+    orgName: orgName || "暖伴示范养老院",
+    healthStatus: elder.getString("health_status") || "总体良好",
+    mobility: elder.getString("mobility") || "行动便利",
+    hobbies: elder.get("hobbies") || ["聊天", "散步"],
+    servicePreferences: elder.get("service_preferences") || ["陪伴聊天"],
+    livingSituation: elder.getString("living_situation") || "与子女同住",
+    emergencyContact: {
+      name: "家属",
+      relation: "女儿",
+      phone: "138****9999",
+    },
+    preferredVisitTimes: ["工作日下午 14:00–17:00", "周末上午 9:00–11:00"],
+    notes: elder.getString("notes") || "请耐心沟通，营造温馨氛围。",
+  });
+});
+
+routerAdd("GET", "/api/nuanban/family/profile", (e) => {
+  const rc = assertActiveRoleHeader(e, "family");
+  if (!rc.ok) return e.json(rc.code, rc.body);
+  const auth = e.auth;
+  if (!auth) return e.json(401, { message: "需要登录" });
+  const bindings = $app.findRecordsByFilter(
+    "family_elder_bindings",
+    'family_user = {:uid}',
+    "",
+    1,
+    0,
+    { uid: auth.id }
+  );
+  let elderName = "张奶奶";
+  let elderId = "elder-1";
+  let relation = "家属";
+  if (bindings.length > 0) {
+    const b = bindings[0];
+    relation = b.getString("relation_label") || relation;
+    elderId = b.getString("elder") || elderId;
+    try {
+      const elder = $app.findRecordById("elders", elderId);
+      elderName = elder.getString("name") || elderName;
+    } catch (_) {}
+  }
+  return e.json(200, {
+    nickname: auth.getString("name") || "家属",
+    email: auth.getString("email"),
+    relationToElder: relation,
+    linkedElderName: elderName,
+    linkedElderId: elderId,
+    contactPhone: "138****8888",
+    district: "浦东新区",
+    address: "浦东新区花木路***室",
+    notificationPrefs: ["订单状态变更", "外出审批提醒", "SOS 紧急通知", "支付成功通知"],
+  });
 });
 
 routerAdd("GET", "/api/nuanban/org/orders/dispatchable", (e) => {
@@ -1386,6 +1610,41 @@ routerAdd("GET", "/api/nuanban/family/orders/{id}", (e) => {
     return e.json(404, { message: "订单不存在" });
   }
   return e.json(200, orderToFamilyDto(order));
+});
+
+routerAdd("GET", "/api/nuanban/student/referral", (e) => {
+  const rc = assertActiveRoleHeader(e, "student");
+  if (!rc.ok) return e.json(rc.code, rc.body);
+  if (!e.auth) return e.json(401, { message: "需要登录" });
+  const code = "NB" + String(e.auth.id || "DEMO").slice(-4).toUpperCase();
+  const base = "https://jushuolot.github.io/jinshouzhi/nuanban";
+  return e.json(200, {
+    code: code,
+    inviteLink: base + "/#/pages/common/launch?ref=" + encodeURIComponent(code),
+    rewardPerInviteCents: 500,
+    rewardOnFirstOrderCents: 1000,
+    invitedCount: 2,
+    rewardedCount: 1,
+    pendingRewardCents: 1000,
+    totalEarnedCents: 1500,
+    records: [
+      {
+        id: "ref-seed-1",
+        inviteeName: "王同学",
+        status: "rewarded",
+        rewardCents: 1500,
+        createdAt: "2025-05-12T10:00:00.000Z",
+        rewardedAt: "2025-05-20T14:00:00.000Z",
+      },
+      {
+        id: "ref-seed-2",
+        inviteeName: "陈同学",
+        status: "first_order",
+        rewardCents: 500,
+        createdAt: "2025-06-01T09:00:00.000Z",
+      },
+    ],
+  });
 });
 
 routerAdd("GET", "/api/nuanban/student/settlements", (e) => {

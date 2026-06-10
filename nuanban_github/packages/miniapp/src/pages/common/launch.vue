@@ -24,6 +24,11 @@ onLoad((query) => {
     uni.reLaunch({ url: '/pages/common/share-demo' });
     return;
   }
+  if (query?.ref) {
+    uni.setStorageSync('pending_referral_code', String(query.ref).trim().toUpperCase());
+    uni.reLaunch({ url: '/pages/common/login' });
+    return;
+  }
 
   const role = query?.role as RoleKey | undefined;
   const target = query?.target as string | undefined;

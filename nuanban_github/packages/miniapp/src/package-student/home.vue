@@ -13,6 +13,15 @@
       </view>
     </view>
 
+    <view class="referral-banner" @tap="goReferral">
+      <text class="ref-icon">🎁</text>
+      <view class="ref-text">
+        <text class="ref-title">推荐同学加入 · 最高得 ¥15</text>
+        <text class="ref-desc">分享邀请链接，同学注册并完成首单即有奖励</text>
+      </view>
+      <text class="ref-arrow">›</text>
+    </view>
+
     <view v-if="sosAlerts.length" class="sos-banner" @tap="handleSos">
       <text class="sos-icon">🆘</text>
       <view class="sos-text">
@@ -199,6 +208,10 @@ function goDiscover() {
 function goProfile() {
   uni.redirectTo({ url: '/package-student/profile' });
 }
+
+function goReferral() {
+  uni.navigateTo({ url: '/package-student/referral/index' });
+}
 function openElder(e: ElderPreview) {
   const q = [
     `id=${e.id}`,
@@ -286,6 +299,38 @@ function openElder(e: ElderPreview) {
   font-weight: 600;
   color: var(--nb-text);
   margin-bottom: 16rpx;
+}
+.referral-banner {
+  display: flex;
+  align-items: center;
+  background: linear-gradient(135deg, #fff8f0, #fff);
+  border: 2rpx solid var(--nb-border-dashed, #e8c4a8);
+  padding: 24rpx;
+  border-radius: var(--nb-radius-md, 16rpx);
+  margin-bottom: 20rpx;
+}
+.ref-icon {
+  font-size: 40rpx;
+  margin-right: 16rpx;
+}
+.ref-text {
+  flex: 1;
+}
+.ref-title {
+  display: block;
+  font-size: 28rpx;
+  font-weight: 600;
+  color: var(--nb-primary, #c45c26);
+}
+.ref-desc {
+  display: block;
+  margin-top: 4rpx;
+  font-size: 22rpx;
+  color: var(--nb-text-muted, #a89488);
+}
+.ref-arrow {
+  font-size: 36rpx;
+  color: var(--nb-primary-light, #e88b4a);
 }
 .sos-banner {
   display: flex;

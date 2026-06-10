@@ -71,11 +71,15 @@ interface UserRoleRecord extends PbRecord {
   elder_profile?: string;
 }
 
-export async function registerRole(role: RoleKey, displayName?: string): Promise<AuthRole[]> {
+export async function registerRole(
+  role: RoleKey,
+  displayName?: string,
+  referralCode?: string,
+): Promise<AuthRole[]> {
   const res = await request<{ roles: AuthRole[] }>({
     url: '/nuanban/auth/register',
     method: 'POST',
-    data: { role, displayName },
+    data: { role, displayName, ...(referralCode ? { referralCode } : {}) },
   });
   return res.roles;
 }

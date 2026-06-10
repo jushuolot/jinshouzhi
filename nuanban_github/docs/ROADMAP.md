@@ -15,6 +15,7 @@
 | **Phase 16** | **登录进化**：手机号主登录、微信可关联、卡哇伊背景、全站柔和主题、上帝视角密码门控、onboarding 统一品牌头 |
 | **Phase 16b** | **AuthBrandHeader**、register/role-select 渐变 onboarding、god-view-gate 深色主题对齐 |
 | **Phase 17** | **完成单自动累加待结算**、student-pending 主题、验收文档对齐手机号登录 |
+| **Phase 18** | **同学拉新推荐有奖**：推荐码/链接、注册绑定、首单奖励、referral 页 |
 | Phase 1–2 | 公网 demo、卡片化 UI、接单/外出审批 |
 | Phase 2.5–4 | 时间轴、SOS、收入、签到、绑定码、家属订单详情 |
 | Phase 3 | PB hooks parity、排班/绑定/无障碍 |

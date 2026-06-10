@@ -14,6 +14,51 @@ export interface CaregiverItem {
   intro?: string;
 }
 
+export interface CaregiverProfileDetail {
+  id: string;
+  userId: string;
+  name: string;
+  school: string;
+  distance?: string;
+  distanceKm?: number;
+  rating: number;
+  orderCount: number;
+  intro: string;
+  tags: string[];
+  gender: string;
+  major: string;
+  grade: string;
+  age: number;
+  phone: string;
+  bio: string;
+  serviceAreas: string[];
+  availableHours: string[];
+  certifications: string[];
+  languages: string[];
+  personalityTags: string[];
+  serviceTypes: string[];
+  completedOrderThemes: string[];
+  reviewSummary: string;
+}
+
+export interface ElderSelfProfile {
+  id: string;
+  name: string;
+  age: number;
+  gender: string;
+  district: string;
+  address: string;
+  orgName: string;
+  healthStatus: string;
+  mobility: string;
+  hobbies: string[];
+  servicePreferences: string[];
+  livingSituation: string;
+  emergencyContact: { name: string; relation: string; phone: string };
+  preferredVisitTimes: string[];
+  notes: string;
+}
+
 export interface ElderStats {
   elderProfileId: string | null;
   elderName: string;
@@ -35,6 +80,20 @@ export async function getNearbyCaregivers(lat: number, lng: number, radiusKm = 5
     method: 'GET',
   });
   return res.list ?? [];
+}
+
+export async function getCaregiverDetail(id: string) {
+  return request<CaregiverProfileDetail>({
+    url: `/nuanban/elder/caregivers/${id}`,
+    method: 'GET',
+  });
+}
+
+export async function fetchElderSelfProfile() {
+  return request<ElderSelfProfile>({
+    url: '/nuanban/elder/profile',
+    method: 'GET',
+  });
 }
 
 export interface ServiceItemRow extends PbRecord {

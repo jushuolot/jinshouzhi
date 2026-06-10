@@ -66,8 +66,8 @@
       </button>
     </view>
 
-    <view v-if="isDemoMockEnabled()" class="demo-chip" @tap="fillDemoPhone">
-      <text>演示：13800000001 学生 · 点按填入</text>
+    <view v-if="isDemoMockEnabled()" class="demo-chip" @tap="showDemoPhones">
+      <text>演示账号 · 点按选择手机号</text>
     </view>
 
     <text class="hint">{{ loginHint }}</text>
@@ -76,6 +76,10 @@
       <text class="foot-link" @tap="goDemoTour">动画演示</text>
       <text class="sep">·</text>
       <text class="foot-link" @tap="goAgreement">用户协议</text>
+      <template v-if="isDemoMockEnabled()">
+        <text class="sep">·</text>
+        <text class="foot-link" @tap="showDemoPhones">测试账号</text>
+      </template>
       <text class="sep">·</text>
       <text class="foot-muted" @tap="showMore">更多</text>
     </view>
@@ -91,6 +95,7 @@ import { APP_TAGLINE, APP_TITLE } from '../../config/brand';
 import { ROLE_HOME } from '../../config/tabs';
 import { useRoleStore } from '../../store/role';
 import { pbErrorMessage } from '../../utils/request';
+import { DEMO_TEST_PHONES } from '../../utils/demo-rich-data';
 import { isDemoMockEnabled } from '../../utils/demo-mock';
 import loginBg from '@/static/images/login-bg-kawaii.png';
 
@@ -121,14 +126,20 @@ const loginHint = computed(() => {
     return '动画演示结束 · 登录后首次将引导选择身份';
   }
   return isDemoMockEnabled()
-    ? '登录后系统按身份分配权限 · 13800000002–06 对应其他演示角色'
+    ? '验证码可留空 · 登录页「测试账号」查看各角色手机号'
     : '首次登录将引导完善身份资料';
 });
 
 const roleStore = useRoleStore();
 
-function fillDemoPhone() {
-  phone.value = '13800000001';
+function showDemoPhones() {
+  uni.showActionSheet({
+    itemList: DEMO_TEST_PHONES.map((p) => `${p.phone.slice(-2)} ${p.label}`),
+    success: (res) => {
+      const picked = DEMO_TEST_PHONES[res.tapIndex];
+      if (picked) phone.value = picked.phone;
+    },
+  });
 }
 
 function onPhoneInput(e: { detail: { value: string } }) {

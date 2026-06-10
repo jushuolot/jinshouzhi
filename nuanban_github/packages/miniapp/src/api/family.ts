@@ -10,6 +10,18 @@ export interface FamilyStats {
   paidTotalYuan: string;
 }
 
+export interface FamilyProfile {
+  nickname: string;
+  email: string;
+  relationToElder: string;
+  linkedElderName: string;
+  linkedElderId: string;
+  contactPhone: string;
+  district: string;
+  address: string;
+  notificationPrefs: string[];
+}
+
 export interface SosAlert {
   id: string;
   elderId: string;
@@ -22,6 +34,13 @@ export interface SosAlert {
 export async function fetchFamilyStats() {
   return request<FamilyStats>({
     url: '/nuanban/family/stats',
+    method: 'GET',
+  });
+}
+
+export async function fetchFamilyProfile() {
+  return request<FamilyProfile>({
+    url: '/nuanban/family/profile',
     method: 'GET',
   });
 }

@@ -1,4 +1,9 @@
 import { APP_TAGLINE } from '../config/brand';
+import {
+  applyReferralOnFirstOrderComplete,
+  applyReferralOnStudentRegister,
+  getReferralOverview,
+} from './demo-referral';
 import { isGodViewUnlocked } from './god-view-auth';
 import type { RoleKey } from '../config/tabs';
 import {
@@ -7,7 +12,13 @@ import {
   buildRichOrders,
   buildServiceLogs,
   DEMO_ORG_MAIN,
+  DEMO_PHONE_EMAIL,
   DEMO_USERS,
+  getElderSelfProfile,
+  getFamilyProfile,
+  getRichCaregiverProfile,
+  getRichElderProfile,
+  getStudentFullProfile,
   normalizeElderId,
   orgNameById,
   SERVICE_PACKAGES,
@@ -122,7 +133,72 @@ function caregiverToListItem(c: (typeof CAREGIVERS)[0]) {
 const studentProfileState = {
   displayName: '林同学',
   schoolName: '示范大学',
+  bio: '热心公益的在校女生，擅长陪伴聊天与康复协助，希望用课余时间为附近老人送去温暖。',
+  major: '护理学',
+  grade: '大三',
+  availableHours: ['周一至周五 14:00–18:00', '周六 9:00–12:00'],
+  serviceAreas: ['浦东新区', '黄浦区'],
 };
+
+function studentProfileDto() {
+  return getStudentFullProfile(studentProfileState);
+}
+
+function elderProfileDto(id: string) {
+  const p = getRichElderProfile(id);
+  if (!p) return null;
+  return {
+    id: p.id,
+    name: p.name,
+    age: p.age,
+    gender: p.gender,
+    district: p.district,
+    address: p.address,
+    orgName: orgNameById(p.org),
+    tags: p.tags,
+    intro: p.intro,
+    healthStatus: p.healthStatus,
+    mobility: p.mobility,
+    hobbies: p.hobbies,
+    servicePreferences: p.servicePreferences,
+    livingSituation: p.livingSituation,
+    emergencyContact: p.emergencyContact,
+    preferredVisitTimes: p.preferredVisitTimes,
+    notes: p.notes,
+  };
+}
+
+function caregiverProfileDto(idOrUserId: string, distanceKm?: number) {
+  const p = getRichCaregiverProfile(idOrUserId);
+  if (!p) return null;
+  const km = distanceKm ?? p.distanceKm;
+  return {
+    id: p.id,
+    userId: p.userId,
+    name: p.name,
+    school: p.school,
+    distanceKm: km,
+    distance: formatKm(km),
+    rating: p.rating,
+    orderCount: p.orderCount,
+    intro: p.intro,
+    tags: p.tags,
+    gender: p.gender,
+    major: p.major,
+    grade: p.grade,
+    age: p.age,
+    phone: p.phone,
+    bio: p.bio,
+    serviceAreas: p.serviceAreas,
+    availableHours: p.availableHours,
+    certifications: p.certifications,
+    languages: p.languages,
+    personalityTags: p.personalityTags,
+    serviceTypes: p.serviceTypes,
+    completedOrderThemes: p.completedOrderThemes,
+    reviewSummary: p.reviewSummary,
+  };
+}
 
 function currentSettlementPeriod() {
   const now = new Date();
@@ -189,16 +265,7 @@ function roleFromEmail(email: string): RoleKey {
   return 'student';
 }
 
-/** 演示手机号 → seed 邮箱；任意 11 位未映射号默认学生演示账号 */
-const DEMO_PHONE_EMAIL: Record<string, string> = {
-  '13800000001': 'student1@test.nuanban.dev',
-  '13800000002': 'student2@test.nuanban.dev',
-  '13800000003': 'student3@test.nuanban.dev',
-  '13800000004': 'family1@test.nuanban.dev',
-  '13800000005': 'elder1@test.nuanban.dev',
-  '13800000006': 'multi1@test.nuanban.dev',
-};
-
+/** 任意 11 位未映射号默认学生演示账号 */
 function emailFromPhone(phone: string): string {
   const digits = phone.replace(/\D/g, '');
   return DEMO_PHONE_EMAIL[digits] || 'student1@test.nuanban.dev';
@@ -502,6 +569,9 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
     const user = demoUserForRoles(roles);
     if (displayName) user.nickname = displayName;
     persistDemoRoles(roles, user);
+    if (role === 'student' && data.referralCode) {
+      applyReferralOnStudentRegister(user.id, displayName || user.nickname, String(data.referralCode));
+    }
     return delay({ ok: true, roles } as T);
   }
 
@@ -525,6 +595,13 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
   if (method === 'POST' && path === '/nuanban/wx-login') {
     const pickRole = data.role as RoleKey | undefined;
     return delay(loginDemoWx(pickRole) as T);
+  }
+
+  if (method === 'GET' && path === '/nuanban/student/referral') {
+    const roleErr = assertDemoActiveRole(options, path, 'student');
+    if (roleErr) return Promise.reject({ message: roleErr, statusCode: 403 });
+    const user = demoUserForRoles(mockRegisterRoles);
+    return delay(getReferralOverview(user.id) as T);
   }
 
   if (method === 'GET' && path === '/nuanban/student/settlements') {
@@ -553,17 +630,27 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
   if (method === 'GET' && path === '/nuanban/student/profile') {
     const roleErr = assertDemoActiveRole(options, path, 'student');
     if (roleErr) return Promise.reject({ message: roleErr, statusCode: 403 });
-    return delay({
-      nickname: USERS.student.nickname,
-      email: USERS.student.email,
-      schoolName: studentProfileState.schoolName,
-      displayName: studentProfileState.displayName,
-    } as T);
+    return delay(studentProfileDto() as T);
   }
   if (method === 'PATCH' && path === '/nuanban/student/profile') {
     if (data.displayName) studentProfileState.displayName = String(data.displayName);
     if (data.schoolName) studentProfileState.schoolName = String(data.schoolName);
-    return delay({ ok: true, ...studentProfileState } as T);
+    if (data.bio != null) studentProfileState.bio = String(data.bio);
+    if (data.major) studentProfileState.major = String(data.major);
+    if (data.grade) studentProfileState.grade = String(data.grade);
+    if (Array.isArray(data.availableHours)) {
+      studentProfileState.availableHours = data.availableHours.map(String);
+    }
+    if (Array.isArray(data.serviceAreas)) {
+      studentProfileState.serviceAreas = data.serviceAreas.map(String);
+    }
+    return delay({ ok: true, ...studentProfileDto() } as T);
+  }
+  const studentElderProfile = path.match(/^\/nuanban\/student\/elders\/([^/]+)\/profile$/);
+  if (method === 'GET' && studentElderProfile) {
+    const dto = elderProfileDto(studentElderProfile[1]);
+    if (!dto) return Promise.reject({ message: '老人档案不存在' });
+    return delay(dto as T);
   }
   if (method === 'GET' && path === '/nuanban/org/orders/dispatchable') {
     const list = state.orders
@@ -655,6 +742,9 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
         createdAt: new Date().toISOString(),
       });
       addToPendingSettlement(order.amount_cents);
+      if (order.student_user) {
+        applyReferralOnFirstOrderComplete(order.student_user);
+      }
     }
     return delay({
       ok: true,
@@ -820,6 +910,22 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
   }
   if (method === 'GET' && path === '/nuanban/elder/caregivers/nearby') {
     return delay({ list: CAREGIVERS.map(caregiverToListItem) } as T);
+  }
+  const elderCaregiverDetail = path.match(/^\/nuanban\/elder\/caregivers\/([^/]+)$/);
+  if (method === 'GET' && elderCaregiverDetail) {
+    const dto = caregiverProfileDto(elderCaregiverDetail[1]);
+    if (!dto) return Promise.reject({ message: '陪护同学不存在' });
+    return delay(dto as T);
+  }
+  if (method === 'GET' && path === '/nuanban/elder/profile') {
+    const roleErr = assertDemoActiveRole(options, path, 'elder');
+    if (roleErr) return Promise.reject({ message: roleErr, statusCode: 403 });
+    return delay(getElderSelfProfile() as T);
+  }
+  if (method === 'GET' && path === '/nuanban/family/profile') {
+    const roleErr = assertDemoActiveRole(options, path, 'family');
+    if (roleErr) return Promise.reject({ message: roleErr, statusCode: 403 });
+    return delay(getFamilyProfile() as T);
   }
   if (method === 'POST' && path === '/nuanban/elder/sos') {
     const elderId = String(data.elderId || 'elder-zhang');

@@ -19,6 +19,8 @@
       </view>
     </view>
 
+    <ProfileDetailCard v-if="detailSections.length" :sections="detailSections" />
+
     <view class="menu-card">
       <view v-for="item in menuItems" :key="item.label" class="menu-item" @tap="item.action">
         <text>{{ item.label }}</text>
@@ -36,8 +38,9 @@
 import { computed, ref } from 'vue';
 import { onShow } from '@dcloudio/uni-app';
 import RoleTabBar from './RoleTabBar.vue';
-import { fetchFamilyStats } from '../api/family';
-import { fetchElderStats } from '../api/elder';
+import ProfileDetailCard, { type ProfileDetailSection } from './ProfileDetailCard.vue';
+import { fetchFamilyStats, fetchFamilyProfile, type FamilyProfile } from '../api/family';
+import { fetchElderStats, fetchElderSelfProfile, type ElderSelfProfile } from '../api/elder';
 import { listBoundElders, listPendingPaymentOrders } from '../api/family';
 import { useRoleStore } from '../store/role';
 import { pbErrorMessage } from '../utils/request';
@@ -48,6 +51,8 @@ const roleStore = useRoleStore();
 
 const familyStats = ref<{ boundElderCount: number; pendingPaymentCount: number; paidTotalYuan: string } | null>(null);
 const elderStats = ref<{ elderName: string; orderCount: number; activeCount: number } | null>(null);
+const familyProfile = ref<FamilyProfile | null>(null);
+const elderProfile = ref<ElderSelfProfile | null>(null);
 
 const roleLabel = computed(() => {
   const map: Record<RoleKey, string> = { student: '家属', family: '家属', elder: '老人' };
@@ -56,6 +61,8 @@ const roleLabel = computed(() => {
 });
 
 const displayName = computed(() => {
+  if (props.role === 'elder' && elderProfile.value?.name) return elderProfile.value.name;
+  if (props.role === 'family' && familyProfile.value?.nickname) return familyProfile.value.nickname;
   if (props.role === 'elder' && elderStats.value?.elderName) return elderStats.value.elderName;
   return roleStore.user?.nickname || '演示用户';
 });
@@ -63,8 +70,11 @@ const displayName = computed(() => {
 const avatarChar = computed(() => displayName.value.slice(0, 1));
 
 const subLine = computed(() => {
-  if (props.role === 'family') return `绑定老人 ${familyStats.value?.boundElderCount ?? 0} 位`;
-  if (props.role === 'elder') return '暖伴示范养老院';
+  if (props.role === 'family') {
+    const linked = familyProfile.value?.linkedElderName;
+    return linked ? `照护 ${linked}（${familyProfile.value?.relationToElder || '家属'}）` : `绑定老人 ${familyStats.value?.boundElderCount ?? 0} 位`;
+  }
+  if (props.role === 'elder') return elderProfile.value?.orgName || '暖伴示范养老院';
   return '';
 });
 
@@ -81,6 +91,79 @@ const statItems = computed(() => {
       { label: '我的订单', value: String(elderStats.value?.orderCount ?? 0), accent: false },
       { label: '进行中', value: String(elderStats.value?.activeCount ?? 0), accent: true },
       { label: '档案', value: elderStats.value?.elderName ? '已绑定' : '未绑定', accent: false },
+    ];
+  }
+  return [];
+});
+
+const detailSections = computed((): ProfileDetailSection[] => {
+  if (props.role === 'family' && familyProfile.value) {
+    const p = familyProfile.value;
+    return [
+      {
+        title: '联系信息',
+        rows: [
+          { label: '邮箱', value: p.email },
+          { label: '联系电话', value: p.contactPhone },
+          { label: '所在区域', value: p.district },
+          { label: '联系地址', value: p.address },
+        ],
+      },
+      {
+        title: '照护关系',
+        rows: [
+          { label: '绑定老人', value: p.linkedElderName },
+          { label: '与老人关系', value: p.relationToElder },
+        ],
+      },
+      {
+        title: '通知偏好',
+        tags: p.notificationPrefs,
+      },
+    ];
+  }
+  if (props.role === 'elder' && elderProfile.value) {
+    const p = elderProfile.value;
+    return [
+      {
+        title: '基本信息',
+        rows: [
+          { label: '年龄', value: `${p.age} 岁` },
+          { label: '性别', value: p.gender },
+          { label: '所在区域', value: p.district },
+          { label: '居住地址', value: p.address },
+          { label: '所属机构', value: p.orgName },
+          { label: '居住情况', value: p.livingSituation },
+        ],
+      },
+      {
+        title: '健康状况',
+        rows: [
+          { label: '健康概况', value: p.healthStatus },
+          { label: '行动能力', value: p.mobility },
+        ],
+      },
+      {
+        title: '兴趣爱好',
+        tags: p.hobbies,
+      },
+      {
+        title: '服务偏好',
+        tags: p.servicePreferences,
+        rows: p.preferredVisitTimes.map((t, i) => ({
+          label: i === 0 ? '期望时段' : '',
+          value: t,
+        })),
+      },
+      {
+        title: '紧急联系人',
+        rows: [
+          { label: '姓名', value: p.emergencyContact.name },
+          { label: '关系', value: p.emergencyContact.relation },
+          { label: '电话', value: p.emergencyContact.phone },
+        ],
+        note: p.notes,
+      },
     ];
   }
   return [];
@@ -115,8 +198,16 @@ const menuItems = computed(() => {
 
 onShow(async () => {
   try {
-    if (props.role === 'family') familyStats.value = await fetchFamilyStats();
-    if (props.role === 'elder') elderStats.value = await fetchElderStats();
+    if (props.role === 'family') {
+      const [stats, profile] = await Promise.all([fetchFamilyStats(), fetchFamilyProfile()]);
+      familyStats.value = stats;
+      familyProfile.value = profile;
+    }
+    if (props.role === 'elder') {
+      const [stats, profile] = await Promise.all([fetchElderStats(), fetchElderSelfProfile()]);
+      elderStats.value = stats;
+      elderProfile.value = profile;
+    }
   } catch (e) {
     uni.showToast({ title: pbErrorMessage(e), icon: 'none' });
   }
@@ -155,16 +246,16 @@ function logout() {
 <style scoped>
 .page {
   min-height: 100vh;
-  background: #f5f5f5;
+  background: var(--nb-page-bg, #f5f5f5);
   padding: 24rpx;
   padding-bottom: 120rpx;
 }
 .hero {
   display: flex;
   align-items: center;
-  background: linear-gradient(135deg, #fff8f0, #fff);
+  background: var(--nb-hero-gradient, linear-gradient(135deg, #fff8f0, #fff));
   padding: 40rpx 32rpx;
-  border-radius: 16rpx;
+  border-radius: var(--nb-radius-md, 16rpx);
   margin-bottom: 24rpx;
 }
 .avatar {
@@ -172,7 +263,7 @@ function logout() {
   height: 100rpx;
   line-height: 100rpx;
   text-align: center;
-  background: #c45c26;
+  background: var(--nb-primary, #c45c26);
   color: #fff;
   font-size: 40rpx;
   font-weight: 600;
@@ -192,20 +283,20 @@ function logout() {
   margin-top: 8rpx;
   padding: 4rpx 12rpx;
   font-size: 22rpx;
-  color: #c45c26;
-  background: #fff5ef;
+  color: var(--nb-primary, #c45c26);
+  background: var(--nb-primary-soft, #fff5ef);
   border-radius: 8rpx;
 }
 .sub {
   display: block;
   margin-top: 8rpx;
   font-size: 24rpx;
-  color: #888;
+  color: var(--nb-text-muted, #888);
 }
 .stats-card {
   display: flex;
-  background: #fff;
-  border-radius: 12rpx;
+  background: var(--nb-surface, #fff);
+  border-radius: var(--nb-radius-sm, 12rpx);
   padding: 32rpx 0;
   margin-bottom: 24rpx;
 }
@@ -230,7 +321,7 @@ function logout() {
   color: #333;
 }
 .stat-num.accent {
-  color: #c45c26;
+  color: var(--nb-primary, #c45c26);
 }
 .stat-label {
   display: block;
@@ -239,8 +330,8 @@ function logout() {
   color: #999;
 }
 .menu-card {
-  background: #fff;
-  border-radius: 12rpx;
+  background: var(--nb-surface, #fff);
+  border-radius: var(--nb-radius-sm, 12rpx);
   margin-bottom: 32rpx;
 }
 .menu-item {
@@ -254,8 +345,8 @@ function logout() {
 }
 .btn-outline {
   background: #fff;
-  color: #c45c26;
-  border: 2rpx solid #c45c26;
+  color: var(--nb-primary, #c45c26);
+  border: 2rpx solid var(--nb-primary, #c45c26);
   margin-bottom: 24rpx;
 }
 .btn-danger {

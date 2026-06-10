@@ -2,7 +2,17 @@
 
 > 您休息期间已推送 GitHub，Actions 会自动更新公网演示。
 
-## 本轮（Phase 17 · 有偿闭环强化）
+## 本轮（Phase 18 · 同学拉新推荐有奖）
+
+1. **推荐有奖** 页：`package-student/referral/index` · 推荐码 / 邀请链接 / 记录
+2. 奖励规则（演示）：注册 ¥5 待到账 + 首单完成再 ¥10
+3. 深链 `launch?ref=NBxxxx` → 登录 → 注册学生自动绑定推荐码
+4. 学生首页横幅 + 我的 → **推荐有奖**
+5. API：`GET /nuanban/student/referral` · register 支持 `referralCode`
+
+验收：`13800000001` 登录 → 我的 → 推荐有奖 → 复制链接
+
+## 上一轮（Phase 17 · 有偿闭环强化）
 
 1. **完成订单** → 自动累加当月「待结算」金额（mock 动态 settlements）
 2. 完成服务提示「已计入收入与待结算」

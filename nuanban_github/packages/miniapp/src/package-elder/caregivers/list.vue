@@ -47,17 +47,8 @@ onMounted(async () => {
 });
 
 function goDetail(item: CaregiverItem) {
-  const q = [
-    `studentUserId=${item.userId || ''}`,
-    `name=${encodeURIComponent(item.name || '')}`,
-    `school=${encodeURIComponent(item.school || '')}`,
-    `distance=${encodeURIComponent(item.distance || '')}`,
-    `rating=${item.rating ?? ''}`,
-    `orderCount=${item.orderCount ?? ''}`,
-    `intro=${encodeURIComponent(item.intro || '')}`,
-    `tags=${encodeURIComponent((item.tags || []).join(','))}`,
-  ].join('&');
-  uni.navigateTo({ url: `/package-elder/caregivers/detail?${q}` });
+  const id = item.id || item.userId || '';
+  uni.navigateTo({ url: `/package-elder/caregivers/detail?id=${id}` });
 }
 </script>
 

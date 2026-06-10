@@ -49,6 +49,41 @@ export interface StudentProfile {
   email: string;
   schoolName: string;
   displayName: string;
+  gender?: string;
+  major?: string;
+  grade?: string;
+  age?: number;
+  phone?: string;
+  bio?: string;
+  serviceAreas?: string[];
+  availableHours?: string[];
+  certifications?: string[];
+  languages?: string[];
+  personalityTags?: string[];
+  serviceTypes?: string[];
+  completedOrderThemes?: string[];
+  rating?: number;
+  orderCount?: number;
+}
+
+export interface ElderProfileDetail {
+  id: string;
+  name: string;
+  age: number;
+  gender: string;
+  district: string;
+  address: string;
+  orgName: string;
+  tags: string[];
+  intro: string;
+  healthStatus: string;
+  mobility: string;
+  hobbies: string[];
+  servicePreferences: string[];
+  livingSituation: string;
+  emergencyContact: { name: string; relation: string; phone: string };
+  preferredVisitTimes: string[];
+  notes: string;
 }
 
 export interface StudentStats {
@@ -66,11 +101,26 @@ export async function fetchStudentProfile() {
   });
 }
 
-export async function updateStudentProfile(data: { displayName?: string; schoolName?: string }) {
-  return request<{ ok: boolean; displayName?: string; schoolName?: string }>({
+export async function updateStudentProfile(data: {
+  displayName?: string;
+  schoolName?: string;
+  bio?: string;
+  major?: string;
+  grade?: string;
+  availableHours?: string[];
+  serviceAreas?: string[];
+}) {
+  return request<{ ok: boolean } & Partial<StudentProfile>>({
     url: '/nuanban/student/profile',
     method: 'PATCH',
     data,
+  });
+}
+
+export async function fetchElderProfile(elderId: string) {
+  return request<ElderProfileDetail>({
+    url: `/nuanban/student/elders/${elderId}/profile`,
+    method: 'GET',
   });
 }
 

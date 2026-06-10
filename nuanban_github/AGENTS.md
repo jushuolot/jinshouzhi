@@ -52,13 +52,18 @@ git pull --rebase origin main && git push origin main
 
 ## 演示账号
 
-| 邮箱 | 角色 | 用途 |
-|------|------|------|
-| `student1@test.nuanban.dev` | 学生 | 示范大学、默认主流程 |
-| `student2@test.nuanban.dev` | 学生 | 城东师范学院、学校合作筛选 |
-| `family1@test.nuanban.dev` | 家属 | 代付、外出、服务包 |
-| `elder1@test.nuanban.dev` | 老人 | 找陪护、SOS |
-| `multi1@test.nuanban.dev` | 三角色 | 身份切换演示 |
+手机号登录（验证码可留空）；配置见 `demo-rich-data.ts` → `DEMO_TEST_PHONES`，与 `pb_hooks` `phoneToEmail` 对齐。
+
+| 手机号 | 邮箱 | 角色 | 用途 |
+|--------|------|------|------|
+| `13800000001` | `student1@test.nuanban.dev` | 学生 | 示范大学、默认主流程（接单/收入/推荐） |
+| `13800000002` | `student2@test.nuanban.dev` | 学生 | 城东师范学院、学校合作筛选 |
+| `13800000003` | `student3@test.nuanban.dev` | 学生 | 审核中页、无法接单 |
+| `13800000004` | `family1@test.nuanban.dev` | 家属 | 代付、外出、服务包、SOS |
+| `13800000005` | `elder1@test.nuanban.dev` | 老人 | 找陪护、SOS |
+| `13800000006` | `multi1@test.nuanban.dev` | 三角色 | 身份切换演示 |
+
+机构派单 / 运营演示：登录页 **更多 → 超级管理**（无独立手机号）。
 
 ## 产品核心（勿偏离）
 

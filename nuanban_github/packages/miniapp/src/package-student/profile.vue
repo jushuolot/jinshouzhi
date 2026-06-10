@@ -28,6 +28,8 @@
     </view>
     <text v-if="stats && stats.incomeCents === 0" class="stats-hint">完成订单并确认后计入收入</text>
 
+    <ProfileDetailCard v-if="profileSections.length" :sections="profileSections" />
+
     <view class="menu-card">
       <view v-if="roleStore.activeRoles.length > 1" class="menu-item" @tap="goRoleSelect">
         <text>切换身份</text>
@@ -39,6 +41,11 @@
       </view>
       <view class="menu-item" @tap="goActive">
         <text>服务中订单</text>
+        <text class="arrow">›</text>
+      </view>
+      <view class="menu-item highlight" @tap="goReferral">
+        <text>推荐有奖</text>
+        <text class="menu-tag">拉新 ¥15</text>
         <text class="arrow">›</text>
       </view>
       <view class="menu-item" @tap="goIncome">
@@ -78,6 +85,7 @@
 import { computed, ref } from 'vue';
 import { onShow } from '@dcloudio/uni-app';
 import RoleTabBar from '../components/RoleTabBar.vue';
+import ProfileDetailCard, { type ProfileDetailSection } from '../components/ProfileDetailCard.vue';
 import {
   fetchStudentProfile,
   fetchStudentStats,
@@ -96,6 +104,42 @@ const stats = ref<StudentStats | null>(null);
 const avatarChar = computed(() => {
   const n = profile.value?.nickname || roleStore.user?.nickname || '学';
   return n.slice(0, 1);
+});
+
+const profileSections = computed((): ProfileDetailSection[] => {
+  const p = profile.value;
+  if (!p?.major) return [];
+  return [
+    {
+      title: '学业信息',
+      rows: [
+        { label: '专业', value: p.major || '-' },
+        { label: '年级', value: p.grade || '-' },
+        { label: '年龄', value: p.age ? `${p.age} 岁` : '-' },
+        { label: '联系电话', value: p.phone || '-' },
+      ],
+    },
+    {
+      title: '服务能力',
+      tags: p.serviceTypes,
+      rows: [
+        { label: '服务区域', value: (p.serviceAreas || []).join('、') || '-' },
+        { label: '语言能力', value: (p.languages || []).join('、') || '-' },
+        { label: '资质证书', value: (p.certifications || []).join('、') || '-' },
+        { label: '服务评分', value: p.rating ? `★ ${p.rating}` : '-' },
+        { label: '累计服务', value: p.orderCount ? `${p.orderCount} 次` : '-' },
+      ],
+      note: p.bio,
+    },
+    {
+      title: '可服务时间',
+      rows: (p.availableHours || []).map((h, i) => ({
+        label: i === 0 ? '时段' : '',
+        value: h,
+      })),
+      tags: p.personalityTags,
+    },
+  ];
 });
 
 onShow(async () => {
@@ -128,6 +172,10 @@ async function goPending() {
 
 function goActive() {
   uni.navigateTo({ url: '/package-student/order/active' });
+}
+
+function goReferral() {
+  uni.navigateTo({ url: '/package-student/referral/index' });
 }
 
 function goIncome() {
@@ -275,6 +323,19 @@ function logout() {
 }
 .menu-item:last-child {
   border-bottom: none;
+}
+.menu-item.highlight {
+  background: var(--nb-primary-soft, #fff5ef);
+}
+.menu-tag {
+  margin-left: auto;
+  margin-right: 12rpx;
+  font-size: 22rpx;
+  color: var(--nb-primary, #c45c26);
+  background: #fff;
+  padding: 4rpx 12rpx;
+  border-radius: 999rpx;
+  border: 1rpx solid var(--nb-border-dashed, #e8c4a8);
 }
 .arrow {
   color: #ccc;

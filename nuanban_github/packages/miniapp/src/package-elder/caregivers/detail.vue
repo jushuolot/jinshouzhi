@@ -1,80 +1,125 @@
 <template>
   <view class="page elder-mode">
-    <MatchScoreBadge v-if="matchScore" :score="matchScore" />
+    <view v-if="loading" class="state">加载中…</view>
+    <template v-else-if="profile">
+      <MatchScoreBadge v-if="matchScore" :score="matchScore" />
 
-    <view class="profile-hero">
-      <view class="avatar">{{ avatarChar }}</view>
-      <view class="hero-info">
-        <text class="name">{{ name || '同学' }}</text>
-        <text class="meta">{{ school || '高校志愿者' }}</text>
-        <view class="hero-row">
-          <text v-if="distance" class="distance">{{ distance }}</text>
-          <text v-if="rating" class="rating">★ {{ rating }}</text>
+      <view class="profile-hero">
+        <view class="avatar">{{ avatarChar }}</view>
+        <view class="hero-info">
+          <text class="name">{{ profile.name }}</text>
+          <text class="meta">{{ profile.school }} · {{ profile.grade }}</text>
+          <view class="hero-row">
+            <text v-if="profile.distance" class="distance">{{ profile.distance }}</text>
+            <text class="rating">★ {{ profile.rating }}</text>
+          </view>
+          <text class="extra">已服务 {{ profile.orderCount }} 次</text>
         </view>
-        <text v-if="orderCount" class="extra">已服务 {{ orderCount }} 次</text>
       </view>
-    </view>
 
-    <view v-if="tags.length" class="card">
-      <text class="card-title">擅长服务</text>
-      <view class="tags">
-        <text v-for="tag in tags" :key="tag" class="tag">{{ tag }}</text>
-      </view>
-    </view>
+      <ProfileDetailCard :sections="detailSections" />
 
-    <view v-if="intro" class="card">
-      <text class="card-title">个人简介</text>
-      <text class="intro">{{ intro }}</text>
-    </view>
-
-    <button class="btn-primary" @tap="goOrder">选择服务并预约</button>
+      <button class="btn-primary" @tap="goOrder">选择服务并预约</button>
+    </template>
+    <view v-else class="state">未找到陪护同学信息</view>
   </view>
 </template>
 
 <script setup lang="ts">
 import { onLoad } from '@dcloudio/uni-app';
 import { computed, ref } from 'vue';
+import { getCaregiverDetail, type CaregiverProfileDetail } from '../../api/elder';
 import MatchScoreBadge from '../../components/MatchScoreBadge.vue';
+import ProfileDetailCard, { type ProfileDetailSection } from '../../components/ProfileDetailCard.vue';
 import { computeMatchScore, parseDistanceKm } from '../../utils/match-score';
+import { pbErrorMessage } from '../../utils/request';
 
-const studentUserId = ref('');
-const name = ref('');
-const school = ref('');
-const distance = ref('');
-const rating = ref('');
-const orderCount = ref('');
-const intro = ref('');
-const tags = ref<string[]>([]);
+const caregiverId = ref('');
+const profile = ref<CaregiverProfileDetail | null>(null);
+const loading = ref(true);
 
-const avatarChar = computed(() => decodeURIComponent(name.value || '同').slice(0, 1));
+const avatarChar = computed(() => (profile.value?.name || '同').slice(0, 1));
 
 const matchScore = computed(() => {
-  const km = parseDistanceKm(distance.value);
-  const ratingNum = rating.value ? parseFloat(rating.value) : undefined;
-  const orders = orderCount.value ? parseInt(orderCount.value, 10) : undefined;
-  if (km == null && ratingNum == null) return 0;
+  const p = profile.value;
+  if (!p) return 0;
+  const km = p.distanceKm ?? parseDistanceKm(p.distance || '');
+  if (km == null && !p.rating) return 0;
   return computeMatchScore({
-    distanceKm: km,
-    rating: ratingNum,
-    orderCount: Number.isNaN(orders) ? undefined : orders,
+    distanceKm: km ?? undefined,
+    rating: p.rating,
+    orderCount: p.orderCount,
   });
 });
 
-onLoad((q) => {
-  studentUserId.value = (q?.studentUserId as string) || '';
-  name.value = decodeURIComponent((q?.name as string) || '');
-  school.value = decodeURIComponent((q?.school as string) || '');
-  distance.value = decodeURIComponent((q?.distance as string) || '');
-  rating.value = (q?.rating as string) || '';
-  orderCount.value = (q?.orderCount as string) || '';
-  intro.value = decodeURIComponent((q?.intro as string) || '');
-  const tagStr = decodeURIComponent((q?.tags as string) || '');
-  tags.value = tagStr ? tagStr.split(',').filter(Boolean) : [];
+const detailSections = computed((): ProfileDetailSection[] => {
+  const p = profile.value;
+  if (!p) return [];
+  return [
+    {
+      title: '学业信息',
+      rows: [
+        { label: '学校', value: p.school },
+        { label: '专业', value: p.major },
+        { label: '年级', value: p.grade },
+        { label: '年龄', value: `${p.age} 岁` },
+        { label: '性别', value: p.gender },
+        { label: '联系电话', value: p.phone },
+      ],
+    },
+    {
+      title: '服务能力',
+      tags: p.serviceTypes,
+      rows: [
+        { label: '服务区域', value: p.serviceAreas.join('、') },
+        { label: '语言能力', value: p.languages.join('、') },
+        { label: '资质证书', value: p.certifications.join('、') },
+      ],
+      note: p.bio,
+    },
+    {
+      title: '可服务时间',
+      rows: p.availableHours.map((h, i) => ({
+        label: i === 0 ? '时段' : '',
+        value: h,
+      })),
+      tags: p.personalityTags,
+    },
+    {
+      title: '个人简介',
+      note: p.intro,
+      tags: p.tags,
+    },
+    {
+      title: '评价摘要',
+      rows: p.completedOrderThemes.map((t, i) => ({
+        label: i === 0 ? '服务记录' : '',
+        value: t,
+      })),
+      note: p.reviewSummary,
+    },
+  ];
+});
+
+onLoad(async (q) => {
+  caregiverId.value = (q?.id as string) || (q?.studentUserId as string) || '';
+  if (!caregiverId.value) {
+    loading.value = false;
+    return;
+  }
+  try {
+    profile.value = await getCaregiverDetail(caregiverId.value);
+  } catch (e) {
+    uni.showToast({ title: pbErrorMessage(e), icon: 'none' });
+  } finally {
+    loading.value = false;
+  }
 });
 
 function goOrder() {
+  const uid = profile.value?.userId || caregiverId.value;
   uni.navigateTo({
-    url: `/package-elder/order/create?studentUserId=${studentUserId.value}`,
+    url: `/package-elder/order/create?studentUserId=${uid}`,
   });
 }
 </script>
@@ -82,15 +127,15 @@ function goOrder() {
 <style scoped>
 .page {
   min-height: 100vh;
-  background: #f5f5f5;
+  background: var(--nb-page-bg, #f5f5f5);
   padding: 24rpx;
 }
 .profile-hero {
   display: flex;
   align-items: flex-start;
-  background: linear-gradient(135deg, #fff8f0, #fff);
+  background: var(--nb-hero-gradient, linear-gradient(135deg, #fff8f0, #fff));
   padding: 40rpx 32rpx;
-  border-radius: 16rpx;
+  border-radius: var(--nb-radius-md, 16rpx);
   margin-bottom: 24rpx;
 }
 .avatar {
@@ -98,7 +143,7 @@ function goOrder() {
   height: 120rpx;
   line-height: 120rpx;
   text-align: center;
-  background: #c45c26;
+  background: var(--nb-primary, #c45c26);
   color: #fff;
   font-size: 48rpx;
   font-weight: 600;
@@ -110,13 +155,13 @@ function goOrder() {
   display: block;
   font-size: 40rpx;
   font-weight: 600;
-  color: #333;
+  color: var(--nb-text, #333);
 }
 .meta {
   display: block;
   margin-top: 8rpx;
   font-size: 26rpx;
-  color: #888;
+  color: var(--nb-text-muted, #888);
 }
 .hero-row {
   display: flex;
@@ -125,7 +170,7 @@ function goOrder() {
 }
 .distance {
   font-size: 26rpx;
-  color: #c45c26;
+  color: var(--nb-primary, #c45c26);
 }
 .rating {
   font-size: 26rpx;
@@ -136,41 +181,17 @@ function goOrder() {
   display: block;
   margin-top: 8rpx;
   font-size: 24rpx;
-  color: #999;
-}
-.card {
-  background: #fff;
-  padding: 28rpx;
-  border-radius: 16rpx;
-  margin-bottom: 20rpx;
-}
-.card-title {
-  display: block;
-  font-size: 28rpx;
-  font-weight: 600;
-  margin-bottom: 16rpx;
-}
-.tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12rpx;
-}
-.tag {
-  padding: 6rpx 18rpx;
-  font-size: 24rpx;
-  color: #c45c26;
-  background: #fff5ef;
-  border-radius: 24rpx;
-}
-.intro {
-  font-size: 28rpx;
-  color: #666;
-  line-height: 1.7;
+  color: var(--nb-text-muted, #999);
 }
 .btn-primary {
   margin-top: 32rpx;
-  background: #c45c26;
+  background: var(--nb-primary, #c45c26);
   color: #fff;
-  border-radius: 12rpx;
+  border-radius: var(--nb-radius-sm, 12rpx);
+}
+.state {
+  text-align: center;
+  color: #999;
+  padding: 80rpx;
 }
 </style>
