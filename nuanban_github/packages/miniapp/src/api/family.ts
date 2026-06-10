@@ -53,10 +53,11 @@ export async function payOrder(orderId: string) {
   });
 }
 
-export async function confirmOrderComplete(orderId: string) {
+export async function confirmOrderComplete(orderId: string, payMethod?: 'wallet') {
   return request<{ ok: boolean; status: string; payment_status?: string }>({
     url: `/nuanban/family/orders/${orderId}/confirm-complete`,
     method: 'POST',
+    data: payMethod ? { payMethod } : undefined,
   });
 }
 

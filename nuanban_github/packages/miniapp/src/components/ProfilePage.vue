@@ -22,8 +22,15 @@
     <ProfileDetailCard v-if="detailSections.length" :sections="detailSections" />
 
     <view class="menu-card">
-      <view v-for="item in menuItems" :key="item.label" class="menu-item" @tap="item.action">
+      <view
+        v-for="item in menuItems"
+        :key="item.label"
+        class="menu-item"
+        :class="{ highlight: item.highlight }"
+        @tap="item.action"
+      >
         <text>{{ item.label }}</text>
+        <text v-if="item.badge" class="menu-tag">{{ item.badge }}</text>
         <text class="arrow">›</text>
       </view>
     </view>
@@ -46,6 +53,7 @@ import RoleTabBar from './RoleTabBar.vue';
 import ProfileDetailCard, { type ProfileDetailSection } from './ProfileDetailCard.vue';
 import { fetchFamilyStats, fetchFamilyProfile, type FamilyProfile } from '../api/family';
 import { fetchElderStats, fetchElderSelfProfile, type ElderSelfProfile } from '../api/elder';
+import { fetchElderWallet, fetchFamilyWallet } from '../api/wallet';
 import { listBoundElders, listPendingPaymentOrders } from '../api/family';
 import { useRoleStore } from '../store/role';
 import { elderFontClass } from '../utils/elder-accessibility';
@@ -60,6 +68,7 @@ const familyStats = ref<{ boundElderCount: number; pendingPaymentCount: number; 
 const elderStats = ref<{ elderName: string; orderCount: number; activeCount: number } | null>(null);
 const familyProfile = ref<FamilyProfile | null>(null);
 const elderProfile = ref<ElderSelfProfile | null>(null);
+const walletBalanceYuan = ref('0.00');
 
 const roleLabel = computed(() => {
   const map: Record<RoleKey, string> = { student: '家属', family: '家属', elder: '老人' };
@@ -184,6 +193,12 @@ const menuItems = computed(() => {
   if (props.role === 'family') {
     return [
       ...switchRole,
+      {
+        label: '储值卡',
+        badge: `¥${walletBalanceYuan.value}`,
+        highlight: true,
+        action: () => uni.navigateTo({ url: '/package-family/wallet/index' }),
+      },
       { label: '待支付订单', action: goFamilyPay },
       { label: '订单列表', action: () => uni.redirectTo({ url: '/package-family/order/list' }) },
       { label: '绑定老人', action: () => uni.navigateTo({ url: '/package-family/bind' }) },
@@ -193,6 +208,12 @@ const menuItems = computed(() => {
   if (props.role === 'elder') {
     return [
       ...switchRole,
+      {
+        label: '储值卡',
+        badge: `¥${walletBalanceYuan.value}`,
+        highlight: true,
+        action: () => uni.navigateTo({ url: '/package-elder/wallet/index' }),
+      },
       { label: '找陪护', action: () => uni.navigateTo({ url: '/package-elder/caregivers/list' }) },
       { label: '我的服务', action: () => uni.redirectTo({ url: '/package-elder/order/list' }) },
       { label: '家属绑定码', action: () => uni.navigateTo({ url: '/package-elder/bind-code' }) },
@@ -207,14 +228,24 @@ onShow(async () => {
   if (props.role === 'elder') elderFontCls.value = elderFontClass();
   try {
     if (props.role === 'family') {
-      const [stats, profile] = await Promise.all([fetchFamilyStats(), fetchFamilyProfile()]);
+      const [stats, profile, wallet] = await Promise.all([
+        fetchFamilyStats(),
+        fetchFamilyProfile(),
+        fetchFamilyWallet().catch(() => null),
+      ]);
       familyStats.value = stats;
       familyProfile.value = profile;
+      if (wallet) walletBalanceYuan.value = wallet.balanceYuan;
     }
     if (props.role === 'elder') {
-      const [stats, profile] = await Promise.all([fetchElderStats(), fetchElderSelfProfile()]);
+      const [stats, profile, wallet] = await Promise.all([
+        fetchElderStats(),
+        fetchElderSelfProfile(),
+        fetchElderWallet().catch(() => null),
+      ]);
       elderStats.value = stats;
       elderProfile.value = profile;
+      if (wallet) walletBalanceYuan.value = wallet.balanceYuan;
     }
   } catch (e) {
     uni.showToast({ title: pbErrorMessage(e), icon: 'none' });
@@ -350,8 +381,19 @@ function logout() {
 .menu-item {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   padding: 32rpx 28rpx;
   border-bottom: 1rpx solid #f5f5f5;
+}
+.menu-item.highlight {
+  background: var(--nb-primary-soft, #fff5ef);
+}
+.menu-tag {
+  margin-left: auto;
+  margin-right: 12rpx;
+  font-size: 24rpx;
+  color: var(--nb-primary, #c45c26);
+  font-weight: 600;
 }
 .arrow {
   color: #ccc;

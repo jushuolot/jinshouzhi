@@ -196,10 +196,11 @@ export async function getOrder(id: string) {
   return res.items[0] ?? null;
 }
 
-export async function confirmOrderComplete(orderId: string) {
+export async function confirmOrderComplete(orderId: string, payMethod?: 'wallet') {
   return request<{ ok: boolean; status: string; payment_status?: string }>({
     url: `/nuanban/elder/orders/${orderId}/confirm-complete`,
     method: 'POST',
+    data: payMethod ? { payMethod } : undefined,
   });
 }
 

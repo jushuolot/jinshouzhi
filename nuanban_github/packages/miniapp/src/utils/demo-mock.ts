@@ -4,6 +4,8 @@ import {
   applyReferralOnStudentRegister,
   getReferralOverview,
 } from './demo-referral';
+import { getWalletOverview, payOrderFromWallet, topupWallet } from './demo-wallet';
+import { getStudentWithdrawalOverview, submitStudentWithdrawal } from './demo-student-wallet';
 import { isGodViewUnlocked } from './god-view-auth';
 import type { RoleKey } from '../config/tabs';
 import {
@@ -219,6 +221,27 @@ function addToPendingSettlement(amountCents: number) {
     amountCents,
     status: 'pending',
   });
+}
+
+function walletPayLabel(order: MockOrder) {
+  const svc = serviceById(order.service_item);
+  const elder = elderById(order.elder);
+  return `${svc.name} · ${elder?.name || '老人'}`;
+}
+
+function walletPayOrderForUser(userId: string, orderId: string) {
+  const order = state.orders.find((o) => o.id === orderId);
+  if (!order) return { ok: false as const, message: '订单不存在' };
+  if (order.payment_status === 'paid') return { ok: false as const, message: '订单已支付' };
+  const payable =
+    order.status === 'pending_payment' ||
+    (order.status === 'pending_confirm' && order.payment_status === 'unpaid');
+  if (!payable) return { ok: false as const, message: '当前订单状态不可支付' };
+  const result = payOrderFromWallet(userId, orderId, order.amount_cents, walletPayLabel(order));
+  if (!result.ok) return result;
+  order.payment_status = 'paid';
+  if (order.status === 'pending_payment') order.status = 'pending_accept';
+  return { ok: true as const, status: order.status, overview: result.overview };
 }
 
 function finalizeOrderAfterConfirm(order: MockOrder) {
@@ -632,6 +655,29 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
     if (roleErr) return Promise.reject({ message: roleErr, statusCode: 403 });
     return delay({ list: [...state.settlements].reverse() } as T);
   }
+  if (method === 'GET' && path === '/nuanban/student/withdrawal') {
+    const roleErr = assertDemoActiveRole(options, path, 'student');
+    if (roleErr) return Promise.reject({ message: roleErr, statusCode: 403 });
+    const user = demoUserForRoles(mockRegisterRoles);
+    return delay(getStudentWithdrawalOverview(user.id, state.settlements) as T);
+  }
+  if (method === 'POST' && path === '/nuanban/student/withdrawal') {
+    const roleErr = assertDemoActiveRole(options, path, 'student');
+    if (roleErr) return Promise.reject({ message: roleErr, statusCode: 403 });
+    const user = demoUserForRoles(mockRegisterRoles);
+    const channel = data.channel === 'bank' ? 'bank' : 'wechat';
+    try {
+      const overview = submitStudentWithdrawal(
+        user.id,
+        state.settlements,
+        Number(data.amountCents),
+        channel,
+      );
+      return delay(overview as T);
+    } catch (err) {
+      return Promise.reject({ message: err instanceof Error ? err.message : '提现失败' });
+    }
+  }
   if (method === 'POST' && path === '/nuanban/family/packages/purchase') {
     const roleErr = assertDemoActiveRole(options, path, 'family');
     if (roleErr) return Promise.reject({ message: roleErr, statusCode: 403 });
@@ -834,6 +880,56 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
     return delay({ ok: true, status: order?.status || 'pending_service' } as T);
   }
 
+  if (method === 'GET' && path === '/nuanban/family/wallet') {
+    const roleErr = assertDemoActiveRole(options, path, 'family');
+    if (roleErr) return Promise.reject({ message: roleErr, statusCode: 403 });
+    const user = demoUserForRoles(mockRegisterRoles);
+    return delay(getWalletOverview(user.id) as T);
+  }
+  if (method === 'POST' && path === '/nuanban/family/wallet/topup') {
+    const roleErr = assertDemoActiveRole(options, path, 'family');
+    if (roleErr) return Promise.reject({ message: roleErr, statusCode: 403 });
+    const user = demoUserForRoles(mockRegisterRoles);
+    try {
+      return delay(topupWallet(user.id, Number(data.amountCents)) as T);
+    } catch (e) {
+      return Promise.reject({ message: (e as Error).message, statusCode: 400 });
+    }
+  }
+  if (method === 'POST' && path === '/nuanban/family/wallet/pay-order') {
+    const roleErr = assertDemoActiveRole(options, path, 'family');
+    if (roleErr) return Promise.reject({ message: roleErr, statusCode: 403 });
+    const user = demoUserForRoles(mockRegisterRoles);
+    const orderId = String(data.orderId || '');
+    const result = walletPayOrderForUser(user.id, orderId);
+    if (!result.ok) return Promise.reject({ message: result.message, statusCode: 400 });
+    return delay({ ok: true, status: result.status, overview: result.overview } as T);
+  }
+  if (method === 'GET' && path === '/nuanban/elder/wallet') {
+    const roleErr = assertDemoActiveRole(options, path, 'elder');
+    if (roleErr) return Promise.reject({ message: roleErr, statusCode: 403 });
+    const user = demoUserForRoles(mockRegisterRoles);
+    return delay(getWalletOverview(user.id) as T);
+  }
+  if (method === 'POST' && path === '/nuanban/elder/wallet/topup') {
+    const roleErr = assertDemoActiveRole(options, path, 'elder');
+    if (roleErr) return Promise.reject({ message: roleErr, statusCode: 403 });
+    const user = demoUserForRoles(mockRegisterRoles);
+    try {
+      return delay(topupWallet(user.id, Number(data.amountCents)) as T);
+    } catch (e) {
+      return Promise.reject({ message: (e as Error).message, statusCode: 400 });
+    }
+  }
+  if (method === 'POST' && path === '/nuanban/elder/wallet/pay-order') {
+    const roleErr = assertDemoActiveRole(options, path, 'elder');
+    if (roleErr) return Promise.reject({ message: roleErr, statusCode: 403 });
+    const user = demoUserForRoles(mockRegisterRoles);
+    const orderId = String(data.orderId || '');
+    const result = walletPayOrderForUser(user.id, orderId);
+    if (!result.ok) return Promise.reject({ message: result.message, statusCode: 400 });
+    return delay({ ok: true, status: result.status, overview: result.overview } as T);
+  }
   if (method === 'GET' && path === '/nuanban/family/stats') {
     const roleErr = assertDemoActiveRole(options, path, 'family');
     if (roleErr) return Promise.reject({ message: roleErr, statusCode: 403 });
@@ -897,6 +993,11 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
     if (!order || order.status !== 'pending_confirm') {
       return Promise.reject({ message: '订单不在待确认状态' });
     }
+    if (order.payment_status === 'unpaid' && data.payMethod === 'wallet') {
+      const user = demoUserForRoles(mockRegisterRoles);
+      const payResult = walletPayOrderForUser(user.id, order.id);
+      if (!payResult.ok) return Promise.reject({ message: payResult.message, statusCode: 400 });
+    }
     finalizeOrderAfterConfirm(order);
     return delay({
       ok: true,
@@ -909,6 +1010,11 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
     const order = state.orders.find((o) => o.id === elderOrderConfirm[1]);
     if (!order || order.status !== 'pending_confirm') {
       return Promise.reject({ message: '订单不在待确认状态' });
+    }
+    if (order.payment_status === 'unpaid' && data.payMethod === 'wallet') {
+      const user = demoUserForRoles(mockRegisterRoles);
+      const payResult = walletPayOrderForUser(user.id, order.id);
+      if (!payResult.ok) return Promise.reject({ message: payResult.message, statusCode: 400 });
     }
     finalizeOrderAfterConfirm(order);
     return delay({

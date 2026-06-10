@@ -29,6 +29,7 @@ import { computed, ref } from 'vue';
 import { onLoad, onShow } from '@dcloudio/uni-app';
 import OrderTimeline from '../../components/OrderTimeline.vue';
 import { confirmOrderComplete, getOrder, type OrderRow } from '../../api/elder';
+import { fetchElderWallet } from '../../api/wallet';
 import { orderStatusLabel } from '../../utils/order-status';
 import { readRouteQuery } from '../../utils/route-query';
 import { pbErrorMessage } from '../../utils/request';
@@ -36,6 +37,7 @@ import { pbErrorMessage } from '../../utils/request';
 const orderId = ref('');
 const loading = ref(false);
 const confirming = ref(false);
+const walletBalanceCents = ref(0);
 const order = ref<
   (OrderRow & {
     payment_status?: string;
@@ -72,7 +74,12 @@ async function load() {
   }
   loading.value = true;
   try {
-    order.value = await getOrder(orderId.value);
+    const [detail, wallet] = await Promise.all([
+      getOrder(orderId.value),
+      fetchElderWallet().catch(() => null),
+    ]);
+    order.value = detail;
+    if (wallet) walletBalanceCents.value = wallet.balanceCents;
   } catch (e) {
     order.value = null;
     uni.showToast({ title: pbErrorMessage(e), icon: 'none' });
@@ -90,18 +97,25 @@ onShow(load);
 async function confirmComplete() {
   if (!orderId.value || !order.value) return;
   const needsPay = order.value.payment_status === 'unpaid';
-  const amount = ((order.value.amount_cents || 0) / 100).toFixed(2);
+  const amountCents = order.value.amount_cents || 0;
+  const amount = (amountCents / 100).toFixed(2);
+  const useWallet = needsPay && walletBalanceCents.value >= amountCents;
   uni.showModal({
     title: needsPay ? '确认服务并付款' : '确认服务完成',
     content: needsPay
-      ? `同学已完成服务，确认并支付 ¥${amount}？（演示，不产生真实扣款）`
+      ? useWallet
+        ? `同学已完成服务，使用储值卡支付 ¥${amount}？`
+        : `同学已完成服务，确认并支付 ¥${amount}？（演示，不产生真实扣款）`
       : '同学已完成服务，确认后订单将完结。',
     success: async (res) => {
       if (!res.confirm) return;
       confirming.value = true;
       try {
-        await confirmOrderComplete(orderId.value);
-        uni.showToast({ title: needsPay ? '已确认并付款' : '已确认完成', icon: 'success' });
+        await confirmOrderComplete(orderId.value, useWallet ? 'wallet' : undefined);
+        uni.showToast({
+          title: needsPay ? (useWallet ? '储值卡已扣款' : '已确认并付款') : '已确认完成',
+          icon: 'success',
+        });
         await load();
       } catch (e) {
         uni.showToast({ title: pbErrorMessage(e), icon: 'none' });

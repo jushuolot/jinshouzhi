@@ -28,6 +28,7 @@
   order/detail
   bind-code          家属绑定码
   settings           无障碍设置
+  wallet/index       储值卡（充值 / 消费记录 · 老人大字）
   profile
 
 分包 package-family/
@@ -38,6 +39,7 @@
   order/detail
   outdoor/approve    外出审批
   package/buy        服务包购买（mock 下单 → 待支付）
+  wallet/index       储值卡（充值 / 消费记录）
   profile
 
 分包 package-student/

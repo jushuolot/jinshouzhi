@@ -132,6 +132,89 @@ function finalizeOrderAfterConfirm(order) {
   completeOrderSchedule(order.id, "completed");
 }
 
+/** 演示储值卡（进程内，按 userId 隔离） */
+var walletDemoStore = {};
+
+function walletEnsureUser(userId) {
+  if (!walletDemoStore[userId]) {
+    walletDemoStore[userId] = { balanceCents: 0, transactions: [] };
+  }
+  return walletDemoStore[userId];
+}
+
+function walletOverviewDto(owner) {
+  var txs = owner.transactions || [];
+  return {
+    balanceCents: owner.balanceCents || 0,
+    balanceYuan: ((owner.balanceCents || 0) / 100).toFixed(2),
+    transactions: txs.slice(0, 10),
+  };
+}
+
+function walletTopup(userId, amountCents) {
+  if (!amountCents || amountCents < 100) {
+    return { ok: false, message: "充值金额至少 ¥1.00" };
+  }
+  var owner = walletEnsureUser(userId);
+  owner.balanceCents = (owner.balanceCents || 0) + amountCents;
+  owner.transactions = owner.transactions || [];
+  owner.transactions.unshift({
+    id: "wt-topup-" + Date.now(),
+    type: "topup",
+    amountCents: amountCents,
+    label: "储值卡充值",
+    createdAt: new Date().toISOString(),
+  });
+  if (owner.transactions.length > 50) owner.transactions.length = 50;
+  return { ok: true, overview: walletOverviewDto(owner) };
+}
+
+function walletPayLabel(order) {
+  var svc = serviceInfoById(order.getString("service_item"));
+  return svc.name + " · " + elderNameById(order.getString("elder"));
+}
+
+function walletDeductForOrder(userId, order) {
+  var amountCents = order.getInt("amount_cents");
+  if (!amountCents || amountCents <= 0) {
+    return { ok: false, message: "订单金额无效" };
+  }
+  var owner = walletEnsureUser(userId);
+  if ((owner.balanceCents || 0) < amountCents) {
+    return { ok: false, message: "储值余额不足，请先充值" };
+  }
+  owner.balanceCents -= amountCents;
+  owner.transactions = owner.transactions || [];
+  owner.transactions.unshift({
+    id: "wt-pay-" + Date.now(),
+    type: "pay",
+    amountCents: amountCents,
+    label: walletPayLabel(order),
+    createdAt: new Date().toISOString(),
+    orderId: order.id,
+  });
+  if (owner.transactions.length > 50) owner.transactions.length = 50;
+  return { ok: true, overview: walletOverviewDto(owner) };
+}
+
+function walletPayOrderRecord(userId, order) {
+  if (order.getString("payment_status") === "paid") {
+    return { ok: false, message: "订单已支付" };
+  }
+  var status = order.getString("status");
+  var payable =
+    status === "pending_payment" ||
+    (status === "pending_confirm" && order.getString("payment_status") === "unpaid");
+  if (!payable) return { ok: false, message: "当前订单状态不可支付" };
+  var deduct = walletDeductForOrder(userId, order);
+  if (!deduct.ok) return deduct;
+  order.set("payment_status", "paid");
+  order.set("paid_at", new Date().toISOString());
+  if (status === "pending_payment") order.set("status", "pending_accept");
+  $app.save(order);
+  return { ok: true, status: order.getString("status"), overview: deduct.overview };
+}
+
 /** X-Active-Role 演示校验：header 与 token 用户角色不一致时 403 */
 function userHasRole(userId, role) {
   const roles = $app.findRecordsByFilter(
@@ -1198,6 +1281,86 @@ routerAdd("GET", "/api/nuanban/student/stats", (e) => {
   });
 });
 
+routerAdd("GET", "/api/nuanban/family/wallet", (e) => {
+  const rc = assertActiveRoleHeader(e, "family");
+  if (!rc.ok) return e.json(rc.code, rc.body);
+  if (!e.auth) return e.json(401, { message: "需要登录" });
+  return e.json(200, walletOverviewDto(walletEnsureUser(e.auth.id)));
+});
+
+routerAdd("POST", "/api/nuanban/family/wallet/topup", (e) => {
+  const rc = assertActiveRoleHeader(e, "family");
+  if (!rc.ok) return e.json(rc.code, rc.body);
+  if (!e.auth) return e.json(401, { message: "需要登录" });
+  const raw = toString(e.request.body);
+  const body = raw ? JSON.parse(raw) : {};
+  const result = walletTopup(e.auth.id, parseInt(body.amountCents, 10) || 0);
+  if (!result.ok) return e.json(400, { message: result.message });
+  return e.json(200, result.overview);
+});
+
+routerAdd("POST", "/api/nuanban/family/wallet/pay-order", (e) => {
+  const rc = assertActiveRoleHeader(e, "family");
+  if (!rc.ok) return e.json(rc.code, rc.body);
+  if (!e.auth) return e.json(401, { message: "需要登录" });
+  const raw = toString(e.request.body);
+  const body = raw ? JSON.parse(raw) : {};
+  const orderId = String(body.orderId || "");
+  let order;
+  try {
+    order = $app.findRecordById("orders", orderId);
+  } catch (_) {
+    return e.json(404, { message: "订单不存在" });
+  }
+  if (!familyCanAccessOrder(e.auth.id, order)) {
+    return e.json(403, { message: "无权支付该订单" });
+  }
+  const result = walletPayOrderRecord(e.auth.id, order);
+  if (!result.ok) return e.json(400, { message: result.message });
+  return e.json(200, { ok: true, status: result.status, overview: result.overview });
+});
+
+routerAdd("GET", "/api/nuanban/elder/wallet", (e) => {
+  const rc = assertActiveRoleHeader(e, "elder");
+  if (!rc.ok) return e.json(rc.code, rc.body);
+  if (!e.auth) return e.json(401, { message: "需要登录" });
+  return e.json(200, walletOverviewDto(walletEnsureUser(e.auth.id)));
+});
+
+routerAdd("POST", "/api/nuanban/elder/wallet/topup", (e) => {
+  const rc = assertActiveRoleHeader(e, "elder");
+  if (!rc.ok) return e.json(rc.code, rc.body);
+  if (!e.auth) return e.json(401, { message: "需要登录" });
+  const raw = toString(e.request.body);
+  const body = raw ? JSON.parse(raw) : {};
+  const result = walletTopup(e.auth.id, parseInt(body.amountCents, 10) || 0);
+  if (!result.ok) return e.json(400, { message: result.message });
+  return e.json(200, result.overview);
+});
+
+routerAdd("POST", "/api/nuanban/elder/wallet/pay-order", (e) => {
+  const rc = assertActiveRoleHeader(e, "elder");
+  if (!rc.ok) return e.json(rc.code, rc.body);
+  if (!e.auth) return e.json(401, { message: "需要登录" });
+  const raw = toString(e.request.body);
+  const body = raw ? JSON.parse(raw) : {};
+  const orderId = String(body.orderId || "");
+  const elderId = elderProfileIdForUser(e.auth.id);
+  if (!elderId) return e.json(403, { message: "未绑定老人档案" });
+  let order;
+  try {
+    order = $app.findRecordById("orders", orderId);
+  } catch (_) {
+    return e.json(404, { message: "订单不存在" });
+  }
+  if (order.getString("elder") !== elderId) {
+    return e.json(403, { message: "无权支付该订单" });
+  }
+  const result = walletPayOrderRecord(e.auth.id, order);
+  if (!result.ok) return e.json(400, { message: result.message });
+  return e.json(200, { ok: true, status: result.status, overview: result.overview });
+});
+
 routerAdd("GET", "/api/nuanban/family/stats", (e) => {
   const rc = assertActiveRoleHeader(e, "family");
   if (!rc.ok) return e.json(rc.code, rc.body);
@@ -1439,6 +1602,15 @@ routerAdd("POST", "/api/nuanban/family/orders/{id}/confirm-complete", (e) => {
   if (order.getString("status") !== "pending_confirm") {
     return e.json(400, { message: "订单不在待确认状态" });
   }
+  const rawFamilyConfirm = toString(e.request.body);
+  const bodyFamilyConfirm = rawFamilyConfirm ? JSON.parse(rawFamilyConfirm) : {};
+  if (
+    order.getString("payment_status") === "unpaid" &&
+    bodyFamilyConfirm.payMethod === "wallet"
+  ) {
+    const payResult = walletPayOrderRecord(e.auth.id, order);
+    if (!payResult.ok) return e.json(400, { message: payResult.message });
+  }
   finalizeOrderAfterConfirm(order);
   return e.json(200, {
     ok: true,
@@ -1465,6 +1637,15 @@ routerAdd("POST", "/api/nuanban/elder/orders/{id}/confirm-complete", (e) => {
   }
   if (order.getString("status") !== "pending_confirm") {
     return e.json(400, { message: "订单不在待确认状态" });
+  }
+  const rawElderConfirm = toString(e.request.body);
+  const bodyElderConfirm = rawElderConfirm ? JSON.parse(rawElderConfirm) : {};
+  if (
+    order.getString("payment_status") === "unpaid" &&
+    bodyElderConfirm.payMethod === "wallet"
+  ) {
+    const payResult = walletPayOrderRecord(e.auth.id, order);
+    if (!payResult.ok) return e.json(400, { message: payResult.message });
   }
   finalizeOrderAfterConfirm(order);
   return e.json(200, {
@@ -1781,6 +1962,87 @@ routerAdd("GET", "/api/nuanban/student/settlements", (e) => {
       { id: "stl-2025-06", period: "2025-06", amountCents: 35200, status: "pending" },
     ],
   });
+});
+
+var studentWithdrawalsByUser = {};
+
+function demoStudentSettlements() {
+  return [
+    { id: "stl-2025-04", period: "2025-04", amountCents: 24800, status: "paid", paidAt: "2025-05-05" },
+    { id: "stl-2025-05", period: "2025-05", amountCents: 28500, status: "paid", paidAt: "2025-06-01" },
+    { id: "stl-2025-06", period: "2025-06", amountCents: 35200, status: "pending" },
+  ];
+}
+
+function studentWithdrawalBalances(settlements, withdrawals) {
+  var paidTotal = 0;
+  var frozenCents = 0;
+  for (var i = 0; i < settlements.length; i++) {
+    var s = settlements[i];
+    if (s.status === "paid") paidTotal += s.amountCents;
+    if (s.status === "pending") frozenCents += s.amountCents;
+  }
+  var withdrawnTotal = 0;
+  for (var j = 0; j < withdrawals.length; j++) {
+    withdrawnTotal += withdrawals[j].amountCents;
+  }
+  var availableCents = paidTotal - withdrawnTotal;
+  if (availableCents < 0) availableCents = 0;
+  return { availableCents: availableCents, frozenCents: frozenCents };
+}
+
+function studentWithdrawalOverview(uid) {
+  var settlements = demoStudentSettlements();
+  if (!studentWithdrawalsByUser[uid]) studentWithdrawalsByUser[uid] = [];
+  var withdrawals = studentWithdrawalsByUser[uid];
+  var bal = studentWithdrawalBalances(settlements, withdrawals);
+  return {
+    availableCents: bal.availableCents,
+    availableYuan: (bal.availableCents / 100).toFixed(2),
+    frozenCents: bal.frozenCents,
+    frozenYuan: (bal.frozenCents / 100).toFixed(2),
+    boundWechat: "微信零钱 · 尾号 8826",
+    boundBank: "建设银行 · 尾号 6688",
+    withdrawals: withdrawals.slice(0, 20),
+  };
+}
+
+routerAdd("GET", "/api/nuanban/student/withdrawal", (e) => {
+  const rc = assertActiveRoleHeader(e, "student");
+  if (!rc.ok) return e.json(rc.code, rc.body);
+  if (!e.auth) return e.json(401, { message: "需要登录" });
+  return e.json(200, studentWithdrawalOverview(e.auth.id));
+});
+
+routerAdd("POST", "/api/nuanban/student/withdrawal", (e) => {
+  const rc = assertActiveRoleHeader(e, "student");
+  if (!rc.ok) return e.json(rc.code, rc.body);
+  const auth = e.auth;
+  if (!auth) return e.json(401, { message: "需要登录" });
+  let body = {};
+  try {
+    body = JSON.parse(toString(e.request.body));
+  } catch (_) {}
+  const amountCents = parseInt(body.amountCents, 10) || 0;
+  const channel = body.channel === "bank" ? "bank" : "wechat";
+  if (amountCents < 1000) return e.json(400, { message: "提现金额至少 ¥10.00" });
+  const overview = studentWithdrawalOverview(auth.id);
+  if (amountCents > overview.availableCents) {
+    return e.json(400, { message: "可提现余额不足" });
+  }
+  if (!studentWithdrawalsByUser[auth.id]) studentWithdrawalsByUser[auth.id] = [];
+  const now = new Date().toISOString();
+  const instant = channel === "wechat";
+  studentWithdrawalsByUser[auth.id].unshift({
+    id: "wd-" + Date.now(),
+    amountCents: amountCents,
+    channel: channel,
+    channelLabel: channel === "wechat" ? "微信零钱 · 尾号 8826" : "建设银行 · 尾号 6688",
+    status: instant ? "completed" : "pending",
+    createdAt: now,
+    completedAt: instant ? now : undefined,
+  });
+  return e.json(200, studentWithdrawalOverview(auth.id));
 });
 
 routerAdd("POST", "/api/nuanban/family/packages/purchase", (e) => {

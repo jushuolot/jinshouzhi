@@ -31,7 +31,22 @@
         </view>
 
         <view v-if="phase === 'idle'" class="pay-methods">
-          <view class="method active">
+          <view
+            class="method"
+            :class="{ active: payMethod === 'wallet' }"
+            @tap="payMethod = 'wallet'"
+          >
+            <text class="method-icon">🧡</text>
+            <view class="method-text">
+              <text>储值卡支付</text>
+              <text class="method-sub">余额 ¥{{ walletBalanceYuan }}</text>
+            </view>
+          </view>
+          <view
+            class="method"
+            :class="{ active: payMethod === 'wechat' }"
+            @tap="payMethod = 'wechat'"
+          >
             <text class="method-icon">💚</text>
             <text>微信支付（演示）</text>
           </view>
@@ -40,12 +55,16 @@
         <button
           v-if="phase !== 'paying'"
           class="btn"
+          :class="{ wallet: payMethod === 'wallet' }"
           :loading="loading"
-          :disabled="phase === 'paying'"
+          :disabled="phase === 'paying' || (payMethod === 'wallet' && !walletCanPay)"
           @tap="confirmPay"
         >
-          {{ phase === 'idle' ? '确认支付 ¥' + (amountCents / 100).toFixed(2) : '微信支付' }}
+          {{ payBtnLabel }}
         </button>
+        <text v-if="payMethod === 'wallet' && !walletCanPay" class="wallet-hint">
+          余额不足，请前往「我的 → 储值卡」充值
+        </text>
       </template>
     </template>
   </view>
@@ -53,9 +72,10 @@
 
 <script setup lang="ts">
 import { onLoad, onShow } from '@dcloudio/uni-app';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { payOrder } from '../../api/family';
 import { pbGet } from '../../api/pb';
+import { fetchFamilyWallet, payFamilyOrderWithWallet } from '../../api/wallet';
 import { guardPackageRoute } from '../../utils/nav-guard';
 import { pbErrorMessage } from '../../utils/request';
 
@@ -66,9 +86,33 @@ const serviceName = ref('');
 const scheduledAt = ref('');
 const loading = ref(false);
 const phase = ref<'idle' | 'confirming' | 'paying' | 'success'>('idle');
+const payMethod = ref<'wallet' | 'wechat'>('wallet');
+const walletBalanceCents = ref(0);
+
+const walletBalanceYuan = computed(() => (walletBalanceCents.value / 100).toFixed(2));
+const walletCanPay = computed(() => walletBalanceCents.value >= amountCents.value);
+const payBtnLabel = computed(() => {
+  const amt = (amountCents.value / 100).toFixed(2);
+  if (phase.value === 'idle') {
+    return payMethod.value === 'wallet' ? `储值卡支付 ¥${amt}` : `确认支付 ¥${amt}`;
+  }
+  return payMethod.value === 'wallet' ? '储值卡支付' : '微信支付';
+});
+
+async function loadWallet() {
+  try {
+    const w = await fetchFamilyWallet();
+    walletBalanceCents.value = w.balanceCents;
+    if (walletCanPay.value) payMethod.value = 'wallet';
+    else payMethod.value = 'wechat';
+  } catch {
+    payMethod.value = 'wechat';
+  }
+}
 
 onShow(() => {
-  guardPackageRoute('/package-family/order/pay');
+  if (!guardPackageRoute('/package-family/order/pay')) return;
+  loadWallet();
 });
 
 onLoad(async (q) => {
@@ -105,9 +149,14 @@ function formatTime(iso: string) {
 function confirmPay() {
   if (phase.value === 'idle') {
     phase.value = 'confirming';
+    const amt = (amountCents.value / 100).toFixed(2);
+    const content =
+      payMethod.value === 'wallet'
+        ? `使用储值卡支付 ¥${amt}？（演示，从余额扣减）`
+        : `使用微信支付 ¥${amt}？（演示，不产生真实扣款）`;
     uni.showModal({
       title: '确认支付',
-      content: `使用微信支付 ¥${(amountCents.value / 100).toFixed(2)}？（演示，不产生真实扣款）`,
+      content,
       success: (res) => {
         if (res.confirm) pay();
         else phase.value = 'idle';
@@ -123,8 +172,12 @@ async function pay() {
   phase.value = 'paying';
   loading.value = true;
   try {
-    await new Promise((r) => setTimeout(r, 1500));
-    await payOrder(orderId.value);
+    if (payMethod.value === 'wallet') {
+      await payFamilyOrderWithWallet(orderId.value);
+    } else {
+      await new Promise((r) => setTimeout(r, 1500));
+      await payOrder(orderId.value);
+    }
     phase.value = 'success';
   } catch (e) {
     phase.value = 'idle';
@@ -205,17 +258,38 @@ function goOrders() {
   font-size: 28rpx;
 }
 .method.active {
-  color: #07c160;
+  color: var(--nb-primary, #c45c26);
+  background: var(--nb-primary-soft, #fff5ef);
+  border-radius: 12rpx;
 }
 .method-icon {
   margin-right: 16rpx;
   font-size: 32rpx;
+}
+.method-text {
+  display: flex;
+  flex-direction: column;
+}
+.method-sub {
+  font-size: 22rpx;
+  color: #888;
+  margin-top: 4rpx;
 }
 .btn {
   margin-top: 48rpx;
   background: #07c160;
   color: #fff;
   border-radius: 12rpx;
+}
+.btn.wallet {
+  background: var(--nb-primary, #c45c26);
+}
+.wallet-hint {
+  display: block;
+  margin-top: 16rpx;
+  text-align: center;
+  font-size: 24rpx;
+  color: #999;
 }
 .wx-pay-overlay {
   position: fixed;

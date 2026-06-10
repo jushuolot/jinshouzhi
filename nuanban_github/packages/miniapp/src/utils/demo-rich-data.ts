@@ -58,14 +58,14 @@ export const DEMO_TEST_PHONES: DemoTestPhone[] = [
     email: DEMO_USERS.family.email,
     role: 'family',
     label: '家属1',
-    testHint: '代付、外出审批、SOS、服务包',
+    testHint: '储值卡、代付、外出审批、SOS、服务包',
   },
   {
     phone: '13800000005',
     email: DEMO_USERS.elder.email,
     role: 'elder',
     label: '老人1',
-    testHint: '找陪护、预约、一键求助',
+    testHint: '储值卡、找陪护、预约、一键求助',
   },
   {
     phone: '13800000006',
