@@ -167,6 +167,13 @@ export async function getOrder(id: string) {
   return res.items[0] ?? null;
 }
 
+export async function confirmOrderComplete(orderId: string) {
+  return request<{ ok: boolean; status: string; payment_status?: string }>({
+    url: `/nuanban/elder/orders/${orderId}/confirm-complete`,
+    method: 'POST',
+  });
+}
+
 export async function triggerSos(elderId: string, message?: string) {
   return request<{ id: string; ok: boolean }>({
     url: '/nuanban/elder/sos',

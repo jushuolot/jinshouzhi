@@ -116,6 +116,7 @@ export type RichOrderStatus =
   | 'outdoor_pending'
   | 'pending_service'
   | 'in_service'
+  | 'pending_confirm'
   | 'completed'
   | 'cancelled';
 
@@ -273,7 +274,7 @@ export function buildRichOrders(elders: RichElder[]): RichOrder[] {
   // 待服务 + 服务中（学生）
   push(0, 3, 'pending_service', 7200000, { student_user: student });
   push(1, 4, 'pending_service', 10800000, { student_user: student });
-  push(0, 3, 'in_service', -3600000, { student_user: student });
+  push(0, 3, 'in_service', -3600000, { student_user: student, payment_status: 'unpaid' });
 
   // 已完成历史（收入压力：8 单）
   for (let i = 0; i < 8; i++) {

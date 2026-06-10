@@ -4,6 +4,7 @@ import { pbCreate, pbList, type PbRecord } from './pb';
 export interface FamilyStats {
   boundElderCount: number;
   pendingPaymentCount: number;
+  pendingConfirmCount?: number;
   outdoorPendingCount?: number;
   sosPendingCount?: number;
   paidTotalCents: number;
@@ -48,6 +49,13 @@ export async function fetchFamilyProfile() {
 export async function payOrder(orderId: string) {
   return request<{ ok: boolean; status: string }>({
     url: `/nuanban/family/orders/${orderId}/pay`,
+    method: 'POST',
+  });
+}
+
+export async function confirmOrderComplete(orderId: string) {
+  return request<{ ok: boolean; status: string; payment_status?: string }>({
+    url: `/nuanban/family/orders/${orderId}/confirm-complete`,
     method: 'POST',
   });
 }
@@ -113,6 +121,17 @@ export async function listPendingPaymentOrders(elderIds: string[]) {
   const filter = elderIds.map((id) => `elder = "${id}"`).join(' || ');
   const res = await pbList<OrderRow>('orders', {
     filter: `(${filter}) && status = "pending_payment"`,
+    expand: 'elder,service_item',
+    perPage: 20,
+  });
+  return res.items;
+}
+
+export async function listPendingConfirmOrders(elderIds: string[]) {
+  if (!elderIds.length) return [];
+  const filter = elderIds.map((id) => `elder = "${id}"`).join(' || ');
+  const res = await pbList<OrderRow>('orders', {
+    filter: `(${filter}) && status = "pending_confirm"`,
     expand: 'elder,service_item',
     perPage: 20,
   });

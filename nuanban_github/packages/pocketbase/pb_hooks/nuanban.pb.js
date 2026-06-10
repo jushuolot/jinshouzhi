@@ -74,6 +74,64 @@ function orderToFamilyDto(order) {
   };
 }
 
+function elderProfileIdForUser(userId) {
+  const roles = $app.findRecordsByFilter(
+    "user_roles",
+    'user = {:uid} && role = "elder"',
+    "",
+    1,
+    0,
+    { uid: userId }
+  );
+  if (roles.length === 0) return null;
+  try {
+    return roles[0].getString("elder_profile") || null;
+  } catch (_) {
+    return null;
+  }
+}
+
+function familyCanAccessOrder(userId, order) {
+  try {
+    if (order.getString("family_user") === userId) return true;
+  } catch (_) {}
+  const elderId = order.getString("elder");
+  const bindings = $app.findRecordsByFilter(
+    "family_elder_bindings",
+    "family_user = {:uid} && elder = {:eid}",
+    "",
+    1,
+    0,
+    { uid: userId, eid: elderId }
+  );
+  return bindings.length > 0;
+}
+
+function completeOrderSchedule(orderId, scheduleStatus) {
+  const schs = $app.findRecordsByFilter(
+    "schedules",
+    "order = {:oid}",
+    "",
+    1,
+    0,
+    { oid: orderId }
+  );
+  if (schs.length > 0) {
+    schs[0].set("status", scheduleStatus);
+    $app.save(schs[0]);
+  }
+}
+
+function finalizeOrderAfterConfirm(order) {
+  if (order.getString("payment_status") === "unpaid") {
+    order.set("payment_status", "paid");
+    order.set("paid_at", new Date().toISOString());
+  }
+  order.set("status", "completed");
+  $app.save(order);
+  completeOrderSchedule(order.id, "completed");
+}
+
 /** X-Active-Role 演示校验：header 与 token 用户角色不一致时 403 */
 function userHasRole(userId, role) {
   const roles = $app.findRecordsByFilter(
@@ -1161,6 +1219,29 @@ routerAdd("GET", "/api/nuanban/family/stats", (e) => {
     0,
     { uid: auth.id }
   );
+  let pendingConfirm = 0;
+  try {
+    const bindings = $app.findRecordsByFilter(
+      "family_elder_bindings",
+      "family_user = {:uid}",
+      "",
+      50,
+      0,
+      { uid: auth.id }
+    );
+    for (let i = 0; i < bindings.length; i++) {
+      const elderId = bindings[i].getString("elder");
+      const rows = $app.findRecordsByFilter(
+        "orders",
+        'elder = {:eid} && status = "pending_confirm"',
+        "",
+        50,
+        0,
+        { eid: elderId }
+      );
+      pendingConfirm += rows.length;
+    }
+  } catch (_) {}
   let paidCents = 0;
   const paid = $app.findRecordsByFilter(
     "orders",
@@ -1199,6 +1280,7 @@ routerAdd("GET", "/api/nuanban/family/stats", (e) => {
   return e.json(200, {
     boundElderCount: bindings.length,
     pendingPaymentCount: pending.length,
+    pendingConfirmCount: pendingConfirm,
     outdoorPendingCount: outdoorPending,
     sosPendingCount: sosPending,
     paidTotalCents: paidCents,
@@ -1334,21 +1416,62 @@ routerAdd("POST", "/api/nuanban/student/orders/{id}/complete", (e) => {
   if (order.getString("status") !== "in_service") {
     return e.json(400, { message: "当前状态不可完成" });
   }
-  order.set("status", "completed");
+  order.set("status", "pending_confirm");
   $app.save(order);
-  const schs = $app.findRecordsByFilter(
-    "schedules",
-    "order = {:oid}",
-    "",
-    1,
-    0,
-    { oid: orderId }
-  );
-  if (schs.length > 0) {
-    schs[0].set("status", "completed");
-    $app.save(schs[0]);
+  completeOrderSchedule(orderId, "pending_confirm");
+  return e.json(200, { ok: true, status: "pending_confirm" });
+});
+
+routerAdd("POST", "/api/nuanban/family/orders/{id}/confirm-complete", (e) => {
+  const rc = assertActiveRoleHeader(e, "family");
+  if (!rc.ok) return e.json(rc.code, rc.body);
+  if (!e.auth) return e.json(401, { message: "需要登录" });
+  const orderId = e.request.pathValue("id");
+  let order;
+  try {
+    order = $app.findRecordById("orders", orderId);
+  } catch (_) {
+    return e.json(404, { message: "订单不存在" });
   }
-  return e.json(200, { ok: true, status: "completed" });
+  if (!familyCanAccessOrder(e.auth.id, order)) {
+    return e.json(403, { message: "无权确认该订单" });
+  }
+  if (order.getString("status") !== "pending_confirm") {
+    return e.json(400, { message: "订单不在待确认状态" });
+  }
+  finalizeOrderAfterConfirm(order);
+  return e.json(200, {
+    ok: true,
+    status: "completed",
+    payment_status: order.getString("payment_status"),
+  });
+});
+
+routerAdd("POST", "/api/nuanban/elder/orders/{id}/confirm-complete", (e) => {
+  const rc = assertActiveRoleHeader(e, "elder");
+  if (!rc.ok) return e.json(rc.code, rc.body);
+  if (!e.auth) return e.json(401, { message: "需要登录" });
+  const orderId = e.request.pathValue("id");
+  const elderId = elderProfileIdForUser(e.auth.id);
+  if (!elderId) return e.json(403, { message: "未绑定老人档案" });
+  let order;
+  try {
+    order = $app.findRecordById("orders", orderId);
+  } catch (_) {
+    return e.json(404, { message: "订单不存在" });
+  }
+  if (order.getString("elder") !== elderId) {
+    return e.json(403, { message: "无权确认该订单" });
+  }
+  if (order.getString("status") !== "pending_confirm") {
+    return e.json(400, { message: "订单不在待确认状态" });
+  }
+  finalizeOrderAfterConfirm(order);
+  return e.json(200, {
+    ok: true,
+    status: "completed",
+    payment_status: order.getString("payment_status"),
+  });
 });
 
 routerAdd("GET", "/api/nuanban/student/income", (e) => {
@@ -1360,7 +1483,7 @@ routerAdd("GET", "/api/nuanban/student/income", (e) => {
   const monthPrefix = year + "-" + (month < 10 ? "0" + month : "" + month);
   const records = $app.findRecordsByFilter(
     "orders",
-    'student_user = {:uid} && status = "completed"',
+    'student_user = {:uid} && status = "completed" && payment_status = "paid"',
     "-scheduled_at",
     100,
     0,

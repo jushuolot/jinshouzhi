@@ -6,26 +6,45 @@
       <text class="svc">{{ serviceName }}</text>
       <text class="meta">预约：{{ formatTime(order.scheduled_at) }}</text>
       <text class="meta">费用：¥{{ ((order.amount_cents || 0) / 100).toFixed(0) }}</text>
+      <text v-if="order.payment_status" class="meta">
+        支付：{{ order.payment_status === 'paid' ? '已支付' : '待支付' }}
+      </text>
     </view>
     <text v-else class="hint">加载中…</text>
+
+    <button
+      v-if="order?.status === 'pending_confirm'"
+      class="btn"
+      :loading="confirming"
+      @tap="confirmComplete"
+    >
+      {{ confirmBtnLabel }}
+    </button>
   </view>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { onLoad } from '@dcloudio/uni-app';
+import { onLoad, onShow } from '@dcloudio/uni-app';
 import OrderTimeline from '../../components/OrderTimeline.vue';
-import { getOrder, type OrderRow } from '../../api/elder';
+import { confirmOrderComplete, getOrder, type OrderRow } from '../../api/elder';
 import { orderStatusLabel } from '../../utils/order-status';
 import { pbErrorMessage } from '../../utils/request';
 
+const orderId = ref('');
+const confirming = ref(false);
 const order = ref<
   (OrderRow & {
+    payment_status?: string;
     expand?: {
       service_item?: { name: string; requires_outdoor_approval?: boolean };
     };
   }) | null
 >(null);
+
+const confirmBtnLabel = computed(() =>
+  order.value?.payment_status === 'unpaid' ? '确认服务并付款' : '确认服务完成',
+);
 
 const serviceName = computed(() => order.value?.expand?.service_item?.name || '陪护服务');
 const requiresOutdoor = computed(
@@ -43,15 +62,46 @@ function formatTime(iso?: string) {
   return `${d.getMonth() + 1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-onLoad(async (q) => {
-  const id = q?.id as string;
-  if (!id) return;
+async function load() {
+  if (!orderId.value) return;
   try {
-    order.value = await getOrder(id);
+    order.value = await getOrder(orderId.value);
   } catch (e) {
+    order.value = null;
     uni.showToast({ title: pbErrorMessage(e), icon: 'none' });
   }
+}
+
+onLoad((q) => {
+  if (q?.id) orderId.value = q.id as string;
 });
+
+onShow(load);
+
+async function confirmComplete() {
+  if (!orderId.value || !order.value) return;
+  const needsPay = order.value.payment_status === 'unpaid';
+  const amount = ((order.value.amount_cents || 0) / 100).toFixed(2);
+  uni.showModal({
+    title: needsPay ? '确认服务并付款' : '确认服务完成',
+    content: needsPay
+      ? `同学已完成服务，确认并支付 ¥${amount}？（演示，不产生真实扣款）`
+      : '同学已完成服务，确认后订单将完结。',
+    success: async (res) => {
+      if (!res.confirm) return;
+      confirming.value = true;
+      try {
+        await confirmOrderComplete(orderId.value);
+        uni.showToast({ title: needsPay ? '已确认并付款' : '已确认完成', icon: 'success' });
+        await load();
+      } catch (e) {
+        uni.showToast({ title: pbErrorMessage(e), icon: 'none' });
+      } finally {
+        confirming.value = false;
+      }
+    },
+  });
+}
 </script>
 
 <style scoped>
@@ -88,5 +138,11 @@ onLoad(async (q) => {
   text-align: center;
   color: #999;
   padding: 80rpx;
+}
+.btn {
+  margin-top: 32rpx;
+  background: #c45c26;
+  color: #fff;
+  border-radius: 12rpx;
 }
 </style>

@@ -4,6 +4,7 @@ export type OrderFlowStatus =
   | 'pending_accept'
   | 'pending_service'
   | 'in_service'
+  | 'pending_confirm'
   | 'completed'
   | 'cancelled';
 
@@ -17,6 +18,7 @@ const BASE_STEPS: TimelineStep[] = [
   { key: 'pending_accept', label: '待接单' },
   { key: 'pending_service', label: '待服务' },
   { key: 'in_service', label: '服务中' },
+  { key: 'pending_confirm', label: '待确认' },
   { key: 'completed', label: '已完成' },
 ];
 
@@ -26,6 +28,7 @@ const OUTDOOR_STEPS: TimelineStep[] = [
   { key: 'pending_accept', label: '待接单' },
   { key: 'pending_service', label: '待服务' },
   { key: 'in_service', label: '服务中' },
+  { key: 'pending_confirm', label: '待确认' },
   { key: 'completed', label: '已完成' },
 ];
 
@@ -35,7 +38,8 @@ const STATUS_INDEX: Record<string, number> = {
   pending_accept: 1,
   pending_service: 2,
   in_service: 3,
-  completed: 4,
+  pending_confirm: 4,
+  completed: 5,
 };
 
 const OUTDOOR_STATUS_INDEX: Record<string, number> = {
@@ -44,7 +48,8 @@ const OUTDOOR_STATUS_INDEX: Record<string, number> = {
   pending_accept: 2,
   pending_service: 3,
   in_service: 4,
-  completed: 5,
+  pending_confirm: 5,
+  completed: 6,
 };
 
 export function orderTimelineSteps(requiresOutdoor?: boolean): TimelineStep[] {
@@ -64,6 +69,7 @@ export function orderStatusLabel(status: string): string {
     pending_accept: '待接单',
     pending_service: '待服务',
     in_service: '服务中',
+    pending_confirm: '待家属/老人确认',
     completed: '已完成',
     cancelled: '已取消',
   };

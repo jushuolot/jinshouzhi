@@ -44,6 +44,16 @@
       </view>
       <text class="chevron">›</text>
     </view>
+    <view class="todo-card highlight" @tap="goConfirm">
+      <view class="todo-left">
+        <text class="todo-icon">✅</text>
+        <view>
+          <text class="todo-title">待确认服务</text>
+          <text class="todo-desc">{{ stats?.pendingConfirmCount ?? 0 }} 笔待确认并付款</text>
+        </view>
+      </view>
+      <text class="chevron">›</text>
+    </view>
     <view class="todo-card" @tap="goPackageBuy">
       <view class="todo-left">
         <text class="todo-icon">📦</text>
@@ -88,6 +98,7 @@ import {
   fetchFamilyStats,
   listActiveSosAlerts,
   listBoundElders,
+  listPendingConfirmOrders,
   listPendingOutdoorApprovals,
   listPendingPaymentOrders,
   type FamilyStats,
@@ -136,6 +147,25 @@ onShow(() => {
   guardPackageRoute('/package-family/home');
   reload();
 });
+
+async function goConfirm() {
+  if (!roleStore.user?.id) {
+    uni.showToast({ title: '请先登录', icon: 'none' });
+    return;
+  }
+  try {
+    const bindingsRes = await listBoundElders(roleStore.user.id);
+    const elderIds = bindingsRes.map((b) => b.elder).filter(Boolean);
+    const orders = await listPendingConfirmOrders(elderIds);
+    if (!orders.length) {
+      uni.showToast({ title: '暂无待确认订单', icon: 'none' });
+      return;
+    }
+    uni.navigateTo({ url: `/package-family/order/detail?id=${orders[0].id}` });
+  } catch (e) {
+    uni.showToast({ title: pbErrorMessage(e), icon: 'none' });
+  }
+}
 
 async function goPay() {
   if (!roleStore.user?.id) {

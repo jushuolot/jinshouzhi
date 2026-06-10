@@ -24,6 +24,14 @@
     <view v-else class="empty">加载中或订单不存在</view>
 
     <button v-if="order?.status === 'pending_payment'" class="btn" @tap="goPay">去支付</button>
+    <button
+      v-if="order?.status === 'pending_confirm'"
+      class="btn"
+      :loading="confirming"
+      @tap="confirmComplete"
+    >
+      {{ confirmBtnLabel }}
+    </button>
     <button v-if="order?.status === 'outdoor_pending'" class="btn-outline" @tap="goOutdoor">
       外出审批
     </button>
@@ -34,7 +42,7 @@
 import { computed, ref } from 'vue';
 import { onLoad, onShow } from '@dcloudio/uni-app';
 import OrderTimeline from '../../components/OrderTimeline.vue';
-import { getFamilyOrder } from '../../api/family';
+import { confirmOrderComplete, getFamilyOrder } from '../../api/family';
 import { orderStatusLabel } from '../../utils/order-status';
 import { pbErrorMessage } from '../../utils/request';
 
@@ -51,6 +59,11 @@ interface FamilyOrderDetail {
 
 const orderId = ref('');
 const order = ref<FamilyOrderDetail | null>(null);
+const confirming = ref(false);
+
+const confirmBtnLabel = computed(() =>
+  order.value?.payment_status === 'unpaid' ? '确认服务并付款' : '确认服务完成',
+);
 
 const serviceName = computed(() => order.value?.serviceName || '陪护服务');
 const elderName = computed(() => order.value?.elderName || '老人');
@@ -95,6 +108,31 @@ function goPay() {
 
 function goOutdoor() {
   uni.navigateTo({ url: `/package-family/outdoor/approve?id=${orderId.value}` });
+}
+
+async function confirmComplete() {
+  if (!orderId.value || !order.value) return;
+  const needsPay = order.value.payment_status === 'unpaid';
+  const amount = ((order.value.amount_cents || 0) / 100).toFixed(2);
+  uni.showModal({
+    title: needsPay ? '确认服务并付款' : '确认服务完成',
+    content: needsPay
+      ? `同学已完成服务，确认并支付 ¥${amount}？（演示，不产生真实扣款）`
+      : '同学已完成服务，确认后订单将完结并计入同学收入。',
+    success: async (res) => {
+      if (!res.confirm) return;
+      confirming.value = true;
+      try {
+        await confirmOrderComplete(orderId.value);
+        uni.showToast({ title: needsPay ? '已确认并付款' : '已确认完成', icon: 'success' });
+        await load();
+      } catch (e) {
+        uni.showToast({ title: pbErrorMessage(e), icon: 'none' });
+      } finally {
+        confirming.value = false;
+      }
+    },
+  });
 }
 </script>
 

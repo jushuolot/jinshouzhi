@@ -62,6 +62,7 @@ type OrderStatus =
   | 'outdoor_pending'
   | 'pending_service'
   | 'in_service'
+  | 'pending_confirm'
   | 'accepted'
   | 'completed'
   | 'paid'
@@ -218,6 +219,28 @@ function addToPendingSettlement(amountCents: number) {
     amountCents,
     status: 'pending',
   });
+}
+
+function finalizeOrderAfterConfirm(order: MockOrder) {
+  if (order.payment_status === 'unpaid') {
+    order.payment_status = 'paid';
+  }
+  order.status = 'completed';
+  const elder = elderById(order.elder);
+  const svc = serviceById(order.service_item);
+  state.serviceLogs.unshift({
+    id: `log-${order.id}-${Date.now()}`,
+    orderId: order.id,
+    elderId: order.elder,
+    elderName: elder?.name || '老人',
+    serviceName: svc.name,
+    summary: `完成${svc.name}，服务记录已归档（演示）`,
+    createdAt: new Date().toISOString(),
+  });
+  addToPendingSettlement(order.amount_cents);
+  if (order.student_user) {
+    applyReferralOnFirstOrderComplete(order.student_user);
+  }
 }
 
 const state = {
@@ -670,10 +693,10 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
   if (method === 'GET' && path === '/nuanban/student/stats') {
     const sid = USERS.student.id;
     const mine = state.orders.filter((o) => o.student_user === sid);
-    const completed = mine.filter((o) => o.status === 'completed');
+    const completed = mine.filter((o) => o.status === 'completed' && o.payment_status === 'paid');
     const pending = state.orders.filter((o) => o.status === 'pending_accept').length;
     const accepted = mine.filter((o) =>
-      ['pending_service', 'in_service', 'completed'].includes(o.status),
+      ['pending_service', 'in_service', 'pending_confirm', 'completed'].includes(o.status),
     ).length;
     const income = completed.reduce((s, o) => s + o.amount_cents, 0);
     const now = new Date();
@@ -728,36 +751,19 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
   if (method === 'POST' && studentOrderComplete) {
     const order = state.orders.find((o) => o.id === studentOrderComplete[1]);
     if (order && order.status === 'in_service') {
-      order.status = 'completed';
+      order.status = 'pending_confirm';
       order.student_user = USERS.student.id;
-      const elder = elderById(order.elder);
-      const svc = serviceById(order.service_item);
-      state.serviceLogs.unshift({
-        id: `log-${order.id}-${Date.now()}`,
-        orderId: order.id,
-        elderId: order.elder,
-        elderName: elder?.name || '老人',
-        serviceName: svc.name,
-        summary: `完成${svc.name}，服务记录已归档（演示）`,
-        createdAt: new Date().toISOString(),
-      });
-      addToPendingSettlement(order.amount_cents);
-      if (order.student_user) {
-        applyReferralOnFirstOrderComplete(order.student_user);
-      }
     }
     return delay({
       ok: true,
-      status: order?.status || 'completed',
-      settlementPending: true,
-      settlementPeriod: currentSettlementPeriod(),
+      status: order?.status || 'pending_confirm',
     } as T);
   }
   if (method === 'GET' && path === '/nuanban/student/schedules') {
     const active = state.orders.filter(
       (o) =>
         o.student_user === USERS.student.id &&
-        ['pending_service', 'in_service', 'completed'].includes(o.status),
+        ['pending_service', 'in_service', 'pending_confirm', 'completed'].includes(o.status),
     );
     const list = active.map((o) => {
       const elder = elderById(o.elder);
@@ -767,7 +773,7 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
         orderId: o.id,
         elderName: elder?.name || '老人',
         serviceName: svc.name,
-        status: o.status === 'completed' ? 'completed' : o.status,
+        status: o.status,
         scheduledStart: o.scheduled_at,
       };
     });
@@ -775,7 +781,10 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
   }
   if (method === 'GET' && path === '/nuanban/student/income') {
     const completed = state.orders.filter(
-      (o) => o.status === 'completed' && o.student_user === USERS.student.id,
+      (o) =>
+        o.status === 'completed' &&
+        o.payment_status === 'paid' &&
+        o.student_user === USERS.student.id,
     );
     const now = new Date();
     const monthPrefix = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
@@ -829,11 +838,13 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
     const roleErr = assertDemoActiveRole(options, path, 'family');
     if (roleErr) return Promise.reject({ message: roleErr, statusCode: 403 });
     const pendingPay = state.orders.filter((o) => o.status === 'pending_payment').length;
+    const pendingConfirm = state.orders.filter((o) => o.status === 'pending_confirm').length;
     const outdoorPending = state.outdoorApprovals.filter((a) => a.status === 'pending_family').length;
     const sosPending = state.sosAlerts.filter((a) => a.status === 'active').length;
     return delay({
       boundElderCount: ELDERS.length,
       pendingPaymentCount: pendingPay,
+      pendingConfirmCount: pendingConfirm,
       outdoorPendingCount: outdoorPending,
       sosPendingCount: sosPending,
       paidTotalCents: state.orders
@@ -880,6 +891,32 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
     }
     return delay({ ok: true, status: order?.status || 'pending_accept' } as T);
   }
+  const familyOrderConfirm = path.match(/^\/nuanban\/family\/orders\/([^/]+)\/confirm-complete$/);
+  if (method === 'POST' && familyOrderConfirm) {
+    const order = state.orders.find((o) => o.id === familyOrderConfirm[1]);
+    if (!order || order.status !== 'pending_confirm') {
+      return Promise.reject({ message: '订单不在待确认状态' });
+    }
+    finalizeOrderAfterConfirm(order);
+    return delay({
+      ok: true,
+      status: 'completed',
+      payment_status: order.payment_status,
+    } as T);
+  }
+  const elderOrderConfirm = path.match(/^\/nuanban\/elder\/orders\/([^/]+)\/confirm-complete$/);
+  if (method === 'POST' && elderOrderConfirm) {
+    const order = state.orders.find((o) => o.id === elderOrderConfirm[1]);
+    if (!order || order.status !== 'pending_confirm') {
+      return Promise.reject({ message: '订单不在待确认状态' });
+    }
+    finalizeOrderAfterConfirm(order);
+    return delay({
+      ok: true,
+      status: 'completed',
+      payment_status: order.payment_status,
+    } as T);
+  }
   if (method === 'POST' && path.match(/\/nuanban\/family\/outdoor\/[^/]+\/approve/)) {
     const id = path.split('/')[4];
     const approved = data.approved !== false;
@@ -903,7 +940,9 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
       elderName: elder?.name || '张奶奶',
       orderCount: elderOrders.length,
       activeCount: elderOrders.filter((o) =>
-        ['pending_accept', 'pending_service', 'in_service', 'outdoor_pending'].includes(o.status),
+        ['pending_accept', 'pending_service', 'in_service', 'pending_confirm', 'outdoor_pending'].includes(
+          o.status,
+        ),
       ).length,
       caregiverNearbyCount: CAREGIVERS.length,
     } as T);
@@ -1029,6 +1068,8 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
     const filter = query.get('filter') || '';
     if (filter.includes('pending_payment')) {
       items = items.filter((o) => o.status === 'pending_payment');
+    } else if (filter.includes('pending_confirm')) {
+      items = items.filter((o) => o.status === 'pending_confirm');
     } else if (filter.includes('elder =')) {
       const elderId = filter.match(/elder = "([^"]+)"/)?.[1];
       if (elderId) items = items.filter((o) => o.elder === elderId);

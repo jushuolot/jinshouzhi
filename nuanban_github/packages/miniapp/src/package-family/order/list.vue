@@ -2,6 +2,7 @@
   <view class="page">
     <view class="segmented">
       <view class="seg-item" :class="{ active: tab === 'pay' }" @tap="tab = 'pay'">待支付</view>
+      <view class="seg-item" :class="{ active: tab === 'confirm' }" @tap="tab = 'confirm'">待确认</view>
       <view class="seg-item" :class="{ active: tab === 'all' }" @tap="tab = 'all'">全部</view>
     </view>
 
@@ -10,7 +11,13 @@
     <scroll-view v-else scroll-y class="order-scroll">
       <ListCountBar
         :count="shown.length"
-        :hint="tab === 'pay' ? '待支付 · 可滚动' : '全部订单 · 可滚动压测'"
+        :hint="
+          tab === 'pay'
+            ? '待支付 · 可滚动'
+            : tab === 'confirm'
+              ? '待确认服务 · 可滚动'
+              : '全部订单 · 可滚动压测'
+        "
       />
       <view v-for="o in shown" :key="o.id" class="card" @tap="onTap(o)">
         <view class="head">
@@ -33,7 +40,7 @@ import { computed, ref } from 'vue';
 import { onShow } from '@dcloudio/uni-app';
 import RoleTabBar from '../../components/RoleTabBar.vue';
 import ListCountBar from '../../components/ListCountBar.vue';
-import { listBoundElders, listPendingPaymentOrders } from '../../api/family';
+import { listBoundElders, listPendingConfirmOrders, listPendingPaymentOrders } from '../../api/family';
 import { pbList, type PbRecord } from '../../api/pb';
 import { useRoleStore } from '../../store/role';
 import { guardPackageRoute } from '../../utils/nav-guard';
@@ -50,13 +57,18 @@ type OrderItem = PbRecord & {
   };
 };
 
-const tab = ref<'pay' | 'all'>('pay');
+const tab = ref<'pay' | 'confirm' | 'all'>('pay');
 const payList = ref<OrderItem[]>([]);
+const confirmList = ref<OrderItem[]>([]);
 const allList = ref<OrderItem[]>([]);
 const loading = ref(false);
 const roleStore = useRoleStore();
 
-const shown = computed(() => (tab.value === 'pay' ? payList.value : allList.value));
+const shown = computed(() => {
+  if (tab.value === 'pay') return payList.value;
+  if (tab.value === 'confirm') return confirmList.value;
+  return allList.value;
+});
 
 function statusLabel(s: string) {
   return orderStatusLabel(s);
@@ -75,6 +87,7 @@ async function reload() {
     const bindings = await listBoundElders(roleStore.user.id);
     const elderIds = bindings.map((b) => b.elder).filter(Boolean);
     payList.value = await listPendingPaymentOrders(elderIds);
+    confirmList.value = await listPendingConfirmOrders(elderIds);
     if (!elderIds.length) {
       allList.value = [];
       return;
@@ -89,6 +102,7 @@ async function reload() {
     allList.value = res.items;
   } catch (e) {
     payList.value = [];
+    confirmList.value = [];
     allList.value = [];
     uni.showToast({ title: pbErrorMessage(e), icon: 'none' });
   } finally {

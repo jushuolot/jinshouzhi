@@ -46,6 +46,9 @@
       <button v-if="order.status === 'in_service'" class="btn-ok" :loading="loading" @tap="complete">
         完成服务
       </button>
+      <view v-if="order.status === 'pending_confirm'" class="wait-hint">
+        服务已结束，等待家属或老人确认并付款后计入收入
+      </view>
       <view v-if="order.status === 'completed'" class="done-hint">本单已完成 · 收入已计入 · 待月结结算</view>
     </template>
     <view v-else class="hint">订单不存在或已失效</view>
@@ -135,7 +138,7 @@ async function complete() {
   loading.value = true;
   try {
     await completeOrder(id.value);
-    uni.showToast({ title: '已完成 · 已计入收入与待结算', icon: 'success', duration: 2500 });
+    uni.showToast({ title: '已提交 · 等待家属/老人确认付款', icon: 'success', duration: 2500 });
     await loadOrder();
   } catch (e) {
     uni.showToast({ title: pbErrorMessage(e), icon: 'none' });
@@ -202,6 +205,14 @@ async function complete() {
   background: #fff;
   color: #666;
   border: 2rpx solid #ddd;
+  border-radius: 12rpx;
+}
+.wait-hint {
+  text-align: center;
+  color: #c45c26;
+  font-size: 28rpx;
+  padding: 24rpx;
+  background: #fffaf5;
   border-radius: 12rpx;
 }
 .done-hint {
