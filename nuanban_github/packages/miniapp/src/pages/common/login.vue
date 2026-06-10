@@ -66,8 +66,8 @@
       </button>
     </view>
 
-    <view v-if="isDemoMockEnabled()" class="demo-chip" @tap="showDemoPhones">
-      <text>演示账号 · 点按选择手机号</text>
+    <view v-if="virtualPhoneLogin" class="demo-chip" @tap="showDemoPhones">
+      <text>虚拟手机登录 · 点按选择测试号</text>
     </view>
 
     <text class="hint">{{ loginHint }}</text>
@@ -76,7 +76,7 @@
       <text class="foot-link" @tap="goDemoTour">动画演示</text>
       <text class="sep">·</text>
       <text class="foot-link" @tap="goAgreement">用户协议</text>
-      <template v-if="isDemoMockEnabled()">
+      <template v-if="virtualPhoneLogin">
         <text class="sep">·</text>
         <text class="foot-link" @tap="showDemoPhones">测试账号</text>
       </template>
@@ -97,7 +97,10 @@ import { useRoleStore } from '../../store/role';
 import { pbErrorMessage } from '../../utils/request';
 import { DEMO_TEST_PHONES } from '../../utils/demo-rich-data';
 import { isDemoMockEnabled } from '../../utils/demo-mock';
+import { isVirtualPhoneLoginEnabled } from '../../utils/virtual-phone-login';
 import loginBg from '@/static/images/login-bg-kawaii.png';
+
+const virtualPhoneLogin = isVirtualPhoneLoginEnabled();
 
 const loading = ref(false);
 const phone = ref('');
@@ -125,8 +128,8 @@ const loginHint = computed(() => {
   if (fromTour.value) {
     return '动画演示结束 · 登录后首次将引导选择身份';
   }
-  return isDemoMockEnabled()
-    ? '验证码可留空 · 登录页「测试账号」查看各角色手机号'
+  return virtualPhoneLogin
+    ? '验证码可留空 · 点按上方测试号一键登录'
     : '首次登录将引导完善身份资料';
 });
 
@@ -134,10 +137,12 @@ const roleStore = useRoleStore();
 
 function showDemoPhones() {
   uni.showActionSheet({
-    itemList: DEMO_TEST_PHONES.map((p) => `${p.phone.slice(-2)} ${p.label}`),
+    itemList: DEMO_TEST_PHONES.map((p) => `${p.phone.slice(-4)} · ${p.label}`),
     success: (res) => {
       const picked = DEMO_TEST_PHONES[res.tapIndex];
-      if (picked) phone.value = picked.phone;
+      if (!picked) return;
+      phone.value = picked.phone;
+      if (virtualPhoneLogin) void loginDemoPhone(picked.phone);
     },
   });
 }
@@ -157,7 +162,7 @@ function sendCode() {
   }
   if (codeCooldown.value > 0) return;
   uni.showToast({
-    title: isDemoMockEnabled() ? '演示验证码已发送（任意 4 位即可）' : '验证码已发送',
+    title: virtualPhoneLogin ? '虚拟验证码（可留空直接登录）' : '验证码已发送',
     icon: 'none',
   });
   codeCooldown.value = 60;
@@ -199,21 +204,25 @@ function afterLogin(res: LoginResult) {
   }
 }
 
-async function onPhoneLogin() {
-  if (phone.value.length !== 11) {
-    uni.showToast({ title: '请输入 11 位手机号', icon: 'none' });
-    return;
-  }
+async function loginDemoPhone(demoPhone: string) {
   loading.value = true;
   try {
     const code = smsCode.value || (isDemoMockEnabled() ? '1234' : undefined);
-    const res = await loginWithPhone(phone.value, code);
+    const res = await loginWithPhone(demoPhone, code);
     afterLogin(res);
   } catch (e) {
     uni.showToast({ title: pbErrorMessage(e), icon: 'none' });
   } finally {
     loading.value = false;
   }
+}
+
+async function onPhoneLogin() {
+  if (phone.value.length !== 11) {
+    uni.showToast({ title: '请输入 11 位手机号', icon: 'none' });
+    return;
+  }
+  await loginDemoPhone(phone.value);
 }
 
 async function onWxLogin() {
