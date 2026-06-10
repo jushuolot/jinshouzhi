@@ -23,6 +23,11 @@ sleep 3
 
 NUANBAN_API=http://127.0.0.1:8090 ./scripts/pb-init-server.sh
 
+echo "==> 冒烟测试学生端 API"
+if ! BASE=http://127.0.0.1:8090 ./scripts/pb-smoke-student.sh; then
+  echo "警告：冒烟测试未全部通过，请检查 PocketBase hooks 是否已更新（需含 pb_hooks/nuanban_lib.js）"
+fi
+
 STAGING_IP="${NUANBAN_STAGING_IP:-}"
 if [[ -z "$STAGING_IP" ]]; then
   STAGING_IP="$(curl -fsS --max-time 5 ifconfig.me 2>/dev/null || curl -fsS --max-time 5 icanhazip.com 2>/dev/null || true)"
