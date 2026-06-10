@@ -31,13 +31,14 @@ if ! command -v git >/dev/null 2>&1; then
   (command -v apt-get >/dev/null && apt-get update && apt-get install -y git)
 fi
 
-if [[ ! -d .git ]]; then
+if [[ ! -f docker-compose.yml ]] || [[ ! -d packages/miniapp ]]; then
   echo "错误: 请在 nuanban_github 目录执行，或先 git clone"
   exit 1
 fi
 
 echo "==> 拉取最新代码"
-git pull --ff-only || git pull
+GIT_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || echo "$ROOT")"
+git -C "$GIT_ROOT" pull --ff-only || git -C "$GIT_ROOT" pull
 
 chmod +x scripts/*.sh
 
