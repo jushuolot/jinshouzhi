@@ -7,6 +7,7 @@
   var VER = 45;
   var BASE = "assets/portraits/";
   var EXT = ".jpg";
+  var REAL_PHOTO_ENABLED = window.MATCH3_ENABLE_REAL_PORTRAITS === true;
   var cache = {};
   var loaded = {};
   var failed = {};
@@ -66,6 +67,9 @@
   function getArt(charId) {
     charId = charId || "narrator";
     var fallbackResult = fallbackArt(charId);
+    if (!REAL_PHOTO_ENABLED && fallbackResult) {
+      return fallbackResult;
+    }
     if ((failed[charId] || !loaded[charId]) && fallbackResult) {
       return fallbackResult;
     }
@@ -76,6 +80,15 @@
 
   function preloadAll(onDone, onProgress) {
     var ids = Object.keys(META);
+    if (!REAL_PHOTO_ENABLED) {
+      if (onProgress) {
+        ids.forEach(function (id, idx) {
+          onProgress(idx + 1, ids.length, id);
+        });
+      }
+      if (onDone) onDone();
+      return;
+    }
     if (!ids.length) {
       if (onDone) onDone();
       return;
@@ -105,7 +118,8 @@
   window.PortraitPainter = {
     ok: true,
     version: VER,
-    mode: "photo",
+    mode: REAL_PHOTO_ENABLED ? "photo" : "generated",
+    realPhotoEnabled: REAL_PHOTO_ENABLED,
     meta: META,
     paint: getArt,
     getArt: getArt,
