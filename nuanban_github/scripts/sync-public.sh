@@ -16,11 +16,13 @@ fi
 LOGIN_PATH="/#/pages/common/login"
 DEMO_URL="${NUANBAN_DEMO_URL:-https://${NUANBAN_DOMAIN:-你的域名}${LOGIN_PATH}}"
 
-echo "==> 推送代码到 GitHub"
-git push origin main
+GIT_ROOT="$(git -C "$ROOT" rev-parse --show-toplevel 2>/dev/null || echo "$ROOT")"
+
+echo "==> 推送代码到 GitHub（仓库根: ${GIT_ROOT}）"
+git -C "$GIT_ROOT" push origin main
 
 echo "==> 云服务器拉取并部署"
-ssh "$NUANBAN_SSH" "cd ${NUANBAN_REMOTE_DIR} && git pull && chmod +x scripts/*.sh && ./scripts/deploy-public.sh"
+ssh "$NUANBAN_SSH" "cd ${NUANBAN_REMOTE_DIR} && git -C \"\$(git rev-parse --show-toplevel 2>/dev/null || echo .)\" pull && chmod +x scripts/*.sh && ./scripts/deploy-public.sh"
 
 echo ""
 echo "同步完成。客人固定链接: ${DEMO_URL}"

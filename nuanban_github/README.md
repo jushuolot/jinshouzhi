@@ -12,15 +12,24 @@
 
 > 仓库中的 `packages/api`、`packages/admin-web`、`database/` 为历史参考，新环境请按极简栈部署。
 
-## 客人公网演示（暂用 GitHub · 无服务器/域名）
+## 公网部署
 
-| 角色 | 做什么 |
-|------|--------|
-| 客人 | 打开 [固定链接](docs/DEMO_LINK.md)：`https://jushuolot.github.io/jinshouzhi/nuanban/#/pages/common/login` |
-| 本地开发 | `git pull` + `./scripts/dev-test.sh` + `npm run dev:h5` |
-| 同步到公网 | `./scripts/sync-github.sh`（push 后 GitHub Pages 自动更新，**无需本机开终端**） |
+| 环境 | 说明 |
+|------|------|
+| **阿里云（推荐 · 正式）** | [docs/ALIYUN_DEPLOY.md](docs/ALIYUN_DEPLOY.md) — PocketBase + HTTPS，真实 API |
+| **GitHub Pages（演示）** | [docs/DEMO_LINK.md](docs/DEMO_LINK.md) — 内置 Mock，无需服务器 |
 
-仅需开启 GitHub Pages（无需信用卡）：[docs/SETUP_STEP_BY_STEP.md](docs/SETUP_STEP_BY_STEP.md)。日后真实 API 见 [docs/PUBLIC_DEMO.md](docs/PUBLIC_DEMO.md)。
+阿里云快速命令（服务器首次）：
+
+```bash
+git clone https://github.com/jushuolot/jinshouzhi.git /opt/jinshouzhi
+cd /opt/jinshouzhi/nuanban_github
+chmod +x scripts/*.sh && sudo ./scripts/aliyun-bootstrap.sh
+# 编辑 config/demo.env 后
+./scripts/deploy-public.sh
+```
+
+本地改代码后同步：`./scripts/sync-public.sh`（需配置 `config/demo.env` 中的 SSH）。
 
 ## 本地测试 / GitHub 克隆测试
 
