@@ -1,0 +1,1 @@
+import{r}from"./request.7yFiRWnm.js";async function t(){return(await r({url:"/nuanban/org/orders/dispatchable",method:"GET"})).list??[]}async function a(t,a){return r({url:`/nuanban/org/orders/${t}/dispatch`,method:"POST",data:{studentUserId:"user-student"}})}export{a as d,t as l};
