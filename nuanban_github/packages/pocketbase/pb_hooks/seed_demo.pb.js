@@ -1,81 +1,15 @@
 /// 一键写入演示数据：POST /api/nuanban/seed-demo?key=nuanban_dev_seed
 /// 可重复执行（按名称/邮箱去重，不重复创建）
-
-const SEED_KEY = "nuanban_dev_seed";
-const DEV_PASS = "nuanban_dev_2025";
-
-var mustSeedKey = function(e) {
-  const q = e.request.url.query();
-  if (q.get("key") !== SEED_KEY) {
-    throw new BadRequestError("缺少或错误的 key 参数");
-  }
-}
-
-var findOne = function(collection, filter, params) {
-  const rows = $app.findRecordsByFilter(collection, filter, "", 1, 0, params || {});
-  return rows.length ? rows[0] : null;
-}
-
-var findOrCreateBase = function(collection, filter, params, apply) {
-  let rec = findOne(collection, filter, params);
-  if (rec) return rec;
-  const col = $app.findCollectionByNameOrId(collection);
-  rec = new Record(col);
-  apply(rec);
-  $app.save(rec);
-  return rec;
-}
-
-var findOrCreateUser = function(email, name) {
-  const existing = $app.findRecordsByFilter(
-    "users",
-    "email = {:e}",
-    "",
-    1,
-    0,
-    { e: email }
-  );
-  if (existing.length > 0) {
-    return existing[0];
-  }
-  const col = $app.findCollectionByNameOrId("users");
-  const u = new Record(col);
-  u.set("email", email);
-  u.setRandomPassword();
-  u.set("verified", true);
-  u.set("name", name);
-  $app.saveNoValidate(u);
-  return u;
-}
-
-var findOrCreateUserRole = function(userId, role, extra) {
-  const existing = $app.findRecordsByFilter(
-    "user_roles",
-    'user = {:uid} && role = {:role}',
-    "",
-    1,
-    0,
-    { uid: userId, role }
-  );
-  if (existing.length) return existing[0];
-  const col = $app.findCollectionByNameOrId("user_roles");
-  const r = new Record(col);
-  r.set("user", userId);
-  r.set("role", role);
-  r.set("status", "active");
-  if (extra) {
-    Object.keys(extra).forEach((k) => r.set(k, extra[k]));
-  }
-  $app.save(r);
-  return r;
-}
+/// 注意：PocketBase hooks 路由回调内无法访问顶层 var/const，常量与校验写在 handler 内。
 
 routerAdd("POST", "/api/nuanban/seed-demo", (e) => {
-  try {
-    mustSeedKey(e);
-  } catch (err) {
-    return e.json(400, { message: String(err.message || err) });
+  const SEED_KEY = "nuanban_dev_seed";
+  const DEV_PASS = "nuanban_dev_2025";
+  const q = e.request.url.query();
+  if (q.get("key") !== SEED_KEY) {
+    return e.json(400, { message: "缺少或错误的 key 参数" });
   }
+
   let stats;
   try {
   stats = { users: 0, roles: 0, schools: 0, orgs: 0, elders: 0, orders: 0, serviceItems: 0, bindings: 0 };
