@@ -26,6 +26,15 @@ STAGING_URL="http://${STAGING_IP}${LOGIN_PATH}"
 echo "==> 备案中临时部署（HTTP · ${STAGING_IP}）"
 echo "    备案通过后请执行: ./scripts/deploy-public.sh"
 
+echo "==> 0/4 清理旧容器与占用端口"
+"${COMPOSE[@]}" down 2>/dev/null || true
+docker rm -f nuanban-pocketbase nuanban-caddy-staging 2>/dev/null || true
+if ss -tlnp 2>/dev/null | grep -q ':8090 '; then
+  echo "    释放 8090 端口..."
+  fuser -k 8090/tcp 2>/dev/null || true
+  sleep 1
+fi
+
 echo "==> 1/4 启动 PocketBase"
 "${COMPOSE[@]}" up -d pocketbase
 for i in $(seq 1 40); do

@@ -3,7 +3,8 @@
 
 services:
   pocketbase:
-    ports:
+    # 覆盖 base 的 0.0.0.0:8090，仅本机反代
+    ports: !override
       - "127.0.0.1:8090:8090"
 
   caddy:
