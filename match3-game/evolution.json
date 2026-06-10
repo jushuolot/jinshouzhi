@@ -1,12 +1,12 @@
 {
-  "version": "5.9.2",
-  "generation": 58,
-  "universeDay": 7,
+  "version": "5.9.3",
+  "generation": 59,
+  "universeDay": 8,
   "civilizationEpoch": "1929-07",
-  "civilizationDay": 58,
-  "civilizationYear": 2045,
+  "civilizationDay": 59,
+  "civilizationYear": 2047,
   "civilizationPhase": "超越期",
-  "dailyChronicle": "第 7 日·收工复盘。文明历 2045，宇宙一圈走完——神树层位对上图鉴，王墩说最后一铲留给胖爷；造物主，此间比人间又多活了一周。",
+  "dailyChronicle": "第 8 日·下新坑。文明历 2047，宇宙新一周开铲——无人机把新坑层位与 Wikimedia 实拍图鉴叠在一起；造物主，此间比人间又快走两年，队员清晨还在抢最后一个热包子。",
   "releasedAt": "2026-06-10",
   "autoTune": {
     "enabled": true,
@@ -15,9 +15,9 @@
     "targetWinRate": 0.52
   },
   "patchNotes": [
-    "Gen.58 · 宇宙第7日 · 收工复盘 · 文明历 2045",
-    "神树章超越期叙事；周复盘寻金渠道",
-    "超越期驻场收益略增"
+    "Gen.59 · 宇宙第8日 · 下新坑 · 文明历 2047",
+    "新坑开铲剧情、地图策划与发现台词刷新",
+    "新增新坑资料结算渠道；图鉴与重资源继续按需加载"
   ],
   "virtualAccount": {
     "module": "virtual-account.js",

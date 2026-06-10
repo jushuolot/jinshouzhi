@@ -71,6 +71,7 @@
   var threeReady = null;
   var codexReady = null;
   var deferredStarted = false;
+  var threeWarmupScheduled = false;
 
   function loadStylesheet(href) {
     if (document.querySelector('link[href="' + href + '"]')) return;
@@ -116,6 +117,14 @@
     window.PortraitPainter.preloadAll(null, null);
   }
 
+  function scheduleIdle(fn, timeout, fallbackDelay) {
+    if (window.requestIdleCallback) {
+      window.requestIdleCallback(fn, { timeout: timeout || 2000 });
+    } else {
+      window.setTimeout(fn, fallbackDelay || 800);
+    }
+  }
+
   function startDeferredIdle() {
     if (deferredStarted) return;
     deferredStarted = true;
@@ -127,14 +136,13 @@
       .catch(function () {
         return null;
       });
-    codexReady = loadScriptChain(CODEX_SCRIPTS).catch(function () {
-      return null;
-    });
-    window.setTimeout(function () {
+    if (threeWarmupScheduled) return;
+    threeWarmupScheduled = true;
+    scheduleIdle(function () {
       ensureThree().catch(function () {
         return null;
       });
-    }, 1200);
+    }, 5000, 2500);
   }
 
   function ensureCinema() {
