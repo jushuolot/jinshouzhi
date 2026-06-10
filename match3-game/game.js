@@ -2050,6 +2050,7 @@
     if (mapPhaseBriefingEl) mapPhaseBriefingEl.hidden = phase !== "briefing";
     if (mapPhaseAssemblyEl) mapPhaseAssemblyEl.hidden = phase !== "assembly";
     if (mapPhaseRouteEl) mapPhaseRouteEl.hidden = phase !== "route";
+    syncVnCinemaForPhase(phase);
     const titles = { world: "蜀地总览", briefing: "② 作战策划", assembly: "③ 小队集合", route: "④ 探方路线" };
     if (mapHeadTitleEl) mapHeadTitleEl.textContent = titles[phase] || "蜀地地图";
     if (mapPhaseStepsEl) {
@@ -2107,6 +2108,25 @@
     if (window.WorldMap2D) window.WorldMap2D.destroy();
     if (window.ExpeditionMap3D) window.ExpeditionMap3D.destroy();
     if (window.ExpeditionMap2D) window.ExpeditionMap2D.destroy();
+  }
+
+  function destroyVnCinema(id) {
+    if (id === "briefing") {
+      if (briefingCinema && briefingCinema.destroy) briefingCinema.destroy();
+      else if (window.PortraitCinema && window.PortraitCinema.destroy) window.PortraitCinema.destroy("briefing");
+      briefingCinema = null;
+      if (vnBriefingCinemaEl) vnBriefingCinemaEl.innerHTML = "";
+    } else if (id === "assembly") {
+      if (assemblyCinema && assemblyCinema.destroy) assemblyCinema.destroy();
+      else if (window.PortraitCinema && window.PortraitCinema.destroy) window.PortraitCinema.destroy("assembly");
+      assemblyCinema = null;
+      if (vnAssemblyCinemaEl) vnAssemblyCinemaEl.innerHTML = "";
+    }
+  }
+
+  function syncVnCinemaForPhase(phase) {
+    if (phase !== "briefing") destroyVnCinema("briefing");
+    if (phase !== "assembly") destroyVnCinema("assembly");
   }
 
   function initBriefingCinema() {

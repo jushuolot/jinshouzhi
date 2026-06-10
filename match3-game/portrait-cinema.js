@@ -95,6 +95,8 @@
     this.blinkT = Math.random() * 3;
     this.compact = !!mount.closest(".discovery-modal");
     this.running = true;
+    this.transitionTimer = null;
+    this.transitionToken = 0;
     var self = this;
     this._frame = function (now) {
       if (!self.running) return;
@@ -121,12 +123,32 @@
       this.root.classList.remove("pc-exit");
     }
     var photos = this.mount.querySelectorAll(".pc-photo-main, .pc-photo-bg");
+    var self = this;
+    function handlePhotoError(img) {
+      img.classList.remove("pc-photo-loading");
+      if (window.PortraitPainter && window.PortraitPainter.notePhotoFailure) {
+        window.PortraitPainter.notePhotoFailure(charId);
+      }
+      if (self.charId === charId && self.root && self.root.classList.contains("pc-photo")) {
+        self._mountCharacter(charId, self.talking);
+      }
+    }
     for (var p = 0; p < photos.length; p++) {
       var img = photos[p];
       img.classList.add("pc-photo-loading");
       if (img.complete && img.naturalWidth > 0) {
+        img.classList.remove("pc-photo-loading");
         img.classList.add("pc-photo-loaded");
+      } else if (img.complete && img.naturalWidth === 0) {
+        handlePhotoError(img);
       } else {
+        img.addEventListener(
+          "error",
+          function (el) {
+            handlePhotoError(el);
+          }.bind(null, img),
+          { once: true }
+        );
         img.addEventListener(
           "load",
           function (el) {
@@ -137,7 +159,6 @@
         );
       }
     }
-    var self = this;
     window.requestAnimationFrame(function () {
       if (self.root) self.root.classList.add("pc-ready");
     });
@@ -152,8 +173,13 @@
     }
     var self = this;
     if (this.root && this.stage) {
+      this.transitionToken += 1;
+      var token = this.transitionToken;
+      if (this.transitionTimer) window.clearTimeout(this.transitionTimer);
       this.root.classList.add("pc-exit");
-      window.setTimeout(function () {
+      this.transitionTimer = window.setTimeout(function () {
+        if (token !== self.transitionToken || !self.running) return;
+        self.transitionTimer = null;
         self._mountCharacter(charId, talking);
       }, 260);
       return;
@@ -230,6 +256,7 @@
 
   PortraitCinema.prototype.destroy = function () {
     this.running = false;
+    if (this.transitionTimer) window.clearTimeout(this.transitionTimer);
     this.mount.innerHTML = "";
     delete instances[this.id];
   };

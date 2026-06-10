@@ -55,10 +55,16 @@
     };
   }
 
+  function fallbackArt(charId) {
+    if (fallback && fallback.getArt) return fallback.getArt(charId);
+    return null;
+  }
+
   function getArt(charId) {
     charId = charId || "narrator";
-    if (failed[charId] && fallback && fallback.getArt) {
-      return fallback.getArt(charId);
+    var fallbackResult = fallbackArt(charId);
+    if ((failed[charId] || !loaded[charId]) && fallbackResult) {
+      return fallbackResult;
     }
     var key = VER + ":" + charId;
     if (!cache[key]) cache[key] = photoArt(charId);
@@ -104,6 +110,11 @@
     photoUrl: photoUrl,
     isPhotoReady: function (charId) {
       return !!loaded[charId] && !failed[charId];
+    },
+    notePhotoFailure: function (charId) {
+      charId = charId || "narrator";
+      loaded[charId] = false;
+      failed[charId] = true;
     },
     fallback: fallback,
   };
