@@ -217,16 +217,24 @@ export function normalizeElderId(id: string, elders: RichElder[]): string {
 
 export function buildRichCaregivers(): RichCaregiver[] {
   const schools = ['示范大学', '城东师范学院', '医科大学', '示范大学'];
-  const names = ['林同学', '陈同学', '赵同学', '孙同学', '周同学', '吴同学'];
+  const names = ['林同学', '陈同学', '赵同学', '孙同学', '周同学', '吴同学', '郑同学', '钱同学'];
+  const tagSets = [
+    ['陪伴聊天', '康复协助'],
+    ['生活陪护'],
+    ['棋牌陪伴'],
+    ['外出陪同'],
+    ['读报陪聊'],
+    ['用药提醒'],
+    ['康复协助', '读报陪聊'],
+    ['生活陪护', '外出陪同'],
+  ];
   return names.map((name, i) => ({
     id: `cg-${i + 1}`,
     userId: i === 0 ? DEMO_USERS.student.id : `user-student-${i + 1}`,
     name,
     school: schools[i % schools.length],
     distanceKm: 0.5 + i * 0.55,
-    tags: [['陪伴聊天', '康复协助'], ['生活陪护'], ['棋牌陪伴'], ['外出陪同'], ['读报陪聊'], ['用药提醒']][i] || [
-      '陪伴',
-    ],
+    tags: tagSets[i] || ['陪伴'],
     rating: 4.9 - i * 0.05,
     orderCount: 35 - i * 4,
     intro: `${name}——富数据演示陪护学生 #${i + 1}`,
