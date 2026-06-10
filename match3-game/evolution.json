@@ -1,12 +1,12 @@
 {
-  "version": "5.9.2",
-  "generation": 58,
-  "universeDay": 7,
+  "version": "5.10.0",
+  "generation": 59,
+  "universeDay": 8,
   "civilizationEpoch": "1929-07",
-  "civilizationDay": 58,
-  "civilizationYear": 2045,
+  "civilizationDay": 59,
+  "civilizationYear": 2047,
   "civilizationPhase": "超越期",
-  "dailyChronicle": "第 7 日·收工复盘。文明历 2045，宇宙一圈走完——神树层位对上图鉴，王墩说最后一铲留给胖爷；造物主，此间比人间又多活了一周。",
+  "dailyChronicle": "第 8 日·下新坑。文明历 2047，锚点 1929-07 后第五十九代，古蜀档案比人间快进两倍；胡探在雨后新坑校罗盘，杨雪把新坑数据贴到层位板，王墩嚷着早饭没吃饱也照样下铲。",
   "releasedAt": "2026-06-10",
   "autoTune": {
     "enabled": true,
@@ -15,9 +15,9 @@
     "targetWinRate": 0.52
   },
   "patchNotes": [
-    "Gen.58 · 宇宙第7日 · 收工复盘 · 文明历 2045",
-    "神树章超越期叙事；周复盘寻金渠道",
-    "超越期驻场收益略增"
+    "Gen.59 · 宇宙第8日 · 下新坑 · 文明历 2047",
+    "青铜门、纵目坑、神树坑接入2047超越期新坑日叙事",
+    "新增新坑数据镜像寻金渠道，保持虚拟账户只入账不扣减"
   ],
   "virtualAccount": {
     "module": "virtual-account.js",
