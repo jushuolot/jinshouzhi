@@ -30,13 +30,21 @@ for f in packages/pocketbase/pb_hooks/nuanban_lib.js \
          packages/pocketbase/pb_hooks/nuanban.pb.js \
          packages/pocketbase/pb_hooks/seed_demo.pb.js \
          scripts/pb-smoke-student.sh \
-         scripts/aliyun-fix-data.sh; do
+         scripts/aliyun-fix-data.sh \
+         scripts/sync-all.sh \
+         scripts/git-pull-cn.sh; do
   if [[ -f "$f" ]]; then ok "$f"; else warn "缺少 $f"; fi
 done
 if grep -q 'require(__hooks + "/nuanban_lib.js")' packages/pocketbase/pb_hooks/nuanban.pb.js 2>/dev/null; then
   ok "nuanban.pb.js 已 require nuanban_lib.js"
 else
   warn "nuanban.pb.js 未 require nuanban_lib.js（旧 hooks，API 会报错）"
+fi
+if grep -q 'toString(e.request.body)' packages/pocketbase/pb_hooks/nuanban.pb.js 2>/dev/null \
+  && grep -q 'god-view-auth' packages/pocketbase/pb_hooks/nuanban.pb.js; then
+  ok "god-view-auth 使用 toString 解析（密码 nuanban2025）"
+else
+  warn "god-view-auth 可能仍为旧版（密码会一直报错）"
 fi
 
 section "2/4 Git 与 GitHub"

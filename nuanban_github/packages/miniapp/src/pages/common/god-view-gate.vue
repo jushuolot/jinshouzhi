@@ -22,6 +22,7 @@
     </view>
 
     <text class="hint">会话 8 小时内免重复输入 · 仅限平台超级管理员</text>
+    <text class="hint pwd-hint">演示环境密码：nuanban2025（请确认访问的是阿里云站点并强刷页面）</text>
     <text class="back nb-link" @tap="goBack">返回</text>
   </view>
 </template>
@@ -97,6 +98,11 @@ function goBack() {
   color: #7a6e78;
   text-align: center;
   line-height: 1.5;
+}
+.pwd-hint {
+  margin-top: 12rpx;
+  color: #a89488;
+  font-size: 20rpx;
 }
 .back {
   display: block;
