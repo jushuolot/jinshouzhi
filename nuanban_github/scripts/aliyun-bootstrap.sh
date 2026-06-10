@@ -21,10 +21,45 @@ elif command -v dnf >/dev/null 2>&1; then
 elif command -v yum >/dev/null 2>&1; then
   PKG=yum
 else
-  echo "错误：未找到 apt-get / yum / dnf，请手动安装 Docker 与 Node.js 20"
+  echo "错误：未找到 apt-get / yum / dnf"
   exit 1
 fi
 echo "    系统包管理: ${PKG}"
+
+is_alinux() {
+  [[ -f /etc/alinux-release ]] || grep -qi 'alinux\|alibaba cloud linux' /etc/os-release 2>/dev/null
+}
+
+install_docker() {
+  if command -v docker >/dev/null 2>&1; then
+    echo "    Docker 已安装: $(docker --version)"
+    return 0
+  fi
+  if is_alinux || [[ "$PKG" == dnf ]] || [[ "$PKG" == yum ]]; then
+    echo "    使用系统源安装 Docker（Alibaba Cloud Linux / RHEL）"
+    "$PKG" install -y docker || "$PKG" install -y docker-ce || true
+    if ! command -v docker >/dev/null 2>&1; then
+      echo "    尝试安装 moby-engine..."
+      "$PKG" install -y moby-engine 2>/dev/null || true
+    fi
+    "$PKG" install -y docker-compose-plugin 2>/dev/null || true
+  else
+    curl -fsSL https://get.docker.com | sh
+  fi
+  systemctl enable docker
+  systemctl start docker
+  if ! docker info >/dev/null 2>&1; then
+    echo "错误：Docker 未启动，请执行: systemctl status docker"
+    exit 1
+  fi
+  echo "    Docker 就绪: $(docker --version)"
+  if docker compose version >/dev/null 2>&1; then
+    echo "    Compose: $(docker compose version)"
+  else
+    echo "    警告: docker compose 插件未找到，尝试安装..."
+    "$PKG" install -y docker-compose-plugin 2>/dev/null || true
+  fi
+}
 
 echo "==> 1/6 系统更新与基础工具"
 case "$PKG" in
@@ -42,13 +77,7 @@ case "$PKG" in
 esac
 
 echo "==> 2/6 安装 Docker"
-if ! command -v docker >/dev/null 2>&1; then
-  curl -fsSL https://get.docker.com | sh
-  systemctl enable docker
-  systemctl start docker
-else
-  echo "    Docker 已安装，跳过"
-fi
+install_docker
 
 echo "==> 3/6 安装 Node.js 20（构建 H5）"
 need_node=1
@@ -70,6 +99,7 @@ if [[ "$need_node" -eq 1 ]]; then
       "$PKG" install -y nodejs
       ;;
   esac
+  echo "    Node $(node -v)"
 fi
 
 echo "==> 4/6 生成生产 .env（PocketBase 加密密钥）"
@@ -88,25 +118,16 @@ fi
 echo "==> 5/6 配置 config/demo.env"
 if [[ ! -f config/demo.env ]]; then
   cp config/demo.env.example config/demo.env
-  echo ""
-  echo "    请编辑 config/demo.env，至少设置："
-  echo "      NUANBAN_DOMAIN=你的备案域名（如 nuanban.cc）"
-  echo "      NUANBAN_STAGING_IP=本机公网IP"
-  echo "      NUANBAN_SSH=root@本机公网IP"
-  echo "      NUANBAN_REMOTE_DIR=${ROOT}"
-  echo ""
-  echo "    编辑命令: nano config/demo.env"
+  echo "    已复制 config/demo.env.example → 请设置 IP/域名"
 else
   echo "    config/demo.env 已存在，跳过"
 fi
 
-echo "==> 6/6 防火墙提示"
+echo "==> 6/6 完成"
 echo ""
 echo "=============================================="
-echo "初始化完成。备案中临时部署:"
+echo "初始化完成。下一步:"
 echo "    cd ${ROOT}"
-echo "    ./scripts/deploy-staging.sh"
-echo ""
-echo "备案通过后正式 HTTPS:"
-echo "    ./scripts/deploy-public.sh"
+echo "    ./scripts/aliyun-oneclick.sh   # 一键部署（备案中）"
+echo "    或 ./scripts/deploy-staging.sh"
 echo "=============================================="
