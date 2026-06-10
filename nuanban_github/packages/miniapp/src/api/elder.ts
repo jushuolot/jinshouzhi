@@ -1,4 +1,6 @@
+import { normalizeElderId } from '../utils/elder-id';
 import { request } from '../utils/request';
+import { useRoleStore } from '../store/role';
 import { pbList, type PbRecord } from './pb';
 
 export interface CaregiverItem {
@@ -74,6 +76,24 @@ export async function fetchElderStats() {
   });
 }
 
+/** 列表/下单用：优先 store，缺失时从 stats 回填 elderProfileId */
+export async function resolveElderIdForApi(): Promise<string | null> {
+  const roleStore = useRoleStore();
+  const fromStore = roleStore.currentElderId;
+  if (fromStore) return normalizeElderId(fromStore);
+  if (roleStore.activeRole !== 'elder') return null;
+  try {
+    const stats = await fetchElderStats();
+    if (stats.elderProfileId) {
+      roleStore.setElderProfileId(stats.elderProfileId);
+      return normalizeElderId(stats.elderProfileId);
+    }
+  } catch {
+    /* ignore */
+  }
+  return null;
+}
+
 export async function getNearbyCaregivers(lat: number, lng: number, radiusKm = 5) {
   const res = await request<{ list: CaregiverItem[] }>({
     url: `/nuanban/elder/caregivers/nearby?lat=${lat}&lng=${lng}&radiusKm=${radiusKm}`,
@@ -147,12 +167,13 @@ export interface OrderRow extends PbRecord {
 }
 
 export async function listOrdersForElder(elderId: string) {
+  const eid = normalizeElderId(elderId);
   const res = await pbList<
     OrderRow & {
       expand?: { service_item?: { name: string; requires_outdoor_approval?: boolean } };
     }
   >('orders', {
-    filter: `elder = "${elderId}"`,
+    filter: `elder = "${eid}"`,
     expand: 'service_item',
     perPage: 30,
   });
@@ -160,8 +181,16 @@ export async function listOrdersForElder(elderId: string) {
 }
 
 export async function getOrder(id: string) {
-  const res = await pbList<OrderRow>('orders', {
+  const res = await pbList<
+    OrderRow & {
+      payment_status?: string;
+      expand?: {
+        service_item?: { name: string; requires_outdoor_approval?: boolean };
+      };
+    }
+  >('orders', {
     filter: `id = "${id}"`,
+    expand: 'service_item',
     perPage: 1,
   });
   return res.items[0] ?? null;

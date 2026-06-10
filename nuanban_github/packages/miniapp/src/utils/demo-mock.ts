@@ -932,11 +932,15 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
   if (method === 'GET' && path === '/nuanban/elder/stats') {
     const roleErr = assertDemoActiveRole(options, path, 'elder');
     if (roleErr) return Promise.reject({ message: roleErr, statusCode: 403 });
-    const elderId = normalizeElderId('elder-zhang', ELDERS);
+    syncMockRolesFromStorage();
+    const storedRoles = mockRegisterRoles.length ? [...mockRegisterRoles] : readStoredRoles();
+    const elderRole = storedRoles.find((r) => r.role === 'elder' && r.status === 'active');
+    const profileId = elderRole?.elderProfileId || 'elder-zhang';
+    const elderId = normalizeElderId(profileId, ELDERS);
     const elderOrders = state.orders.filter((o) => o.elder === elderId);
     const elder = elderById(elderId);
     return delay({
-      elderProfileId: 'elder-zhang',
+      elderProfileId: profileId,
       elderName: elder?.name || '张奶奶',
       orderCount: elderOrders.length,
       activeCount: elderOrders.filter((o) =>

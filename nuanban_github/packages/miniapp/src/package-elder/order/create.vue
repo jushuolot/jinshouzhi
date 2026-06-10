@@ -37,8 +37,7 @@
 <script setup lang="ts">
 import { onLoad } from '@dcloudio/uni-app';
 import { computed, ref } from 'vue';
-import { createOrder, listServiceItems } from '../../api/elder';
-import { useRoleStore } from '../../store/role';
+import { createOrder, listServiceItems, resolveElderIdForApi } from '../../api/elder';
 import { pbErrorMessage } from '../../utils/request';
 
 const studentUserId = ref('');
@@ -55,7 +54,6 @@ const rows = ref<
 const selectedId = ref('');
 const loadingList = ref(true);
 const loading = ref(false);
-const roleStore = useRoleStore();
 
 const groups = computed(() => {
   const map = new Map<string, { name: string; duration: number; priceYuan: string; outdoor: boolean; id: string }[]>();
@@ -94,7 +92,7 @@ onLoad(async (q) => {
 });
 
 async function submit() {
-  const elderId = roleStore.currentElderId;
+  const elderId = await resolveElderIdForApi();
   if (!elderId) {
     uni.showToast({ title: '未绑定老人档案', icon: 'none' });
     return;

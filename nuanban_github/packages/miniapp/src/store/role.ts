@@ -10,11 +10,20 @@ const ROLES_KEY = 'roles';
 const ELDER_PROFILE_KEY = 'elderProfileId';
 const USER_KEY = 'user';
 
+function readRolesFromStorage(): UserRole[] {
+  try {
+    const raw = uni.getStorageSync(ROLES_KEY);
+    return Array.isArray(raw) ? (raw as UserRole[]) : [];
+  } catch {
+    return [];
+  }
+}
+
 export const useRoleStore = defineStore('role', {
   state: () => ({
     token: uni.getStorageSync(TOKEN_KEY) as string,
     activeRole: (uni.getStorageSync(ACTIVE_ROLE_KEY) as RoleKey) || null,
-    roles: (uni.getStorageSync(ROLES_KEY) as UserRole[]) || [],
+    roles: readRolesFromStorage(),
     elderProfileId: (uni.getStorageSync(ELDER_PROFILE_KEY) as string) || null,
     user: (uni.getStorageSync(USER_KEY) as {
       id: string;
@@ -43,8 +52,10 @@ export const useRoleStore = defineStore('role', {
       this.token = payload.token;
       this.roles = payload.roles;
       this.user = payload.user ?? null;
-      const elderRole = payload.roles.find((r) => r.role === 'elder' && r.elderProfileId);
-      this.elderProfileId = elderRole?.elderProfileId ?? this.elderProfileId;
+      const elderRole = payload.roles.find((r) => r.role === 'elder' && r.status === 'active');
+      if (elderRole?.elderProfileId) {
+        this.elderProfileId = elderRole.elderProfileId;
+      }
 
       if (payload.activeRole) {
         this.activeRole = payload.activeRole;

@@ -10,6 +10,7 @@
         支付：{{ order.payment_status === 'paid' ? '已支付' : '待支付' }}
       </text>
     </view>
+    <text v-else-if="!loading" class="hint">订单不存在或加载失败</text>
     <text v-else class="hint">加载中…</text>
 
     <button
@@ -29,9 +30,11 @@ import { onLoad, onShow } from '@dcloudio/uni-app';
 import OrderTimeline from '../../components/OrderTimeline.vue';
 import { confirmOrderComplete, getOrder, type OrderRow } from '../../api/elder';
 import { orderStatusLabel } from '../../utils/order-status';
+import { readRouteQuery } from '../../utils/route-query';
 import { pbErrorMessage } from '../../utils/request';
 
 const orderId = ref('');
+const loading = ref(false);
 const confirming = ref(false);
 const order = ref<
   (OrderRow & {
@@ -63,17 +66,23 @@ function formatTime(iso?: string) {
 }
 
 async function load() {
-  if (!orderId.value) return;
+  if (!orderId.value) {
+    order.value = null;
+    return;
+  }
+  loading.value = true;
   try {
     order.value = await getOrder(orderId.value);
   } catch (e) {
     order.value = null;
     uni.showToast({ title: pbErrorMessage(e), icon: 'none' });
+  } finally {
+    loading.value = false;
   }
 }
 
 onLoad((q) => {
-  if (q?.id) orderId.value = q.id as string;
+  orderId.value = readRouteQuery(q, 'id');
 });
 
 onShow(load);
@@ -135,6 +144,7 @@ async function confirmComplete() {
   font-size: 28rpx;
 }
 .hint {
+  display: block;
   text-align: center;
   color: #999;
   padding: 80rpx;

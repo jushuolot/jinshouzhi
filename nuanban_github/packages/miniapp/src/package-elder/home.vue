@@ -6,19 +6,35 @@
     </view>
 
     <view class="stats-card">
-      <view class="stat-item">
+      <view class="stat-item" @tap="goOrders">
         <text class="stat-num">{{ stats?.orderCount ?? 0 }}</text>
         <text class="stat-label">我的订单</text>
       </view>
       <view class="stat-divider" />
-      <view class="stat-item">
+      <view class="stat-item" @tap="goOrders">
         <text class="stat-num accent">{{ stats?.activeCount ?? 0 }}</text>
         <text class="stat-label">进行中</text>
       </view>
       <view class="stat-divider" />
-      <view class="stat-item">
+      <view class="stat-item" @tap="goFind">
         <text class="stat-num">{{ stats?.caregiverNearbyCount ?? 0 }}</text>
         <text class="stat-label">附近女大学生</text>
+      </view>
+    </view>
+
+    <view v-if="recentOrders.length" class="section-title">最近服务</view>
+    <view v-if="recentOrders.length" class="order-preview">
+      <view
+        v-for="o in recentOrders"
+        :key="o.id"
+        class="order-card"
+        @tap="goOrderDetail(o.id)"
+      >
+        <view class="order-head">
+          <text class="order-svc">{{ serviceName(o) }}</text>
+          <text class="order-status">{{ statusLabel(o.status) }}</text>
+        </view>
+        <text class="order-meta">{{ formatTime(o.scheduled_at) }} · ¥{{ ((o.amount_cents || 0) / 100).toFixed(0) }}</text>
       </view>
     </view>
 
@@ -47,20 +63,59 @@
 import { computed, ref } from 'vue';
 import RoleTabBar from '../components/RoleTabBar.vue';
 import { onShow } from '@dcloudio/uni-app';
-import { fetchElderStats, triggerSos, type ElderStats } from '../api/elder';
+import {
+  fetchElderStats,
+  listOrdersForElder,
+  resolveElderIdForApi,
+  triggerSos,
+  type ElderStats,
+  type OrderRow,
+} from '../api/elder';
+import { useRoleStore } from '../store/role';
 import { elderFontClass } from '../utils/elder-accessibility';
 import { guardPackageRoute } from '../utils/nav-guard';
+import { orderStatusLabel } from '../utils/order-status';
 import { pbErrorMessage } from '../utils/request';
 
 const stats = ref<ElderStats | null>(null);
+const recentOrders = ref<
+  (OrderRow & { expand?: { service_item?: { name: string } } })[]
+>([]);
 const fontClass = computed(() => elderFontClass());
 const orgName = ref('暖伴示范养老院');
+const roleStore = useRoleStore();
+
+function serviceName(o: (typeof recentOrders.value)[0]) {
+  return o.expand?.service_item?.name || '陪护服务';
+}
+
+function statusLabel(s: string) {
+  return orderStatusLabel(s);
+}
+
+function formatTime(iso?: string) {
+  if (!iso) return '待定';
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getMonth() + 1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
 
 onShow(async () => {
   guardPackageRoute('/package-elder/home');
   try {
     stats.value = await fetchElderStats();
+    if (stats.value?.elderProfileId) {
+      roleStore.setElderProfileId(stats.value.elderProfileId);
+    }
+    const elderId = await resolveElderIdForApi();
+    if (elderId) {
+      const all = await listOrdersForElder(elderId);
+      recentOrders.value = all.slice(0, 3);
+    } else {
+      recentOrders.value = [];
+    }
   } catch (e) {
+    recentOrders.value = [];
     uni.showToast({ title: pbErrorMessage(e), icon: 'none' });
   }
 });
@@ -71,8 +126,11 @@ function goFind() {
 function goOrders() {
   uni.redirectTo({ url: '/package-elder/order/list' });
 }
+function goOrderDetail(id: string) {
+  uni.navigateTo({ url: `/package-elder/order/detail?id=${id}` });
+}
 async function sos() {
-  const elderId = stats.value?.elderProfileId || 'elder-zhang';
+  const elderId = (await resolveElderIdForApi()) || stats.value?.elderProfileId || 'elder-zhang';
   try {
     await triggerSos(elderId);
     uni.showModal({
@@ -145,6 +203,38 @@ async function sos() {
   margin-bottom: 16rpx;
   color: var(--nb-text);
 }
+.order-preview {
+  margin-bottom: 28rpx;
+}
+.order-card {
+  background: var(--nb-surface);
+  padding: 28rpx 24rpx;
+  margin-bottom: 12rpx;
+  border-radius: var(--nb-radius-md);
+  box-shadow: var(--nb-shadow-soft);
+}
+.order-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.order-svc {
+  font-size: 30rpx;
+  font-weight: 600;
+}
+.order-status {
+  font-size: 22rpx;
+  color: #c45c26;
+  background: #fff5ef;
+  padding: 4rpx 12rpx;
+  border-radius: 8rpx;
+}
+.order-meta {
+  display: block;
+  margin-top: 10rpx;
+  color: #888;
+  font-size: 24rpx;
+}
 .quick-grid {
   display: flex;
   flex-direction: column;
@@ -185,5 +275,8 @@ async function sos() {
 }
 .page.elder-large .quick-text {
   font-size: 40rpx;
+}
+.page.elder-large .order-svc {
+  font-size: 38rpx;
 }
 </style>
