@@ -48,6 +48,7 @@ export interface StudentProfile {
   nickname: string;
   email: string;
   avatarUrl?: string;
+  profileComplete?: boolean;
   schoolName: string;
   displayName: string;
   gender?: string;

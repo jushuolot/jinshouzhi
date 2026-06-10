@@ -1270,7 +1270,7 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
   if (method === 'GET' && path === '/nuanban/elder/profile') {
     const roleErr = assertDemoActiveRole(options, path, 'elder');
     if (roleErr) return Promise.reject({ message: roleErr, statusCode: 403 });
-    return delay(elderProfileDto() as T);
+    return delay(elderSelfProfileDto() as T);
   }
   if (method === 'GET' && path === '/nuanban/family/profile') {
     const roleErr = assertDemoActiveRole(options, path, 'family');

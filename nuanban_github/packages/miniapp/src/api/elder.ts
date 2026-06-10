@@ -47,6 +47,7 @@ export interface ElderSelfProfile {
   id: string;
   name: string;
   avatarUrl?: string;
+  profileComplete?: boolean;
   age: number;
   gender: string;
   district: string;
@@ -114,6 +115,23 @@ export async function fetchElderSelfProfile() {
   return request<ElderSelfProfile>({
     url: '/nuanban/elder/profile',
     method: 'GET',
+  });
+}
+
+export async function updateElderProfile(data: {
+  name?: string;
+  age?: number;
+  gender?: string;
+  district?: string;
+  address?: string;
+  emergencyContactName?: string;
+  emergencyContactPhone?: string;
+  emergencyContactRelation?: string;
+}) {
+  return request<{ ok: boolean; profileComplete?: boolean } & Partial<ElderSelfProfile>>({
+    url: '/nuanban/elder/profile',
+    method: 'PATCH',
+    data,
   });
 }
 

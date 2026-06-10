@@ -15,6 +15,7 @@ export interface FamilyProfile {
   nickname: string;
   email: string;
   avatarUrl?: string;
+  profileComplete?: boolean;
   relationToElder: string;
   linkedElderName: string;
   linkedElderId: string;
@@ -44,6 +45,20 @@ export async function fetchFamilyProfile() {
   return request<FamilyProfile>({
     url: '/nuanban/family/profile',
     method: 'GET',
+  });
+}
+
+export async function updateFamilyProfile(data: {
+  nickname?: string;
+  contactPhone?: string;
+  district?: string;
+  address?: string;
+  relationToElder?: string;
+}) {
+  return request<{ ok: boolean; profileComplete?: boolean } & Partial<FamilyProfile>>({
+    url: '/nuanban/family/profile',
+    method: 'PATCH',
+    data,
   });
 }
 
