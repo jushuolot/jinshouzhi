@@ -1,1 +1,0 @@
-import{r as a}from"./request.DnuWRHp5.js";async function r(){return a({url:"/nuanban/platform/overview",method:"GET"})}async function n(r){return a({url:"/nuanban/platform/god-view-auth",method:"POST",data:{password:r}})}export{r as f,n as v};
