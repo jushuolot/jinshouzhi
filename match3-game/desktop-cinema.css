@@ -3,7 +3,7 @@
 @media (min-width: 960px) {
   body.blockbuster-mode .vn-screen.cinema-mode {
     display: grid;
-    grid-template-columns: 1fr minmax(300px, 38%);
+    grid-template-columns: minmax(0, 1fr) minmax(320px, 34%);
     grid-template-rows: 1fr;
     min-height: calc(100vh - 3.5rem);
     min-height: calc(100dvh - 3.5rem);
@@ -26,7 +26,10 @@
     min-height: 100%;
     border-top: none;
     border-left: 1px solid rgba(201, 162, 39, 0.22);
-    background: linear-gradient(90deg, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0.92) 18%);
+    background:
+      radial-gradient(ellipse at 15% 12%, rgba(201, 162, 39, 0.16), transparent 42%),
+      linear-gradient(135deg, rgba(28, 20, 10, 0.94) 0%, rgba(8, 5, 3, 0.96) 62%, rgba(0, 0, 0, 0.9) 100%);
+    box-shadow: inset 14px 0 30px rgba(201, 162, 39, 0.05);
     padding: 2rem 1.75rem 2rem;
   }
 
@@ -36,8 +39,16 @@
   }
 
   body.blockbuster-mode .portrait-cinema.pc-photo .pc-layer {
-    max-width: min(88%, 520px);
+    max-width: min(82%, 460px);
     height: 100%;
+  }
+
+  body.blockbuster-mode .portrait-cinema.pc-photo.pc-align-right .pc-layer {
+    right: clamp(1.25rem, 4vw, 3rem);
+  }
+
+  body.blockbuster-mode .portrait-cinema.pc-photo .pc-layer-main img.pc-photo-main {
+    object-fit: contain;
   }
 
   .vn-kbd-hint {
