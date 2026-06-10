@@ -7,11 +7,13 @@ import {
 import {
   getWalletOverview,
   payOrderFromWallet,
+  resolveDemoFamilyUserId,
   resolveDemoWalletUserId,
   topupWallet,
 } from './demo-wallet';
 import {
   loadDemoRuntimeState,
+  resetDemoRuntimeState as clearAllDemoStorage,
   saveDemoRuntimeState,
   type DemoRuntimeState,
   type MockOutdoorApproval,
@@ -48,6 +50,13 @@ const MOCK_TOKEN = 'demo-mock-token';
 const USERS = DEMO_USERS;
 const ORG = DEMO_ORG_MAIN;
 const ELDERS = buildRichElders();
+/** 家属演示绑定：张奶奶、李爷爷、王阿姨 */
+const PRIMARY_FAMILY_ELDER_IDS = ['elder-1', 'elder-2', 'elder-3'];
+const PRIMARY_FAMILY_RELATIONS: Record<string, string> = {
+  'elder-1': '女儿',
+  'elder-2': '儿子',
+  'elder-3': '儿媳',
+};
 const CAREGIVERS = buildRichCaregivers();
 
 const SERVICE_CATEGORIES = [
@@ -476,6 +485,27 @@ function persistDemoState() {
   saveDemoRuntimeState(state);
 }
 
+function familyUserFromFilter(filter: string): string | null {
+  const raw = filter.match(/family_user = "([^"]+)"/)?.[1];
+  return raw ? resolveDemoFamilyUserId(raw) : null;
+}
+
+function buildFamilyElderBindings(familyUserId: string) {
+  return PRIMARY_FAMILY_ELDER_IDS.map((eid) => {
+    const elder = elderById(eid);
+    return {
+      id: `bind-${eid}`,
+      collectionId: 'family_elder_bindings',
+      created: '',
+      updated: '',
+      elder: eid,
+      family_user: familyUserId,
+      relation_label: PRIMARY_FAMILY_RELATIONS[eid] || '家属',
+      expand: { elder: { id: eid, name: elder?.name || '老人' } },
+    };
+  });
+}
+
 function filterMockOrders(items: ReturnType<typeof orderRecord>[], filter: string) {
   let out = items;
   if (filter.includes('pending_payment')) {
@@ -488,7 +518,7 @@ function filterMockOrders(items: ReturnType<typeof orderRecord>[], filter: strin
     out = out.filter((o) => o.status === 'outdoor_pending');
   }
   if (filter.includes('family_user =')) {
-    const uid = filter.match(/family_user = "([^"]+)"/)?.[1];
+    const uid = familyUserFromFilter(filter);
     if (uid) out = out.filter((o) => o.family_user === uid);
   }
   if (filter.includes('elder =')) {
@@ -779,6 +809,14 @@ function parseBody(data: unknown): Record<string, unknown> {
 }
 
 /** 构建时 VITE_DEMO_MOCK，或运行在 GitHub Pages 时自动启用 */
+/** 运营演示：重置 localStorage 并刷新页面 */
+export function resetDemoRuntimeState() {
+  clearAllDemoStorage();
+  if (typeof window !== 'undefined') {
+    window.location.reload();
+  }
+}
+
 export function isDemoMockEnabled(): boolean {
   if (import.meta.env.VITE_DEMO_MOCK === 'true') return true;
   try {
@@ -1195,7 +1233,7 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
     const outdoorPending = state.outdoorApprovals.filter((a) => a.status === 'pending_family').length;
     const sosPending = state.sosAlerts.filter((a) => a.status === 'active').length;
     return delay({
-      boundElderCount: ELDERS.length,
+      boundElderCount: PRIMARY_FAMILY_ELDER_IDS.length,
       pendingPaymentCount: pendingPay,
       pendingConfirmCount: pendingConfirm,
       outdoorPendingCount: outdoorPending,
@@ -1392,21 +1430,17 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
     return delay(pbList(items) as T);
   }
   if (method === 'GET' && path.startsWith('/collections/family_elder_bindings/records')) {
-    const items = ELDERS.map((e) => ({
-      id: `bind-${e.id}`,
-      collectionId: 'family_elder_bindings',
-      created: '',
-      updated: '',
-      elder: e.id,
-      family_user: USERS.family.id,
-      relation_label: e.id === 'elder-zhang' ? '女儿' : '儿子',
-      expand: { elder: { id: e.id, name: e.name } },
-    }));
+    const filter = query.get('filter') || '';
+    const requestedUid = familyUserFromFilter(filter) || USERS.family.id;
+    const items = buildFamilyElderBindings(requestedUid);
     return delay(pbList(items) as T);
   }
   if (method === 'GET' && path.startsWith('/collections/outdoor_approvals/records')) {
+    const filter = query.get('filter') || '';
+    const requestedUid = familyUserFromFilter(filter);
     const items = state.outdoorApprovals
       .filter((a) => a.status === 'pending_family')
+      .filter((a) => !requestedUid || a.family_user === requestedUid)
       .map((a) => {
         const order = state.orders.find((o) => o.id === a.order);
         const elder = order ? elderById(order.elder) : null;
@@ -1452,18 +1486,29 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
     return delay(pbList(SERVICE_ITEMS.map(serviceRecord)) as T);
   }
 
+  if (method === 'POST' && path === '/nuanban/platform/reset-demo') {
+    clearAllDemoStorage();
+    return delay({ ok: true } as T);
+  }
   if (method === 'GET' && path === '/nuanban/platform/overview') {
     const pending = state.orders.filter((o) => o.status === 'pending_accept').length;
+    const pendingPay = state.orders.filter((o) => o.status === 'pending_payment').length;
     const inSvc = state.orders.filter((o) => o.status === 'in_service').length;
     const done = state.orders.filter((o) => o.status === 'completed').length;
+    const walletPaidCents = state.orders
+      .filter((o) => o.payment_status === 'paid')
+      .reduce((s, o) => s + o.amount_cents, 0);
     return delay({
       mission: APP_TAGLINE,
       updatedAt: new Date().toISOString(),
       eldersTotal: ELDERS.length,
       studentsActive: CAREGIVERS.length,
       ordersPendingAccept: pending,
+      ordersPendingPayment: pendingPay,
       ordersInService: inSvc,
       ordersCompleted: done,
+      walletPaidTotalCents: walletPaidCents,
+      walletPaidTotalYuan: (walletPaidCents / 100).toFixed(2),
       caregiversNearby: CAREGIVERS.length,
       eldersNearby: ELDERS.length,
       todayMatches: inSvc + Math.min(done, 12),
