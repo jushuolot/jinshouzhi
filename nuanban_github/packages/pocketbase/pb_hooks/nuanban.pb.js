@@ -102,12 +102,14 @@ routerAdd("POST", "/api/nuanban/dev-login", function (e) {
   const resolvedActive =
     activeRoles.length === 1 ? activeRoles[0].role : activeRoles.length > 1 ? null : activeRole;
 
+  var avDev = nb.userAvatarFields(user, e);
   return e.json(200, {
     token: user.newAuthToken(),
     user: {
       id: user.id,
       nickname: user.getString("name") || user.getString("email"),
       email: user.getString("email"),
+      avatarUrl: avDev.avatarUrl,
     },
     roles: roles,
     activeRole: resolvedActive,
@@ -185,12 +187,14 @@ routerAdd("POST", "/api/nuanban/phone-login", function (e) {
   const resolvedActive =
     activeRoles.length === 1 ? activeRoles[0].role : activeRoles.length > 1 ? null : activeRole;
 
+  var av = nb.userAvatarFields(user, e);
   return e.json(200, {
     token: user.newAuthToken(),
     user: {
       id: user.id,
       nickname: user.getString("name") || user.getString("email"),
       email: user.getString("email"),
+      avatarUrl: av.avatarUrl,
     },
     roles: roles,
     activeRole: resolvedActive,
@@ -223,8 +227,9 @@ routerAdd("GET", "/api/nuanban/auth/me", function (e) {
       elderProfileId: elderProfileId,
     });
   }
+  var avMe = nb.userAvatarFields(auth, e);
   return e.json(200, {
-    user: { id: auth.id, nickname: auth.getString("name") },
+    user: { id: auth.id, nickname: auth.getString("name"), avatarUrl: avMe.avatarUrl },
     roles: roles,
   });
 });
@@ -755,11 +760,13 @@ routerAdd("GET", "/api/nuanban/student/profile", function (e) {
         } catch (_) {}
       }
     }
+    var av = nb.userAvatarFields(auth, e);
     return e.json(200, {
       nickname: nb.safeRecordString(auth, "name", displayName || "学生"),
       email: nb.safeRecordString(auth, "email", ""),
       schoolName: schoolName,
       displayName: displayName,
+      avatarUrl: av.avatarUrl,
       gender: "女",
       major: "护理学",
       grade: "大三",
@@ -927,9 +934,11 @@ routerAdd("GET", "/api/nuanban/elder/profile", function (e) {
       orgName = o.getString("name");
     } catch (_) {}
   }
+  var avE = nb.userAvatarFields(auth, e);
   return e.json(200, {
     id: elder.id,
     name: elder.getString("name") || "老人",
+    avatarUrl: avE.avatarUrl,
     age: elder.getInt("age") || 78,
     gender: elder.getString("gender") || "女",
     district: elder.getString("district") || "浦东新区",
@@ -976,9 +985,11 @@ routerAdd("GET", "/api/nuanban/family/profile", function (e) {
       elderName = elder.getString("name") || elderName;
     } catch (_) {}
   }
+  var avF = nb.userAvatarFields(auth, e);
   return e.json(200, {
     nickname: auth.getString("name") || "家属",
     email: auth.getString("email"),
+    avatarUrl: avF.avatarUrl,
     relationToElder: relation,
     linkedElderName: elderName,
     linkedElderId: elderId,

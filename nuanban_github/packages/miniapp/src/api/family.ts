@@ -14,6 +14,7 @@ export interface FamilyStats {
 export interface FamilyProfile {
   nickname: string;
   email: string;
+  avatarUrl?: string;
   relationToElder: string;
   linkedElderName: string;
   linkedElderId: string;

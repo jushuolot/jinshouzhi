@@ -82,6 +82,11 @@ export const useRoleStore = defineStore('role', {
       this.elderProfileId = id;
       uni.setStorageSync(ELDER_PROFILE_KEY, id);
     },
+    setUserAvatar(avatarUrl: string) {
+      if (!this.user) return;
+      this.user = { ...this.user, avatarUrl };
+      uni.setStorageSync(USER_KEY, this.user);
+    },
     logout() {
       this.token = '';
       this.activeRole = null;

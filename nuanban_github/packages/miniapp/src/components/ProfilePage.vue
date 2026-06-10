@@ -1,7 +1,12 @@
 <template>
   <view class="page" :class="{ 'elder-mode': role === 'elder', [elderFontCls]: role === 'elder' }">
     <view class="hero">
-      <view class="avatar">{{ avatarChar }}</view>
+      <ProfileAvatar
+        class="hero-avatar"
+        :avatar-url="avatarUrl"
+        :name="displayName"
+        @change="onAvatarChange"
+      />
       <view class="hero-info">
         <text class="name">{{ displayName }}</text>
         <text class="tag">{{ roleLabel }}</text>
@@ -50,6 +55,7 @@
 import { computed, ref } from 'vue';
 import { onShow } from '@dcloudio/uni-app';
 import RoleTabBar from './RoleTabBar.vue';
+import ProfileAvatar from './ProfileAvatar.vue';
 import ProfileDetailCard, { type ProfileDetailSection } from './ProfileDetailCard.vue';
 import { fetchFamilyStats, fetchFamilyProfile, type FamilyProfile } from '../api/family';
 import { fetchElderStats, fetchElderSelfProfile, type ElderSelfProfile } from '../api/elder';
@@ -83,7 +89,19 @@ const displayName = computed(() => {
   return roleStore.user?.nickname || '演示用户';
 });
 
-const avatarChar = computed(() => displayName.value.slice(0, 1));
+const avatarUrl = computed(() => {
+  if (props.role === 'family') return familyProfile.value?.avatarUrl;
+  if (props.role === 'elder') return elderProfile.value?.avatarUrl;
+  return roleStore.user?.avatarUrl;
+});
+
+function onAvatarChange(url: string) {
+  if (props.role === 'family' && familyProfile.value) {
+    familyProfile.value = { ...familyProfile.value, avatarUrl: url };
+  } else if (props.role === 'elder' && elderProfile.value) {
+    elderProfile.value = { ...elderProfile.value, avatarUrl: url };
+  }
+}
 
 const subLine = computed(() => {
   if (props.role === 'family') {
@@ -235,6 +253,7 @@ onShow(async () => {
       ]);
       familyStats.value = stats;
       familyProfile.value = profile;
+      if (profile.avatarUrl) roleStore.setUserAvatar(profile.avatarUrl);
       if (wallet) walletBalanceYuan.value = wallet.balanceYuan;
     }
     if (props.role === 'elder') {
@@ -245,6 +264,7 @@ onShow(async () => {
       ]);
       elderStats.value = stats;
       elderProfile.value = profile;
+      if (profile.avatarUrl) roleStore.setUserAvatar(profile.avatarUrl);
       if (wallet) walletBalanceYuan.value = wallet.balanceYuan;
     }
   } catch (e) {
@@ -302,16 +322,7 @@ function logout() {
   border-radius: var(--nb-radius-md, 16rpx);
   margin-bottom: 24rpx;
 }
-.avatar {
-  width: 100rpx;
-  height: 100rpx;
-  line-height: 100rpx;
-  text-align: center;
-  background: var(--nb-primary, #c45c26);
-  color: #fff;
-  font-size: 40rpx;
-  font-weight: 600;
-  border-radius: 50%;
+.hero-avatar {
   margin-right: 24rpx;
 }
 .hero-info {

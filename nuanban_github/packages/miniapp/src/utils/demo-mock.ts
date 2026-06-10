@@ -8,6 +8,7 @@ import { getWalletOverview, payOrderFromWallet, topupWallet } from './demo-walle
 import { getStudentWithdrawalOverview, submitStudentWithdrawal } from './demo-student-wallet';
 import { isGodViewUnlocked } from './god-view-auth';
 import type { RoleKey } from '../config/tabs';
+import { getMockAvatarUrl } from './mock-avatar-storage';
 import {
   buildRichCaregivers,
   buildRichElders,
@@ -144,7 +145,9 @@ const studentProfileState = {
 };
 
 function studentProfileDto() {
-  return getStudentFullProfile(studentProfileState);
+  const dto = getStudentFullProfile(studentProfileState);
+  const url = getMockAvatarUrl(USERS.student.id);
+  return url ? { ...dto, avatarUrl: url } : dto;
 }
 
 function elderProfileDto(id: string) {
@@ -1082,12 +1085,16 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
   if (method === 'GET' && path === '/nuanban/elder/profile') {
     const roleErr = assertDemoActiveRole(options, path, 'elder');
     if (roleErr) return Promise.reject({ message: roleErr, statusCode: 403 });
-    return delay(getElderSelfProfile() as T);
+    const dto = getElderSelfProfile();
+    const url = getMockAvatarUrl(USERS.elder.id);
+    return delay((url ? { ...dto, avatarUrl: url } : dto) as T);
   }
   if (method === 'GET' && path === '/nuanban/family/profile') {
     const roleErr = assertDemoActiveRole(options, path, 'family');
     if (roleErr) return Promise.reject({ message: roleErr, statusCode: 403 });
-    return delay(getFamilyProfile() as T);
+    const dto = getFamilyProfile();
+    const url = getMockAvatarUrl(USERS.family.id);
+    return delay((url ? { ...dto, avatarUrl: url } : dto) as T);
   }
   if (method === 'POST' && path === '/nuanban/elder/sos') {
     const elderId = String(data.elderId || 'elder-zhang');

@@ -323,6 +323,40 @@ function studentWithdrawalBalances(settlements, withdrawals) {
   return { availableCents: availableCents, frozenCents: frozenCents };
 }
 
+function requestBearerToken(e) {
+  try {
+    var h = e.request.header.get("Authorization") || "";
+    if (h.indexOf("Bearer ") === 0) return h.substring(7);
+  } catch (_) {}
+  return "";
+}
+
+function requestOrigin(e) {
+  try {
+    return e.request.scheme + "://" + e.request.host;
+  } catch (_) {}
+  return "";
+}
+
+/** PocketBase users.avatar 文件对外 URL（含 token 以便 H5 img 加载） */
+function userAvatarUrlForClient(auth, e) {
+  var fn = safeRecordString(auth, "avatar", "");
+  if (!fn) return "";
+  var origin = requestOrigin(e);
+  if (!origin) return "";
+  var tok = requestBearerToken(e);
+  var q = tok ? "?token=" + encodeURIComponent(tok) : "";
+  return origin + "/api/files/users/" + auth.id + "/" + fn + q;
+}
+
+function userAvatarFields(auth, e) {
+  var fn = safeRecordString(auth, "avatar", "");
+  return {
+    avatar: fn,
+    avatarUrl: userAvatarUrlForClient(auth, e),
+  };
+}
+
 function studentWithdrawalOverview(uid) {
   var store = studentWithdrawalsMap();
   var settlements = demoStudentSettlements();
@@ -347,5 +381,6 @@ module.exports = {
   elderProfileIdForUser, familyCanAccessOrder, completeOrderSchedule, finalizeOrderAfterConfirm,
   walletDemoStoreMap, walletEnsureUser, walletOverviewDto, walletTopup, walletPayLabel,
   walletDeductForOrder, walletPayOrderRecord, userHasRole, assertActiveRoleHeader,
-  studentWithdrawalsMap, demoStudentSettlements, studentWithdrawalBalances, studentWithdrawalOverview
+  studentWithdrawalsMap, demoStudentSettlements, studentWithdrawalBalances, studentWithdrawalOverview,
+  requestBearerToken, requestOrigin, userAvatarUrlForClient, userAvatarFields
 };

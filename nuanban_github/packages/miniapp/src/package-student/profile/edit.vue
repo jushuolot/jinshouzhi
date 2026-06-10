@@ -1,5 +1,11 @@
 <template>
   <view class="page">
+    <text class="section">头像</text>
+    <view class="avatar-row">
+      <ProfileAvatar :avatar-url="avatarUrl" :name="displayName" @change="onAvatarChange" />
+      <text class="avatar-hint">点击更换头像</text>
+    </view>
+
     <text class="section">显示名称</text>
     <input v-model="displayName" class="input nb-input" placeholder="如：林同学" />
 
@@ -37,6 +43,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { onShow } from '@dcloudio/uni-app';
+import ProfileAvatar from '../../components/ProfileAvatar.vue';
 import { fetchStudentProfile, updateStudentProfile } from '../../api/student';
 import { DEMO_SCHOOLS } from '../../utils/demo-rich-data';
 import { pbErrorMessage } from '../../utils/request';
@@ -44,6 +51,7 @@ import { pbErrorMessage } from '../../utils/request';
 const schools = [...DEMO_SCHOOLS];
 const grades = ['大一', '大二', '大三', '大四', '研一', '研二'];
 const displayName = ref('');
+const avatarUrl = ref('');
 const schoolIdx = ref(0);
 const gradeIdx = ref(2);
 const major = ref('');
@@ -56,6 +64,7 @@ onShow(async () => {
   try {
     const p = await fetchStudentProfile();
     displayName.value = p.displayName || p.nickname;
+    avatarUrl.value = p.avatarUrl || '';
     const idx = schools.indexOf(p.schoolName as (typeof schools)[number]);
     schoolIdx.value = idx >= 0 ? idx : 0;
     major.value = p.major || '';
@@ -68,6 +77,10 @@ onShow(async () => {
     /* ignore */
   }
 });
+
+function onAvatarChange(url: string) {
+  avatarUrl.value = url;
+}
 
 function onSchoolPick(e: { detail: { value: string } }) {
   schoolIdx.value = Number(e.detail.value);
@@ -126,6 +139,16 @@ async function save() {
   font-weight: 600;
   margin: 24rpx 0 12rpx;
   color: var(--nb-text, #333);
+}
+.avatar-row {
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+  padding: 16rpx 0;
+}
+.avatar-hint {
+  font-size: 24rpx;
+  color: var(--nb-text-muted, #999);
 }
 .input,
 .picker,

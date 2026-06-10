@@ -46,6 +46,7 @@ export interface CaregiverProfileDetail {
 export interface ElderSelfProfile {
   id: string;
   name: string;
+  avatarUrl?: string;
   age: number;
   gender: string;
   district: string;

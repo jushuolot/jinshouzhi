@@ -1,7 +1,12 @@
 <template>
   <view class="page">
     <view class="hero">
-      <view class="avatar">{{ avatarChar }}</view>
+      <ProfileAvatar
+        class="hero-avatar"
+        :avatar-url="profile?.avatarUrl"
+        :name="profile?.nickname"
+        @change="onAvatarChange"
+      />
       <view class="hero-info">
         <text class="name">{{ profile?.nickname || '学生' }}</text>
         <text class="tag">学生志愿者</text>
@@ -90,6 +95,7 @@
 import { computed, ref } from 'vue';
 import { onShow } from '@dcloudio/uni-app';
 import RoleTabBar from '../components/RoleTabBar.vue';
+import ProfileAvatar from '../components/ProfileAvatar.vue';
 import ProfileDetailCard, { type ProfileDetailSection } from '../components/ProfileDetailCard.vue';
 import {
   fetchStudentProfile,
@@ -108,10 +114,9 @@ const profile = ref<StudentProfile | null>(null);
 const stats = ref<StudentStats | null>(null);
 const withdrawAvailable = ref('');
 
-const avatarChar = computed(() => {
-  const n = profile.value?.nickname || roleStore.user?.nickname || '学';
-  return n.slice(0, 1);
-});
+function onAvatarChange(url: string) {
+  if (profile.value) profile.value = { ...profile.value, avatarUrl: url };
+}
 
 const profileSections = computed((): ProfileDetailSection[] => {
   const p = profile.value;
@@ -164,7 +169,10 @@ onShow(async () => {
     errors.push(pbErrorMessage(e));
     return null;
   });
-  if (p) profile.value = p;
+  if (p) {
+    profile.value = p;
+    if (p.avatarUrl) roleStore.setUserAvatar(p.avatarUrl);
+  }
   if (s) stats.value = s;
   if (wd) withdrawAvailable.value = wd.availableYuan;
   if (errors.length) {
@@ -254,16 +262,7 @@ function logout() {
   border-radius: 16rpx;
   margin-bottom: 24rpx;
 }
-.avatar {
-  width: 100rpx;
-  height: 100rpx;
-  line-height: 100rpx;
-  text-align: center;
-  background: #c45c26;
-  color: #fff;
-  font-size: 40rpx;
-  font-weight: 600;
-  border-radius: 50%;
+.hero-avatar {
   margin-right: 24rpx;
 }
 .hero-info {

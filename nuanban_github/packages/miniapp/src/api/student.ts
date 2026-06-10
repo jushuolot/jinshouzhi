@@ -47,6 +47,7 @@ export interface SosAlert {
 export interface StudentProfile {
   nickname: string;
   email: string;
+  avatarUrl?: string;
   schoolName: string;
   displayName: string;
   gender?: string;
