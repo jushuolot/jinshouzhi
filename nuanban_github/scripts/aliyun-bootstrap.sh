@@ -30,35 +30,44 @@ is_alinux() {
   [[ -f /etc/alinux-release ]] || grep -qi 'alinux\|alibaba cloud linux' /etc/os-release 2>/dev/null
 }
 
+docker_ready() {
+  command -v docker >/dev/null 2>&1 \
+    && docker info >/dev/null 2>&1 \
+    && docker compose version >/dev/null 2>&1
+}
+
+install_docker_ce_aliyun() {
+  echo "    从阿里云镜像安装 Docker CE（避免 podman-docker 占位）"
+  "$PKG" install -y dnf-plugins-core 2>/dev/null || "$PKG" install -y yum-utils 2>/dev/null || true
+  if [[ ! -f /etc/yum.repos.d/docker-ce.repo ]]; then
+    "$PKG" config-manager --add-repo https://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo
+  fi
+  "$PKG" makecache -y 2>/dev/null || true
+  "$PKG" install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
+}
+
 install_docker() {
-  if command -v docker >/dev/null 2>&1; then
-    echo "    Docker 已安装: $(docker --version)"
+  if docker_ready; then
+    echo "    Docker 已就绪: $(docker --version)"
+    echo "    Compose: $(docker compose version)"
     return 0
   fi
+  # 系统源的 docker 常是 podman-docker，无 docker.service / compose 插件
   if is_alinux || [[ "$PKG" == dnf ]] || [[ "$PKG" == yum ]]; then
-    echo "    使用系统源安装 Docker（Alibaba Cloud Linux / RHEL）"
-    "$PKG" install -y docker || "$PKG" install -y docker-ce || true
-    if ! command -v docker >/dev/null 2>&1; then
-      echo "    尝试安装 moby-engine..."
-      "$PKG" install -y moby-engine 2>/dev/null || true
-    fi
-    "$PKG" install -y docker-compose-plugin 2>/dev/null || true
+    install_docker_ce_aliyun
   else
     curl -fsSL https://get.docker.com | sh
+    "$PKG" install -y docker-compose-plugin 2>/dev/null || true
   fi
   systemctl enable docker
   systemctl start docker
-  if ! docker info >/dev/null 2>&1; then
-    echo "错误：Docker 未启动，请执行: systemctl status docker"
+  if ! docker_ready; then
+    echo "错误：Docker 或 docker compose 未就绪"
+    echo "  请手动执行: systemctl status docker && docker compose version"
     exit 1
   fi
   echo "    Docker 就绪: $(docker --version)"
-  if docker compose version >/dev/null 2>&1; then
-    echo "    Compose: $(docker compose version)"
-  else
-    echo "    警告: docker compose 插件未找到，尝试安装..."
-    "$PKG" install -y docker-compose-plugin 2>/dev/null || true
-  fi
+  echo "    Compose: $(docker compose version)"
 }
 
 echo "==> 1/6 系统更新与基础工具"
