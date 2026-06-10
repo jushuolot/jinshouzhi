@@ -253,6 +253,22 @@ cd /opt/jinshouzhi/nuanban_github
 
 成功后用手机号 `13800000001`（验证码留空）登录：`http://101.200.128.82/#/pages/common/login`
 
+### 三地一致性检测（本地 / GitHub / 阿里云）
+
+| 环境 | 作用 | 命令 |
+|------|------|------|
+| 本地 Mac | 对比 Git + 测 API | `cd nuanban_github && ./scripts/sync-check.sh` |
+| GitHub | 代码源 | `git fetch && git log origin/main -1` |
+| 阿里云 | 拉代码 + 部署 + 自检 | `git pull && ./scripts/aliyun-fix-data.sh` |
+
+本地改完推送到阿里云（已配 SSH 时）：
+
+```bash
+./scripts/sync-three-way.sh
+```
+
+检测通过时应看到 `profile / pending / elders/nearby / withdrawal` 四项 **OK**。
+
 ---
 
 ## 八、与 GitHub Pages 的关系
