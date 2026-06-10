@@ -22,6 +22,7 @@
     publicCommonsMirror: { amount: 0.016, phases: ["超越期"] },
     beyondPhaseTick: { amount: 0.0014, sessionCap: 0.01, phases: ["超越期"] },
     weeklyRecap: { amount: 0.02, phases: ["超越期", "复兴期"] },
+    openDataEcho: { amount: 0.019, phases: ["超越期"], minGeneration: 59 },
     bounty: {
       label: "任务赏金(演示)",
       endpoint: "https://api.coingecko.com/api/v3/ping",
@@ -123,6 +124,7 @@
     lastPublicCommonsMirror: "",
     beyondSessionTickTotal: 0,
     lastWeeklyRecap: "",
+    lastOpenDataEcho: "",
   };
 
   var tickTimer = null;
@@ -147,6 +149,7 @@
       state.beyondSessionTickTotal =
         typeof data.beyondSessionTickTotal === "number" ? data.beyondSessionTickTotal : 0;
       state.lastWeeklyRecap = data.lastWeeklyRecap || "";
+      state.lastOpenDataEcho = data.lastOpenDataEcho || "";
     } catch (e) {
       // ignore
     }
@@ -161,6 +164,10 @@
           sessionTickTotal: state.sessionTickTotal,
           lastRelicBounty: state.lastRelicBounty,
           lastCivilizationArchive: state.lastCivilizationArchive,
+          lastPublicCommonsMirror: state.lastPublicCommonsMirror,
+          beyondSessionTickTotal: state.beyondSessionTickTotal,
+          lastWeeklyRecap: state.lastWeeklyRecap,
+          lastOpenDataEcho: state.lastOpenDataEcho,
           updatedAt: Date.now(),
         })
       );
@@ -178,6 +185,14 @@
     if (!id || !def || !def.source || !def.label) return false;
     registry[id] = Object.assign({ id: id }, def);
     return true;
+  }
+
+  function registerNightlyChannels() {
+    registerChannel("open_data_echo", {
+      label: "公开数据回声",
+      source: "network_settlement",
+      description: "超越期公开文物数据回声入账；无密钥，失败不阻塞首屏",
+    });
   }
 
   function listChannels() {
@@ -429,6 +444,33 @@
     return credited;
   }
 
+  function tryOpenDataEcho() {
+    var evo = typeof window !== "undefined" && window.MATCH3_EVOLUTION ? window.MATCH3_EVOLUTION : {};
+    var generation = Number(evo.generation) || 0;
+    var cfg = CONFIG.openDataEcho;
+    if (!cfg || generation < cfg.minGeneration) return 0;
+    var clock =
+      typeof window !== "undefined" && window.MATCH3_CIVILIZATION_CLOCK
+        ? window.MATCH3_CIVILIZATION_CLOCK
+        : null;
+    var phase = clock ? clock.getPhase() : evo.civilizationPhase || "";
+    if (cfg.phases.indexOf(phase) < 0) return 0;
+    var key = todayKey() + "-g" + generation;
+    if (state.lastOpenDataEcho === key) return 0;
+    state.lastOpenDataEcho = key;
+    saveState();
+    var credited = creditChannel("open_data_echo", {
+      amount: cfg.amount,
+      meta: {
+        kind: "open_data_echo",
+        generation: generation,
+        universeDay: evo.universeDay || 0,
+        phase: phase,
+      },
+    });
+    return credited;
+  }
+
   function startPeriodicTick() {
     if (tickTimer) return;
     var ms = CONFIG.passiveYield.tickMs;
@@ -457,6 +499,7 @@
     tryCivilizationArchive();
     tryPublicCommonsMirror();
     tryWeeklyRecap();
+    tryOpenDataEcho();
     tryAffiliateReferral();
     startPeriodicTick();
     deferNetworkProbes();
@@ -469,6 +512,8 @@
   function getConfig() {
     return Object.assign({}, CONFIG);
   }
+
+  registerNightlyChannels();
 
   window.MATCH3_NETWORK_EARNINGS = {
     CONFIG: CONFIG,

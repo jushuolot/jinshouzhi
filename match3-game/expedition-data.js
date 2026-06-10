@@ -15,12 +15,12 @@
     chapters: [
       {
         nodes: [
-          { id: "c0n0", name: "雨夜营地", level: 0, x: -3.5, z: 2.2, discover: ["chenli", "二〇四一，超越期首日。探照灯撕开雨幕——造物主不在屏前，层位照样记。"], artifactHint: 3 },
-          { id: "c0n1", name: "陶片层", level: 4, x: -2, z: 0.8, discover: ["wangdun", "胖爷铲子下去——陶片！成片的！刘哥你别顺手揣兜里！"], artifactHint: 3 },
-          { id: "c0n2", name: "象牙露头", level: 9, x: -0.5, z: -0.3, discover: ["yangxue", "象牙饰！古蜀不产象，这是丝路来的。"], artifactHint: 4 },
-          { id: "c0n3", name: "金粉纹层", level: 14, x: 1, z: -1.2, discover: ["jinyaliu", "金粉！刘哥我……就看看！王墩你闭嘴，昨晚泡面的事还没算呢！"], artifactHint: 1 },
-          { id: "c0n4", name: "祭祀面", level: 18, x: 2.2, z: -2, discover: ["hutan", "罗盘疯了。前面是祭祀面，层位不能乱。"], artifactHint: 0 },
-          { id: "c0n5", name: "青铜门墓", level: 19, isTomb: true, discover: ["chenli", "门缝里有光。I 级大墓——青铜门启。"], artifactHint: 0 },
+          { id: "c0n0", name: "雾后营地", level: 0, x: -3.5, z: 2.2, discover: ["chenli", "二〇四七，宇宙第八日。探照灯撕开晨雾——造物主不在屏前，新坑照样开口。"], artifactHint: 3 },
+          { id: "c0n1", name: "湿陶片层", level: 4, x: -2, z: 0.8, discover: ["wangdun", "胖爷铲子下去——陶片带着雾水！刘哥你别拿袖子擦，样本编号还没贴呢！"], artifactHint: 3 },
+          { id: "c0n2", name: "象牙新露头", level: 9, x: -0.5, z: -0.3, discover: ["yangxue", "象牙饰！二〇四七的纹路库刚响了一声，和新坑边缘的磨痕对上了。"], artifactHint: 4 },
+          { id: "c0n3", name: "金粉回声层", level: 14, x: 1, z: -1.2, discover: ["jinyaliu", "金粉！刘哥我……就看看！王墩你闭嘴，早饭账和样本袋账分开算！"], artifactHint: 1 },
+          { id: "c0n4", name: "祭祀新面", level: 18, x: 2.2, z: -2, discover: ["hutan", "罗盘疯了。前面是祭祀面，今天的气口比昨天更低，层位不能乱。"], artifactHint: 0 },
+          { id: "c0n5", name: "青铜门新墓", level: 19, isTomb: true, discover: ["chenli", "门缝里有光。I 级大墓——青铜门启；第八日的新坑，先归档后惊叹。"], artifactHint: 0 },
         ],
       },
       {

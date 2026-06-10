@@ -76,6 +76,9 @@
     return (
       "Gen." +
       s.generation +
+      " · 宇宙第" +
+      s.universeDay +
+      "日" +
       " · 文明历 " +
       s.year +
       " · " +
