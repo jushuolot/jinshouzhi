@@ -72,6 +72,7 @@ export function resetDemoRuntimeState() {
     uni.removeStorageSync('nuanban_wallet_v1');
     uni.removeStorageSync('nuanban_student_wallet_v1');
     uni.removeStorageSync('nuanban_scenario_v1');
+    uni.removeStorageSync('nuanban_admin_funds_v1');
   } catch {
     /* ignore */
   }

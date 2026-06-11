@@ -127,7 +127,9 @@ function onCustomInput(e: { detail: { value: string } }) {
 }
 
 function statusLabel(status: string) {
-  return status === 'completed' ? '已到账' : '处理中';
+  if (status === 'completed') return '已到账';
+  if (status === 'rejected') return '已驳回';
+  return '处理中';
 }
 
 function formatTime(iso: string) {

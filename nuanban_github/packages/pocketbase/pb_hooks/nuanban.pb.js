@@ -2069,6 +2069,65 @@ routerAdd("POST", "/api/nuanban/student/withdrawal", function (e) {
   return e.json(200, nb.studentWithdrawalOverview(auth.id));
 });
 
+routerAdd("GET", "/api/nuanban/platform/funds/overview", function (e) {
+  var nb = require(__hooks + "/nuanban_lib.js");
+  return e.json(200, nb.adminFundOverview());
+});
+
+routerAdd("GET", "/api/nuanban/platform/funds/topups", function (e) {
+  var nb = require(__hooks + "/nuanban_lib.js");
+  var collected = nb.adminFundCollectWallet();
+  return e.json(200, { list: collected.topups });
+});
+
+routerAdd("GET", "/api/nuanban/platform/funds/payments", function (e) {
+  var nb = require(__hooks + "/nuanban_lib.js");
+  var collected = nb.adminFundCollectWallet();
+  return e.json(200, { list: collected.payments });
+});
+
+routerAdd("GET", "/api/nuanban/platform/funds/withdrawals", function (e) {
+  var nb = require(__hooks + "/nuanban_lib.js");
+  var list = nb.adminFundWithdrawalsList();
+  var status = "";
+  try {
+    status = e.request.url.query().get("status") || "";
+  } catch (_) {}
+  if (status) list = list.filter(function (w) { return w.status === status; });
+  return e.json(200, { list: list });
+});
+
+routerAdd("POST", "/api/nuanban/platform/funds/withdrawals/:id/approve", function (e) {
+  var nb = require(__hooks + "/nuanban_lib.js");
+  var id = e.request.pathValue("id");
+  var record = nb.adminApproveWithdrawal(id);
+  if (!record) return e.json(400, { message: "提现记录不存在或已处理" });
+  return e.json(200, { ok: true, record: record });
+});
+
+routerAdd("POST", "/api/nuanban/platform/funds/withdrawals/:id/reject", function (e) {
+  var nb = require(__hooks + "/nuanban_lib.js");
+  var id = e.request.pathValue("id");
+  var body = {};
+  try {
+    body = JSON.parse(toString(e.request.body));
+  } catch (_) {}
+  var record = nb.adminRejectWithdrawal(id, body.reason || "");
+  if (!record) return e.json(400, { message: "提现记录不存在或已处理" });
+  return e.json(200, { ok: true, record: record });
+});
+
+routerAdd("POST", "/api/nuanban/platform/funds/reconcile", function (e) {
+  var nb = require(__hooks + "/nuanban_lib.js");
+  var body = {};
+  try {
+    body = JSON.parse(toString(e.request.body));
+  } catch (_) {}
+  var recordId = body.recordId || "";
+  if (!recordId) return e.json(400, { message: "缺少 recordId" });
+  return e.json(200, nb.adminMarkReconciled(recordId));
+});
+
 routerAdd("GET", "/api/nuanban/elder/service-logs", function (e) {
   var nb = require(__hooks + "/nuanban_lib.js");
   const rc = nb.assertActiveRoleHeader(e, "elder");

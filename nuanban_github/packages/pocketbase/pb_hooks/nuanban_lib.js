@@ -325,6 +325,7 @@ function studentWithdrawalBalances(settlements, withdrawals) {
   }
   var withdrawnTotal = 0;
   for (var j = 0; j < withdrawals.length; j++) {
+    if (withdrawals[j].status === "rejected") continue;
     withdrawnTotal += withdrawals[j].amountCents;
   }
   var availableCents = paidTotal - withdrawnTotal;
@@ -400,6 +401,191 @@ function studentWithdrawalOverview(uid) {
   };
 }
 
+function adminFundsReconcileMap() {
+  if (!adminFundsReconcileMap._data) adminFundsReconcileMap._data = {};
+  return adminFundsReconcileMap._data;
+}
+
+function adminUserDisplayName(userId) {
+  try {
+    var u = $app.findRecordById("users", userId);
+    var nick = safeRecordString(u, "nickname", "");
+    if (nick) return nick;
+  } catch (_) {}
+  return userId.substring(0, 8);
+}
+
+function adminFundCollectWallet() {
+  var store = walletDemoStoreMap();
+  var topups = [];
+  var payments = [];
+  var reconcile = adminFundsReconcileMap();
+  for (var uid in store) {
+    if (!store.hasOwnProperty(uid)) continue;
+    var owner = store[uid];
+    var txs = owner.transactions || [];
+    var userName = adminUserDisplayName(uid);
+    for (var i = 0; i < txs.length; i++) {
+      var tx = txs[i];
+      var base = {
+        id: tx.id,
+        userId: uid,
+        userName: userName,
+        amountCents: tx.amountCents,
+        label: tx.label,
+        createdAt: tx.createdAt,
+        reconciled: !!reconcile[tx.id],
+      };
+      if (tx.type === "topup") {
+        base.role = "family";
+        topups.push(base);
+      } else if (tx.type === "pay") {
+        base.role = "family";
+        base.orderId = tx.orderId;
+        payments.push(base);
+      }
+    }
+  }
+  return { topups: topups, payments: payments };
+}
+
+function adminFundOverview() {
+  var store = walletDemoStoreMap();
+  var totalBalanceCents = 0;
+  for (var uid in store) {
+    if (!store.hasOwnProperty(uid)) continue;
+    totalBalanceCents += store[uid].balanceCents || 0;
+  }
+  var collected = adminFundCollectWallet();
+  var topupTotalCents = 0;
+  for (var ti = 0; ti < collected.topups.length; ti++) {
+    topupTotalCents += collected.topups[ti].amountCents;
+  }
+  var paymentTotalCents = 0;
+  for (var pi = 0; pi < collected.payments.length; pi++) {
+    paymentTotalCents += collected.payments[pi].amountCents;
+  }
+  var wdStore = studentWithdrawalsMap();
+  var pendingCount = 0;
+  var pendingCents = 0;
+  for (var suid in wdStore) {
+    if (!wdStore.hasOwnProperty(suid)) continue;
+    var list = wdStore[suid];
+    for (var wi = 0; wi < list.length; wi++) {
+      if (list[wi].status === "pending") {
+        pendingCount += 1;
+        pendingCents += list[wi].amountCents;
+      }
+    }
+  }
+  var unreconciled = 0;
+  for (var ui = 0; ui < collected.topups.length; ui++) {
+    if (!collected.topups[ui].reconciled) unreconciled += 1;
+  }
+  for (var uj = 0; uj < collected.payments.length; uj++) {
+    if (!collected.payments[uj].reconciled) unreconciled += 1;
+  }
+  return {
+    totalBalanceCents: totalBalanceCents,
+    totalBalanceYuan: (totalBalanceCents / 100).toFixed(2),
+    topupTotalCents: topupTotalCents,
+    topupTotalYuan: (topupTotalCents / 100).toFixed(2),
+    paymentTotalCents: paymentTotalCents,
+    paymentTotalYuan: (paymentTotalCents / 100).toFixed(2),
+    pendingWithdrawalCents: pendingCents,
+    pendingWithdrawalYuan: (pendingCents / 100).toFixed(2),
+    pendingWithdrawalCount: pendingCount,
+    unreconciledCount: unreconciled,
+    updatedAt: new Date().toISOString(),
+  };
+}
+
+function adminFundWithdrawalsList() {
+  var wdStore = studentWithdrawalsMap();
+  var out = [];
+  for (var uid in wdStore) {
+    if (!wdStore.hasOwnProperty(uid)) continue;
+    var list = wdStore[uid];
+    var name = adminUserDisplayName(uid);
+    for (var i = 0; i < list.length; i++) {
+      var w = list[i];
+      out.push({
+        id: w.id,
+        userId: uid,
+        studentName: name,
+        amountCents: w.amountCents,
+        channel: w.channel,
+        channelLabel: w.channelLabel,
+        status: w.status,
+        createdAt: w.createdAt,
+        completedAt: w.completedAt,
+        rejectReason: w.rejectReason,
+      });
+    }
+  }
+  out.sort(function (a, b) {
+    return b.createdAt.localeCompare(a.createdAt);
+  });
+  return out;
+}
+
+function adminFindWithdrawal(withdrawalId) {
+  var wdStore = studentWithdrawalsMap();
+  for (var uid in wdStore) {
+    if (!wdStore.hasOwnProperty(uid)) continue;
+    var list = wdStore[uid];
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].id === withdrawalId) return { uid: uid, idx: i, list: list };
+    }
+  }
+  return null;
+}
+
+function adminApproveWithdrawal(withdrawalId) {
+  var found = adminFindWithdrawal(withdrawalId);
+  if (!found || found.list[found.idx].status !== "pending") return null;
+  var now = new Date().toISOString();
+  found.list[found.idx].status = "completed";
+  found.list[found.idx].completedAt = now;
+  var w = found.list[found.idx];
+  return {
+    id: w.id,
+    userId: found.uid,
+    studentName: adminUserDisplayName(found.uid),
+    amountCents: w.amountCents,
+    channel: w.channel,
+    channelLabel: w.channelLabel,
+    status: w.status,
+    createdAt: w.createdAt,
+    completedAt: w.completedAt,
+  };
+}
+
+function adminRejectWithdrawal(withdrawalId, reason) {
+  var found = adminFindWithdrawal(withdrawalId);
+  if (!found || found.list[found.idx].status !== "pending") return null;
+  found.list[found.idx].status = "rejected";
+  found.list[found.idx].rejectReason = reason || "运营驳回";
+  var w = found.list[found.idx];
+  return {
+    id: w.id,
+    userId: found.uid,
+    studentName: adminUserDisplayName(found.uid),
+    amountCents: w.amountCents,
+    channel: w.channel,
+    channelLabel: w.channelLabel,
+    status: w.status,
+    createdAt: w.createdAt,
+    rejectReason: w.rejectReason,
+  };
+}
+
+function adminMarkReconciled(recordId) {
+  var reconcile = adminFundsReconcileMap();
+  reconcile[recordId] = true;
+  return { ok: true };
+}
+
 
 module.exports = {
   elderNameById, safeRecordString, safeRecordInt, safeRecordBool, safeRecordFloat,
@@ -408,5 +594,7 @@ module.exports = {
   walletDemoStoreMap, walletEnsureUser, walletOverviewDto, walletTopup, walletPayLabel,
   walletDeductForOrder, walletPayOrderRecord, userHasRole, assertActiveRoleHeader,
   studentWithdrawalsMap, demoStudentSettlements, studentWithdrawalBalances, studentWithdrawalOverview,
+  adminFundsReconcileMap, adminFundOverview, adminFundCollectWallet, adminFundWithdrawalsList,
+  adminApproveWithdrawal, adminRejectWithdrawal, adminMarkReconciled,
   requestBearerToken, requestOrigin, h5AppBaseUrl, userAvatarUrlForClient, userAvatarFields
 };

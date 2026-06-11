@@ -12,7 +12,8 @@
   register         注册角色（写 user_roles）
   agreement        用户协议与隐私说明
   org-dispatch     机构派单演示（零成本 Mock）
-  admin-hub        运营演示入口（派单 + 学校合作）
+  admin-hub        运营演示入口（派单 + 学校合作 + 资金管理）
+  fund-admin       资金管理（储值/支付/提现审批 · 运营模式）
   school-coop      学校合作配置（只读）
   student-pending  学生资质审核中拦截页
   god-view-gate    超级管理密码门（默认演示密码见 VITE_GOD_VIEW_PASSWORD）

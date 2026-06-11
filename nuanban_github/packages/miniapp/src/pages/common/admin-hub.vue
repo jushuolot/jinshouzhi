@@ -78,6 +78,13 @@
       </view>
       <text class="chevron">›</text>
     </view>
+    <view class="link-card highlight" @tap="goFunds">
+      <view class="link-main">
+        <text class="link-title">资金管理</text>
+        <text class="link-desc">储值 · 支付 · 提现审批 · 对账</text>
+      </view>
+      <text class="chevron">›</text>
+    </view>
     <view class="link-card highlight" @tap="goDispatch">
       <view class="link-main">
         <text class="link-title">机构派单</text>
@@ -218,6 +225,10 @@ function goSecurity() {
 
 function goDispatch() {
   uni.navigateTo({ url: '/pages/common/org-dispatch' });
+}
+
+function goFunds() {
+  uni.navigateTo({ url: '/pages/common/fund-admin' });
 }
 
 function goSchoolCoop() {

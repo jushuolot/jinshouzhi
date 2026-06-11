@@ -1,19 +1,25 @@
 /** 演示栈 · 学生提现（可提现余额 = 已结算 − 已提现） */
 
-import type { SettlementRecord } from './demo-rich-data';
-import { isGuestBrowse } from './guest-browse';
+import { DEMO_USERS, type SettlementRecord } from './demo-rich-data';
 import { isGuestBrowse } from './guest-browse';
 
 export type WithdrawalChannel = 'wechat' | 'bank';
+export type WithdrawalStatus = 'pending' | 'completed' | 'rejected';
 
 export interface StudentWithdrawalRecord {
   id: string;
   amountCents: number;
   channel: WithdrawalChannel;
   channelLabel: string;
-  status: 'pending' | 'completed';
+  status: WithdrawalStatus;
   createdAt: string;
   completedAt?: string;
+  rejectReason?: string;
+}
+
+export interface AdminWithdrawalRecord extends StudentWithdrawalRecord {
+  userId: string;
+  studentName: string;
 }
 
 export interface StudentWithdrawalOverview {
@@ -78,6 +84,12 @@ function channelLabel(channel: WithdrawalChannel) {
   return channel === 'wechat' ? DEMO_BOUND.wechat : DEMO_BOUND.bank;
 }
 
+function studentDisplayName(userId: string) {
+  if (userId === DEMO_USERS.student.id) return DEMO_USERS.student.nickname;
+  if (userId === DEMO_USERS.studentPending.id) return DEMO_USERS.studentPending.nickname;
+  return '学生';
+}
+
 function computeBalances(settlements: SettlementRecord[], withdrawals: StudentWithdrawalRecord[]) {
   const paidTotal = settlements
     .filter((s) => s.status === 'paid')
@@ -85,7 +97,9 @@ function computeBalances(settlements: SettlementRecord[], withdrawals: StudentWi
   const frozenCents = settlements
     .filter((s) => s.status === 'pending')
     .reduce((sum, s) => sum + s.amountCents, 0);
-  const withdrawnTotal = withdrawals.reduce((sum, w) => sum + w.amountCents, 0);
+  const withdrawnTotal = withdrawals
+    .filter((w) => w.status !== 'rejected')
+    .reduce((sum, w) => sum + w.amountCents, 0);
   const availableCents = Math.max(0, paidTotal - withdrawnTotal);
   return { availableCents, frozenCents };
 }
@@ -148,4 +162,50 @@ export function submitStudentWithdrawal(
   if (owner.withdrawals.length > 50) owner.withdrawals.length = 50;
   saveStore(store);
   return overviewDto(settlements, owner);
+}
+
+function findWithdrawal(store: StudentWalletStore, withdrawalId: string) {
+  for (const [userId, owner] of Object.entries(store.byUser)) {
+    const idx = owner.withdrawals.findIndex((w) => w.id === withdrawalId);
+    if (idx >= 0) return { userId, owner, idx };
+  }
+  return null;
+}
+
+export function listAllStudentWithdrawals(): AdminWithdrawalRecord[] {
+  const store = loadStore();
+  const list: AdminWithdrawalRecord[] = [];
+  for (const [userId, owner] of Object.entries(store.byUser)) {
+    for (const w of owner.withdrawals) {
+      list.push({ ...w, userId, studentName: studentDisplayName(userId) });
+    }
+  }
+  list.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  return list;
+}
+
+export function approveStudentWithdrawal(withdrawalId: string): AdminWithdrawalRecord | null {
+  const store = loadStore();
+  const found = findWithdrawal(store, withdrawalId);
+  if (!found || found.owner.withdrawals[found.idx].status !== 'pending') return null;
+  const now = new Date().toISOString();
+  found.owner.withdrawals[found.idx].status = 'completed';
+  found.owner.withdrawals[found.idx].completedAt = now;
+  saveStore(store);
+  const w = found.owner.withdrawals[found.idx];
+  return { ...w, userId: found.userId, studentName: studentDisplayName(found.userId) };
+}
+
+export function rejectStudentWithdrawal(
+  withdrawalId: string,
+  reason?: string,
+): AdminWithdrawalRecord | null {
+  const store = loadStore();
+  const found = findWithdrawal(store, withdrawalId);
+  if (!found || found.owner.withdrawals[found.idx].status !== 'pending') return null;
+  found.owner.withdrawals[found.idx].status = 'rejected';
+  found.owner.withdrawals[found.idx].rejectReason = reason?.trim() || '运营驳回';
+  saveStore(store);
+  const w = found.owner.withdrawals[found.idx];
+  return { ...w, userId: found.userId, studentName: studentDisplayName(found.userId) };
 }

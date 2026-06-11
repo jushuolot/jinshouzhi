@@ -25,6 +25,15 @@ import {
   type MockSosAlert,
 } from './demo-mock-state';
 import { getStudentWithdrawalOverview, submitStudentWithdrawal } from './demo-student-wallet';
+import {
+  approveAdminWithdrawal,
+  getAdminFundOverview,
+  listAdminPayments,
+  listAdminTopups,
+  listAdminWithdrawals,
+  markFundReconciled,
+  rejectAdminWithdrawal,
+} from './demo-admin-funds';
 import type { RoleKey } from '../config/tabs';
 import { isGuestBrowse, notifyGuestSimulate } from './guest-browse';
 import { getMockAvatarUrl } from './mock-avatar-storage';
@@ -1820,6 +1829,41 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
   if (method === 'GET' && path === '/nuanban/platform/activity') {
     return delay({ list: state.activityEvents.slice(0, 20) } as T);
   }
+
+  if (method === 'GET' && path === '/nuanban/platform/funds/overview') {
+    return delay(getAdminFundOverview() as T);
+  }
+  if (method === 'GET' && path === '/nuanban/platform/funds/topups') {
+    return delay({ list: listAdminTopups() } as T);
+  }
+  if (method === 'GET' && path === '/nuanban/platform/funds/payments') {
+    return delay({ list: listAdminPayments() } as T);
+  }
+  if (method === 'GET' && path === '/nuanban/platform/funds/withdrawals') {
+    const status = query.get('status') as 'pending' | 'completed' | 'rejected' | null;
+    return delay({
+      list: listAdminWithdrawals(status ? { status } : undefined),
+    } as T);
+  }
+  const fundWdApprove = path.match(/^\/nuanban\/platform\/funds\/withdrawals\/([^/]+)\/approve$/);
+  if (method === 'POST' && fundWdApprove) {
+    const record = approveAdminWithdrawal(fundWdApprove[1]);
+    if (!record) return Promise.reject({ message: '提现记录不存在或已处理', statusCode: 400 });
+    return delay({ ok: true, record } as T);
+  }
+  const fundWdReject = path.match(/^\/nuanban\/platform\/funds\/withdrawals\/([^/]+)\/reject$/);
+  if (method === 'POST' && fundWdReject) {
+    const reason = String(data.reason || '');
+    const record = rejectAdminWithdrawal(fundWdReject[1], reason);
+    if (!record) return Promise.reject({ message: '提现记录不存在或已处理', statusCode: 400 });
+    return delay({ ok: true, record } as T);
+  }
+  if (method === 'POST' && path === '/nuanban/platform/funds/reconcile') {
+    const recordId = String(data.recordId || '');
+    if (!recordId) return Promise.reject({ message: '缺少 recordId', statusCode: 400 });
+    return delay(markFundReconciled(recordId) as T);
+  }
+
   if (method === 'GET' && path === '/nuanban/platform/overview') {
     const pending = state.orders.filter((o) => o.status === 'pending_accept').length;
     const pendingPay = state.orders.filter((o) => o.status === 'pending_payment').length;
