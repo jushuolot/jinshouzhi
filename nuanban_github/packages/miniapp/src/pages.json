@@ -17,7 +17,8 @@
     { "path": "pages/common/school-coop", "style": { "navigationBarTitleText": "学校合作" } },
     { "path": "pages/common/student-pending", "style": { "navigationBarTitleText": "审核中" } },
     { "path": "pages/common/demo-tour", "style": { "navigationBarTitleText": "动画演示", "navigationBarBackgroundColor": "#1a1a2e", "navigationBarTextStyle": "white" } },
-    { "path": "pages/common/share-demo", "style": { "navigationBarTitleText": "演示链接" } }
+    { "path": "pages/common/share-demo", "style": { "navigationBarTitleText": "演示链接" } },
+    { "path": "pages/common/scenario-guide", "style": { "navigationBarTitleText": "深度验收向导" } }
   ],
   "subPackages": [
     {

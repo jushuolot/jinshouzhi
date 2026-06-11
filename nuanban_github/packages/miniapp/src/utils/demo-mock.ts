@@ -12,6 +12,11 @@ import {
   topupWallet,
 } from './demo-wallet';
 import {
+  buildSeedActivities,
+  type ActivityEvent,
+  type ActivityKind,
+} from './demo-activity';
+import {
   loadDemoRuntimeState,
   resetDemoRuntimeState as clearAllDemoStorage,
   saveDemoRuntimeState,
@@ -419,6 +424,14 @@ function walletPayOrderForUser(
   if (!result.ok) return result;
   order.payment_status = 'paid';
   if (order.status === 'pending_payment') order.status = 'pending_accept';
+  const elder = elderById(order.elder);
+  const svc = serviceById(order.service_item);
+  recordActivity(
+    'order_paid',
+    '储值卡支付成功',
+    `${elder?.name || '老人'} · ${svc.name} ¥${(order.amount_cents / 100).toFixed(0)}`,
+    { role: 'family', orderId: order.id },
+  );
   persistDemoState();
   return { ok: true as const, status: order.status, overview: result.overview };
 }
@@ -443,6 +456,12 @@ function finalizeOrderAfterConfirm(order: MockOrder) {
   if (order.student_user) {
     applyReferralOnFirstOrderComplete(order.student_user);
   }
+  recordActivity(
+    'order_confirmed',
+    '服务已确认完成',
+    `${elder?.name || '老人'} · ${svc.name} · 已归档`,
+    { role: 'family', orderId: order.id },
+  );
   persistDemoState();
 }
 
@@ -476,10 +495,34 @@ function buildSeedRuntimeState(): DemoRuntimeState {
       },
     ],
     outdoorApprovals,
+    activityEvents: buildSeedActivities(),
   };
 }
 
 const state = loadDemoRuntimeState(buildSeedRuntimeState());
+if (!state.activityEvents?.length) {
+  state.activityEvents = buildSeedActivities();
+}
+
+function recordActivity(
+  kind: ActivityKind,
+  title: string,
+  detail: string,
+  extra?: Pick<ActivityEvent, 'role' | 'orderId'>,
+) {
+  state.activityEvents.unshift({
+    id: `act-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`,
+    kind,
+    title,
+    detail,
+    role: extra?.role,
+    orderId: extra?.orderId,
+    createdAt: new Date().toISOString(),
+  });
+  if (state.activityEvents.length > 50) {
+    state.activityEvents = state.activityEvents.slice(0, 50);
+  }
+}
 
 function persistDemoState() {
   saveDemoRuntimeState(state);
@@ -492,6 +535,37 @@ function resetRuntimeStateInMemory() {
   state.serviceLogs = seed.serviceLogs;
   state.sosAlerts = seed.sosAlerts;
   state.outdoorApprovals = seed.outdoorApprovals;
+  state.activityEvents = seed.activityEvents;
+}
+
+function seedOutdoorWalkScenario() {
+  const id = `order-scenario-${Date.now()}`;
+  const svc = serviceById('svc-walk');
+  const elder = elderById('elder-1');
+  state.orders.unshift({
+    id,
+    elder: elder?.id || 'elder-1',
+    service_item: svc.id,
+    status: 'outdoor_pending',
+    amount_cents: svc.price_cents,
+    payment_status: 'paid',
+    family_user: USERS.family.id,
+    scheduled_at: new Date(Date.now() + 86400000).toISOString(),
+  });
+  state.outdoorApprovals.unshift({
+    id: `outdoor-scenario-${Date.now()}`,
+    order: id,
+    status: 'pending_family',
+    family_user: USERS.family.id,
+  });
+  recordActivity(
+    'scenario_seeded',
+    '注入外出演示单',
+    `${elder?.name || '张奶奶'} · ${svc.name} · 待家属审批`,
+    { role: 'platform', orderId: id },
+  );
+  persistDemoState();
+  return { orderId: id, elderName: elder?.name || '张奶奶', serviceName: svc.name };
 }
 
 function familyUserFromFilter(filter: string): string | null {
@@ -1001,6 +1075,10 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
       family_user: familyUserId,
       scheduled_at: new Date(Date.now() + 86400000 * 3).toISOString(),
     });
+    recordActivity('package_purchased', '购买服务包', `${pkg.name} · 待支付`, {
+      role: 'family',
+      orderId: id,
+    });
     persistDemoState();
     return delay({ ok: true, orderId: id, status: 'pending_payment', packageName: pkg.name } as T);
   }
@@ -1068,6 +1146,11 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
     if (order && order.status === 'pending_accept') {
       order.student_user = String(data.studentUserId || USERS.student.id);
       order.status = 'pending_service';
+      const dto = pendingOrderDto(order);
+      recordActivity('dispatch', '机构派单', `${dto.elderName} · ${dto.serviceName}`, {
+        role: 'platform',
+        orderId: order.id,
+      });
       persistDemoState();
     }
     return delay({ ok: true, status: order?.status || 'pending_service' } as T);
@@ -1143,6 +1226,11 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
     const order = state.orders.find((o) => o.id === studentOrderStart[1]);
     if (order && order.status === 'pending_service') {
       order.status = 'in_service';
+      const dto = pendingOrderDto(order);
+      recordActivity('checkin', '开始服务', `${dto.elderName} · ${dto.serviceName}`, {
+        role: 'student',
+        orderId: order.id,
+      });
       persistDemoState();
     }
     return delay({ ok: true, status: order?.status || 'in_service' } as T);
@@ -1154,6 +1242,11 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
       return Promise.reject({ message: '当前状态不可签到' });
     }
     order.status = 'in_service';
+    const dto = pendingOrderDto(order);
+    recordActivity('checkin', '到场签到', `${dto.elderName} · ${dto.serviceName}`, {
+      role: 'student',
+      orderId: order.id,
+    });
     persistDemoState();
     return delay({ ok: true, status: 'in_service' } as T);
   }
@@ -1163,6 +1256,11 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
     if (order && order.status === 'in_service') {
       order.status = 'pending_confirm';
       order.student_user = order.student_user || currentStudentUserId();
+      const dto = pendingOrderDto(order);
+      recordActivity('order_completed', '服务完成待确认', `${dto.elderName} · ${dto.serviceName}`, {
+        role: 'student',
+        orderId: order.id,
+      });
       persistDemoState();
     }
     return delay({
@@ -1233,6 +1331,10 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
     const alert = state.sosAlerts.find((a) => a.id === studentSosAck[1]);
     if (alert) {
       alert.status = 'acknowledged';
+      const elder = elderById(alert.elder);
+      recordActivity('sos_ack', 'SOS 已确认', `${elder?.name || '老人'} · 学生已知晓`, {
+        role: 'student',
+      });
       persistDemoState();
     }
     return delay({ ok: true } as T);
@@ -1259,8 +1361,20 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
       } else {
         order.status = 'pending_service';
       }
+      const dto = pendingOrderDto(order);
+      recordActivity(
+        'order_accepted',
+        '学生接单',
+        `${dto.elderName} · ${dto.serviceName}`,
+        { role: 'student', orderId: order.id },
+      );
       persistDemoState();
     } else if (order && action === 'reject') {
+      const dto = pendingOrderDto(order);
+      recordActivity('order_rejected', '学生拒单', `${dto.elderName} · ${dto.serviceName}`, {
+        role: 'student',
+        orderId: order.id,
+      });
       order.student_user = undefined;
       order.status = 'pending_accept';
       persistDemoState();
@@ -1353,6 +1467,10 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
     const alert = state.sosAlerts.find((a) => a.id === familySosAck[1]);
     if (alert) {
       alert.status = 'acknowledged';
+      const elder = elderById(alert.elder);
+      recordActivity('sos_ack', 'SOS 已确认', `${elder?.name || '老人'} · 家属已知晓`, {
+        role: 'family',
+      });
       persistDemoState();
     }
     return delay({ ok: true } as T);
@@ -1380,6 +1498,11 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
     if (order) {
       order.status = 'pending_accept';
       order.payment_status = 'paid';
+      const dto = pendingOrderDto(order);
+      recordActivity('order_paid', '微信支付（演示）', `${dto.elderName} · ${dto.serviceName}`, {
+        role: 'family',
+        orderId: order.id,
+      });
       persistDemoState();
     }
     return delay({ ok: true, status: order?.status || 'pending_accept' } as T);
@@ -1433,6 +1556,13 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
     if (order) {
       order.status = approved ? 'pending_service' : 'cancelled';
       changed = true;
+      const dto = pendingOrderDto(order);
+      recordActivity(
+        approved ? 'outdoor_approved' : 'outdoor_rejected',
+        approved ? '外出已批准' : '外出已拒绝',
+        `${dto.elderName} · ${dto.serviceName}`,
+        { role: 'family', orderId: order.id },
+      );
     }
     if (changed) persistDemoState();
     return delay({ ok: true, approved } as T);
@@ -1482,12 +1612,16 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
   if (method === 'POST' && path === '/nuanban/elder/sos') {
     const elderId = String(data.elderId || 'elder-zhang');
     const id = `sos-${Date.now()}`;
+    const elder = elderById(elderId);
     state.sosAlerts.unshift({
       id,
       elder: elderId,
       message: String(data.message || '老人发起一键求助'),
       status: 'active',
       created_at: new Date().toISOString(),
+    });
+    recordActivity('sos_triggered', '一键求助', `${elder?.name || '老人'} · ${String(data.message || '求助')}`, {
+      role: 'elder',
     });
     persistDemoState();
     return delay({ id, ok: true } as T);
@@ -1515,6 +1649,13 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
         family_user: familyUserId,
       });
     }
+    const elder = elderById(normalizeElderId(String(data.elderId || 'elder-zhang'), ELDERS));
+    recordActivity(
+      'order_created',
+      needsOutdoor ? '预约外出服务' : '预约服务',
+      `${elder?.name || '老人'} · ${svc.name}`,
+      { role: 'elder', orderId: id },
+    );
     persistDemoState();
     return delay({ id, status: needsOutdoor ? 'outdoor_pending' : 'pending_payment' } as T);
   }
@@ -1589,6 +1730,13 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
     clearAllDemoStorage();
     resetRuntimeStateInMemory();
     return delay({ ok: true } as T);
+  }
+  if (method === 'POST' && path === '/nuanban/platform/seed-scenario') {
+    const result = seedOutdoorWalkScenario();
+    return delay({ ok: true, ...result } as T);
+  }
+  if (method === 'GET' && path === '/nuanban/platform/activity') {
+    return delay({ list: state.activityEvents.slice(0, 20) } as T);
   }
   if (method === 'GET' && path === '/nuanban/platform/overview') {
     const pending = state.orders.filter((o) => o.status === 'pending_accept').length;

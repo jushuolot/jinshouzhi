@@ -94,6 +94,14 @@
       </view>
       <text class="chevron">›</text>
     </view>
+    <view v-if="recentActivities.length" class="activity-preview">
+      <text class="activity-label">最新动态</text>
+      <view v-for="a in recentActivities" :key="a.id" class="activity-item">
+        <text class="activity-title">{{ a.title }}</text>
+        <text class="activity-detail">{{ a.detail }}</text>
+      </view>
+    </view>
+
     <view v-if="(stats?.sosPendingCount ?? 0) > 0" class="todo-card sos" @tap="goSos">
       <view class="todo-left">
         <text class="todo-icon">🆘</text>
@@ -126,6 +134,8 @@ import {
   type FamilyStats,
 } from '../api/family';
 import { fetchFamilyWallet } from '../api/wallet';
+import { fetchPlatformActivity } from '../api/platform';
+import type { ActivityEvent } from '../utils/demo-activity';
 import { useRoleStore } from '../store/role';
 import { guardPackageRoute } from '../utils/nav-guard';
 import { pbErrorMessage } from '../utils/request';
@@ -141,6 +151,7 @@ const outdoorList = ref<{ order: string }[]>([]);
 const walletBalanceYuan = ref('0.00');
 const serviceLogCount = ref(0);
 const packageCount = ref(3);
+const recentActivities = ref<ActivityEvent[]>([]);
 
 const packageSummary = computed(() => {
   const n = packageCount.value;
@@ -159,19 +170,21 @@ async function reload() {
   loading.value = true;
   try {
     const uid = roleStore.user.id;
-    const [st, binds, outdoor, wallet, pkgs, logs] = await Promise.all([
+    const [st, binds, outdoor, wallet, pkgs, logs, acts] = await Promise.all([
       fetchFamilyStats(),
       listBoundElders(uid),
       listPendingOutdoorApprovals(uid).catch(() => []),
       fetchFamilyWallet().catch(() => null),
       listFamilyPackages().catch(() => []),
       listFamilyServiceLogs().catch(() => []),
+      fetchPlatformActivity().catch(() => []),
     ]);
     stats.value = st;
     bindings.value = binds;
     outdoorList.value = outdoor;
     packageCount.value = pkgs.length || 3;
     serviceLogCount.value = logs.length;
+    recentActivities.value = acts.slice(0, 2);
     if (wallet) walletBalanceYuan.value = wallet.balanceYuan;
   } catch (e) {
     uni.showToast({ title: pbErrorMessage(e), icon: 'none' });
@@ -400,6 +413,37 @@ async function goSos() {
 .todo-card.sos {
   border: 2rpx solid #f5d0d0;
   background: #fff8f6;
+}
+.activity-preview {
+  background: var(--nb-surface);
+  border-radius: var(--nb-radius-md);
+  padding: 20rpx 24rpx;
+  margin-bottom: 16rpx;
+  box-shadow: var(--nb-shadow-soft);
+}
+.activity-label {
+  display: block;
+  font-size: 24rpx;
+  color: var(--nb-text-muted);
+  margin-bottom: 12rpx;
+}
+.activity-item {
+  padding: 10rpx 0;
+  border-top: 1rpx solid var(--nb-border);
+}
+.activity-item:first-of-type {
+  border-top: none;
+}
+.activity-title {
+  display: block;
+  font-size: 26rpx;
+  font-weight: 600;
+}
+.activity-detail {
+  display: block;
+  margin-top: 4rpx;
+  font-size: 22rpx;
+  color: var(--nb-text-muted);
 }
 .todo-left {
   display: flex;

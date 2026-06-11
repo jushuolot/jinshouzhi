@@ -42,7 +42,24 @@
       <text>今日撮合 {{ overview.todayMatches }}</text>
     </view>
 
+    <view v-if="activities.length" class="section-title">撮合动态</view>
+    <view v-for="a in activities" :key="a.id" class="activity-row">
+      <text class="act-icon">{{ actIcon(a.kind) }}</text>
+      <view class="act-body">
+        <text class="act-title">{{ a.title }}</text>
+        <text class="act-detail">{{ a.detail }}</text>
+        <text class="act-time">{{ formatTime(a.createdAt) }}</text>
+      </view>
+    </view>
+
     <view class="section-title">功能入口</view>
+    <view class="link-card highlight" @tap="goScenario">
+      <view class="link-main">
+        <text class="link-title">深度验收向导</text>
+        <text class="link-desc">9 步走完三角色闭环 · 进度可保存</text>
+      </view>
+      <text class="chevron">›</text>
+    </view>
     <view class="link-card highlight" @tap="goDispatch">
       <view class="link-main">
         <text class="link-title">机构派单</text>
@@ -72,6 +89,10 @@
       <text class="chevron">›</text>
     </view>
 
+    <view v-if="demoMode" class="seed-card" @tap="confirmSeed">
+      <text class="seed-title">注入外出演示单</text>
+      <text class="seed-desc">一键生成张奶奶陪同散步 · 待家属审批</text>
+    </view>
     <view v-if="demoMode" class="reset-card" @tap="confirmReset">
       <text class="reset-title">重置演示数据</text>
       <text class="reset-desc">清除本地订单/储值卡状态，恢复种子数据</text>
@@ -84,8 +105,10 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { onShow } from '@dcloudio/uni-app';
-import { fetchPlatformOverview, type PlatformOverview } from '../../api/platform';
+import { fetchPlatformActivity, fetchPlatformOverview, seedDemoScenario, type PlatformOverview } from '../../api/platform';
 import { listDispatchableOrders } from '../../api/org';
+import { activityIcon } from '../../utils/demo-activity';
+import type { ActivityEvent } from '../../utils/demo-activity';
 import { isDemoMockEnabled, resetDemoRuntimeState } from '../../utils/demo-mock';
 import { pbErrorMessage } from '../../utils/request';
 
@@ -93,6 +116,12 @@ const demoMode = isDemoMockEnabled();
 
 const pendingCount = ref(0);
 const overview = ref<PlatformOverview | null>(null);
+const activities = ref<ActivityEvent[]>([]);
+const seeding = ref(false);
+
+function actIcon(kind: ActivityEvent['kind']) {
+  return activityIcon(kind);
+}
 
 function formatTime(iso: string) {
   try {
@@ -105,12 +134,14 @@ function formatTime(iso: string) {
 
 async function reload() {
   try {
-    const [list, o] = await Promise.all([
+    const [list, o, acts] = await Promise.all([
       listDispatchableOrders(),
       fetchPlatformOverview().catch(() => null),
+      fetchPlatformActivity().catch(() => []),
     ]);
     pendingCount.value = list.length;
     if (o) overview.value = o;
+    activities.value = acts.slice(0, 8);
   } catch (e) {
     pendingCount.value = 0;
     uni.showToast({ title: pbErrorMessage(e), icon: 'none' });
@@ -133,6 +164,28 @@ function goTour() {
 
 function goShare() {
   uni.navigateTo({ url: '/pages/common/share-demo' });
+}
+
+function goScenario() {
+  uni.navigateTo({ url: '/pages/common/scenario-guide' });
+}
+
+async function confirmSeed() {
+  if (seeding.value) return;
+  seeding.value = true;
+  try {
+    const res = await seedDemoScenario();
+    uni.showModal({
+      title: '已注入演示单',
+      content: `${res.elderName} · ${res.serviceName}\n请用 13800000004 登录家属端审批外出`,
+      showCancel: false,
+    });
+    await reload();
+  } catch (e) {
+    uni.showToast({ title: pbErrorMessage(e), icon: 'none' });
+  } finally {
+    seeding.value = false;
+  }
 }
 
 function confirmReset() {
@@ -237,6 +290,60 @@ function confirmReset() {
 .chevron {
   font-size: 36rpx;
   color: #ccc;
+}
+.activity-row {
+  display: flex;
+  gap: 12rpx;
+  background: #fff;
+  padding: 20rpx;
+  border-radius: 12rpx;
+  margin-bottom: 10rpx;
+}
+.act-icon {
+  font-size: 28rpx;
+  flex-shrink: 0;
+}
+.act-body {
+  flex: 1;
+  min-width: 0;
+}
+.act-title {
+  display: block;
+  font-size: 26rpx;
+  font-weight: 600;
+}
+.act-detail {
+  display: block;
+  margin-top: 4rpx;
+  font-size: 22rpx;
+  color: #666;
+}
+.act-time {
+  display: block;
+  margin-top: 4rpx;
+  font-size: 20rpx;
+  color: #aaa;
+}
+.seed-card {
+  margin-top: 8rpx;
+  margin-bottom: 12rpx;
+  padding: 24rpx;
+  background: #fff8e6;
+  border: 1rpx solid #f0d080;
+  border-radius: 12rpx;
+  text-align: center;
+}
+.seed-title {
+  display: block;
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #8a6d3b;
+}
+.seed-desc {
+  display: block;
+  margin-top: 6rpx;
+  font-size: 22rpx;
+  color: #999;
 }
 .reset-card {
   margin-top: 8rpx;

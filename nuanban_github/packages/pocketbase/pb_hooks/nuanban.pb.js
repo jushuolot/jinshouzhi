@@ -2119,6 +2119,51 @@ routerAdd("POST", "/api/nuanban/family/packages/purchase", function (e) {
   });
 });
 
+routerAdd("GET", "/api/nuanban/platform/activity", function (e) {
+  const summaries = [
+    { kind: "order_confirmed", title: "服务已确认", detail: "演示归档记录" },
+    { kind: "order_accepted", title: "学生接单", detail: "待签到服务" },
+    { kind: "order_paid", title: "家属已支付", detail: "储值卡扣款" },
+    { kind: "outdoor_approved", title: "外出已批准", detail: "陪同散步" },
+  ];
+  const list = [];
+  for (let i = 0; i < summaries.length; i++) {
+    const s = summaries[i];
+    list.push({
+      id: "act-seed-" + (i + 1),
+      kind: s.kind,
+      title: s.title,
+      detail: s.detail,
+      createdAt: new Date(Date.now() - (i + 1) * 3600000).toISOString(),
+    });
+  }
+  return e.json(200, { list: list });
+});
+
+routerAdd("POST", "/api/nuanban/platform/seed-scenario", function (e) {
+  var nb = require(__hooks + "/nuanban_lib.js");
+  const col = $app.findCollectionByNameOrId("orders");
+  const order = new Record(col);
+  order.set("status", "outdoor_pending");
+  order.set("payment_status", "paid");
+  order.set("amount_cents", 6500);
+  order.set("family_user", e.auth ? e.auth.id : "");
+  order.set("scheduled_at", new Date(Date.now() + 86400000).toISOString());
+  try {
+    const elders = $app.findRecordsByFilter("elders", "enabled = true", "", 1, 0);
+    if (elders.length > 0) order.set("elder", elders[0].id);
+    const items = $app.findRecordsByFilter("service_items", 'name != ""', "", 1, 0);
+    if (items.length > 0) order.set("service_item", items[0].id);
+  } catch (_) {}
+  $app.save(order);
+  return e.json(200, {
+    ok: true,
+    orderId: order.id,
+    elderName: "张奶奶",
+    serviceName: "陪同散步",
+  });
+});
+
 /** 平台运营看板：撮合漏斗与核心指标（演示） */
 routerAdd("GET", "/api/nuanban/platform/overview", function (e) {
   var nb = require(__hooks + "/nuanban_lib.js");

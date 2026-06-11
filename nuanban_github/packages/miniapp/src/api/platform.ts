@@ -1,4 +1,5 @@
 import { request } from '../utils/request';
+import type { ActivityEvent } from '../utils/demo-activity';
 
 export interface MatchingPathStatus {
   id: string;
@@ -35,5 +36,25 @@ export async function fetchPlatformOverview() {
   return request<PlatformOverview>({
     url: '/nuanban/platform/overview',
     method: 'GET',
+  });
+}
+
+export async function fetchPlatformActivity() {
+  const res = await request<{ list: ActivityEvent[] }>({
+    url: '/nuanban/platform/activity',
+    method: 'GET',
+  });
+  return res.list ?? [];
+}
+
+export async function seedDemoScenario() {
+  return request<{
+    ok: boolean;
+    orderId: string;
+    elderName: string;
+    serviceName: string;
+  }>({
+    url: '/nuanban/platform/seed-scenario',
+    method: 'POST',
   });
 }

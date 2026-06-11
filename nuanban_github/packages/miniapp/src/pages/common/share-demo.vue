@@ -35,9 +35,15 @@ const links = [
     url: `${BASE}/#/pages/common/login`,
   },
   {
+    id: 'scenario',
+    title: '深度验收向导',
+    desc: '9 步三角色闭环 · 进度可保存',
+    url: `${BASE}/#/pages/common/scenario-guide`,
+  },
+  {
     id: 'admin',
     title: '运营演示',
-    desc: '平台 KPI · 机构派单 · 重置演示数据',
+    desc: '平台 KPI · 撮合动态 · 注入外出演示单',
     url: `${BASE}/#/pages/common/admin-hub`,
   },
   {

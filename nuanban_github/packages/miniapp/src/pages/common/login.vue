@@ -250,11 +250,13 @@ async function onWxLogin() {
 
 function showMore() {
   uni.showActionSheet({
-    itemList: ['运营演示', '分享演示链接'],
+    itemList: ['深度验收向导', '运营演示', '分享演示链接'],
     success: (res) => {
       if (res.tapIndex === 0) {
-        uni.navigateTo({ url: '/pages/common/admin-hub' });
+        uni.navigateTo({ url: '/pages/common/scenario-guide' });
       } else if (res.tapIndex === 1) {
+        uni.navigateTo({ url: '/pages/common/admin-hub' });
+      } else if (res.tapIndex === 2) {
         uni.navigateTo({ url: '/pages/common/share-demo' });
       }
     },
