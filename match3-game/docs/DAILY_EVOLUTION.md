@@ -172,6 +172,10 @@ MATCH3_CIVILIZATION_CLOCK.formatForSplash(); // "Gen.50 · 文明历 2029 · 复
 | `faucet_demo` | `faucet_demo` | 会话启动，可配置水龙头或模拟 |
 | `relic_bounty` | `bounty` | 晚间 18–24 点首次启动 |
 | `civilization_archive` | `network_settlement` | 每日首次启动（复兴期/超越期） |
+| `public_commons_mirror` | `network_settlement` | 超越期每日公开文物档案镜像入账 |
+| `beyond_phase_presence` | `passive_yield` | 超越期会话网络存在感微量收益 |
+| `weekly_recap` | `network_settlement` | 宇宙第七日收工复盘入账 |
+| `open_data_citation` | `network_settlement` | 超越期新坑引用公开文物数据时每日入账 |
 
 ### 新增渠道模板（复制改写）
 
@@ -194,8 +198,8 @@ MATCH3_NETWORK_EARNINGS.creditChannel("my_channel", { amount: 0.01, meta: { ... 
 
 ## 当前基线
 
-- **Gen.50** · v5.7.0 · 宇宙第 3 日 · 险情日 · **文明历 2029 · 复兴期**
-- 文明时钟已上线；堪舆图、桌面 VN、发现弹窗、三星盛典已就绪
+- **Gen.59** · v5.9.3 · 宇宙第 8 日 · 下新坑 · **文明历 2047 · 超越期**
+- 文明时钟已上线；第八日新坑对白、开放数据引用赏金、堪舆图、桌面 VN、发现弹窗、三星盛典已就绪
 
 ---
 
