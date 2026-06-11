@@ -1137,7 +1137,6 @@ routerAdd("PATCH", "/api/nuanban/family/profile", function (e) {
 
 routerAdd("GET", "/api/nuanban/org/orders/dispatchable", function (e) {
   var nb = require(__hooks + "/nuanban_lib.js");
-  if (!e.auth) return e.json(401, { message: "需要登录" });
   const records = $app.findRecordsByFilter(
     "orders",
     'status = "pending_accept" && student_user = ""',
@@ -1154,7 +1153,6 @@ routerAdd("GET", "/api/nuanban/org/orders/dispatchable", function (e) {
 
 routerAdd("POST", "/api/nuanban/org/orders/{id}/dispatch", function (e) {
   var nb = require(__hooks + "/nuanban_lib.js");
-  if (!e.auth) return e.json(401, { message: "需要登录" });
   const orderId = e.request.pathValue("id");
   const raw = toString(e.request.body);
   const body = raw ? JSON.parse(raw) : {};
@@ -2340,7 +2338,7 @@ routerAdd("GET", "/api/nuanban/platform/students", function (e) {
     var roleRecords = $app.findRecordsByFilter(
       "user_roles",
       'role = "student"',
-      "-created",
+      "",
       100,
       0
     );
