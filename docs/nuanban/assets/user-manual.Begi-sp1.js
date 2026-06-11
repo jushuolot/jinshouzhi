@@ -1,1 +1,0 @@
-import{l as a,R as n}from"./index-CFUjT73Z.js";const c="nuanban_user_manual_accepted",t="nuanban_privacy_policy_accepted";function r(){try{return!0===a(c)&&!0===a(t)}catch{return!1}}function e(){try{n(c,!0),n(t,!0)}catch{}}export{r as i,e as m};

@@ -1,1 +1,0 @@
-import{r}from"./request.COAMtPQ2.js";async function t(){return(await r({url:"/nuanban/org/orders/dispatchable",method:"GET"})).list??[]}async function a(t,a){return r({url:`/nuanban/org/orders/${t}/dispatch`,method:"POST",data:{studentUserId:"user-student"}})}export{a as d,t as l};
