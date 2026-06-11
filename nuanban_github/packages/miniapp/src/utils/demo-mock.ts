@@ -43,6 +43,7 @@ import {
   setMockCartoonAvatarId,
 } from './mock-verification-storage';
 import { defaultCartoonAvatarId, resolveCartoonAvatarUrl } from './cartoon-avatars';
+import { isKnownSchool } from './known-schools';
 import {
   buildRichCaregivers,
   buildRichElders,
@@ -238,7 +239,7 @@ function seedDemoPaymentAccounts(email: string, userId: string) {
 }
 
 function studentProfileComplete() {
-  return !!(studentProfileState.displayName.trim() && studentProfileState.schoolName.trim());
+  return isKnownSchool(studentProfileState.schoolName);
 }
 
 function familyProfileComplete() {
@@ -295,8 +296,13 @@ function resetRoleProfileState(role: RoleKey, displayName?: string) {
   }
 }
 
+function isNewPhoneDemoEmail(email: string): boolean {
+  return /^m\d{11}@test\.nuanban\.dev$/i.test(email);
+}
+
 function seedDemoRoleProfiles(email: string) {
   const em = email.toLowerCase();
+  if (isNewPhoneDemoEmail(em)) return;
   familyProfileState.seeded = true;
   elderProfileState.seeded = true;
   if (em.includes('student3')) return;
@@ -314,7 +320,7 @@ function seedDemoRoleProfiles(email: string) {
 
 function studentProfileDto() {
   const dto = getStudentFullProfile(studentProfileState);
-  const userId = USERS.student.id;
+  const userId = currentDemoUser().id;
   const cartoonId =
     getMockCartoonAvatarId(userId) || defaultCartoonAvatarId(dto.displayName || dto.nickname);
   const verificationPhotoUrl = getMockVerificationPhotoUrl(userId);
@@ -702,10 +708,93 @@ function roleFromEmail(email: string): RoleKey {
   return 'student';
 }
 
-/** 任意 11 位未映射号默认学生演示账号 */
-function emailFromPhone(phone: string): string {
-  const digits = phone.replace(/\D/g, '');
+const DEMO_LOGIN_PHONE_KEY = 'demo_login_phone';
+
+function normalizePhone(phone: string): string {
+  return phone.replace(/\D/g, '');
+}
+
+function isPresetDemoPhone(phone: string): boolean {
+  return normalizePhone(phone) in DEMO_PHONE_EMAIL;
+}
+
+function emailFromPresetPhone(phone: string): string {
+  const digits = normalizePhone(phone);
   return DEMO_PHONE_EMAIL[digits] || 'student1@test.nuanban.dev';
+}
+
+function emailFromNewPhone(phone: string): string {
+  return `m${normalizePhone(phone)}@test.nuanban.dev`;
+}
+
+type PhoneSession = {
+  user: { id: string; nickname: string; email: string };
+  roles: DemoAuthRole[];
+};
+
+function readPhoneSession(phone: string): PhoneSession | null {
+  try {
+    const raw = uni.getStorageSync(`demo_phone_session_${normalizePhone(phone)}`);
+    if (raw && typeof raw === 'object' && Array.isArray((raw as PhoneSession).roles)) {
+      return raw as PhoneSession;
+    }
+  } catch {
+    /* ignore */
+  }
+  return null;
+}
+
+function savePhoneSession(phone: string, user: PhoneSession['user'], roles: DemoAuthRole[]) {
+  try {
+    uni.setStorageSync(`demo_phone_session_${normalizePhone(phone)}`, { user, roles });
+    uni.setStorageSync(DEMO_LOGIN_PHONE_KEY, normalizePhone(phone));
+  } catch {
+    /* ignore */
+  }
+}
+
+function activeRoleFromRoles(roles: DemoAuthRole[]): RoleKey | undefined {
+  const active = roles.filter((r) => r.status === 'active');
+  if (active.length === 1) return active[0].role;
+  return undefined;
+}
+
+/** 新手机号：首次登录无角色 → 注册页；注册后资料未完善 → 编辑资料 */
+function loginByNewPhone(phone: string) {
+  const digits = normalizePhone(phone);
+  const email = emailFromNewPhone(digits);
+  const session = readPhoneSession(digits);
+
+  if (session?.roles?.length) {
+    mockRegisterRoles.length = 0;
+    mockRegisterRoles.push(...session.roles);
+    persistDemoRoles(session.roles, session.user);
+    return {
+      token: MOCK_TOKEN,
+      user: session.user,
+      roles: session.roles,
+      activeRole: activeRoleFromRoles(session.roles),
+    };
+  }
+
+  mockRegisterRoles.length = 0;
+  try {
+    uni.removeStorageSync(DEMO_STORAGE_ROLES);
+  } catch {
+    /* ignore */
+  }
+  const user = { id: `user-phone-${digits}`, nickname: '', email };
+  try {
+    uni.setStorageSync(DEMO_STORAGE_USER, user);
+    uni.setStorageSync(DEMO_LOGIN_PHONE_KEY, digits);
+  } catch {
+    /* ignore */
+  }
+  return {
+    token: MOCK_TOKEN,
+    user,
+    roles: [] as DemoAuthRole[],
+  };
 }
 
 type DemoAuthRole = {
@@ -1027,8 +1116,8 @@ export function resetDemoRuntimeState() {
 }
 
 /**
- * 演示 Mock：游客、本地显式开启、GitHub Pages（远端 API 未就绪前）。
- * 阿里云等发布版登录用户走真实 PocketBase API。
+ * 演示 Mock：游客、显式 VITE_DEMO_MOCK、GitHub Pages 测试备份。
+ * 阿里云 / 本地 parity 模式（VITE_DEMO_MOCK=false）走真实 PocketBase API。
  */
 export function isDemoMockEnabled(): boolean {
   if (isGuestBrowse()) return true;
@@ -1059,9 +1148,23 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
     }
     resetRoleProfileState(role, displayName);
     const roles = [...mockRegisterRoles];
-    const user = demoUserForRoles(roles);
+    let user: { id: string; nickname: string; email: string };
+    try {
+      const stored = uni.getStorageSync(DEMO_STORAGE_USER) as PhoneSession['user'];
+      user = stored?.id
+        ? { ...stored, nickname: displayName || stored.nickname || '' }
+        : demoUserForRoles(roles);
+    } catch {
+      user = demoUserForRoles(roles);
+    }
     if (displayName) user.nickname = displayName;
     persistDemoRoles(roles, user);
+    try {
+      const phone = uni.getStorageSync(DEMO_LOGIN_PHONE_KEY) as string;
+      if (phone) savePhoneSession(phone, user, roles);
+    } catch {
+      /* ignore */
+    }
     if (role === 'student' && data.referralCode) {
       applyReferralOnStudentRegister(user.id, displayName || user.nickname, String(data.referralCode));
     }
@@ -1074,7 +1177,7 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
   }
 
   if (method === 'POST' && path === '/nuanban/phone-login') {
-    const phone = String(data.phone || '').replace(/\D/g, '');
+    const phone = normalizePhone(String(data.phone || ''));
     if (phone.length !== 11) {
       return Promise.reject({ message: '请输入 11 位手机号', statusCode: 400 });
     }
@@ -1082,7 +1185,15 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
     if (code && code.length < 4) {
       return Promise.reject({ message: '验证码无效', statusCode: 400 });
     }
-    return delay(loginByEmail(emailFromPhone(phone)) as T);
+    if (isPresetDemoPhone(phone)) {
+      try {
+        uni.setStorageSync(DEMO_LOGIN_PHONE_KEY, phone);
+      } catch {
+        /* ignore */
+      }
+      return delay(loginByEmail(emailFromPresetPhone(phone)) as T);
+    }
+    return delay(loginByNewPhone(phone) as T);
   }
 
   if (method === 'POST' && path === '/nuanban/wx-login') {
@@ -1112,6 +1223,10 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
     const roleErr = assertDemoActiveRole(options, path, 'student');
     if (roleErr) return Promise.reject({ message: roleErr, statusCode: 403 });
     const user = demoUserForRoles(mockRegisterRoles);
+    const pay = paymentAccountDto(user.id, 'student');
+    if (!pay.configured) {
+      return Promise.reject({ message: '请先绑定收款账户', statusCode: 400 });
+    }
     const channel = data.channel === 'bank' ? 'bank' : 'wechat';
     try {
       const overview = submitStudentWithdrawal(
@@ -1162,7 +1277,13 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
   }
   if (method === 'PATCH' && path === '/nuanban/student/profile') {
     if (data.displayName) studentProfileState.displayName = String(data.displayName);
-    if (data.schoolName) studentProfileState.schoolName = String(data.schoolName);
+    if (data.schoolName) {
+      const name = String(data.schoolName).trim();
+      if (!isKnownSchool(name)) {
+        return Promise.reject({ message: '请从列表中选择有效学校', statusCode: 400 });
+      }
+      studentProfileState.schoolName = name;
+    }
     if (data.bio != null) studentProfileState.bio = String(data.bio);
     if (data.major) studentProfileState.major = String(data.major);
     if (data.grade) studentProfileState.grade = String(data.grade);

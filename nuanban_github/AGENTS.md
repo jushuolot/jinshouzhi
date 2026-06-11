@@ -65,7 +65,7 @@ git pull --rebase origin main && git push origin main
 
 机构派单 / 运营演示：登录页 **更多 → 运营演示**（无独立手机号）。
 
-**发布**：GitHub Pages = 测试版，`release-test.sh`；阿里云 = 正式版，`release-prod.sh`。见 [docs/RELEASE.md](./docs/RELEASE.md) · 测试版文档 [docs/TEST_VERSION.md](./docs/TEST_VERSION.md)。
+**发布**：GitHub Pages = 测试备份（Mock），`release-test.sh`；阿里云 = 正式版，`release-prod.sh`。见 [ENV_PARITY.md](./docs/ENV_PARITY.md) · [RELEASE.md](./docs/RELEASE.md)。
 
 ## 产品核心（勿偏离）
 
@@ -73,6 +73,7 @@ git pull --rebase origin main && git push origin main
 
 ## 文档索引
 
+- [ENV_PARITY.md](./docs/ENV_PARITY.md) — 测试/正式一致性与硬约束
 - [PROGRESS_GOD_VIEW.md](./docs/PROGRESS_GOD_VIEW.md) — 历史进度文档（看板已并入运营演示）
 - [AGENT_EVOLUTION.md](./docs/AGENT_EVOLUTION.md) — 自我进化与教训
 - [PERFECT.md](./docs/PERFECT.md) — 验收清单

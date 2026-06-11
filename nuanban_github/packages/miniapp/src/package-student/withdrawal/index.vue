@@ -1,9 +1,18 @@
 <template>
   <view class="page nb-page">
+    <view v-if="!paymentReady" class="gate nb-card">
+      <text class="gate-title">请先绑定收款账户</text>
+      <text class="gate-desc">
+        收益暂存运营平台。提现前需绑定微信/银行卡/支付宝收款账户，审核通过后自动打款。
+      </text>
+      <button class="btn-bind nb-btn-primary" @tap="goPayment">去绑定收款账户</button>
+    </view>
+
+    <template v-else>
     <view class="hero nb-hero">
       <text class="hero-label">可提现余额</text>
       <text class="hero-balance">¥{{ availableYuan }}</text>
-      <text class="hero-sub">待结算 ¥{{ frozenYuan }} · 已打款结算可提现</text>
+      <text class="hero-sub">收益暂存运营平台 · 待结算 ¥{{ frozenYuan }}</text>
     </view>
 
     <view class="channel-card nb-card">
@@ -69,6 +78,7 @@
       </view>
       <text class="record-amount">-¥{{ (w.amountCents / 100).toFixed(2) }}</text>
     </view>
+    </template>
 
     <RoleTabBar role="student" current="/package-student/profile" />
   </view>
@@ -84,12 +94,14 @@ import {
   type StudentWithdrawalOverview,
   type WithdrawalChannel,
 } from '../../api/student';
+import { fetchPaymentAccount } from '../../api/payment-account';
 import { guardPackageRoute } from '../../utils/nav-guard';
 import { pbErrorMessage } from '../../utils/request';
 
 const presetAmounts = [50, 100, 200];
 const loading = ref(false);
 const submitting = ref(false);
+const paymentReady = ref(false);
 const overview = ref<StudentWithdrawalOverview | null>(null);
 const channel = ref<WithdrawalChannel>('wechat');
 const selectedCents = ref(5000);
@@ -141,17 +153,31 @@ function formatTime(iso: string) {
 async function reload() {
   loading.value = true;
   try {
-    overview.value = await fetchStudentWithdrawal();
+    const [pay, wd] = await Promise.all([
+      fetchPaymentAccount('student'),
+      fetchStudentWithdrawal(),
+    ]);
+    paymentReady.value = pay.configured === true;
+    overview.value = wd;
   } catch (e) {
     overview.value = null;
+    paymentReady.value = false;
     uni.showToast({ title: pbErrorMessage(e), icon: 'none' });
   } finally {
     loading.value = false;
   }
 }
 
+function goPayment() {
+  uni.navigateTo({ url: '/package-student/profile/payment' });
+}
+
 async function doWithdraw() {
   if (submitting.value) return;
+  if (!paymentReady.value) {
+    uni.showToast({ title: '请先绑定收款账户', icon: 'none' });
+    return;
+  }
   const cents = selectedCents.value;
   if (!Number.isFinite(cents) || cents < 1000) {
     uni.showToast({ title: '提现金额至少 ¥10', icon: 'none' });
@@ -185,6 +211,27 @@ onShow(() => {
   min-height: 100vh;
   padding: 24rpx;
   padding-bottom: 120rpx;
+}
+.gate {
+  padding: 40rpx 32rpx;
+  margin-bottom: 24rpx;
+  text-align: center;
+}
+.gate-title {
+  display: block;
+  font-size: 32rpx;
+  font-weight: 600;
+  margin-bottom: 16rpx;
+}
+.gate-desc {
+  display: block;
+  font-size: 26rpx;
+  color: #666;
+  line-height: 1.6;
+  margin-bottom: 32rpx;
+}
+.btn-bind {
+  width: 100%;
 }
 .hero {
   margin-bottom: 24rpx;

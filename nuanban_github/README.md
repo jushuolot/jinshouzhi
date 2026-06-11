@@ -12,24 +12,28 @@
 
 > 仓库中的 `packages/api`、`packages/admin-web`、`database/` 为历史参考，新环境请按极简栈部署。
 
-## 发布规则（测试版 → 正式版）
+## 发布规则（测试备份 → 正式版）
 
 | 环境 | 角色 | 链接 |
 |------|------|------|
-| **GitHub Pages** | **最新测试版** | https://jushuolot.github.io/jinshouzhi/nuanban/#/pages/common/login |
-| **阿里云** | **正式发布版** | http://101.200.128.82（备案后 nuanban.cc） |
+| **GitHub Pages** | **测试备份**（与本地测试同配置） | https://jushuolot.github.io/jinshouzhi/nuanban/#/pages/common/login |
+| **阿里云** | **正式发布** | http://101.200.128.82（备案后 nuanban.cc） |
 
-- 测试版完整文档：**[docs/TEST_VERSION.md](docs/TEST_VERSION.md)**（链接大全 · 验收路径 · 演示号）
+- 环境一致性：**[docs/ENV_PARITY.md](docs/ENV_PARITY.md)**
+- 测试版验收：**[docs/TEST_VERSION.md](docs/TEST_VERSION.md)**
 - 发布规则：**[docs/RELEASE.md](docs/RELEASE.md)**
 
 ```bash
-# 1. 开发完成 → 发布测试版（推 GitHub，Actions 自动更新 Pages）
+# 1. 本地 parity 测通（VITE_DEMO_MOCK=false + dev-test.sh）
+./scripts/dev-test.sh && ./scripts/start-h5.sh
+
+# 2. 推送 GitHub 测试备份
 ./scripts/release-test.sh
 
-# 2. 测试版验收通过 → 发布正式版（仅阿里云）
+# 3. 验收通过 → 阿里云正式发布
 ./scripts/release-prod.sh
 
-# 查看两环境版本是否一致
+# 对比 GitHub 与阿里云版本
 ./scripts/release-status.sh
 ```
 

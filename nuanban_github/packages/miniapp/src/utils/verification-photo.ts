@@ -1,4 +1,5 @@
 import { pickCameraImage, type CameraPickResult } from './camera-picker';
+import { saveVerificationPhotoToDevDisk } from './dev-verification-store';
 import { API_BASE } from './request';
 import { useRoleStore } from '../store/role';
 import { isDemoMockEnabled } from './demo-mock';
@@ -81,12 +82,15 @@ export async function captureAndUploadVerificationPhoto(): Promise<string> {
   if (!userId || !token) throw new Error('请先登录');
 
   const pick = await pickCameraImage();
+  const diskUrl = await saveVerificationPhotoToDevDisk(userId, pick.previewUrl);
+  const storedUrl = diskUrl || pick.previewUrl;
 
   if (isDemoMockEnabled()) {
-    const url = pick.previewUrl;
-    setMockVerificationPhotoUrl(userId, url);
-    return url;
+    setMockVerificationPhotoUrl(userId, storedUrl);
+    return storedUrl;
   }
 
-  return uploadVerificationBlob(pick, token, role.activeRole ?? undefined);
+  const uploaded = await uploadVerificationBlob(pick, token, role.activeRole ?? undefined);
+  if (diskUrl) return diskUrl;
+  return uploaded;
 }

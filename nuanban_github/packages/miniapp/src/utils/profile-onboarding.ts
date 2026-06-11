@@ -5,6 +5,7 @@ import { fetchFamilyProfile } from '../api/family';
 import { fetchPaymentAccount } from '../api/payment-account';
 import { fetchStudentProfile } from '../api/student';
 import { useRoleStore } from '../store/role';
+import { isKnownSchool } from './known-schools';
 
 export const ROLE_PROFILE_EDIT: Record<RoleKey, string> = {
   student: '/package-student/profile/edit',
@@ -51,7 +52,7 @@ type ProfilePayload = {
 function baseProfileFieldsComplete(role: RoleKey, profile: ProfilePayload): boolean {
   if (profile.profileComplete === false) return false;
   if (role === 'student') {
-    return !!(profile.displayName?.trim() && profile.schoolName?.trim());
+    return isKnownSchool(profile.schoolName || '');
   }
   if (role === 'family') {
     return !!(profile.nickname?.trim() && profile.contactPhone?.trim() && profile.district?.trim());
@@ -60,6 +61,10 @@ function baseProfileFieldsComplete(role: RoleKey, profile: ProfilePayload): bool
 }
 
 export function computeProfileComplete(role: RoleKey, profile: ProfilePayload): boolean {
+  if (role === 'student') {
+    if (profile.profileComplete === true) return true;
+    return baseProfileFieldsComplete(role, profile);
+  }
   if (!profile.paymentAccountConfigured) return false;
   if (profile.profileComplete === true && profile.paymentAccountConfigured) return true;
   return baseProfileFieldsComplete(role, profile);

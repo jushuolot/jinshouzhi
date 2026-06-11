@@ -1,4 +1,41 @@
 /// Shared helpers for nuanban.pb.js (require inside each route handler)
+/** 与 packages/miniapp/src/utils/known-schools.ts 保持同步 */
+var KNOWN_SCHOOLS = [
+  "示范大学", "城东师范学院", "医科大学", "复旦大学", "上海交通大学", "同济大学",
+  "华东师范大学", "上海大学", "南京大学", "东南大学", "浙江大学", "中国科学技术大学",
+  "北京大学", "清华大学", "中国人民大学", "北京师范大学", "武汉大学", "华中科技大学",
+  "中山大学", "华南理工大学", "四川大学", "电子科技大学", "西安交通大学", "哈尔滨工业大学",
+  "吉林大学", "厦门大学", "山东大学", "中南大学", "湖南大学", "重庆大学",
+];
+
+function isKnownSchool(name) {
+  var t = String(name || "").trim();
+  if (!t) return false;
+  for (var i = 0; i < KNOWN_SCHOOLS.length; i++) {
+    if (KNOWN_SCHOOLS[i] === t) return true;
+  }
+  return false;
+}
+
+function findOrCreateSchoolByName(name) {
+  var schools = $app.findRecordsByFilter(
+    "school_dict",
+    "name = {:n}",
+    "",
+    1,
+    0,
+    { n: name }
+  );
+  if (schools.length > 0) return schools[0];
+  var schoolCol = $app.findCollectionByNameOrId("school_dict");
+  var rec = new Record(schoolCol);
+  rec.set("name", name);
+  rec.set("enabled", true);
+  rec.set("sort_order", 99);
+  $app.save(rec);
+  return rec;
+}
+
 function elderNameById(id) {
   try {
     return $app.findRecordById("elders", id).getString("name");
@@ -610,6 +647,7 @@ function adminMarkReconciled(recordId) {
 
 
 module.exports = {
+  KNOWN_SCHOOLS, isKnownSchool, findOrCreateSchoolByName,
   elderNameById, safeRecordString, safeRecordInt, safeRecordBool, safeRecordFloat,
   serviceInfoById, orderToStudentDto, sosToDto, haversineM, orderToFamilyDto,
   elderProfileIdForUser, familyCanAccessOrder, completeOrderSchedule, finalizeOrderAfterConfirm,
@@ -618,5 +656,6 @@ module.exports = {
   studentWithdrawalsMap, demoStudentSettlements, studentWithdrawalBalances, studentWithdrawalOverview,
   adminFundsReconcileMap, adminFundOverview, adminFundCollectWallet, adminFundWithdrawalsList,
   adminApproveWithdrawal, adminRejectWithdrawal, adminMarkReconciled,
-  requestBearerToken, requestOrigin, h5AppBaseUrl, userAvatarUrlForClient, userAvatarFields
+  requestBearerToken, requestOrigin, h5AppBaseUrl, userAvatarUrlForClient, userAvatarFields,
+  roleFileUrlForClient, studentRoleRecord
 };

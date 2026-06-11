@@ -1,4 +1,6 @@
-/** H5 相机选取：iOS Safari 上 uni.chooseImage(camera) 易黑屏，改用原生 input[capture] */
+import { canUseFaceCapture, requestFaceCapture } from './face-capture';
+
+/** H5 核验照：优先人脸取景框；小程序回退系统相机 */
 
 export interface CameraPickResult {
   /** uni.uploadFile 或预览用路径 */
@@ -73,8 +75,8 @@ function pickCameraViaNativeInput(
 }
 
 export async function pickCameraImage(): Promise<CameraPickResult> {
-  if (isH5() && isIOSDevice()) {
-    return pickCameraViaNativeInput('user');
+  if (canUseFaceCapture()) {
+    return requestFaceCapture();
   }
 
   const pick = await new Promise<UniApp.ChooseImageSuccessCallbackResult>((resolve, reject) => {

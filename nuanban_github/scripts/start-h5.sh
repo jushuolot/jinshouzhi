@@ -23,8 +23,12 @@ if [ ! -f "$MINIAPP/.env" ]; then
   echo "    已创建 packages/miniapp/.env"
 fi
 
-if ! grep -q '^VITE_DEMO_MOCK=true' "$MINIAPP/.env" 2>/dev/null; then
-  echo "    警告: .env 未设置 VITE_DEMO_MOCK=true，运营台/演示数据可能为空"
+if grep -q '^VITE_DEMO_MOCK=true' "$MINIAPP/.env" 2>/dev/null; then
+  echo "    模式: Mock（不依赖 PocketBase 响应）"
+elif grep -q '^VITE_DEMO_MOCK=false' "$MINIAPP/.env" 2>/dev/null; then
+  echo "    模式: parity（PocketBase，与阿里云一致）"
+else
+  echo "    提示: 建议 .env 设置 VITE_DEMO_MOCK=false，见 docs/ENV_PARITY.md"
 fi
 
 echo ""

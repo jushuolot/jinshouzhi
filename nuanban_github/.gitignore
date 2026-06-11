@@ -34,3 +34,7 @@ Caddyfile.prod
 
 # PocketBase backup (do not commit)
 packages/pocketbase/pb_data.bak*/
+
+# 本地 dev 核验照（学生拍照测试）
+dev-data/verification-photos/*
+!dev-data/verification-photos/.gitkeep

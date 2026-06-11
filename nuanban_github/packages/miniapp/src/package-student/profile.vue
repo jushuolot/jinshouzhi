@@ -95,6 +95,10 @@
         <text>编辑资料</text>
         <text class="arrow">›</text>
       </view>
+      <view class="menu-item" @tap="goPayment">
+        <text>收款账户</text>
+        <text class="arrow">›</text>
+      </view>
       <view class="menu-item" @tap="goDiscover">
         <text>附近老人</text>
         <text class="arrow">›</text>
@@ -277,6 +281,10 @@ function goModuleMap() {
 
 function goEditProfile() {
   uni.navigateTo({ url: '/package-student/profile/edit' });
+}
+
+function goPayment() {
+  uni.navigateTo({ url: '/package-student/profile/payment' });
 }
 
 function goDiscover() {

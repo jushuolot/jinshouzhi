@@ -14,27 +14,34 @@ routerAdd("POST", "/api/nuanban/seed-demo", (e) => {
   try {
   stats = { users: 0, roles: 0, schools: 0, orgs: 0, elders: 0, orders: 0, serviceItems: 0, bindings: 0 };
 
-  // school_dict
-  const existingSchool = $app.findRecordsByFilter(
-    "school_dict",
-    "name = {:n}",
-    "",
-    1,
-    0,
-    { n: "示范大学" }
-  );
-  let school;
-  if (existingSchool.length > 0) {
-    school = existingSchool[0];
-  } else {
-    const schoolCol = $app.findCollectionByNameOrId("school_dict");
-    school = new Record(schoolCol);
-    school.set("name", "示范大学");
-    school.set("sort_order", 1);
-    school.set("enabled", true);
-    $app.save(school);
+  // school_dict（与 demo-rich-data DEMO_SCHOOLS 对齐）
+  const demoSchoolNames = ["示范大学", "城东师范学院", "医科大学"];
+  const schoolsByName = {};
+  for (let si = 0; si < demoSchoolNames.length; si++) {
+    const sn = demoSchoolNames[si];
+    const existingSchool = $app.findRecordsByFilter(
+      "school_dict",
+      "name = {:n}",
+      "",
+      1,
+      0,
+      { n: sn }
+    );
+    if (existingSchool.length > 0) {
+      schoolsByName[sn] = existingSchool[0];
+    } else {
+      const schoolCol = $app.findCollectionByNameOrId("school_dict");
+      const srec = new Record(schoolCol);
+      srec.set("name", sn);
+      srec.set("sort_order", si + 1);
+      srec.set("enabled", true);
+      $app.save(srec);
+      schoolsByName[sn] = srec;
+      stats.schools += 1;
+    }
   }
-  stats.schools += 1;
+  const school = schoolsByName["示范大学"];
+  const schoolEast = schoolsByName["城东师范学院"];
 
   function findOrCreateUserByEmail(email, name) {
     const rows = $app.findRecordsByFilter(
@@ -265,7 +272,7 @@ routerAdd("POST", "/api/nuanban/seed-demo", (e) => {
     longitude: 121.475,
   });
   findOrCreateRole(uStudent2.id, "student", {
-    school: school.id,
+    school: schoolEast.id,
     display_name: "周同学",
     latitude: 31.231,
     longitude: 121.474,

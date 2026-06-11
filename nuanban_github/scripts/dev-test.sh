@@ -19,12 +19,12 @@ ensure_local_env() {
       echo "    已补全 .env: ${key}"
     fi
   done
-  if grep -q '^VITE_DEMO_MOCK=' "$ENV_FILE" && ! grep -q '^VITE_DEMO_MOCK=true' "$ENV_FILE"; then
-    echo "    提示: 本地联调建议 VITE_DEMO_MOCK=true（见 .env.example）"
+  if grep -q '^VITE_DEMO_MOCK=' "$ENV_FILE" && ! grep -q '^VITE_DEMO_MOCK=false' "$ENV_FILE"; then
+    echo "    提示: parity 模式建议 VITE_DEMO_MOCK=false（与阿里云一致，见 docs/ENV_PARITY.md）"
   fi
 }
 
-echo "==> 0/3 检查前端 .env（Mock 演示数据）"
+echo "==> 0/3 检查前端 .env（parity 模式）"
 ensure_local_env
 
 echo "==> 1/3 启动 PocketBase (docker compose)"
@@ -61,7 +61,8 @@ echo ""
 echo " 下一步（新开终端）："
 echo "   ./scripts/start-h5.sh"
 echo "   浏览器打开 http://localhost:5174/#/pages/common/launch"
-echo "   确认 .env 含 VITE_DEMO_MOCK=true → 运营台/三端有演示数据"
+echo "   确认 .env 含 VITE_DEMO_MOCK=false → 与阿里云同 PocketBase 逻辑"
+echo "   （纯 Mock 演示可设 VITE_DEMO_MOCK=true）"
 echo "   学生核验照落盘: dev-data/verification-photos/（拍照后生成）"
 echo ""
 "$ROOT/scripts/print-phone-dev-url.sh"

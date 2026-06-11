@@ -1,25 +1,19 @@
 <template>
-  <view class="verification-section">
-    <view class="section-head">
+  <view class="verification-section" :class="{ compact }">
+    <view v-if="!compact" class="section-head">
       <text class="section-title">实名核验照</text>
-      <text class="section-badge">仅学生</text>
     </view>
-    <text class="section-desc">请使用相机拍摄本人正面照，供平台核验身份。卡通头像对外展示，此照片不对老人/家属公开。</text>
 
     <view class="photo-frame" @tap="onCapture">
       <image v-if="displayUrl" :src="displayUrl" class="photo" mode="aspectFill" />
       <view v-else class="placeholder">
         <text class="cam-icon">📷</text>
-        <text class="cam-text">点击拍摄核验照</text>
-        <text class="cam-sub">需使用相机拍摄正面照</text>
+        <text class="cam-text">点击拍摄</text>
       </view>
       <view v-if="displayUrl && editable" class="retake">
-        <text>重新拍摄</text>
+        <text>重拍</text>
       </view>
     </view>
-
-    <text v-if="displayUrl" class="status ok">✓ 已上传核验照</text>
-    <text v-else class="status warn">尚未上传 · 完成核验后可优先接单</text>
   </view>
 </template>
 
@@ -32,8 +26,9 @@ const props = withDefaults(
   defineProps<{
     photoUrl?: string;
     editable?: boolean;
+    compact?: boolean;
   }>(),
-  { editable: true },
+  { editable: true, compact: false },
 );
 
 const emit = defineEmits<{ change: [url: string] }>();
@@ -77,30 +72,20 @@ async function onCapture() {
   padding: 28rpx;
   margin-bottom: 24rpx;
 }
+.verification-section.compact {
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  flex: 1;
+  min-width: 0;
+}
 .section-head {
-  display: flex;
-  align-items: center;
-  gap: 12rpx;
-  margin-bottom: 8rpx;
+  margin-bottom: 12rpx;
 }
 .section-title {
-  font-size: 30rpx;
+  font-size: 28rpx;
   font-weight: 600;
   color: var(--nb-text, #333);
-}
-.section-badge {
-  font-size: 20rpx;
-  color: var(--nb-primary, #c45c26);
-  background: var(--nb-primary-soft, #fff5ef);
-  padding: 4rpx 12rpx;
-  border-radius: 8rpx;
-}
-.section-desc {
-  display: block;
-  font-size: 24rpx;
-  color: var(--nb-text-muted, #888);
-  line-height: 1.5;
-  margin-bottom: 20rpx;
 }
 .photo-frame {
   position: relative;
@@ -110,6 +95,9 @@ async function onCapture() {
   overflow: hidden;
   background: #fafafa;
   border: 2rpx dashed var(--nb-border-dashed, #e8c4a8);
+}
+.compact .photo-frame {
+  height: 280rpx;
 }
 .photo {
   width: 100%;
@@ -121,39 +109,23 @@ async function onCapture() {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 12rpx;
+  gap: 8rpx;
 }
 .cam-icon {
-  font-size: 64rpx;
+  font-size: 48rpx;
 }
 .cam-text {
-  font-size: 30rpx;
-  font-weight: 600;
-  color: var(--nb-text, #333);
-}
-.cam-sub {
-  font-size: 22rpx;
-  color: var(--nb-text-muted, #aaa);
+  font-size: 26rpx;
+  color: var(--nb-text-muted, #999);
 }
 .retake {
   position: absolute;
-  right: 16rpx;
-  bottom: 16rpx;
-  padding: 10rpx 20rpx;
+  right: 12rpx;
+  bottom: 12rpx;
+  padding: 8rpx 16rpx;
   background: rgba(0, 0, 0, 0.55);
   color: #fff;
-  font-size: 24rpx;
+  font-size: 22rpx;
   border-radius: 999rpx;
-}
-.status {
-  display: block;
-  margin-top: 16rpx;
-  font-size: 24rpx;
-}
-.status.ok {
-  color: #2a9d8f;
-}
-.status.warn {
-  color: #c45c26;
 }
 </style>

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# 发布 GitHub 正式版（正式制作环境）→ push main，Actions 构建 Pages
+# 发布 GitHub 测试备份 → push main，Actions 构建 Pages（与本地测试同 Mock 配置）
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -14,7 +14,7 @@ GIT_ROOT="$(git -C "$ROOT" rev-parse --show-toplevel 2>/dev/null || echo "$ROOT"
 FORMAL_URL="${NUANBAN_DEMO_URL:-https://jushuolot.github.io/jinshouzhi/nuanban/#/pages/common/launch}"
 
 echo "=============================================="
-echo "发布 GitHub 正式版（正式制作）"
+echo "发布 GitHub 测试备份"
 echo "=============================================="
 
 if [[ -n "$(git -C "$GIT_ROOT" status --porcelain)" ]]; then
@@ -32,13 +32,12 @@ git -C "$GIT_ROOT" push origin main
 
 echo ""
 echo "=============================================="
-echo "正式版已推送，GitHub Actions 约 2～5 分钟后更新"
+echo "测试备份已推送，GitHub Actions 约 2～5 分钟后更新"
 echo ""
 echo "  验收: ${FORMAL_URL}"
 echo "  构建: https://github.com/jushuolot/jinshouzhi/actions"
-echo "  角标: 正式版 · 游客 Mock · 登录走真实 API"
+echo "  角标: 测试版 · 全量 Mock（见 docs/ENV_PARITY.md）"
 echo ""
-echo "请确认仓库 Variable 已设: NUANBAN_FORMAL_API_URL"
-echo "对外发布（阿里云）:"
+echo "正式发布（阿里云）:"
 echo "  ./scripts/release-prod.sh"
 echo "=============================================="

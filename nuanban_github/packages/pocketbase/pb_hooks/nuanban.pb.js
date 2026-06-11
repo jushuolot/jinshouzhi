@@ -139,20 +139,24 @@ routerAdd("POST", "/api/nuanban/phone-login", function (e) {
     "13800000005": "elder1@test.nuanban.dev",
     "13800000006": "multi1@test.nuanban.dev",
   };
-  const email = phoneToEmail[phone] || "student1@test.nuanban.dev";
+  const isPresetPhone = Object.prototype.hasOwnProperty.call(phoneToEmail, phone);
+  const email = isPresetPhone ? phoneToEmail[phone] : "m" + phone + "@test.nuanban.dev";
 
-  const users = $app.findRecordsByFilter("users", "email = {:e}", "", 1, 0, { e: email });
+  let users = $app.findRecordsByFilter("users", "email = {:e}", "", 1, 0, { e: email });
+  let user;
   if (users.length === 0) {
-    return e.json(404, { message: "用户不存在，请先执行: ./scripts/seed-demo.sh" });
-  }
-  const user = users[0];
-
-  const em = (email + "").toLowerCase();
-  let activeRole = "student";
-  if (em.indexOf("elder") >= 0) {
-    activeRole = "elder";
-  } else if (em.indexOf("family") >= 0) {
-    activeRole = "family";
+    if (isPresetPhone) {
+      return e.json(404, { message: "用户不存在，请先执行: ./scripts/seed-demo.sh" });
+    }
+    const usersCol = $app.findCollectionByNameOrId("users");
+    user = new Record(usersCol);
+    user.set("email", email);
+    user.setPassword("nuanban_dev_2025");
+    user.set("verified", true);
+    user.set("name", "");
+    $app.save(user);
+  } else {
+    user = users[0];
   }
 
   const roleRecords = $app.findRecordsByFilter(
@@ -177,22 +181,23 @@ routerAdd("POST", "/api/nuanban/phone-login", function (e) {
       elderProfileId: elderProfileId,
     });
   }
-  if (roles.length === 0) {
-    roles.push({ role: activeRole, status: "active", elderProfileId: null });
-  }
-
   const activeRoles = roles.filter(function (r) {
     return r.status === "active";
   });
-  const resolvedActive =
-    activeRoles.length === 1 ? activeRoles[0].role : activeRoles.length > 1 ? null : activeRole;
+  var resolvedActive = null;
+  if (activeRoles.length === 1) {
+    resolvedActive = activeRoles[0].role;
+  } else if (activeRoles.length === 0 && roles.length === 1) {
+    resolvedActive = roles[0].role;
+  }
 
   var av = nb.userAvatarFields(user, e);
+  var nick = user.getString("name") || "";
   return e.json(200, {
     token: user.newAuthToken(),
     user: {
       id: user.id,
-      nickname: user.getString("name") || user.getString("email"),
+      nickname: nick,
       email: user.getString("email"),
       avatarUrl: av.avatarUrl,
     },
@@ -505,6 +510,18 @@ routerAdd("POST", "/api/nuanban/student/order-requests/{id}/accept", function (e
   }
   if (order.getString("status") !== "pending_accept") {
     return e.json(400, { message: "订单状态不可接单" });
+  }
+
+  const studentRoles = $app.findRecordsByFilter(
+    "user_roles",
+    'user = {:uid} && role = "student"',
+    "",
+    1,
+    0,
+    { uid: auth.id }
+  );
+  if (studentRoles.length > 0 && studentRoles[0].getString("status") !== "active") {
+    return e.json(403, { message: "学生资质审核中，暂无法接单" });
   }
 
   let item;
@@ -837,18 +854,12 @@ routerAdd("PATCH", "/api/nuanban/student/profile", function (e) {
     roleRec.set("display_name", displayName);
   }
   if (body.schoolName) {
-    schoolName = String(body.schoolName);
-    const schools = $app.findRecordsByFilter(
-      "school_dict",
-      "name = {:n}",
-      "",
-      1,
-      0,
-      { n: schoolName }
-    );
-    if (schools.length > 0) {
-      roleRec.set("school", schools[0].id);
+    schoolName = String(body.schoolName).trim();
+    if (!nb.isKnownSchool(schoolName)) {
+      return e.json(400, { message: "请从列表中选择有效学校" });
     }
+    const schoolRec = nb.findOrCreateSchoolByName(schoolName);
+    roleRec.set("school", schoolRec.id);
   } else {
     const schoolId = roleRec.getString("school");
     if (schoolId) {
@@ -2079,6 +2090,11 @@ routerAdd("POST", "/api/nuanban/student/withdrawal", function (e) {
   const amountCents = parseInt(body.amountCents, 10) || 0;
   const channel = body.channel === "bank" ? "bank" : "wechat";
   if (amountCents < 1000) return e.json(400, { message: "提现金额至少 ¥10.00" });
+  seedPaymentAccountDemoForUser(auth, "student");
+  const payAcct = paymentAccountDemoDto(auth.id, "student");
+  if (!payAcct.configured) {
+    return e.json(400, { message: "请先绑定收款账户" });
+  }
   const overview = nb.studentWithdrawalOverview(auth.id);
   if (amountCents > overview.availableCents) {
     return e.json(400, { message: "可提现余额不足" });

@@ -1,7 +1,7 @@
 # 暖伴勤工 · 阿里云部署指南
 
-将应用部署到 **阿里云轻量服务器（正式发布版 · 真实 PocketBase API + HTTPS）**。  
-GitHub Pages 仍为 **最新测试版**（Mock），验收后再 `./scripts/release-prod.sh` 发布正式版。见 [RELEASE.md](./RELEASE.md)。
+将应用部署到 **阿里云轻量服务器（正式发布 · PocketBase + HTTPS）**。  
+GitHub Pages 为 **测试备份**（Mock，与本地测试同配置）。见 [ENV_PARITY.md](./ENV_PARITY.md) · [RELEASE.md](./RELEASE.md)。
 
 预计耗时：**30–60 分钟**（备案已完成、域名已解析的前提下）。
 

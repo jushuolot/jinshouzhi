@@ -1,9 +1,9 @@
 <template>
-  <view class="cartoon-picker">
+  <view class="cartoon-picker" :class="{ compact }">
     <view class="current" @tap="toggleOpen">
       <image :src="currentUrl" class="current-img" mode="aspectFill" />
       <view v-if="editable" class="edit-badge">
-        <text class="edit-icon">🎨</text>
+        <text class="edit-icon">选</text>
       </view>
     </view>
     <view v-if="editable && open" class="grid">
@@ -15,10 +15,9 @@
         @tap="pick(item.id)"
       >
         <image :src="item.url" class="option-img" mode="aspectFill" />
-        <text class="option-label">{{ item.label }}</text>
       </view>
     </view>
-    <text v-if="editable" class="hint">卡通头像 · 点击选择风格（非真实照片）</text>
+    <text v-if="editable && !open" class="tap-hint">点击选择</text>
   </view>
 </template>
 
@@ -31,9 +30,9 @@ const props = withDefaults(
     avatarId?: string;
     name?: string;
     editable?: boolean;
-    size?: 'md' | 'lg';
+    compact?: boolean;
   }>(),
-  { editable: true, size: 'lg' },
+  { editable: true, compact: false },
 );
 
 const emit = defineEmits<{ change: [avatarId: string] }>();
@@ -67,76 +66,66 @@ function pick(id: string) {
 .cartoon-picker {
   display: flex;
   flex-direction: column;
+  align-items: center;
+}
+.cartoon-picker.compact {
   align-items: flex-start;
 }
 .current {
   position: relative;
-  border-radius: 50%;
+  border-radius: 20rpx;
   overflow: hidden;
   flex-shrink: 0;
-  border: 4rpx solid var(--nb-border, #f0e0d4);
-  background: var(--nb-primary-soft, #fff5ef);
-}
-.current.lg,
-.cartoon-picker .current {
-  width: 120rpx;
-  height: 120rpx;
+  background: #f5f5f5;
 }
 .current-img {
-  width: 100%;
-  height: 100%;
+  width: 140rpx;
+  height: 140rpx;
+  display: block;
+}
+.compact .current-img {
+  width: 120rpx;
+  height: 120rpx;
 }
 .edit-badge {
   position: absolute;
   right: 0;
   bottom: 0;
-  width: 40rpx;
-  height: 40rpx;
-  border-radius: 50%;
+  padding: 4rpx 10rpx;
+  border-radius: 8rpx 0 0 0;
   background: rgba(0, 0, 0, 0.55);
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 .edit-icon {
-  font-size: 22rpx;
+  font-size: 20rpx;
+  color: #fff;
   line-height: 1;
 }
 .grid {
   display: flex;
   flex-wrap: wrap;
-  gap: 16rpx;
-  margin-top: 20rpx;
-  padding: 20rpx;
+  gap: 12rpx;
+  margin-top: 16rpx;
+  padding: 16rpx;
   background: var(--nb-surface, #fff);
-  border-radius: var(--nb-radius-sm, 12rpx);
+  border-radius: 12rpx;
   width: 100%;
   box-sizing: border-box;
 }
 .option {
-  width: calc(33.33% - 12rpx);
-  text-align: center;
+  width: calc(25% - 10rpx);
 }
 .option.active .option-img {
-  border-color: var(--nb-primary, #c45c26);
-  box-shadow: 0 0 0 4rpx rgba(196, 92, 38, 0.2);
+  box-shadow: 0 0 0 4rpx var(--nb-primary, #c45c26);
 }
 .option-img {
   width: 100%;
   aspect-ratio: 1;
-  border-radius: 50%;
-  border: 4rpx solid transparent;
+  border-radius: 16rpx;
   background: #f5f5f5;
 }
-.option-label {
-  display: block;
-  margin-top: 6rpx;
-  font-size: 20rpx;
-  color: var(--nb-text-muted, #888);
-}
-.hint {
-  margin-top: 12rpx;
+.tap-hint {
+  margin-top: 8rpx;
   font-size: 22rpx;
-  color: var(--nb-text-muted, #999);
+  color: var(--nb-text-muted, #aaa);
 }
 </style>

@@ -102,6 +102,7 @@
         { "path": "schedule/log", "style": { "navigationBarTitleText": "服务日志" } },
         { "path": "profile", "style": { "navigationBarTitleText": "我的" } },
         { "path": "profile/edit", "style": { "navigationBarTitleText": "编辑资料" } },
+        { "path": "profile/payment", "style": { "navigationBarTitleText": "收款账户" } },
         { "path": "referral/index", "style": { "navigationBarTitleText": "推荐有奖" } }
       ]
     }
