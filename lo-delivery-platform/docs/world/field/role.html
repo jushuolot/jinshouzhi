@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <title>LOT Field · 现场作业</title>
+  <style>
+    :root { --bg:#060a10; --card:#101820; --line:#1e3348; --text:#eef8ff; --muted:#6d8fa8; --accent:#3dffb0; --warn:#ff9eb8; }
+    * { box-sizing:border-box; }
+    body { margin:0; min-height:100dvh; font-family:"PingFang SC",system-ui,sans-serif;
+      background:var(--bg); color:var(--text); padding:env(safe-area-inset-top) 16px env(safe-area-inset-bottom); }
+    header { display:flex; align-items:center; gap:10px; padding:12px 0; border-bottom:1px solid var(--line); }
+    header h1 { font-size:17px; margin:0; flex:1; }
+    .badge { font-size:10px; padding:4px 8px; border-radius:999px; background:#0a2a1e; color:var(--accent); border:1px solid #1a5a40; }
+    header a { color:var(--muted); font-size:12px; text-decoration:none; }
+    .task { margin:12px 0; padding:14px; border-radius:12px; background:var(--card); border:1px solid var(--line); }
+    .task.active { border-color:var(--accent); }
+    .task-id { font-size:11px; color:var(--muted); }
+    .task-route { font-size:14px; margin:6px 0; }
+    .task-meta { font-size:11px; color:var(--muted); }
+    .task-warn { font-size:11px; color:var(--warn); margin-top:6px; }
+    .actions { margin-top:16px; display:grid; gap:10px; }
+    .actions button { padding:18px; border:none; border-radius:14px; font-size:16px; font-weight:700; cursor:pointer;
+      background:linear-gradient(135deg,#1a5a40,#0d3020); color:var(--accent); }
+    .actions button:disabled { opacity:0.35; }
+    .actions button.secondary { background:#141e2a; color:var(--text); border:1px solid var(--line); font-size:13px; padding:12px; }
+    #empty { text-align:center; color:var(--muted); padding:40px 16px; }
+    #toast { position:fixed; bottom:24px; left:16px; right:16px; background:#0a2a1e; border:1px solid var(--accent);
+      color:var(--accent); padding:14px; border-radius:12px; text-align:center; opacity:0; transition:opacity .3s; pointer-events:none; }
+    #toast.show { opacity:1; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1 id="role-title">现场</h1>
+    <span class="badge" id="task-count">0 待办</span>
+    <a href="index.html">角色</a>
+  </header>
+  <span id="role-badge" hidden></span>
+  <div id="task-list"></div>
+  <div id="empty" hidden>暂无待办<br/><small>去 C4I 创建订单或切换角色</small></div>
+  <div class="actions" id="actions" hidden>
+    <button type="button" id="btn-exec">执行待办</button>
+    <button type="button" id="btn-docs" class="secondary">单据作业（跳转指挥台）</button>
+  </div>
+  <div id="toast"></div>
+  <script type="module">
+    import { defaultChain } from '../../kernel/lot-chain.js?v=13.0';
+    import { parseRole, bindFieldShell } from './role-shell.js';
+    const role = parseRole();
+    bindFieldShell({ chain: defaultChain, role });
+  </script>
+</body>
+</html>
