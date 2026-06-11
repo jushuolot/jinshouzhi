@@ -1,5 +1,6 @@
 <template>
   <view class="page nb-page">
+    <GuestBrowseBanner v-if="guestMode" />
     <view class="hero">
       <view class="hero-top">
         <view>
@@ -115,6 +116,7 @@
 import { ref } from 'vue';
 import { onShow } from '@dcloudio/uni-app';
 import RoleTabBar from '../components/RoleTabBar.vue';
+import GuestBrowseBanner from '../components/GuestBrowseBanner.vue';
 import PersonCard from '../components/PersonCard.vue';
 import {
   acknowledgeSosAlert,
@@ -128,6 +130,8 @@ import {
   type SosAlert,
   type StudentStats,
 } from '../api/student';
+import { GUEST_STUDENT_PREVIEW } from '../utils/guest-preview-data';
+import { isGuestBrowse, requireOperableAuth } from '../utils/guest-browse';
 import { guardPackageRoute } from '../utils/nav-guard';
 import { getLocationWithFallback } from '../utils/location';
 import { pbErrorMessage } from '../utils/request';
@@ -149,6 +153,20 @@ const schoolName = ref('示范大学');
 const previewElders = ref<ElderPreview[]>([]);
 const errorMsg = ref('');
 const withdrawAvailableYuan = ref('');
+const guestMode = ref(false);
+
+function loadGuestPreview() {
+  const p = GUEST_STUDENT_PREVIEW;
+  profileName.value = p.profileName;
+  schoolName.value = p.schoolName;
+  pendingCount.value = p.pendingCount;
+  activeCount.value = p.activeCount;
+  stats.value = p.stats;
+  withdrawAvailableYuan.value = p.withdrawAvailableYuan;
+  sosAlerts.value = p.sosAlerts;
+  previewElders.value = p.previewElders;
+  errorMsg.value = '';
+}
 
 function formatDistance(km: number) {
   if (km < 1) return `${Math.round(km * 1000)}m`;
@@ -192,23 +210,33 @@ async function reload() {
 }
 
 onShow(() => {
-  guardPackageRoute('/package-student/home');
+  guestMode.value = isGuestBrowse();
+  if (!guardPackageRoute('/package-student/home')) return;
+  if (guestMode.value) {
+    loadGuestPreview();
+    return;
+  }
   reload();
 });
 
 function goPending() {
+  if (!requireOperableAuth()) return;
   uni.redirectTo({ url: '/package-student/order/pending' });
 }
 function goActive() {
+  if (!requireOperableAuth()) return;
   uni.navigateTo({ url: '/package-student/order/active' });
 }
 function goIncome() {
+  if (!requireOperableAuth()) return;
   uni.navigateTo({ url: '/package-student/income' });
 }
 function goServiceLog() {
+  if (!requireOperableAuth()) return;
   uni.navigateTo({ url: '/package-student/schedule/log' });
 }
 function handleSos() {
+  if (!requireOperableAuth()) return;
   const alert = sosAlerts.value[0];
   if (!alert) return;
   uni.showModal({
@@ -229,19 +257,24 @@ function handleSos() {
   });
 }
 function goDiscover() {
+  if (!requireOperableAuth()) return;
   uni.redirectTo({ url: '/package-student/discover/list' });
 }
 function goProfile() {
+  if (!requireOperableAuth()) return;
   uni.redirectTo({ url: '/package-student/profile' });
 }
 
 function goReferral() {
+  if (!requireOperableAuth()) return;
   uni.navigateTo({ url: '/package-student/referral/index' });
 }
 function goWithdraw() {
+  if (!requireOperableAuth()) return;
   uni.navigateTo({ url: '/package-student/withdrawal/index' });
 }
 function openElder(e: ElderPreview) {
+  if (!requireOperableAuth()) return;
   const q = [
     `id=${e.id}`,
     `name=${encodeURIComponent(e.name)}`,

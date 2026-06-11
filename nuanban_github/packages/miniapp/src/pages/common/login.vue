@@ -82,6 +82,8 @@
       <text class="sep">·</text>
       <text v-if="virtualPhoneLogin" class="foot-link" @tap="goScenario">深度验收</text>
       <text v-if="virtualPhoneLogin" class="sep">·</text>
+      <text class="foot-link" @tap="goUserManual">用户手册</text>
+      <text class="sep">·</text>
       <text class="foot-link" @tap="goAgreement">用户协议</text>
       <template v-if="virtualPhoneLogin">
         <text class="sep">·</text>
@@ -101,6 +103,8 @@ import { loginWithPhone, loginWithWxCode, type LoginResult } from '../../api/aut
 import { APP_TAGLINE, APP_TITLE } from '../../config/brand';
 import { releaseLabel } from '../../config/release';
 import { navigateAfterAuth } from '../../utils/profile-onboarding';
+import { exitGuestBrowse } from '../../utils/guest-browse';
+import { isUserManualAccepted } from '../../utils/user-manual';
 import { useRoleStore } from '../../store/role';
 import { pbErrorMessage } from '../../utils/request';
 import { DEMO_TEST_PHONES } from '../../utils/demo-rich-data';
@@ -123,6 +127,9 @@ onLoad((query) => {
   fromTour.value = query?.from === 'tour';
   if (fromTour.value) {
     phone.value = '13800000001';
+  }
+  if (!isUserManualAccepted()) {
+    uni.redirectTo({ url: '/pages/common/user-manual?next=login' });
   }
 });
 
@@ -190,7 +197,14 @@ function sendCode() {
   }, 1000);
 }
 
+function ensureManualAccepted(): boolean {
+  if (isUserManualAccepted()) return true;
+  uni.redirectTo({ url: '/pages/common/user-manual?next=login' });
+  return false;
+}
+
 function afterLogin(res: LoginResult) {
+  exitGuestBrowse();
   roleStore.setAuth({
     token: res.token,
     roles: res.roles,
@@ -233,6 +247,7 @@ async function loginDemoPhone(demoPhone: string) {
 }
 
 async function onPhoneLogin() {
+  if (!ensureManualAccepted()) return;
   if (phone.value.length !== 11) {
     uni.showToast({ title: '请输入 11 位手机号', icon: 'none' });
     return;
@@ -241,6 +256,7 @@ async function onPhoneLogin() {
 }
 
 async function onWxLogin() {
+  if (!ensureManualAccepted()) return;
   loading.value = true;
   try {
     if (isDemoMockEnabled()) {
@@ -275,6 +291,10 @@ function showMore() {
       if (url) uni.navigateTo({ url });
     },
   });
+}
+
+function goUserManual() {
+  uni.navigateTo({ url: '/pages/common/user-manual?next=login' });
 }
 
 function goAgreement() {

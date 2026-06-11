@@ -1,5 +1,6 @@
 <template>
   <view class="page nb-page">
+    <GuestBrowseBanner v-if="guestMode" />
     <view class="hero">
       <text class="title">家属中心</text>
       <text class="sub">代付 · 外出审批 · 绑定老人</text>
@@ -127,6 +128,7 @@
 import { ref, computed } from 'vue';
 import { onShow } from '@dcloudio/uni-app';
 import RoleTabBar from '../components/RoleTabBar.vue';
+import GuestBrowseBanner from '../components/GuestBrowseBanner.vue';
 import {
   acknowledgeSosAlert,
   fetchFamilyStats,
@@ -143,6 +145,8 @@ import { fetchFamilyWallet } from '../api/wallet';
 import { fetchPlatformActivity } from '../api/platform';
 import type { ActivityEvent } from '../utils/demo-activity';
 import { useRoleStore } from '../store/role';
+import { GUEST_FAMILY_PREVIEW } from '../utils/guest-preview-data';
+import { isGuestBrowse, requireOperableAuth } from '../utils/guest-browse';
 import { guardPackageRoute } from '../utils/nav-guard';
 import { formatRelativeTime } from '../utils/format-time';
 import { pbErrorMessage } from '../utils/request';
@@ -159,6 +163,17 @@ const walletBalanceYuan = ref('0.00');
 const serviceLogCount = ref(0);
 const packageCount = ref(3);
 const recentActivities = ref<ActivityEvent[]>([]);
+const guestMode = ref(false);
+
+function loadGuestPreview() {
+  const p = GUEST_FAMILY_PREVIEW;
+  stats.value = p.stats;
+  bindings.value = p.bindings as typeof bindings.value;
+  walletBalanceYuan.value = p.walletBalanceYuan;
+  serviceLogCount.value = p.serviceLogCount;
+  packageCount.value = p.packageCount;
+  recentActivities.value = p.recentActivities;
+}
 
 const packageSummary = computed(() => {
   const n = packageCount.value;
@@ -201,11 +216,17 @@ async function reload() {
 }
 
 onShow(() => {
-  guardPackageRoute('/package-family/home');
+  guestMode.value = isGuestBrowse();
+  if (!guardPackageRoute('/package-family/home')) return;
+  if (guestMode.value) {
+    loadGuestPreview();
+    return;
+  }
   reload();
 });
 
 async function goConfirm() {
+  if (!requireOperableAuth()) return;
   if (!roleStore.user?.id) {
     uni.showToast({ title: '请先登录', icon: 'none' });
     return;
@@ -225,6 +246,7 @@ async function goConfirm() {
 }
 
 async function goPay() {
+  if (!requireOperableAuth()) return;
   if (!roleStore.user?.id) {
     uni.showToast({ title: '请先登录', icon: 'none' });
     return;
@@ -244,6 +266,7 @@ async function goPay() {
 }
 
 async function goOutdoor() {
+  if (!requireOperableAuth()) return;
   if (!roleStore.user?.id) return;
   try {
     const list = outdoorList.value.length
@@ -261,26 +284,32 @@ async function goOutdoor() {
 }
 
 function goBind() {
+  if (!requireOperableAuth()) return;
   uni.navigateTo({ url: '/package-family/bind' });
 }
 
 function goWallet() {
+  if (!requireOperableAuth()) return;
   uni.navigateTo({ url: '/package-family/wallet/index' });
 }
 
 function goPackageBuy() {
+  if (!requireOperableAuth()) return;
   uni.navigateTo({ url: '/package-family/package/buy' });
 }
 
 function goServiceLogs() {
+  if (!requireOperableAuth()) return;
   uni.navigateTo({ url: '/package-family/service/log' });
 }
 
 function goActivities() {
+  if (!requireOperableAuth()) return;
   uni.navigateTo({ url: '/pages/common/admin-hub' });
 }
 
 async function goSos() {
+  if (!requireOperableAuth()) return;
   try {
     const list = await listActiveSosAlerts();
     if (!list.length) {

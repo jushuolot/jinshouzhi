@@ -98,7 +98,7 @@
             <text class="income-num">¥285.00</text>
           </view>
           <text class="caption">平台记录结算 · 三端可追溯</text>
-          <text class="last-hint">即将进入登录 · 选择身份后即可体验接单</text>
+          <text class="last-hint">即将进入预览模式 · 可先浏览三端首页</text>
         </view>
       </view>
     </view>
@@ -114,7 +114,8 @@
     </view>
 
     <view class="foot">
-      <button class="btn" @tap="goLogin">亲自体验演示</button>
+      <button class="btn" @tap="goBrowse">开始浏览演示</button>
+      <button class="btn-outline" @tap="goLoginRegister">登录/注册</button>
       <button class="btn-outline" @tap="goAdminHub">运营演示</button>
     </view>
   </view>
@@ -123,6 +124,8 @@
 <script setup lang="ts">
 import { onHide, onShow, onUnload } from '@dcloudio/uni-app';
 import { computed, ref } from 'vue';
+import { ROLE_HOME } from '../../config/tabs';
+import { enterGuestBrowse } from '../../utils/guest-browse';
 
 const SCENE_COUNT = 5;
 const INTERVAL_MS = 4500;
@@ -149,7 +152,7 @@ function prevScene() {
 
 function autoAdvance() {
   if (scene.value >= SCENE_COUNT - 1) {
-    goLoginFromTour();
+    goBrowseFromTour();
     return;
   }
   goScene(scene.value + 1);
@@ -182,13 +185,19 @@ onShow(() => {
 onHide(stopAuto);
 onUnload(stopAuto);
 
-function goLoginFromTour() {
+function goBrowseFromTour() {
   stopAuto();
-  uni.navigateTo({ url: '/pages/common/login?from=tour' });
+  enterGuestBrowse('elder');
+  uni.reLaunch({ url: ROLE_HOME.elder });
 }
 
-function goLogin() {
-  goLoginFromTour();
+function goBrowse() {
+  goBrowseFromTour();
+}
+
+function goLoginRegister() {
+  stopAuto();
+  uni.navigateTo({ url: '/pages/common/user-manual?next=login' });
 }
 
 function goAdminHub() {

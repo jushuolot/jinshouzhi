@@ -1318,6 +1318,83 @@ routerAdd("POST", "/api/nuanban/elder/wallet/pay-order", function (e) {
   return e.json(200, { ok: true, status: result.status, overview: result.overview });
 });
 
+var paymentAccountDemoStore = paymentAccountDemoStore || {};
+
+function paymentAccountDemoKey(uid, role) {
+  return uid + ":" + role;
+}
+
+function paymentAccountDemoDto(uid, role) {
+  var st = paymentAccountDemoStore[paymentAccountDemoKey(uid, role)];
+  if (!st || !st.configured) {
+    return { provider: "saobei", configured: false };
+  }
+  var tail = String(st.merchantNo || "").slice(-4) || "8029";
+  return {
+    provider: "saobei",
+    configured: true,
+    merchantNo: st.merchantNo,
+    accountName: st.accountName,
+    accountLabel: st.accountLabel || "扫呗 · ****" + tail,
+  };
+}
+
+function seedPaymentAccountDemoForUser(auth, role) {
+  var nb = require(__hooks + "/nuanban_lib.js");
+  var em = nb.safeRecordString(auth, "email", "").toLowerCase();
+  if (em.indexOf("student3") >= 0) return;
+  var roles = [];
+  if (em.indexOf("multi") >= 0) roles = ["student", "family", "elder"];
+  else {
+    if (em.indexOf("student") >= 0) roles.push("student");
+    if (em.indexOf("family") >= 0) roles.push("family");
+    if (em.indexOf("elder") >= 0) roles.push("elder");
+  }
+  if (roles.indexOf(role) < 0) return;
+  paymentAccountDemoStore[paymentAccountDemoKey(auth.id, role)] = {
+    configured: true,
+    merchantNo: "80291234",
+    accountName: "演示账户",
+    accountLabel: "扫呗 · ****1234",
+  };
+}
+
+function registerPaymentAccountRoutes(role) {
+  routerAdd("GET", "/api/nuanban/" + role + "/payment-account", function (e) {
+    var nb = require(__hooks + "/nuanban_lib.js");
+    const rc = nb.assertActiveRoleHeader(e, role);
+    if (!rc.ok) return e.json(rc.code, rc.body);
+    if (!e.auth) return e.json(401, { message: "需要登录" });
+    seedPaymentAccountDemoForUser(e.auth, role);
+    return e.json(200, paymentAccountDemoDto(e.auth.id, role));
+  });
+  routerAdd("POST", "/api/nuanban/" + role + "/payment-account", function (e) {
+    var nb = require(__hooks + "/nuanban_lib.js");
+    const rc = nb.assertActiveRoleHeader(e, role);
+    if (!rc.ok) return e.json(rc.code, rc.body);
+    if (!e.auth) return e.json(401, { message: "需要登录" });
+    const raw = toString(e.request.body);
+    const body = raw ? JSON.parse(raw) : {};
+    const merchantNo = String(body.merchantNo || "").trim();
+    const accountName = String(body.accountName || "").trim();
+    if (!merchantNo || !accountName) {
+      return e.json(400, { message: "请填写商户号与账户名称" });
+    }
+    var tail = merchantNo.slice(-4);
+    paymentAccountDemoStore[paymentAccountDemoKey(e.auth.id, role)] = {
+      configured: true,
+      merchantNo: merchantNo,
+      accountName: accountName,
+      accountLabel: "扫呗 · ****" + tail,
+    };
+    return e.json(200, paymentAccountDemoDto(e.auth.id, role));
+  });
+}
+
+registerPaymentAccountRoutes("student");
+registerPaymentAccountRoutes("family");
+registerPaymentAccountRoutes("elder");
+
 routerAdd("GET", "/api/nuanban/family/stats", function (e) {
   var nb = require(__hooks + "/nuanban_lib.js");
   const rc = nb.assertActiveRoleHeader(e, "family");

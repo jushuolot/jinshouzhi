@@ -23,6 +23,8 @@
     <text class="section">与老人关系</text>
     <input v-model="relationToElder" class="input nb-input" placeholder="如：女儿、儿子" />
 
+    <PaymentAccountSection ref="paymentRef" role="family" @change="onPaymentChange" />
+
     <button class="btn" :loading="loading" @tap="save">保存</button>
     <button v-if="!onboarding" class="btn-outline" @tap="goBack">取消</button>
   </view>
@@ -32,6 +34,7 @@
 import { ref } from 'vue';
 import { onLoad, onShow } from '@dcloudio/uni-app';
 import ProfileAvatar from '../../components/ProfileAvatar.vue';
+import PaymentAccountSection from '../../components/PaymentAccountSection.vue';
 import { fetchFamilyProfile, updateFamilyProfile } from '../../api/family';
 import { finishProfileOnboarding } from '../../utils/profile-onboarding';
 import { pbErrorMessage } from '../../utils/request';
@@ -44,6 +47,12 @@ const address = ref('');
 const relationToElder = ref('');
 const loading = ref(false);
 const onboarding = ref(false);
+const paymentConfigured = ref(false);
+const paymentRef = ref<InstanceType<typeof PaymentAccountSection> | null>(null);
+
+function onPaymentChange(configured: boolean) {
+  paymentConfigured.value = configured;
+}
 
 onLoad((query) => {
   onboarding.value = query?.onboarding === '1';
@@ -78,6 +87,10 @@ async function save() {
   }
   if (!contactPhone.value.trim() || !district.value.trim()) {
     uni.showToast({ title: '请填写联系电话与区域', icon: 'none' });
+    return;
+  }
+  if (onboarding.value && !paymentConfigured.value && !paymentRef.value?.isConfigured()) {
+    uni.showToast({ title: '请配置扫呗付款账户', icon: 'none' });
     return;
   }
   loading.value = true;

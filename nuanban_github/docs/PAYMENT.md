@@ -52,6 +52,35 @@
 
 ---
 
+## Phase 1b · 扫呗账户预留（当前）
+
+**目标**：首次资料引导中配置付款/收款通道，为正式版扫呗分账预留 API，测试版仅 Mock 绑定。
+
+### 前端
+
+- **模块**：`packages/miniapp/src/api/payment-account.ts`
+- **组件**：`PaymentAccountSection.vue`（学生收款 · 家属/老人付款）
+- **引导**：`profile-onboarding.ts` 要求 `paymentAccountConfigured` 后视为资料完整
+
+### API（双端对齐）
+
+```
+GET  /api/nuanban/{student|family|elder}/payment-account
+POST /api/nuanban/{student|family|elder}/payment-account
+  body: { provider: 'saobei', merchantNo, accountName }
+  → { provider: 'saobei', configured, accountLabel, ... }
+```
+
+- **测试版**：`demo-mock.ts` 内存 Map；演示账号登录后自动种子已配置
+- **正式版**：`nuanban.pb.js` 内存 stub（上线前迁移 `payment_accounts` 集合）
+
+### 与储值卡关系
+
+- 储值卡仍走 `wallet` API；扫呗账户用于 Phase 2+ 真实充值/分账通道标识
+- 微信支付 JSAPI 见 Phase 3，与扫呗可并行演进
+
+---
+
 ## Phase 2 · 正式版储值卡（PocketBase）
 
 **目标**：阿里云部署下，家属/老人使用平台储值卡完成真实账务记录（仍可不接微信商户）。

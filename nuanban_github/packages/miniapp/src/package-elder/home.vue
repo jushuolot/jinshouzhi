@@ -1,5 +1,6 @@
 <template>
   <view class="page nb-page elder-mode" :class="fontClass">
+    <GuestBrowseBanner v-if="guestMode" />
     <view class="hero">
       <text class="h1">您好，{{ stats?.elderName || '长辈' }}</text>
       <text class="sub">{{ orgName }}</text>
@@ -82,6 +83,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import RoleTabBar from '../components/RoleTabBar.vue';
+import GuestBrowseBanner from '../components/GuestBrowseBanner.vue';
 import { onShow } from '@dcloudio/uni-app';
 import {
   fetchElderStats,
@@ -95,6 +97,8 @@ import {
 import { fetchElderWallet } from '../api/wallet';
 import { useRoleStore } from '../store/role';
 import { elderFontClass } from '../utils/elder-accessibility';
+import { GUEST_ELDER_PREVIEW } from '../utils/guest-preview-data';
+import { isGuestBrowse, requireOperableAuth } from '../utils/guest-browse';
 import { guardPackageRoute } from '../utils/nav-guard';
 import { orderStatusLabel } from '../utils/order-status';
 import { pbErrorMessage } from '../utils/request';
@@ -108,6 +112,16 @@ const orgName = ref('暖伴示范养老院');
 const roleStore = useRoleStore();
 const walletBalanceYuan = ref('0.00');
 const serviceLogCount = ref(0);
+const guestMode = ref(false);
+
+function loadGuestPreview() {
+  const p = GUEST_ELDER_PREVIEW;
+  stats.value = p.stats;
+  orgName.value = p.orgName;
+  walletBalanceYuan.value = p.walletBalanceYuan;
+  serviceLogCount.value = p.serviceLogCount;
+  recentOrders.value = p.recentOrders;
+}
 
 function serviceName(o: (typeof recentOrders.value)[0]) {
   return o.expand?.service_item?.name || '陪护服务';
@@ -125,7 +139,12 @@ function formatTime(iso?: string) {
 }
 
 onShow(async () => {
-  guardPackageRoute('/package-elder/home');
+  guestMode.value = isGuestBrowse();
+  if (!guardPackageRoute('/package-elder/home')) return;
+  if (guestMode.value) {
+    loadGuestPreview();
+    return;
+  }
   try {
     const [st, wallet, logs] = await Promise.all([
       fetchElderStats(),
@@ -152,22 +171,28 @@ onShow(async () => {
 });
 
 function goWallet() {
+  if (!requireOperableAuth()) return;
   uni.navigateTo({ url: '/package-elder/wallet/index' });
 }
 
 function goFind() {
+  if (!requireOperableAuth()) return;
   uni.navigateTo({ url: '/package-elder/caregivers/list' });
 }
 function goOrders() {
+  if (!requireOperableAuth()) return;
   uni.redirectTo({ url: '/package-elder/order/list' });
 }
 function goServiceLogs() {
+  if (!requireOperableAuth()) return;
   uni.navigateTo({ url: '/package-elder/service/log' });
 }
 function goOrderDetail(id: string) {
+  if (!requireOperableAuth()) return;
   uni.navigateTo({ url: `/package-elder/order/detail?id=${id}` });
 }
 async function sos() {
+  if (!requireOperableAuth()) return;
   const elderId = (await resolveElderIdForApi()) || stats.value?.elderProfileId || 'elder-zhang';
   try {
     await triggerSos(elderId);

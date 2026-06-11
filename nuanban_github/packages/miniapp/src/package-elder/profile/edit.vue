@@ -30,6 +30,8 @@
     <input v-model="emergencyRelation" class="input nb-input emergency" placeholder="关系，如：女儿" />
     <input v-model="emergencyPhone" class="input nb-input emergency" type="number" placeholder="联系电话" />
 
+    <PaymentAccountSection ref="paymentRef" role="elder" @change="onPaymentChange" />
+
     <button class="btn" :loading="loading" @tap="save">保存</button>
     <button v-if="!onboarding" class="btn-outline" @tap="goBack">取消</button>
   </view>
@@ -39,6 +41,7 @@
 import { ref } from 'vue';
 import { onLoad, onShow } from '@dcloudio/uni-app';
 import ProfileAvatar from '../../components/ProfileAvatar.vue';
+import PaymentAccountSection from '../../components/PaymentAccountSection.vue';
 import { fetchElderSelfProfile, updateElderProfile } from '../../api/elder';
 import { elderFontClass } from '../../utils/elder-accessibility';
 import { finishProfileOnboarding } from '../../utils/profile-onboarding';
@@ -56,7 +59,13 @@ const emergencyRelation = ref('');
 const emergencyPhone = ref('');
 const loading = ref(false);
 const onboarding = ref(false);
+const paymentConfigured = ref(false);
+const paymentRef = ref<InstanceType<typeof PaymentAccountSection> | null>(null);
 const elderFontCls = ref(elderFontClass());
+
+function onPaymentChange(configured: boolean) {
+  paymentConfigured.value = configured;
+}
 
 onLoad((query) => {
   onboarding.value = query?.onboarding === '1';
@@ -96,6 +105,10 @@ function goBack() {
 async function save() {
   if (!name.value.trim() || !district.value.trim() || !address.value.trim()) {
     uni.showToast({ title: '请填写姓名、区域与地址', icon: 'none' });
+    return;
+  }
+  if (onboarding.value && !paymentConfigured.value && !paymentRef.value?.isConfigured()) {
+    uni.showToast({ title: '请配置扫呗付款账户', icon: 'none' });
     return;
   }
   loading.value = true;

@@ -175,6 +175,52 @@ const elderProfileState = {
   seeded: true,
 };
 
+const paymentAccountStore = new Map<
+  string,
+  { configured: boolean; merchantNo?: string; accountName?: string; accountLabel?: string }
+>();
+
+function paymentAccountKey(userId: string, role: RoleKey) {
+  return `${userId}_${role}`;
+}
+
+function paymentAccountDto(userId: string, role: RoleKey) {
+  const st = paymentAccountStore.get(paymentAccountKey(userId, role));
+  if (!st?.configured) {
+    return { provider: 'saobei' as const, configured: false };
+  }
+  const tail = (st.merchantNo || '').slice(-4) || '8029';
+  return {
+    provider: 'saobei' as const,
+    configured: true,
+    merchantNo: st.merchantNo,
+    accountName: st.accountName,
+    accountLabel: st.accountLabel || `扫呗 · ****${tail}`,
+  };
+}
+
+function seedDemoPaymentAccount(userId: string, role: RoleKey) {
+  paymentAccountStore.set(paymentAccountKey(userId, role), {
+    configured: true,
+    merchantNo: '80291234',
+    accountName: '演示账户',
+    accountLabel: '扫呗 · ****1234',
+  });
+}
+
+function seedDemoPaymentAccounts(email: string, userId: string) {
+  const em = email.toLowerCase();
+  if (em.includes('student3')) return;
+  const roles: RoleKey[] = [];
+  if (em.includes('multi')) roles.push('student', 'family', 'elder');
+  else {
+    if (em.includes('student')) roles.push('student');
+    if (em.includes('family')) roles.push('family');
+    if (em.includes('elder')) roles.push('elder');
+  }
+  for (const role of roles) seedDemoPaymentAccount(userId, role);
+}
+
 function studentProfileComplete() {
   return !!(studentProfileState.displayName.trim() && studentProfileState.schoolName.trim());
 }
@@ -744,6 +790,7 @@ function loginByEmail(email: string, pickRole?: RoleKey) {
   seedDemoRoleProfiles(email);
 
   if (em.includes('multi1')) {
+    seedDemoPaymentAccounts(email, USERS.multi.id);
     return {
       token: MOCK_TOKEN,
       user: { id: USERS.multi.id, nickname: USERS.multi.nickname, email },
@@ -784,6 +831,7 @@ function loginByEmail(email: string, pickRole?: RoleKey) {
       elderProfileId: role === 'elder' ? 'elder-zhang' : null,
     },
   ];
+  seedDemoPaymentAccounts(email, user.id);
   return {
     token: MOCK_TOKEN,
     user: { id: user.id, nickname: user.nickname, email: user.email },
@@ -1380,6 +1428,35 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
       persistDemoState();
     }
     return delay({ ok: true, status: order?.status || 'pending_service' } as T);
+  }
+
+  const paymentRoles: RoleKey[] = ['student', 'family', 'elder'];
+  for (const pr of paymentRoles) {
+    const payPath = `/nuanban/${pr}/payment-account`;
+    if (method === 'GET' && path === payPath) {
+      const roleErr = assertDemoActiveRole(options, path, pr);
+      if (roleErr) return Promise.reject({ message: roleErr, statusCode: 403 });
+      const user = demoUserForRoles(mockRegisterRoles);
+      return delay(paymentAccountDto(user.id, pr) as T);
+    }
+    if (method === 'POST' && path === payPath) {
+      const roleErr = assertDemoActiveRole(options, path, pr);
+      if (roleErr) return Promise.reject({ message: roleErr, statusCode: 403 });
+      const user = demoUserForRoles(mockRegisterRoles);
+      const merchantNo = String(data.merchantNo || '').trim();
+      const accountName = String(data.accountName || '').trim();
+      if (!merchantNo || !accountName) {
+        return Promise.reject({ message: '请填写商户号与账户名称', statusCode: 400 });
+      }
+      const tail = merchantNo.slice(-4);
+      paymentAccountStore.set(paymentAccountKey(user.id, pr), {
+        configured: true,
+        merchantNo,
+        accountName,
+        accountLabel: `扫呗 · ****${tail}`,
+      });
+      return delay(paymentAccountDto(user.id, pr) as T);
+    }
   }
 
   if (method === 'GET' && path === '/nuanban/family/wallet') {

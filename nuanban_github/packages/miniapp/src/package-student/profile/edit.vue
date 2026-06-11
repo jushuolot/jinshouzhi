@@ -1,5 +1,7 @@
 <template>
   <view class="page">
+    <view v-if="onboarding" class="banner">首次登录 · 请完善学生资料与收款账户</view>
+
     <text class="section">头像</text>
     <view class="avatar-row">
       <ProfileAvatar :avatar-url="avatarUrl" :name="displayName" @change="onAvatarChange" />
@@ -35,16 +37,21 @@
       placeholder="每行一个时段，如：周一至周五 14:00–18:00"
     />
 
+    <PaymentAccountSection ref="paymentRef" role="student" @change="onPaymentChange" />
+
     <text class="hint">切换学校后，「发现」页学校合作筛选结果会变化</text>
     <button class="btn" :loading="loading" @tap="save">保存</button>
+    <button v-if="!onboarding" class="btn-outline" @tap="goBack">取消</button>
   </view>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import { onShow } from '@dcloudio/uni-app';
+import { onLoad, onShow } from '@dcloudio/uni-app';
 import ProfileAvatar from '../../components/ProfileAvatar.vue';
+import PaymentAccountSection from '../../components/PaymentAccountSection.vue';
 import { fetchStudentProfile, updateStudentProfile } from '../../api/student';
+import { finishProfileOnboarding } from '../../utils/profile-onboarding';
 import { DEMO_SCHOOLS } from '../../utils/demo-rich-data';
 import { pbErrorMessage } from '../../utils/request';
 
@@ -59,6 +66,21 @@ const bio = ref('');
 const serviceAreasText = ref('');
 const availableHoursText = ref('');
 const loading = ref(false);
+const onboarding = ref(false);
+const paymentConfigured = ref(false);
+const paymentRef = ref<InstanceType<typeof PaymentAccountSection> | null>(null);
+
+onLoad((query) => {
+  onboarding.value = query?.onboarding === '1';
+});
+
+function onPaymentChange(configured: boolean) {
+  paymentConfigured.value = configured;
+}
+
+function goBack() {
+  uni.navigateBack();
+}
 
 onShow(async () => {
   try {
@@ -105,6 +127,14 @@ function splitHours(text: string) {
 }
 
 async function save() {
+  if (!displayName.value.trim()) {
+    uni.showToast({ title: '请填写显示名称', icon: 'none' });
+    return;
+  }
+  if (onboarding.value && !paymentConfigured.value && !paymentRef.value?.isConfigured()) {
+    uni.showToast({ title: '请配置扫呗收款账户', icon: 'none' });
+    return;
+  }
   loading.value = true;
   try {
     await updateStudentProfile({
@@ -117,7 +147,11 @@ async function save() {
       availableHours: splitHours(availableHoursText.value),
     });
     uni.showToast({ title: '已保存', icon: 'success' });
-    setTimeout(() => uni.navigateBack(), 500);
+    if (onboarding.value) {
+      setTimeout(() => finishProfileOnboarding('student'), 500);
+    } else {
+      setTimeout(() => uni.navigateBack(), 500);
+    }
   } catch (e) {
     uni.showToast({ title: pbErrorMessage(e), icon: 'none' });
   } finally {
@@ -132,6 +166,14 @@ async function save() {
   background: var(--nb-page-bg, #f5f5f5);
   padding: 24rpx;
   padding-bottom: 48rpx;
+}
+.banner {
+  padding: 20rpx 24rpx;
+  margin-bottom: 16rpx;
+  font-size: 26rpx;
+  color: var(--nb-primary, #c45c26);
+  background: var(--nb-primary-soft, #fff5ef);
+  border-radius: var(--nb-radius-sm, 12rpx);
 }
 .section {
   display: block;
@@ -173,6 +215,13 @@ async function save() {
   margin-top: 40rpx;
   background: var(--nb-primary, #c45c26);
   color: #fff;
+  border-radius: var(--nb-radius-sm, 12rpx);
+}
+.btn-outline {
+  margin-top: 24rpx;
+  background: #fff;
+  color: var(--nb-primary, #c45c26);
+  border: 2rpx solid var(--nb-primary, #c45c26);
   border-radius: var(--nb-radius-sm, 12rpx);
 }
 </style>

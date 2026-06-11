@@ -1,5 +1,6 @@
 import type { RoleKey } from '../config/tabs';
 import { useRoleStore } from '../store/role';
+import { isGuestBrowse, isGuestHomePath, promptLoginForAction } from './guest-browse';
 
 const PACKAGE_ROLE: Record<string, RoleKey> = {
   'package-elder': 'elder',
@@ -10,7 +11,14 @@ const PACKAGE_ROLE: Record<string, RoleKey> = {
 export function guardPackageRoute(path: string): boolean {
   const roleStore = useRoleStore();
   if (!roleStore.isLoggedIn) {
-    uni.reLaunch({ url: '/pages/common/login' });
+    if (isGuestBrowse() && isGuestHomePath(path)) {
+      return true;
+    }
+    if (isGuestBrowse()) {
+      promptLoginForAction();
+      return false;
+    }
+    uni.reLaunch({ url: '/pages/common/demo-tour' });
     return false;
   }
   const pkg = Object.keys(PACKAGE_ROLE).find((p) => path.includes(p));

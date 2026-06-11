@@ -2,6 +2,7 @@ import type { RoleKey } from '../config/tabs';
 import { ROLE_HOME } from '../config/tabs';
 import { fetchElderSelfProfile } from '../api/elder';
 import { fetchFamilyProfile } from '../api/family';
+import { fetchPaymentAccount } from '../api/payment-account';
 import { fetchStudentProfile } from '../api/student';
 import { useRoleStore } from '../store/role';
 
@@ -37,6 +38,7 @@ export function markProfileOnboarded(role: RoleKey) {
 
 type ProfilePayload = {
   profileComplete?: boolean;
+  paymentAccountConfigured?: boolean;
   displayName?: string;
   schoolName?: string;
   nickname?: string;
@@ -46,8 +48,7 @@ type ProfilePayload = {
   address?: string;
 };
 
-export function computeProfileComplete(role: RoleKey, profile: ProfilePayload): boolean {
-  if (profile.profileComplete === true) return true;
+function baseProfileFieldsComplete(role: RoleKey, profile: ProfilePayload): boolean {
   if (profile.profileComplete === false) return false;
   if (role === 'student') {
     return !!(profile.displayName?.trim() && profile.schoolName?.trim());
@@ -58,10 +59,25 @@ export function computeProfileComplete(role: RoleKey, profile: ProfilePayload): 
   return !!(profile.name?.trim() && profile.district?.trim() && profile.address?.trim());
 }
 
+export function computeProfileComplete(role: RoleKey, profile: ProfilePayload): boolean {
+  if (!profile.paymentAccountConfigured) return false;
+  if (profile.profileComplete === true && profile.paymentAccountConfigured) return true;
+  return baseProfileFieldsComplete(role, profile);
+}
+
 async function fetchProfileForRole(role: RoleKey): Promise<ProfilePayload> {
-  if (role === 'student') return fetchStudentProfile();
-  if (role === 'family') return fetchFamilyProfile();
-  return fetchElderSelfProfile();
+  const [profile, payment] = await Promise.all([
+    role === 'student'
+      ? fetchStudentProfile()
+      : role === 'family'
+        ? fetchFamilyProfile()
+        : fetchElderSelfProfile(),
+    fetchPaymentAccount(role).catch(() => ({ configured: false })),
+  ]);
+  return {
+    ...profile,
+    paymentAccountConfigured: payment.configured === true,
+  };
 }
 
 export async function needsProfileOnboarding(role: RoleKey): Promise<boolean> {

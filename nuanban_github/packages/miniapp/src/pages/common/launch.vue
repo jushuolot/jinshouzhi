@@ -33,7 +33,7 @@ onLoad((query) => {
 
   setTimeout(() => {
     if (!roleStore.isLoggedIn) {
-      uni.reLaunch({ url: '/pages/common/login' });
+      uni.reLaunch({ url: '/pages/common/demo-tour' });
       return;
     }
     if (role) {
