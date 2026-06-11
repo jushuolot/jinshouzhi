@@ -22,6 +22,7 @@
     publicCommonsMirror: { amount: 0.016, phases: ["超越期"] },
     beyondPhaseTick: { amount: 0.0014, sessionCap: 0.01, phases: ["超越期"] },
     weeklyRecap: { amount: 0.02, phases: ["超越期", "复兴期"] },
+    newPitBriefing: { amount: 0.024, phases: ["超越期"], universeDayMod: 1 },
     bounty: {
       label: "任务赏金(演示)",
       endpoint: "https://api.coingecko.com/api/v3/ping",
@@ -110,6 +111,12 @@
       source: "network_settlement",
       description: "宇宙第七日收工复盘入账",
     },
+    new_pit_briefing: {
+      id: "new_pit_briefing",
+      label: "新坑策划结算",
+      source: "network_settlement",
+      description: "周一下新坑同步公开线索，模拟策划档案结算",
+    },
   };
 
   var state = {
@@ -123,6 +130,7 @@
     lastPublicCommonsMirror: "",
     beyondSessionTickTotal: 0,
     lastWeeklyRecap: "",
+    lastNewPitBriefing: "",
   };
 
   var tickTimer = null;
@@ -147,6 +155,7 @@
       state.beyondSessionTickTotal =
         typeof data.beyondSessionTickTotal === "number" ? data.beyondSessionTickTotal : 0;
       state.lastWeeklyRecap = data.lastWeeklyRecap || "";
+      state.lastNewPitBriefing = data.lastNewPitBriefing || "";
     } catch (e) {
       // ignore
     }
@@ -161,6 +170,10 @@
           sessionTickTotal: state.sessionTickTotal,
           lastRelicBounty: state.lastRelicBounty,
           lastCivilizationArchive: state.lastCivilizationArchive,
+          lastPublicCommonsMirror: state.lastPublicCommonsMirror,
+          beyondSessionTickTotal: state.beyondSessionTickTotal,
+          lastWeeklyRecap: state.lastWeeklyRecap,
+          lastNewPitBriefing: state.lastNewPitBriefing,
           updatedAt: Date.now(),
         })
       );
@@ -366,7 +379,7 @@
     state.lastCivilizationArchive = key;
     saveState();
     var amt = phase === "超越期" && cfg.beyondAmount ? cfg.beyondAmount : cfg.amount;
-    var credited = creditChannel("civilization_archive", {
+    return creditChannel("civilization_archive", {
       amount: amt,
       meta: {
         kind: "civilization_sync",
@@ -375,10 +388,6 @@
         day: key,
       },
     });
-    if (credited > 0 && typeof window.showSystemToast === "function") {
-      window.showSystemToast("📜 文明档案同步 · " + phase + " · 此间比人间快", 3600);
-    }
-    return credited;
   }
 
   function tryWeeklyRecap() {
@@ -396,14 +405,38 @@
     if (!cfg || cfg.phases.indexOf(phase) < 0) return 0;
     state.lastWeeklyRecap = key;
     saveState();
-    var credited = creditChannel("weekly_recap", {
+    return creditChannel("weekly_recap", {
       amount: cfg.amount,
       meta: { kind: "weekly_recap", universeDay: uday, phase: phase },
     });
-    if (credited > 0 && typeof window.showSystemToast === "function") {
-      window.showSystemToast("📋 宇宙第" + uday + "日收工复盘 · 入账", 3600);
-    }
-    return credited;
+  }
+
+  function tryNewPitBriefing() {
+    var evo = typeof window !== "undefined" && window.MATCH3_EVOLUTION ? window.MATCH3_EVOLUTION : {};
+    var uday = Number(evo.universeDay) || 0;
+    var cfg = CONFIG.newPitBriefing;
+    if (!cfg || uday % 7 !== cfg.universeDayMod) return 0;
+    var key = todayKey() + "-u" + uday + "-g" + (evo.generation || "");
+    if (state.lastNewPitBriefing === key) return 0;
+    var clock =
+      typeof window !== "undefined" && window.MATCH3_CIVILIZATION_CLOCK
+        ? window.MATCH3_CIVILIZATION_CLOCK
+        : null;
+    var phase = clock ? clock.getPhase() : evo.civilizationPhase || "超越期";
+    if (cfg.phases.indexOf(phase) < 0) return 0;
+    state.lastNewPitBriefing = key;
+    saveState();
+    var date = clock ? clock.getCivilizationDate() : { civilizationYear: evo.civilizationYear || 0 };
+    return creditChannel("new_pit_briefing", {
+      amount: cfg.amount,
+      meta: {
+        kind: "new_pit_briefing",
+        universeDay: uday,
+        generation: evo.generation || 0,
+        phase: phase,
+        year: date.civilizationYear,
+      },
+    });
   }
 
   function tryPublicCommonsMirror() {
@@ -419,14 +452,10 @@
     if (!cfg || cfg.phases.indexOf(phase) < 0) return 0;
     state.lastPublicCommonsMirror = key;
     saveState();
-    var credited = creditChannel("public_commons_mirror", {
+    return creditChannel("public_commons_mirror", {
       amount: cfg.amount,
       meta: { kind: "commons_mirror", phase: phase, day: key },
     });
-    if (credited > 0 && typeof window.showSystemToast === "function") {
-      window.showSystemToast("📚 公开资料镜像入账 · 超越期 · Wikimedia 档", 3400);
-    }
-    return credited;
   }
 
   function startPeriodicTick() {
@@ -457,6 +486,7 @@
     tryCivilizationArchive();
     tryPublicCommonsMirror();
     tryWeeklyRecap();
+    tryNewPitBriefing();
     tryAffiliateReferral();
     startPeriodicTick();
     deferNetworkProbes();

@@ -130,11 +130,6 @@
     codexReady = loadScriptChain(CODEX_SCRIPTS).catch(function () {
       return null;
     });
-    window.setTimeout(function () {
-      ensureThree().catch(function () {
-        return null;
-      });
-    }, 1200);
   }
 
   function ensureCinema() {
