@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>LOT 世界核 · 生态链全链管理</title>
+  <title>LOT 世界核 v12 · 全球控制塔</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <style>
@@ -107,17 +107,47 @@
       border-top: 1px solid var(--line); max-height: 48px; overflow: auto;
     }
     .evolve-log b { color: var(--orange); }
+    .ver-badge { font-size: 9px; padding: 2px 6px; border-radius: 4px; border: 1px solid var(--accent); color: var(--accent); margin-left: 6px; }
+    .tower { font-size: 10px; padding: 8px; border: 1px solid var(--line); border-radius: 8px; margin-bottom: 10px; background: #0a1424; }
+    .tower-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 6px; }
+    .tower-kpi { padding: 6px; border-radius: 6px; border: 1px solid #152238; text-align: center; }
+    .tower-kpi b { display: block; font-size: 14px; color: var(--accent); }
+    .tower-risk { font-size: 9px; color: #ff9eb8; margin-top: 4px; }
+    #order-modal { position: fixed; inset: 0; z-index: 9999; display: none; align-items: center; justify-content: center; background: rgba(2,6,14,0.85); }
+    #order-modal:not([hidden]) { display: flex; }
+    .modal-box { width: min(640px,94vw); max-height: 88vh; overflow: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px; }
+    .modal-tabs { display: flex; gap: 6px; margin: 8px 0; }
+    .modal-tabs button { flex: 1; padding: 7px; border-radius: 8px; border: 1px solid var(--line); background: #111c2e; color: var(--text); font-size: 11px; cursor: pointer; }
+    .modal-tabs button.on { border-color: var(--orange); color: var(--orange); }
+    .flow-step { font-size: 10px; padding: 4px 8px; border-radius: 6px; border: 1px solid var(--line); margin-bottom: 4px; color: var(--muted); }
+    .flow-step.current { border-color: var(--orange); color: var(--orange); }
+    .flow-step.done { border-color: var(--accent); color: var(--accent); }
+    .ops-card { padding: 10px; border: 1px solid var(--orange); border-radius: 8px; background: #1a1408; margin-bottom: 10px; }
+    .ops-actor { font-size: 10px; margin: 6px 0; color: var(--muted); }
+    .ops-actor b { color: var(--orange); }
+    .ops-primary { width: 100%; padding: 10px; margin-top: 8px; border: none; border-radius: 8px; cursor: pointer;
+      background: linear-gradient(135deg, #4d2a0a, #2a1808); color: var(--orange); font-weight: 700; font-size: 12px; }
+    .ops-primary:disabled { opacity: 0.35; cursor: not-allowed; }
+    .ops-warn { font-size: 10px; color: #ff9eb8; margin-top: 6px; line-height: 1.4; }
+    .doc-chips { display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0; }
+    .doc-chip { font-size: 9px; padding: 4px 8px; border-radius: 6px; border: 1px solid var(--line); background: #111c2e; color: var(--muted); cursor: pointer; }
+    .doc-chip.on { border-color: var(--accent); color: var(--accent); }
+    .doc-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .doc-act { padding: 6px 10px; border-radius: 6px; border: 1px solid var(--accent); background: #0f2a22; color: var(--accent); font-size: 10px; cursor: pointer; }
+    .doc-act.off, .doc-act:disabled { opacity: 0.35; border-color: var(--line); color: var(--muted); }
+    .doc-card-head { margin-bottom: 4px; }
   </style>
 </head>
 <body>
   <header>
     <div class="nucleus-dot"></div>
-    <h1>LOT 世界核 · 免费资源链</h1>
+    <h1>LOT 世界核 · 全球控制塔<span class="ver-badge" id="ver-badge">v12</span></h1>
     <div class="hdr-tools">
       <select id="sel-ent" title="企业视角"></select>
       <button type="button" class="primary" id="btn-new">＋货主下单</button>
-      <button type="button" class="primary" id="btn-advance">推进业务</button>
-      <button type="button" id="btn-auto">自动裂变</button>
+      <button type="button" class="primary" id="btn-advance" title="由当前角色执行待办">执行待办</button>
+      <button type="button" id="btn-auto" title="仅演示：自动推步">演示自动驾驶</button>
+      <button type="button" id="btn-seed" title="应用 v10孪生→v11下单→v12全球链">种子进化 G12</button>
     </div>
     <div class="chain-pills" id="chain-pills"></div>
   </header>
@@ -126,6 +156,7 @@
       <p class="sec-title">空间 zoom · 宇宙 → 乡村</p>
       <div class="crumb" id="spatial-crumb"></div>
       <p class="zoom-hint" id="zoom-hint"></p>
+      <div class="tower" id="control-tower"></div>
       <p class="sec-title">链订单 · 采购原料 → 用户签收</p>
       <div id="co-list"></div>
       <p class="sec-title">任务核（LO）</p>
@@ -139,8 +170,11 @@
     <div class="quest">
       <p class="sec-title">角色镜头</p>
       <div class="actor-row" id="actors"></div>
+      <div id="sales-flow"></div>
+      <div id="ops-console"></div>
+      <div id="doc-workbench"></div>
       <div id="next-hint" hidden class="next-hint"></div>
-      <p class="sec-title">动作 · 写入事件链</p>
+      <p class="sec-title">辅助动作 · 须匹配角色与待办</p>
       <div class="actions" id="actions"></div>
       <p class="sec-title">轨道电子 · 事件账本</p>
       <div id="event-log"></div>
@@ -149,28 +183,68 @@
       <div class="evolve-log" id="evolve-log">系统进化：关闭</div>
     </div>
   </main>
+  <div id="order-modal" hidden role="dialog">
+    <div class="modal-box">
+      <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+        <h2 style="margin:0;font-size:14px;color:var(--orange)">货主下单 · 订单接入</h2>
+        <button type="button" id="order-modal-close">✕</button>
+      </div>
+      <div class="modal-tabs">
+        <button type="button" class="on" data-intake-tab="manual">手工制单</button>
+        <button type="button" data-intake-tab="import">批量导入</button>
+        <button type="button" data-intake-tab="api">API 对接</button>
+      </div>
+      <div data-intake-panel="manual">
+        <label class="sec-title">订单标题</label><input id="in-title" value="智能终端整机 · 华北履约" style="width:100%;margin-bottom:6px" />
+        <label class="sec-title">货品摘要</label><input id="in-cargo" value="智能终端整机" style="width:100%;margin-bottom:6px" />
+        <label class="sec-title">收货方</label><input id="in-consignee" value="北京海淀终端客户" style="width:100%;margin-bottom:6px" />
+        <label class="sec-title">SO 单号</label><input id="in-so" placeholder="SO-2026-001" style="width:100%;margin-bottom:6px" />
+        <table style="width:100%;font-size:10px"><thead><tr><th>SKU</th><th>品名</th><th>规格</th><th>数量</th><th>单位</th><th>单价</th></tr></thead>
+          <tbody id="manual-lines"></tbody></table>
+        <button type="button" id="btn-add-line" style="margin:6px 0;font-size:10px">＋ 添加行</button>
+        <button type="button" class="primary" id="btn-manual-submit" style="width:100%;padding:8px">创建订单（人工推步）</button>
+      </div>
+      <div data-intake-panel="import" hidden>
+        <input type="file" id="import-file" accept=".csv,.json" />
+        <button type="button" id="btn-csv-template" style="font-size:10px;margin:6px 0">下载 CSV 模板</button>
+        <pre id="import-preview" class="lo-meta"></pre>
+        <button type="button" class="primary" id="btn-import-submit" style="width:100%;padding:8px">导入订单</button>
+      </div>
+      <div data-intake-panel="api" hidden>
+        <input id="api-url" value="demo" placeholder="demo 或 JSON URL" style="width:100%;margin-bottom:6px" />
+        <pre id="api-preview" class="lo-meta"></pre>
+        <button type="button" id="btn-api-fetch" style="margin-right:6px">拉取</button>
+        <button type="button" class="primary" id="btn-api-submit">接入订单</button>
+      </div>
+    </div>
+  </div>
   <script type="module">
-    import { defaultChain } from '../kernel/lot-chain.js';
+    import { defaultChain, PLATFORM_VERSION } from '../kernel/lot-chain.js?v=12.1.0';
     import { projectLOState, ACTOR_LENSES, SPATIAL_LEVELS } from '../kernel/lot-nucleus.js';
     import { CHAIN_STATUS, legMeta } from '../kernel/lot-chain-order.js';
     import { ENTERPRISES, getEnterprise } from '../kernel/lot-ecosystem.js';
     import { SETTLEMENT_STATUS } from '../kernel/lot-settlement.js';
     import { settlementActionsForViewer } from '../kernel/lot-business.js';
     import { getDomain } from '../kernel/lot-domains.js';
+    import { bindOrderIntake } from './intake-modal.js?v=12.1.0';
+    import { bindOperationConsole, renderOperationConsole } from './operation-console.js?v=12.1.0';
 
     const state = {
       chain: defaultChain,
       focusCellId: 'beijing',
       activeLoId: null,
       activeCoId: null,
-      actor: 'driver',
+      actor: 'shipper',
       viewerEnterpriseId: localStorage.getItem('lot_viewer_ent') || 'ENT-LUWEI-BRAND',
       map: null,
       markers: [],
       autoFission: false,
       autoTimer: null,
       evolveLog: [],
+      routeLayers: [],
     };
+
+    document.getElementById('ver-badge').textContent = 'v' + (PLATFORM_VERSION || '12.0.0');
 
     const ACTION_TABLE = {
       driver: [
@@ -208,7 +282,9 @@
     };
 
     const ROLE_FILTER = {
-      'ENT-LUWEI-BRAND': ['shipper', 'purchaser', 'planner', 'finance', 'dispatcher'],
+      'ENT-LUWEI-BRAND': ['shipper', 'purchaser', 'planner', 'warehouse', 'dispatcher', 'driver', 'finance', 'customs_broker'],
+      'ENT-GLOBAL-FWD': ['dispatcher', 'customs_broker', 'finance'],
+      'ENT-EU-3PL': ['warehouse', 'dispatcher'],
       'ENT-LOT-3PL': ['warehouse', 'dispatcher'],
       'ENT-ZHOU-CARRIER': ['driver', 'dispatcher'],
       'ENT-YANQING-SUP': ['purchaser'],
@@ -261,13 +337,40 @@
       }).addTo(state.map);
     }
 
+    async function renderControlTower() {
+      const tw = await state.chain.getControlTower({ viewerEnterpriseId: state.viewerEnterpriseId });
+      const el = document.getElementById('control-tower');
+      const risks = (tw.risks || []).slice(0, 3).map((r) => `<div class="tower-risk">⚠ ${r.title}: ${r.reason}</div>`).join('');
+      el.innerHTML = `<p class="sec-title" style="margin:0">控制塔 · G${tw.seedGeneration}</p>
+        <div class="tower-grid">
+          <div class="tower-kpi"><b>${tw.otif}%</b>OTIF</div>
+          <div class="tower-kpi"><b>${tw.atpUnits}</b>ATP</div>
+          <div class="tower-kpi"><b>${tw.carbonKg}kg</b>碳足迹</div>
+          <div class="tower-kpi"><b>${tw.orders.total}</b>链订单</div>
+        </div>
+        <div class="lo-meta" style="margin-top:6px">全球航线 ${tw.policies.globalLanes} · 冷链 ${tw.policies.coldChain ? 'ON' : 'OFF'} · 异常 ${tw.orders.exceptions}</div>${risks}`;
+    }
+
     async function renderMap() {
       ensureMap();
       state.markers.forEach((m) => state.map.removeLayer(m));
       state.markers = [];
+      state.routeLayers.forEach((l) => state.map.removeLayer(l));
+      state.routeLayers = [];
       const los = await visibleLos();
       const spatial = await state.chain.listSpatial();
       const labels = new Map(spatial.map((c) => [c.id, c.labelZh]));
+      const cellMap = new Map(spatial.map((c) => [c.id, c]));
+
+      const routes = await state.chain.getGlobalRoutes();
+      for (const r of routes) {
+        const a = cellMap.get(r.from);
+        const b = cellMap.get(r.to);
+        if (!a?.lat || !b?.lat) continue;
+        const line = L.polyline([[a.lat, a.lng], [b.lat, b.lng]], { color: r.color || '#3d9dff', weight: 3, opacity: 0.75, dashArray: r.mode === 'ocean' ? '8 6' : null });
+        line.addTo(state.map);
+        state.routeLayers.push(line);
+      }
 
       for (const lo of los) {
         for (const cellId of [lo.originCellId, lo.destCellId]) {
@@ -307,14 +410,18 @@
 
     async function renderChainOrders() {
       const rows = await state.chain.listChainOrders({ viewerEnterpriseId: state.viewerEnterpriseId });
-      if (!state.activeCoId && rows[0]) state.activeCoId = rows[0].chainOrderId;
+      if (!state.activeCoId && rows.length) {
+        const draft = rows.find((r) => r.status === 'draft');
+        state.activeCoId = (draft || rows[0]).chainOrderId;
+      }
       const views = await Promise.all(rows.map((r) => state.chain.getChainOrderView(r.chainOrderId)));
       document.getElementById('co-list').innerHTML = views.filter(Boolean).map((v) => {
         const on = v.chainOrderId === state.activeCoId ? ' active' : '';
         const st = CHAIN_STATUS[v.status]?.labelZh || v.status;
         const exCls = v.status === 'exception' ? ' ex' : '';
+        const draftTag = v.status === 'draft' ? ' <span class="badge" style="color:var(--orange)">待人工下单</span>' : '';
         return `<div class="co-card${on}" data-co="${v.chainOrderId}">
-          <b>${v.title}</b> <span class="badge${exCls}">${st}</span>
+          <b>${v.title}</b> <span class="badge${exCls}">${st}</span>${draftTag}
           <div class="lo-meta">${v.chainOrderId} · ${v.progress}%</div></div>`;
       }).join('') || '<p class="lo-meta">无链订单 · 点顶栏「货主下单」</p>';
       document.querySelectorAll('.co-card').forEach((c) => {
@@ -357,7 +464,7 @@
         `<button type="button" data-actor="${a.id}" class="${a.id === state.actor ? 'on' : ''}">${a.labelZh}</button>`
       ).join('');
       document.querySelectorAll('#actors button').forEach((btn) => {
-        btn.onclick = () => { state.actor = btn.dataset.actor; renderActions(); renderActors(); };
+        btn.onclick = () => { state.actor = btn.dataset.actor; renderAll(); };
       });
     }
 
@@ -385,34 +492,30 @@
 
     async function renderActions() {
       const lo = state.activeLoId ? await state.chain.getLO(state.activeLoId) : null;
+      const pending = state.activeCoId
+        ? await state.chain.getPendingOperation(state.activeCoId, state.actor)
+        : null;
       const acts = [...(ACTION_TABLE[state.actor] || [])];
-      if (lo?.logisticsDomain) {
-        const dom = getDomain(lo.logisticsDomain);
-        const events = lo ? await state.chain.getEvents(lo.loId) : [];
-        const done = new Set(events.filter((e) => e.type === 'FACT').map((e) => e.code));
-        const stage = dom?.stages?.find((s) => !done.has(s.code) && s.actor === state.actor);
-        if (stage && !acts.find((a) => a.code === stage.code)) {
-          acts.unshift({ code: stage.code, label: stage.labelZh, cell: 'facility' });
-        }
-      }
       const el = document.getElementById('actions');
-      let html = '';
-      if (state.activeCoId) {
-        html += `<button type="button" class="biz" id="btn-biz-step" ${lo ? '' : 'disabled'}>⚡ 推进链上下一步</button>`;
+      let hint = '<p class="lo-meta" style="margin-bottom:6px">主操作请在上方「待办操作」确认；此处仅辅助写入事件。</p>';
+      if (pending?.code && !pending.canExecute) {
+        hint += `<p class="lo-meta">当前待办「${pending.buttonLabel}」须由 ${pending.actorLabel} 执行。</p>`;
       }
-      html += acts.map((a) =>
-        `<button type="button" data-code="${a.code}" data-cell="${a.cell || ''}" ${lo ? '' : 'disabled'}>${a.label}</button>`
-      ).join('');
+      const html = hint + acts.map((a) => {
+        const isNext = pending?.code === a.code && pending?.canExecute;
+        return `<button type="button" data-code="${a.code}" data-cell="${a.cell || ''}" ${lo ? '' : 'disabled'} class="${isNext ? 'biz' : ''}">${a.label}${isNext ? ' ★' : ''}</button>`;
+      }).join('');
       el.innerHTML = html;
-      const bizBtn = document.getElementById('btn-biz-step');
-      if (bizBtn) bizBtn.onclick = async () => {
-        const r = await state.chain.advanceChain(state.activeCoId);
-        if (r.step) state.activeLoId = r.step.loId;
-        await renderAll();
-      };
       el.querySelectorAll('button[data-code]').forEach((btn) => {
         btn.onclick = async () => {
           if (!state.activeLoId) return;
+          if (pending?.code === btn.dataset.code && pending?.canExecute && state.activeCoId) {
+            const r = await state.chain.executeOperation(state.activeCoId, state.actor);
+            if (r.ok && r.step?.loId) state.activeLoId = r.step.loId;
+            else if (!r.ok) logEvolve(`<b>受阻</b> ${r.reason}`);
+            await renderAll();
+            return;
+          }
           const lo = await state.chain.getLO(state.activeLoId);
           let cellId = state.focusCellId;
           if (btn.dataset.cell === 'origin') cellId = lo.originCellId;
@@ -421,7 +524,7 @@
             code: btn.dataset.code,
             actor: state.actor,
             spatialCellId: cellId,
-            payload: { viewer: state.viewerEnterpriseId },
+            payload: { manual: true, viewer: state.viewerEnterpriseId },
           });
           await renderAll();
         };
@@ -474,6 +577,7 @@
 
     async function renderAll() {
       await buildCrumb();
+      await renderControlTower();
       await renderChainOrders();
       await renderLOs();
       await renderMap();
@@ -482,23 +586,17 @@
       await renderActions();
       await renderEvents();
       await renderSettlements();
+      await renderOperationConsole(state.chain, state.activeCoId, state.actor);
     }
 
-    document.getElementById('btn-new').onclick = async () => {
-      const r = await state.chain.createChainFromSales({
-        anchorEnterpriseId: state.viewerEnterpriseId,
-        title: '链订单 ' + new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }),
-        cargoSummary: '采购原料→生产→仓运配→签收',
-      });
-      state.activeCoId = r.chainOrder.chainOrderId;
-      state.activeLoId = r.salesLoId;
-      await renderAll();
-    };
+    bindOrderIntake({ state, chain: state.chain, onRefresh: renderAll, logEvolve });
+    bindOperationConsole({ state, chain: state.chain, onRefresh: renderAll, logEvolve });
 
     document.getElementById('btn-advance').onclick = async () => {
       if (!state.activeCoId) return;
-      const r = await state.chain.advanceChain(state.activeCoId);
-      if (r.step) state.activeLoId = r.step.loId;
+      const r = await state.chain.executeOperation(state.activeCoId, state.actor);
+      if (!r.ok) logEvolve(`<b>受阻</b> ${r.reason}`);
+      else if (r.step?.loId) state.activeLoId = r.step.loId;
       await renderAll();
     };
 
@@ -522,24 +620,46 @@
       await renderAll();
     }
 
-    document.getElementById('btn-auto').onclick = () => {
+    document.getElementById('btn-seed').onclick = async () => {
+      const btn = document.getElementById('btn-seed');
+      btn.disabled = true;
+      try {
+        const r = await state.chain.evolveSeed();
+        const msg = r.activated?.length
+          ? `v${r.version} 种子 G${r.generation} · ${r.activated.join(' · ')}`
+          : `v${r.version} 种子已是最新 G${r.generation}`;
+        logEvolve(`<b>${msg}</b>`);
+        await renderAll();
+      } finally {
+        btn.disabled = false;
+      }
+    };
+
+    document.getElementById('btn-auto').onclick = async () => {
       state.autoFission = !state.autoFission;
+      await state.chain.setAutoPilot(state.autoFission);
       const btn = document.getElementById('btn-auto');
       btn.classList.toggle('on', state.autoFission);
-      btn.textContent = state.autoFission ? '进化ON' : '自动进化';
+      btn.textContent = state.autoFission ? '自动驾驶ON' : '演示自动驾驶';
       if (state.autoFission) {
-        logEvolve('自动进化启动 · 闸门/三单/异常闭环');
+        logEvolve('<b>演示模式</b> 自动驾驶开启 · 将自动推步（非生产）');
         tickEvolution();
         state.autoTimer = setInterval(tickEvolution, 6000);
       } else {
         clearInterval(state.autoTimer);
-        logEvolve('自动进化已暂停');
+        logEvolve('已切回人工作业模式');
       }
+      await renderAll();
     };
 
     initEnt();
+    state.autoFission = await state.chain.getAutoPilot();
     const status = await state.chain.init();
     renderChainPills(status);
+    const seedSt = await state.chain.getSeedStatus();
+    if (seedSt.generation) {
+      logEvolve(`v${seedSt.version} 种子 G${seedSt.generation}${seedSt.remoteBundle ? ' · ' + seedSt.remoteBundle : ''}`);
+    }
     await renderAll();
     setInterval(() => { if (!state.autoFission) renderAll(); }, 15000);
   </script>

@@ -11,6 +11,10 @@ export const CHAIN_LEG_TYPES = [
   { id: 'sales', labelZh: '销售履约', icon: '📦', domain: 'sales' },
   { id: 'linehaul', labelZh: '干线运输', icon: '🚛', domain: 'linehaul' },
   { id: 'express', labelZh: '末端配送', icon: '📮', domain: 'express' },
+  { id: 'ocean', labelZh: '海运', icon: '🚢', domain: 'ocean' },
+  { id: 'customs', labelZh: '关务', icon: '🛃', domain: 'customs' },
+  { id: 'rail', labelZh: '铁路', icon: '🚆', domain: 'rail' },
+  { id: 'cold_chain', labelZh: '冷链', icon: '❄️', domain: 'cold_chain' },
 ];
 
 export const CHAIN_STATUS = {
@@ -40,6 +44,12 @@ export function createChainOrder(partial) {
     participants: partial.participants || [],
     upstreamExpanded: partial.upstreamExpanded ?? false,
     customerRef: partial.customerRef || null,
+    consignee: partial.consignee || null,
+    orderLines: partial.orderLines || [],
+    intakeSource: partial.intakeSource || 'manual',
+    intakeMeta: partial.intakeMeta || null,
+    salesFlowComplete: partial.salesFlowComplete ?? false,
+    laneType: partial.laneType || 'domestic',
     createdAt: partial.createdAt || now,
     updatedAt: partial.updatedAt || now,
     lastEventAt: partial.lastEventAt || now,
@@ -140,8 +150,9 @@ export async function syncChainOrderOnEvent(chain, loId, code) {
 
   co.updatedAt = new Date().toISOString();
   co.lastEventAt = co.updatedAt;
-  if (code === 'ORDER_CREATED' && lo.legType === 'sales' && !co.upstreamExpanded) {
+  if (code === 'CHAIN_START' && lo.legType === 'sales' && !co.upstreamExpanded) {
     co.upstreamExpanded = true;
+    co.salesFlowComplete = true;
     co.status = 'upstream';
   }
   const projected = await projectChainOrder(chain, co);

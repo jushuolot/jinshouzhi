@@ -1,0 +1,27 @@
+{
+  "version": 12,
+  "label": "全球控制塔种子 · 跨境海运 + 医药冷链",
+  "spatial": [
+    { "id": "shenzhen", "level": "metro", "parentId": "cn", "labelZh": "深圳", "lat": 22.543, "lng": 114.057 },
+    { "id": "sz-yantian-port", "level": "port", "parentId": "shenzhen", "labelZh": "盐田港", "lat": 22.587, "lng": 114.272 },
+    { "id": "eu", "level": "region", "parentId": "earth", "labelZh": "欧洲", "lat": 50.85, "lng": 4.35 },
+    { "id": "netherlands", "level": "nation", "parentId": "eu", "labelZh": "荷兰", "lat": 52.132, "lng": 5.291 },
+    { "id": "rotterdam", "level": "metro", "parentId": "netherlands", "labelZh": "鹿特丹", "lat": 51.924, "lng": 4.477 },
+    { "id": "eu-rotterdam-port", "level": "port", "parentId": "rotterdam", "labelZh": "鹿特丹港", "lat": 51.949, "lng": 4.142 },
+    { "id": "eu-hub-rtm", "level": "hub", "parentId": "rotterdam", "labelZh": "鹿特丹 DC", "lat": 51.92, "lng": 4.48 },
+    { "id": "de-duisburg", "level": "hub", "parentId": "eu", "labelZh": "杜伊斯堡枢纽", "lat": 51.434, "lng": 6.762 }
+  ],
+  "chainOrders": [
+    {
+      "chainOrderId": "CO-GLOBAL-SEA-001",
+      "title": "全球链 · 深圳→鹿特丹 海运+铁路",
+      "status": "in_transit",
+      "laneType": "global_sea",
+      "cargoSummary": "消费电子整机 FCL"
+    }
+  ],
+  "routes": [
+    { "chainOrderId": "CO-GLOBAL-SEA-001", "from": "sz-yantian-port", "to": "eu-rotterdam-port", "mode": "ocean" },
+    { "chainOrderId": "CO-GLOBAL-SEA-001", "from": "eu-hub-rtm", "to": "de-duisburg", "mode": "rail" }
+  ]
+}

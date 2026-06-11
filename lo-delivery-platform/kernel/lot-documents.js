@@ -4,6 +4,8 @@
 
 export const DOC_TYPES = {
   SO: { labelZh: '销售订单', subsystem: 'oms', icon: '📋' },
+  PR: { labelZh: '采购申请', subsystem: 'oms', icon: '📝' },
+  CO: { labelZh: '链订单确认', subsystem: 'oms', icon: '🔗' },
   PO: { labelZh: '采购订单', subsystem: 'oms', icon: '🛒' },
   ASN: { labelZh: '预到货通知', subsystem: 'wms', icon: '📥' },
   GRN: { labelZh: '入库单', subsystem: 'wms', icon: '✅' },

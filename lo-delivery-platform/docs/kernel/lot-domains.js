@@ -150,6 +150,61 @@ export const LOGISTICS_DOMAINS = {
       { code: 'STAGE_OUT', labelZh: '集货区待发', actor: 'warehouse', evidence: ['stage_lane'] },
     ],
   },
+  ocean: {
+    id: 'ocean',
+    icon: '🚢',
+    labelZh: '海运',
+    labelEn: 'Ocean Freight',
+    color: '#38bdf8',
+    descZh: '订舱 → 装船 → 在途 → 到港 → 卸船',
+    stages: [
+      { code: 'BOOKING_CONFIRMED', labelZh: '订舱确认', actor: 'dispatcher', evidence: ['booking'] },
+      { code: 'VESSEL_LOADED', labelZh: '装船完成', actor: 'dispatcher', evidence: ['loading_list'] },
+      { code: 'IN_TRANSIT', labelZh: '海上在途', actor: 'dispatcher', evidence: ['ais'] },
+      { code: 'PORT_ARRIVAL', labelZh: '到港', actor: 'dispatcher', evidence: ['arrival_notice'] },
+      { code: 'DISCHARGE_COMPLETE', labelZh: '卸船完成', actor: 'warehouse', evidence: ['discharge'] },
+    ],
+  },
+  customs: {
+    id: 'customs',
+    icon: '🛃',
+    labelZh: '关务',
+    labelEn: 'Customs',
+    color: '#c084fc',
+    descZh: '报关 → 查验 → 放行',
+    stages: [
+      { code: 'DECLARATION_FILED', labelZh: '报关申报', actor: 'customs_broker', evidence: ['declaration'] },
+      { code: 'INSPECTION', labelZh: '海关查验', actor: 'customs_broker', evidence: ['inspection'] },
+      { code: 'CUSTOMS_RELEASED', labelZh: '海关放行', actor: 'customs_broker', evidence: ['release'] },
+    ],
+  },
+  rail: {
+    id: 'rail',
+    icon: '🚆',
+    labelZh: '铁路',
+    labelEn: 'Rail',
+    color: '#fbbf24',
+    descZh: '装车 → 发车 → 在途 → 到站',
+    stages: [
+      { code: 'RAIL_LOADED', labelZh: '装车', actor: 'dispatcher', evidence: ['wagon_list'] },
+      { code: 'TRAIN_DEPART', labelZh: '发车', actor: 'dispatcher', evidence: ['departure'] },
+      { code: 'IN_TRANSIT', labelZh: '在途', actor: 'dispatcher', evidence: ['gps'] },
+      { code: 'STATION_ARRIVAL', labelZh: '到站', actor: 'warehouse', evidence: ['arrival'] },
+    ],
+  },
+  cold_chain: {
+    id: 'cold_chain',
+    icon: '❄️',
+    labelZh: '冷链',
+    labelEn: 'Cold Chain',
+    color: '#67e8f9',
+    descZh: '温控入库 → 监控 → 出库',
+    stages: [
+      { code: 'TEMP_IN_RANGE', labelZh: '温控达标', actor: 'warehouse', evidence: ['temp_log'] },
+      { code: 'PICK_PACK', labelZh: '冷链拣配', actor: 'warehouse', evidence: ['cold_pick'] },
+      { code: 'LOADED', labelZh: '冷藏装车', actor: 'warehouse', evidence: ['reefer_seal'] },
+    ],
+  },
   tender: {
     id: 'tender',
     icon: '📋',
@@ -189,6 +244,7 @@ export const EXTENDED_ACTORS = {
   bidder: { id: 'bidder', labelZh: '投标人', labelEn: 'Bidder' },
   evaluator: { id: 'evaluator', labelZh: '评标专家', labelEn: 'Evaluator' },
   legal: { id: 'legal', labelZh: '法务', labelEn: 'Legal' },
+  customs_broker: { id: 'customs_broker', labelZh: '关务', labelEn: 'Customs Broker' },
 };
 
 export function getDomain(id) {

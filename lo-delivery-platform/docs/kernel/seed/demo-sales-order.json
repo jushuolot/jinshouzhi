@@ -1,0 +1,17 @@
+{
+  "externalId": "ERP-SO-88421",
+  "title": "API 接入订单 · 华北履约",
+  "cargoSummary": "智能终端整机",
+  "consignee": "北京朝阳经销商",
+  "customerRef": "SO-API-88421",
+  "lines": [
+    {
+      "sku": "SKU-MAIN-01",
+      "name": "智能终端整机",
+      "spec": "旗舰版",
+      "qty": 80,
+      "uom": "件",
+      "price": 1380
+    }
+  ]
+}

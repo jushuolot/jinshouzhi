@@ -33,6 +33,18 @@ export const ENTERPRISES = [
     nameZh: '延庆原料供应',
     roles: ['supplier'],
   },
+  {
+    id: 'ENT-GLOBAL-FWD',
+    groupId: 'GRP-LOG-B',
+    nameZh: '环球货代（跨境）',
+    roles: ['forwarder', 'carrier'],
+  },
+  {
+    id: 'ENT-EU-3PL',
+    groupId: 'GRP-LOG-B',
+    nameZh: '鹿特丹保税仓（EU 3PL）',
+    roles: ['warehouse'],
+  },
 ];
 
 export function getEnterprise(id) {

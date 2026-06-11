@@ -5,6 +5,7 @@ import { createLO, createChainLink } from './lot-nucleus.js';
 import { createChainOrder } from './lot-chain-order.js';
 import { createPeerSettlement } from './lot-settlement.js';
 import { GROUPS, ENTERPRISES } from './lot-ecosystem.js';
+import { DEMO_ORDER_LINES, ECO_SALES_FLOW_PREFIX } from './lot-demo-data-intake.js';
 
 export { GROUPS, ENTERPRISES };
 
@@ -20,6 +21,10 @@ export const DEMO_CHAIN_ORDER = createChainOrder({
   status: 'in_transit',
   upstreamExpanded: true,
   customerRef: 'SO-LUWEI-88421',
+  consignee: '北京终端用户',
+  orderLines: DEMO_ORDER_LINES,
+  intakeSource: 'api',
+  salesFlowComplete: true,
   participants: [
     { enterpriseId: 'ENT-LUWEI-BRAND', groupId: 'GRP-BRAND-A', role: 'shipper' },
     { enterpriseId: 'ENT-YANQING-SUP', groupId: 'GRP-SUP-C', role: 'supplier' },
@@ -127,7 +132,7 @@ export const DEMO_ECO_LOS = [
 /** 事件历史：反映实时态势（非播放剧本） */
 export const DEMO_ECO_EVENTS = new Map([
   [`LO-SAL-${SUFFIX}`, [
-    { type: 'FACT', code: 'ORDER_CREATED', actor: 'shipper', spatialCellId: 'bj-dc-shunyi', payload: { origin: 'sales', msg: '货主创建销售订单' } },
+    ...ECO_SALES_FLOW_PREFIX,
     { type: 'FACT', code: 'ALLOCATION', actor: 'warehouse', spatialCellId: 'bj-dc-shunyi', payload: { msg: '库存分配' } },
   ]],
   [`LO-PUR-${SUFFIX}`, [

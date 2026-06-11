@@ -40,6 +40,37 @@ import {
   DEMO_ECO_EVENTS,
   DEMO_SETTLEMENTS,
 } from './lot-demo-data-eco.js';
+import {
+  DEMO_INTAKE_DRAFT_ORDER,
+  DEMO_INTAKE_FLOW_ORDER,
+  DEMO_INTAKE_LOS,
+  DEMO_INTAKE_EVENTS,
+  DEMO_INTAKE_DOCUMENTS,
+  ECO_SALES_FLOW_PREFIX,
+} from './lot-demo-data-intake.js';
+import {
+  DEMO_SPATIAL_GLOBAL,
+  DEMO_GLOBAL_SEA_ORDER,
+  DEMO_GLOBAL_COLD_ORDER,
+  DEMO_GLOBAL_LOS,
+  DEMO_GLOBAL_EVENTS,
+  DEMO_GLOBAL_DOCUMENTS,
+  DEMO_GLOBAL_ROUTES,
+} from './lot-demo-data-global.js';
+import {
+  DEMO_SPATIAL_TWIN,
+  DEMO_TWIN_SNAPSHOTS,
+  DEMO_TWIN_POLICIES,
+} from './lot-demo-data-twin.js';
+import { computeControlTower } from './lot-control-tower.js';
+import {
+  getPendingOperation,
+  executePendingOperation,
+  isAutoPilot,
+  setAutoPilot,
+} from './lot-operations.js';
+import { applyDocumentAction, getDocumentActions } from './lot-document-ops.js';
+import { runSeedEvolution, reportSeedStatus, PLATFORM_VERSION } from './lot-seed-evolve.js';
 import { projectChainOrder as computeChainProjection, syncChainOrderOnEvent } from './lot-chain-order.js';
 import { defaultPeerSettlements } from './lot-settlement.js';
 import {
@@ -47,10 +78,16 @@ import {
   advanceChainOrderStep,
   getNextBusinessStep,
   describeStageBlock,
+  getShipperOrderFlowView,
+  advanceShipperOrderFlow,
+  createChainFromIntake,
   createChainFromSales,
+  docsForChainOrder,
   advanceSettlement,
   runBusinessEvolutionTick,
 } from './lot-business.js';
+
+export { PLATFORM_VERSION };
 
 export class LotChain {
   constructor(adapters) {
@@ -95,6 +132,9 @@ export class LotChain {
       await this._ensureTenderV7Seed();
       await this._ensureDocsV8Seed();
       await this._ensureEcoV9Seed();
+      await this._ensureTwinV10Seed();
+      await this._ensureIntakeV11Seed();
+      await this._ensureGlobalV12Seed();
       return;
     }
 
@@ -127,7 +167,233 @@ export class LotChain {
     await this._ensureTenderV7Seed();
     await this._ensureDocsV8Seed();
     await this._ensureEcoV9Seed();
+    await this._ensureTwinV10Seed();
+    await this._ensureIntakeV11Seed();
+    await this._ensureGlobalV12Seed();
     await this.local.setMeta('nucleus_seeded', new Date().toISOString());
+  }
+
+  async _ensureTwinV10Seed() {
+    const v10 = await this.local.getMeta('twin_v10_seeded');
+    if (v10) return;
+    const allSpatial = await this.local.listSpatial();
+    const ids = new Set(allSpatial.map((c) => c.id));
+    const toAdd = DEMO_SPATIAL_GLOBAL.filter((c) => !ids.has(c.id));
+    if (toAdd.length) await this.local.putSpatial(toAdd);
+    await this.local.setMeta('twin_facilities', JSON.stringify(DEMO_SPATIAL_TWIN));
+    await this.local.setMeta('twin_snapshots', JSON.stringify(DEMO_TWIN_SNAPSHOTS));
+    await this.local.setMeta('twin_policies', JSON.stringify(DEMO_TWIN_POLICIES));
+    await this.local.setMeta('twin_v10_seeded', new Date().toISOString());
+  }
+
+  async _ensureGlobalV12Seed() {
+    const v12 = await this.local.getMeta('global_v12_seeded');
+    if (v12) return;
+
+    const allSpatial = await this.local.listSpatial();
+    const ids = new Set(allSpatial.map((c) => c.id));
+    const toAdd = DEMO_SPATIAL_GLOBAL.filter((c) => !ids.has(c.id));
+    if (toAdd.length) await this.local.putSpatial(toAdd);
+
+    for (const co of [DEMO_GLOBAL_SEA_ORDER, DEMO_GLOBAL_COLD_ORDER]) {
+      if (!(await this.local.getChainOrder(co.chainOrderId))) await this.local.putChainOrder(co);
+    }
+    for (const lo of DEMO_GLOBAL_LOS) {
+      if (await this.local.getLO(lo.loId)) continue;
+      await this.local.putLO(lo);
+      const partials = DEMO_GLOBAL_EVENTS.get(lo.loId) || [];
+      let chain = [];
+      for (const p of partials) {
+        chain = await appendEventToChain(chain, { loId: lo.loId, ...p });
+      }
+      for (const e of chain) await this.local.putEvent(e);
+    }
+    for (const doc of DEMO_GLOBAL_DOCUMENTS) {
+      if (!(await this.local.getDocument(doc.docId))) await this.local.putDocument(doc);
+    }
+    await this.local.setMeta('global_routes', JSON.stringify(DEMO_GLOBAL_ROUTES));
+    await this.local.setMeta('global_v12_seeded', new Date().toISOString());
+    await this.local.setMeta('platform_version', PLATFORM_VERSION);
+  }
+
+  async _mergeRemoteGlobalBundle() {
+    const bundle = this.seed?._globalBundle;
+    if (!bundle || bundle.version !== 12) return;
+    if (bundle.spatial?.length) {
+      const ids = new Set((await this.local.listSpatial()).map((c) => c.id));
+      const add = bundle.spatial.filter((c) => !ids.has(c.id));
+      if (add.length) await this.local.putSpatial(add);
+    }
+    for (const co of bundle.chainOrders || []) {
+      if (!(await this.local.getChainOrder(co.chainOrderId))) await this.local.putChainOrder(co);
+    }
+  }
+
+  async getGlobalRoutes() {
+    const raw = await this.local.getMeta('global_routes');
+    return raw ? JSON.parse(raw) : DEMO_GLOBAL_ROUTES;
+  }
+
+  async getControlTower(opts) {
+    return computeControlTower(this, opts);
+  }
+
+  async _ensureIntakeV11Seed() {
+    const v11 = await this.local.getMeta('intake_v11_seeded');
+    if (v11) return;
+
+    await this._retrofitEcoSalesFlow();
+
+    for (const co of [DEMO_INTAKE_DRAFT_ORDER, DEMO_INTAKE_FLOW_ORDER]) {
+      if (!(await this.local.getChainOrder(co.chainOrderId))) {
+        await this.local.putChainOrder(co);
+      }
+    }
+    for (const lo of DEMO_INTAKE_LOS) {
+      if (await this.local.getLO(lo.loId)) continue;
+      await this.local.putLO(lo);
+      const partials = DEMO_INTAKE_EVENTS.get(lo.loId) || [];
+      let chain = [];
+      for (const p of partials) {
+        chain = await appendEventToChain(chain, { loId: lo.loId, ...p });
+      }
+      for (const e of chain) await this.local.putEvent(e);
+    }
+    for (const doc of DEMO_INTAKE_DOCUMENTS) {
+      if (await this.local.getDocument(doc.docId)) continue;
+      await this.local.putDocument(doc);
+    }
+
+    const eco = await this.local.getChainOrder(DEMO_CHAIN_ORDER.chainOrderId);
+    if (eco) {
+      eco.orderLines = eco.orderLines?.length ? eco.orderLines : DEMO_CHAIN_ORDER.orderLines;
+      eco.intakeSource = eco.intakeSource || DEMO_CHAIN_ORDER.intakeSource;
+      eco.consignee = eco.consignee || DEMO_CHAIN_ORDER.consignee;
+      eco.salesFlowComplete = true;
+      await this.local.putChainOrder(eco);
+    }
+
+    await this.local.setMeta('intake_v11_seeded', new Date().toISOString());
+  }
+
+  /** 将 v9 主单销售 LO 事件链补齐五步货主流程（保留后续履约事件） */
+  async _retrofitEcoSalesFlow() {
+    const loId = 'LO-SAL-2024-ECO-001';
+    const lo = await this.local.getLO(loId);
+    if (!lo) return;
+    const existing = await this.local.getEvents(loId);
+    if (!existing.length || existing.some((e) => e.code === 'SO_DRAFT')) return;
+
+    const prefixCodes = new Set(ECO_SALES_FLOW_PREFIX.map((p) => p.code));
+    const tail = existing.filter((e) => !prefixCodes.has(e.code));
+    let chain = [];
+    for (const p of [
+      ...ECO_SALES_FLOW_PREFIX,
+      ...tail.map((e) => ({
+        type: e.type,
+        code: e.code,
+        actor: e.actor,
+        spatialCellId: e.spatialCellId,
+        payload: e.payload,
+      })),
+    ]) {
+      chain = await appendEventToChain(chain, { loId, ...p });
+    }
+    const db = this.local._db;
+    if (db) {
+      await new Promise((res, rej) => {
+        const idx = db.transaction('events', 'readwrite').objectStore('events').index('loId_seq');
+        const range = IDBKeyRange.bound([loId, 0], [loId, Infinity]);
+        const req = idx.openCursor(range);
+        req.onsuccess = (ev) => {
+          const cur = ev.target.result;
+          if (cur) {
+            cur.delete();
+            cur.continue();
+          } else res();
+        };
+        req.onerror = () => rej(req.error);
+      });
+    }
+    for (const e of chain) await this.local.putEvent(e);
+  }
+
+  async _mergeRemoteIntakeBundle() {
+    const bundle = this.seed?._intakeBundle;
+    if (!bundle) return;
+    for (const co of bundle.chainOrders || []) {
+      if (!(await this.local.getChainOrder(co.chainOrderId))) await this.local.putChainOrder(co);
+    }
+    for (const lo of bundle.los || []) {
+      if (await this.local.getLO(lo.loId)) continue;
+      await this.local.putLO(lo);
+    }
+    for (const row of bundle.events || []) {
+      const ev = await this.local.getEvents(row.loId);
+      if (ev.some((e) => e.code === row.code)) continue;
+      const chain = await appendEventToChain(ev, {
+        loId: row.loId,
+        type: row.type || 'FACT',
+        code: row.code,
+        actor: row.actor,
+        spatialCellId: row.spatialCellId,
+        payload: row.payload,
+      });
+      const last = chain[chain.length - 1];
+      if (last) await this.local.putEvent(last);
+    }
+    for (const doc of bundle.documents || []) {
+      if (!(await this.local.getDocument(doc.docId))) await this.local.putDocument(doc);
+    }
+  }
+
+  async evolveSeed() {
+    return runSeedEvolution(this);
+  }
+
+  async getSeedStatus() {
+    return reportSeedStatus(this);
+  }
+
+  async getShipperFlow(chainOrderId) {
+    return getShipperOrderFlowView(this, chainOrderId);
+  }
+
+  async advanceShipperFlow(chainOrderId, opts) {
+    return advanceShipperOrderFlow(this, chainOrderId, opts);
+  }
+
+  async getPendingOperation(chainOrderId, viewerActor) {
+    return getPendingOperation(this, chainOrderId, viewerActor);
+  }
+
+  async executeOperation(chainOrderId, viewerActor) {
+    return executePendingOperation(this, chainOrderId, viewerActor);
+  }
+
+  async getDocumentActions(docId, viewerActor) {
+    const doc = await this.getDocument(docId);
+    return getDocumentActions(doc, viewerActor);
+  }
+
+  async applyDocumentAction(docId, actionId, viewerActor) {
+    return applyDocumentAction(this, docId, actionId, viewerActor);
+  }
+
+  async getAutoPilot() {
+    return isAutoPilot(this);
+  }
+
+  async setAutoPilot(on) {
+    return setAutoPilot(this, on);
+  }
+
+  async createChainFromIntake(intake) {
+    return createChainFromIntake(this, intake);
+  }
+
+  async getDocumentsForChain(chainOrderId) {
+    return docsForChainOrder(this, chainOrderId);
   }
 
   async _ensureEcoV9Seed() {
@@ -625,6 +891,7 @@ export class LotChain {
       }
     }
     await this._ensureSeed();
+    return this.getSeedStatus();
   }
 }
 

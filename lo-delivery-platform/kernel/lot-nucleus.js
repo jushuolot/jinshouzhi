@@ -259,4 +259,5 @@ export const ACTOR_LENSES = {
   bidder: { id: 'bidder', labelZh: '投标人', labelEn: 'Bidder', actions: ['submit'] },
   evaluator: { id: 'evaluator', labelZh: '评标专家', labelEn: 'Evaluator', actions: ['score'] },
   legal: { id: 'legal', labelZh: '法务', labelEn: 'Legal', actions: ['sign'] },
+  customs_broker: { id: 'customs_broker', labelZh: '关务', labelEn: 'Customs Broker', actions: ['declare', 'release'] },
 };

@@ -10,6 +10,85 @@ import { propagateSync } from './lot-network.js';
 import { createDocument, DOC_TYPES } from './lot-documents.js';
 import { createPeerSettlement, SETTLEMENT_STATUS } from './lot-settlement.js';
 import { DEMO_CHAIN_ORDER } from './lot-demo-data-eco.js';
+import { normalizeSalesIntake, orderLinesFromCargo } from './lot-sales-intake.js';
+import { checkShipperDocGate } from './lot-document-ops.js';
+
+export const SHIPPER_ORDER_FLOW = [
+  { code: 'SO_DRAFT', labelZh: '草拟销售订单', buttonLabel: '📝 草拟销售订单', actor: 'shipper', doc: { type: 'SO', status: 'draft' }, docGate: null },
+  { code: 'SO_APPROVED', labelZh: '销售审单通过', buttonLabel: '✅ 销售审单通过', actor: 'shipper', doc: { type: 'SO', status: 'approved' }, docGate: { type: 'SO', status: 'approved' } },
+  { code: 'ORDER_CREATED', labelZh: '正式下达 SO', buttonLabel: '📤 正式下达 SO', actor: 'shipper', doc: { type: 'SO', status: 'posted' }, docGate: { type: 'SO', status: 'posted' } },
+  { code: 'MRP_EXPLODE', labelZh: 'MRP 展开上游', buttonLabel: '📊 MRP 展开上游', actor: 'planner', doc: { type: 'PR', status: 'draft' }, docGate: { type: 'SO', status: 'posted' } },
+  { code: 'CHAIN_START', labelZh: '激活全链履约', buttonLabel: '🚀 激活全链履约', actor: 'shipper', doc: { type: 'CO', status: 'posted' }, docGate: [{ type: 'SO', status: 'posted' }, { type: 'PR', status: 'posted' }] },
+];
+const SHIPPER_FLOW_CODES = new Set(SHIPPER_ORDER_FLOW.map((s) => s.code));
+const lineAmt = (lines) => (lines || []).reduce((s, l) => s + (l.amount ?? l.qty * l.price), 0);
+
+async function upsertShipperFlowDoc(chain, lo, co, step) {
+  if (!step?.doc) return null;
+  const suffix = co.chainOrderId.replace('CO-', '');
+  const lines = co.orderLines?.length ? co.orderLines : orderLinesFromCargo(co.cargoSummary, {});
+  if (step.doc.type === 'SO') {
+    const docId = `DOC-SO-${suffix}`;
+    let doc = await chain.getDocument(docId);
+    if (!doc) {
+      doc = createDocument({
+        docId, docType: 'SO', loId: lo.loId, status: step.doc.status,
+        header: { docNo: co.customerRef || `SO-${suffix}`, title: `销售订单 · ${co.cargoSummary}`, partyFrom: lo.ownerEnterpriseId, partyTo: co.consignee || '客户', amount: lineAmt(lines) },
+        lines, links: [{ loId: lo.loId, rel: 'source' }],
+      });
+    } else { doc.status = step.doc.status; doc.lines = lines; }
+    await chain.local.putDocument(doc); return doc;
+  }
+  const docId = `DOC-${step.doc.type}-${suffix}`;
+  if (await chain.getDocument(docId)) return chain.getDocument(docId);
+  const doc = createDocument({
+    docId, docType: step.doc.type, loId: lo.loId, status: step.doc.status,
+    header: { docNo: `${step.doc.type}-${co.chainOrderId}`, title: co.title, partyFrom: lo.ownerEnterpriseId, partyTo: co.consignee, amount: lineAmt(lines) },
+    lines, links: [{ loId: lo.loId, rel: 'source' }],
+  });
+  await chain.local.putDocument(doc); return doc;
+}
+
+export async function getShipperOrderFlowView(chain, chainOrderId) {
+  const co = await chain.getChainOrder(chainOrderId);
+  const salesLo = co ? await findLegLo(chain, chainOrderId, 'sales') : null;
+  if (!co || !salesLo) return null;
+  const done = await getLegDoneCodes(chain, salesLo.loId);
+  const next = SHIPPER_ORDER_FLOW.find((s) => !done.has(s.code)) || null;
+  return {
+    chainOrderId, intakeSource: co.intakeSource, salesFlowComplete: co.salesFlowComplete || co.status !== 'draft',
+    steps: SHIPPER_ORDER_FLOW.map((s) => ({ ...s, done: done.has(s.code), current: next?.code === s.code })),
+    next, salesLoId: salesLo.loId,
+  };
+}
+
+export async function advanceShipperOrderFlow(chain, chainOrderId, { actor, requireActor = false } = {}) {
+  const co = await chain.getChainOrder(chainOrderId);
+  if (!co || co.status !== 'draft') return { done: true, chainOrderId };
+  const view = await getShipperOrderFlowView(chain, chainOrderId);
+  if (!view?.next) return { done: true, chainOrderId };
+  const step = view.next;
+  if (requireActor && actor && actor !== step.actor) {
+    return { ok: false, reason: `此步须由操作人「${step.actor}」执行` };
+  }
+  const gate = await checkShipperDocGate(chain, chainOrderId, step);
+  if (!gate.ok) return { ok: false, reason: gate.reason };
+  const evt = await chain.emitAction(view.salesLoId, {
+    code: step.code,
+    actor: actor || step.actor,
+    spatialCellId: 'bj-dc-shunyi',
+    payload: { salesFlow: true, manual: true, operator: actor || step.actor },
+  });
+  if (step.code === 'CHAIN_START') {
+    const c2 = await chain.getChainOrder(chainOrderId);
+    if (c2?.status === 'draft') { c2.status = 'active'; c2.salesFlowComplete = true; await chain.putChainOrder(c2); }
+  }
+  return { done: step.code === 'CHAIN_START', step: { ...step, loId: view.salesLoId }, evt, phase: 'sales_flow', chainOrderId };
+}
+
+export async function createChainFromIntake(chain, intake) {
+  return createChainFromSales(chain, { ...normalizeSalesIntake(intake, intake.source || 'manual'), anchorEnterpriseId: intake.anchorEnterpriseId });
+}
 
 /** 链段完成 → 下一段触发（同 chainOrderId 内按 legType 匹配） */
 export const LEG_HANDOFF_RULES = {
@@ -237,6 +316,7 @@ export async function maybeChainHandoff(chain, fromLo, actionCode) {
 
 /** 事件驱动单据裂变 */
 export async function maybeSpawnDocument(chain, lo, code) {
+  if (SHIPPER_FLOW_CODES.has(code) && lo?.legType === 'sales') return null;
   const spec = DOC_ON_EVENT[code];
   if (!spec || !lo?.chainOrderId) return null;
   const docId = `DOC-${spec.docType}-${lo.chainOrderId.replace('CO-', '')}-${code}`;
@@ -480,6 +560,62 @@ async function maybeSpawnProcurementSettlement(chain, lo) {
   return stl;
 }
 
+/** 窥视下一业务步（含闸门阻塞原因，供人工作业台展示） */
+export async function peekNextBusinessStep(chain, chainOrderId) {
+  const co = await chain.getChainOrder(chainOrderId);
+  if (!co || ['settled', 'draft'].includes(co.status)) return null;
+  if ((await getOpenExceptions(chain, chainOrderId)).length) return null;
+
+  const legLos = await legsForChain(chain, chainOrderId);
+  legLos.sort((a, b) => (a.contract?.legSeq ?? 99) - (b.contract?.legSeq ?? 99));
+
+  for (const lo of legLos) {
+    const domain = getDomain(lo.logisticsDomain);
+    if (!domain?.stages?.length) continue;
+    const done = await getLegDoneCodes(chain, lo.loId);
+    const next = domain.stages.find((s) => !done.has(s.code));
+    if (!next) continue;
+
+    const step = {
+      chainOrderId,
+      loId: lo.loId,
+      legType: lo.legType || lo.logisticsDomain,
+      code: next.code,
+      actor: next.actor,
+      labelZh: next.labelZh,
+      spatialCellId: pickSpatialForStage(lo, next.code),
+      reason: `${legMeta(lo.legType).labelZh} · 标准作业`,
+    };
+
+    if (await canExecuteStage(chain, chainOrderId, lo, next.code)) {
+      return { ...step, canExecute: true, blockedReason: null };
+    }
+
+    const legType = lo.legType || lo.logisticsDomain;
+    const docGate = await docGateStatus(chain, chainOrderId, lo, next.code);
+    if (!docGate.ok) {
+      return {
+        ...step,
+        canExecute: false,
+        blockedReason: `待齐备单据：${docGate.missing.join('、')}（方可 ${next.labelZh}）`,
+      };
+    }
+    const cross = STAGE_CROSS_GATES[legType]?.[next.code];
+    if (cross && !(await upstreamGateOk(chain, chainOrderId, cross))) {
+      return { ...step, canExecute: false, blockedReason: `上游作业未完成 · 暂不可 ${next.labelZh}` };
+    }
+    if (!(await canStartLeg(chain, chainOrderId, lo))) {
+      return {
+        ...step,
+        canExecute: false,
+        blockedReason: `链段未启动 · 等待上游 ${legMeta(lo.legType).labelZh}`,
+      };
+    }
+    return { ...step, canExecute: false, blockedReason: '业务闸门未满足' };
+  }
+  return null;
+}
+
 /** 取链上「当前应推进」的一段及其下一业务动作（带真实业务闸门） */
 export async function getNextBusinessStep(chain, chainOrderId) {
   const co = await chain.getChainOrder(chainOrderId);
@@ -632,6 +768,13 @@ export async function runBusinessEvolutionTick(chain, { viewerEnterpriseId } = {
   let orders = await chain.listChainOrders(
     viewerEnterpriseId ? { viewerEnterpriseId } : {}
   );
+  const autoPilot = (await chain.local.getMeta('auto_pilot')) === '1';
+  if (autoPilot) {
+    for (const co of (await chain.listChainOrders(viewerEnterpriseId ? { viewerEnterpriseId } : {})).filter((c) => c.status === 'draft')) {
+      const f = await advanceShipperOrderFlow(chain, co.chainOrderId);
+      if (f?.step && !f.done) return { ...f, chainOrderId: co.chainOrderId };
+    }
+  }
   orders = orders.filter((co) => co.status !== 'settled' && co.status !== 'draft');
 
   const views = await Promise.all(
@@ -658,9 +801,11 @@ export async function runBusinessEvolutionTick(chain, { viewerEnterpriseId } = {
         chainOrderId: co.chainOrderId,
       };
     }
-    const result = await advanceChainOrderStep(chain, co.chainOrderId);
-    if (!result.done || result.phase === 'settlement' || result.phase === 'exception') {
-      return { ...result, chainOrderId: co.chainOrderId };
+    if (autoPilot) {
+      const result = await advanceChainOrderStep(chain, co.chainOrderId);
+      if (!result.done || result.phase === 'settlement' || result.phase === 'exception') {
+        return { ...result, chainOrderId: co.chainOrderId };
+      }
     }
   }
   return null;
@@ -673,6 +818,8 @@ export async function createChainFromSales(chain, partial) {
   const anchor = partial.anchorEnterpriseId || 'ENT-LUWEI-BRAND';
   const cargo = partial.cargoSummary || partial.cargo || '供应链货品';
   const participants = partial.participants || DEMO_CHAIN_ORDER.participants;
+  const orderLines = partial.orderLines?.length ? partial.orderLines : orderLinesFromCargo(cargo, partial);
+  const soNo = partial.customerRef || `SO-${suffix.toUpperCase()}`;
 
   const loIds = {
     pur: `LO-PUR-${suffix}`,
@@ -693,7 +840,7 @@ export async function createChainFromSales(chain, partial) {
       primaryActor: 'shipper',
       originCellId: 'bj-dc-shunyi',
       destCellId: 'bj-west-hub',
-      contract: { legSeq: 4, cargo, soNo: partial.customerRef || `SO-${suffix}` },
+      contract: { legSeq: 4, cargo, soNo },
       links: [
         createChainLink({ rel: 'upstream', targetLoId: loIds.pur, label: '原料采购' }),
         createChainLink({ rel: 'downstream', targetLoId: loIds.whi, label: '仓配' }),
@@ -775,24 +922,22 @@ export async function createChainFromSales(chain, partial) {
     anchorGroupId: partial.anchorGroupId || 'GRP-BRAND-A',
     title: partial.title || `链订单 ${suffix}`,
     cargoSummary: cargo,
-    status: 'active',
+    status: 'draft',
     upstreamExpanded: false,
-    customerRef: partial.customerRef,
+    salesFlowComplete: false,
+    customerRef: soNo,
+    consignee: partial.consignee || '终端客户',
+    orderLines,
+    intakeSource: partial.source || partial.intakeSource || 'manual',
+    intakeMeta: partial.intakeMeta || null,
+    laneType: partial.laneType || 'domestic',
     participants,
     legLoIds: Object.values(loIds),
   });
 
   await chain.putChainOrder(co);
   for (const lo of los) await chain.putLODirect(lo);
-
-  await chain.emitAction(loIds.sal, {
-    code: 'ORDER_CREATED',
-    actor: 'shipper',
-    spatialCellId: 'bj-dc-shunyi',
-    payload: { origin: 'sales', msg: '货主销售侧建链' },
-  });
-
-  return { chainOrder: await chain.getChainOrder(chainOrderId), salesLoId: loIds.sal };
+  return { chainOrder: await chain.getChainOrder(chainOrderId), salesLoId: loIds.sal, pendingFirstStep: 'SO_DRAFT' };
 }
 
 /** 统一业务事件入口（emitAction 之后调用） */
@@ -802,8 +947,12 @@ export async function onBusinessEvent(chain, loId, code) {
 
   if (lo.chainOrderId) {
     const co = await chain.getChainOrder(lo.chainOrderId);
-    if (co && code === 'ORDER_CREATED' && lo.legType === 'sales') {
+    if (co && code === 'CHAIN_START' && lo.legType === 'sales' && !co.upstreamExpanded) {
       await expandUpstreamProcurement(chain, co, lo);
+    }
+    if (co && SHIPPER_FLOW_CODES.has(code) && lo.legType === 'sales') {
+      const st = SHIPPER_ORDER_FLOW.find((s) => s.code === code);
+      if (st) await upsertShipperFlowDoc(chain, lo, co, st);
     }
     await maybeChainHandoff(chain, lo, code);
     await maybeSpawnDocument(chain, lo, code);
