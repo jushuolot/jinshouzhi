@@ -42,8 +42,17 @@ export interface PbErrorBody {
   data?: Record<string, { message?: string }>;
 }
 
-const BACKEND_DOWN_HINT =
-  '后端未启动。请先打开 Docker Desktop，再在项目根目录执行：docker compose up -d pocketbase';
+function backendDownHint(): string {
+  if (typeof window !== 'undefined') {
+    const { hostname } = window.location;
+    const onGithubPages = hostname.endsWith('.github.io');
+    const onDevHost = hostname === 'localhost' || hostname === '127.0.0.1';
+    if (!onDevHost && !onGithubPages) {
+      return '无法连接服务器，请检查网络后重试（可 Cmd+Shift+R 强刷）';
+    }
+  }
+  return '后端未启动。请先打开 Docker Desktop，再在项目根目录执行：docker compose up -d pocketbase';
+}
 
 function isBackendUnreachable(err: unknown): boolean {
   if (!err || typeof err !== 'object') return false;
@@ -62,11 +71,11 @@ function isBackendUnreachable(err: unknown): boolean {
 }
 
 export function pbErrorMessage(err: unknown): string {
-  if (isBackendUnreachable(err)) return BACKEND_DOWN_HINT;
+  if (isBackendUnreachable(err)) return backendDownHint();
   if (!err || typeof err !== 'object') return '请求失败';
   const body = err as PbErrorBody;
   if (body.message) {
-    if (isBackendUnreachable({ message: body.message })) return BACKEND_DOWN_HINT;
+    if (isBackendUnreachable({ message: body.message })) return backendDownHint();
     return body.message;
   }
   if (body.data) {

@@ -347,6 +347,23 @@ function requestOrigin(e) {
   return "";
 }
 
+var GITHUB_DEMO_BASE = "https://jushuolot.github.io/jinshouzhi/nuanban";
+
+/** H5 站点根（邀请链接、运营看板 demoUrl）；线上用请求来源，本地回退 GitHub 测试版 */
+function h5AppBaseUrl(e) {
+  var origin = requestOrigin(e);
+  if (origin) {
+    var host = "";
+    try {
+      host = origin.split("://")[1] || "";
+    } catch (_) {}
+    if (host.indexOf("localhost") === -1 && host.indexOf("127.0.0.1") === -1) {
+      return origin.replace(/\/$/, "");
+    }
+  }
+  return GITHUB_DEMO_BASE;
+}
+
 /** PocketBase users.avatar 文件对外 URL（含 token 以便 H5 img 加载） */
 function userAvatarUrlForClient(auth, e) {
   var fn = safeRecordString(auth, "avatar", "");
@@ -391,5 +408,5 @@ module.exports = {
   walletDemoStoreMap, walletEnsureUser, walletOverviewDto, walletTopup, walletPayLabel,
   walletDeductForOrder, walletPayOrderRecord, userHasRole, assertActiveRoleHeader,
   studentWithdrawalsMap, demoStudentSettlements, studentWithdrawalBalances, studentWithdrawalOverview,
-  requestBearerToken, requestOrigin, userAvatarUrlForClient, userAvatarFields
+  requestBearerToken, requestOrigin, h5AppBaseUrl, userAvatarUrlForClient, userAvatarFields
 };

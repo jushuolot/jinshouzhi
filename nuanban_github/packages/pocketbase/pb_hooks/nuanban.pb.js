@@ -1903,7 +1903,7 @@ routerAdd("GET", "/api/nuanban/student/referral", function (e) {
   if (!rc.ok) return e.json(rc.code, rc.body);
   if (!e.auth) return e.json(401, { message: "需要登录" });
   const code = "NB" + String(e.auth.id || "DEMO").slice(-4).toUpperCase();
-  const base = "https://jushuolot.github.io/jinshouzhi/nuanban";
+  const base = nb.h5AppBaseUrl(e);
   return e.json(200, {
     code: code,
     inviteLink: base + "/#/pages/common/launch?ref=" + encodeURIComponent(code),
@@ -2183,7 +2183,7 @@ routerAdd("GET", "/api/nuanban/platform/overview", function (e) {
     ],
     coreCompletionPct: 88,
     auditStatus: "PASS",
-    demoUrl: "https://jushuolot.github.io/jinshouzhi/nuanban/#/pages/common/login",
+    demoUrl: nb.h5AppBaseUrl(e) + "/#/pages/common/login",
   });
 });
 
