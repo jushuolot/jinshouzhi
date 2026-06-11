@@ -69,7 +69,7 @@
         <text class="todo-icon">📦</text>
         <view>
           <text class="todo-title">服务包购买</text>
-          <text class="todo-desc">3 档套餐 · 模拟购买</text>
+          <text class="todo-desc">{{ packageSummary }}</text>
         </view>
       </view>
       <text class="chevron">›</text>
@@ -100,7 +100,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { onShow } from '@dcloudio/uni-app';
 import RoleTabBar from '../components/RoleTabBar.vue';
 import {
@@ -108,6 +108,7 @@ import {
   fetchFamilyStats,
   listActiveSosAlerts,
   listBoundElders,
+  listFamilyPackages,
   listPendingConfirmOrders,
   listPendingOutdoorApprovals,
   listPendingPaymentOrders,
@@ -127,6 +128,12 @@ const bindings = ref<
 const loading = ref(false);
 const outdoorList = ref<{ order: string }[]>([]);
 const walletBalanceYuan = ref('0.00');
+const packageCount = ref(3);
+
+const packageSummary = computed(() => {
+  const n = packageCount.value;
+  return n ? `${n} 档套餐 · 基础/康复/全家` : '机构套餐 · 模拟购买';
+});
 
 function elderName(b: (typeof bindings.value)[0]) {
   return b.expand?.elder?.name || '老人';
@@ -140,15 +147,17 @@ async function reload() {
   loading.value = true;
   try {
     const uid = roleStore.user.id;
-    const [st, binds, outdoor, wallet] = await Promise.all([
+    const [st, binds, outdoor, wallet, pkgs] = await Promise.all([
       fetchFamilyStats(),
       listBoundElders(uid),
       listPendingOutdoorApprovals(uid).catch(() => []),
       fetchFamilyWallet().catch(() => null),
+      listFamilyPackages().catch(() => []),
     ]);
     stats.value = st;
     bindings.value = binds;
     outdoorList.value = outdoor;
+    packageCount.value = pkgs.length || 3;
     if (wallet) walletBalanceYuan.value = wallet.balanceYuan;
   } catch (e) {
     uni.showToast({ title: pbErrorMessage(e), icon: 'none' });

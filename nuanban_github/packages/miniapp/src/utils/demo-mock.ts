@@ -945,6 +945,11 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
       return Promise.reject({ message: err instanceof Error ? err.message : '提现失败' });
     }
   }
+  if (method === 'GET' && path === '/nuanban/family/packages') {
+    const roleErr = assertDemoActiveRole(options, path, 'family');
+    if (roleErr) return Promise.reject({ message: roleErr, statusCode: 403 });
+    return delay({ list: SERVICE_PACKAGES } as T);
+  }
   if (method === 'POST' && path === '/nuanban/family/packages/purchase') {
     const roleErr = assertDemoActiveRole(options, path, 'family');
     if (roleErr) return Promise.reject({ message: roleErr, statusCode: 403 });

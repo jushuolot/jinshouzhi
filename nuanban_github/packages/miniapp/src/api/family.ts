@@ -199,6 +199,22 @@ export async function getFamilyOrder(orderId: string) {
   });
 }
 
+export interface FamilyServicePackage {
+  id: string;
+  name: string;
+  desc: string;
+  priceYuan: number;
+  sessionsPerMonth: number;
+}
+
+export async function listFamilyPackages() {
+  const res = await request<{ list: FamilyServicePackage[] }>({
+    url: '/nuanban/family/packages',
+    method: 'GET',
+  });
+  return res.list ?? [];
+}
+
 export async function purchaseFamilyPackage(packageId: string) {
   return request<{ ok: boolean; orderId: string; status: string; packageName?: string }>({
     url: '/nuanban/family/packages/purchase',

@@ -105,6 +105,7 @@ export interface SettlementRecord {
 }
 
 export const SETTLEMENTS: SettlementRecord[] = [
+  { id: 'stl-2025-03', period: '2025-03', amountCents: 22100, status: 'paid', paidAt: '2025-04-03' },
   { id: 'stl-2025-04', period: '2025-04', amountCents: 24800, status: 'paid', paidAt: '2025-05-05' },
   { id: 'stl-2025-05', period: '2025-05', amountCents: 28500, status: 'paid', paidAt: '2025-06-01' },
   { id: 'stl-2025-06', period: '2025-06', amountCents: 35200, status: 'pending' },
@@ -320,6 +321,9 @@ export function buildServiceLogs(orders: RichOrder[], elderName: (id: string) =>
     '陪同散步至小区花园，往返约 1km',
     '用药提醒已执行，老人已服药',
     '棋牌陪伴，老人兴致良好',
+    '手指操陪练完成，老人反馈手劲有改善',
+    '陪同就医挂号取药，全程约 2 小时',
+    '生活陪护整理房间，协助简单餐食',
   ];
   return orders
     .filter((o) => o.status === 'completed')

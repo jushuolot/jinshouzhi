@@ -1992,6 +1992,19 @@ routerAdd("POST", "/api/nuanban/student/withdrawal", function (e) {
   return e.json(200, nb.studentWithdrawalOverview(auth.id));
 });
 
+routerAdd("GET", "/api/nuanban/family/packages", function (e) {
+  var nb = require(__hooks + "/nuanban_lib.js");
+  const rc = nb.assertActiveRoleHeader(e, "family");
+  if (!rc.ok) return e.json(rc.code, rc.body);
+  return e.json(200, {
+    list: [
+      { id: "pkg-basic", name: "基础陪护包", desc: "每月 4 次聊天陪伴", priceYuan: 199, sessionsPerMonth: 4 },
+      { id: "pkg-rehab", name: "康复关爱包", desc: "每月 2 次康复协助 + 2 次生活陪护", priceYuan: 399, sessionsPerMonth: 4 },
+      { id: "pkg-family", name: "全家安心包", desc: "含外出陪同审批优先通道", priceYuan: 599, sessionsPerMonth: 6 },
+    ],
+  });
+});
+
 routerAdd("POST", "/api/nuanban/family/packages/purchase", function (e) {
   var nb = require(__hooks + "/nuanban_lib.js");
   const rc = nb.assertActiveRoleHeader(e, "family");
