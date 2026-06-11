@@ -104,6 +104,7 @@ import { APP_TAGLINE, APP_TITLE } from '../../config/brand';
 import { releaseLabel } from '../../config/release';
 import { navigateAfterAuth } from '../../utils/profile-onboarding';
 import { exitGuestBrowse } from '../../utils/guest-browse';
+import { hasSeenTour } from '../../utils/tour-onboarding';
 import { isUserManualAccepted } from '../../utils/user-manual';
 import { useRoleStore } from '../../store/role';
 import { pbErrorMessage } from '../../utils/request';
@@ -136,8 +137,8 @@ onLoad((query) => {
     uni.redirectTo({ url: '/pages/common/user-manual?next=login&from=guest' });
     return;
   }
-  if (!isUserManualAccepted() && !fromGuest.value && !fromTour.value) {
-    uni.reLaunch({ url: '/pages/common/demo-tour' });
+  if (!isUserManualAccepted() && !fromGuest.value && !fromTour.value && !hasSeenTour()) {
+    uni.reLaunch({ url: '/pages/common/launch' });
   }
 });
 
@@ -321,7 +322,7 @@ function goAgreement() {
 }
 
 function goDemoTour() {
-  uni.navigateTo({ url: '/pages/common/demo-tour' });
+  uni.navigateTo({ url: '/pages/common/launch?tour=1' });
 }
 
 function goScenario() {

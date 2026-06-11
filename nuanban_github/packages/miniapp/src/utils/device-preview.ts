@@ -16,7 +16,7 @@ function isMobile() {
 /** 上帝视角 / 平台看板：桌面全屏，不进手机框 */
 function isFullPageRoute() {
   const h = window.location.hash || '';
-  return h.includes('demo-tour');
+  return h.includes('admin-hub') || h.includes('ops-gate');
 }
 
 export function initDevicePreview() {

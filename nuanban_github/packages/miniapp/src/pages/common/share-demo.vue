@@ -23,9 +23,15 @@ const BASE = 'https://jushuolot.github.io/jinshouzhi/nuanban';
 
 const links = [
   {
+    id: 'entry',
+    title: '标准入口（推荐）',
+    desc: '品牌闪屏 → 动画 → 选演示身份 · 首次完整体验',
+    url: `${BASE}/#/pages/common/launch`,
+  },
+  {
     id: 'tour',
-    title: '动画演示（22 秒）',
-    desc: '五幕自动轮播 · 三种撮合路径',
+    title: '动画演示（15 秒）',
+    desc: '跳过闪屏 · 五幕自动轮播',
     url: `${BASE}/#/pages/common/demo-tour`,
   },
   {

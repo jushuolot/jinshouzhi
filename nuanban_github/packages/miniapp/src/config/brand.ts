@@ -1,6 +1,8 @@
 /** 品牌文案 — 登录页、上帝视角、平台看板等统一引用 */
 export const APP_TITLE = '暖伴勤工';
 export const APP_TAGLINE = '让陪伴有温度，让勤工有意义';
+export const DEMO_DISCLAIMER = '演示版 · 数据仅供体验 · 非真实交易';
+export const COPYRIGHT_LINE = '© 2026 暖伴勤工 · 保留所有权利';
 
 /** 品牌色 — 从 login-bg-kawaii 提取的柔和暖色盘 */
 export const BRAND_PEACH = '#fff5eb';

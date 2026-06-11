@@ -1,93 +1,99 @@
 <template>
   <view class="tour">
-    <view class="top-bar">
-      <text class="tag">动画演示 · 自动播放</text>
+    <view class="safe-top" />
+
+    <view class="chrome-top">
+      <text class="skip" @tap="confirmSkip">跳过</text>
+      <view class="progress-wrap">
+        <view class="progress-bar" :style="{ width: progressPct + '%' }" />
+      </view>
       <text class="scene-counter">{{ scene + 1 }}/{{ SCENE_COUNT }}</text>
     </view>
 
-    <view class="progress-wrap">
-      <view class="progress-bar" :style="{ width: progressPct + '%' }" />
-    </view>
+    <text class="focus-line">{{ scenes[scene].focus }}</text>
 
-    <view class="stage" :class="'scene-' + scene">
+    <view class="stage">
       <view :key="scene" class="slide-wrap">
-        <view v-if="scene === 0" class="slide fade-in">
+        <view v-if="scene === 0" class="slide">
           <text class="slide-title">暖伴勤工</text>
-          <text class="slide-sub">让陪伴有温度，让勤工有意义</text>
-          <view class="orbit">
-            <view class="node elder pulse">👵 张奶奶</view>
-            <view class="link-line draw" />
-            <view class="node platform">🏢 平台撮合</view>
-            <view class="link-line draw delay" />
-            <view class="node student pulse">👩‍🎓 林同学</view>
+          <text class="slide-sub">陪伴有温度 · 勤工有意义</text>
+          <view class="chain">
+            <view class="chain-node pulse">👵 老人</view>
+            <text class="chain-arrow">↓</text>
+            <view class="chain-node platform">🏢 平台撮合</view>
+            <text class="chain-arrow">↓</text>
+            <view class="chain-node pulse">🎓 学生</view>
           </view>
-          <text class="caption">邻里陪伴 · 高校助学 · 平台安心撮合</text>
+          <text class="caption">三端一条链 · 明码标价可追溯</text>
         </view>
 
-        <view v-else-if="scene === 1" class="slide fade-in">
-          <text class="scene-label">路径 ② 老人找同学</text>
-          <view class="card anim-up">
-            <text class="card-title">找陪护 · 5km 内</text>
+        <view v-else-if="scene === 1" class="slide">
+          <text class="scene-label">老人找陪护</text>
+          <view class="hero-card">
             <view class="row">
               <text class="avatar">林</text>
               <view class="info">
-                <text class="name">林同学 · 示范大学</text>
-                <text class="meta">距您 1.2km · 服务 28 次 · ¥50/小时</text>
+                <text class="name">林同学 · 1.2km</text>
+                <text class="meta">¥50/小时 · 服务 28 次</text>
               </view>
               <text class="cta blink">预约</text>
             </view>
           </view>
-          <view class="map-dots">
-            <view v-for="i in 5" :key="i" class="dot" :class="'d' + i" />
-          </view>
-          <text class="caption">老人按距离浏览大学生志愿者并下单</text>
+          <text class="caption">按距离选大学生 · 一键下单</text>
         </view>
 
-        <view v-else-if="scene === 2" class="slide fade-in">
-          <text class="scene-label">路径 ③ 同学找需求</text>
-          <view class="card anim-up">
+        <view v-else-if="scene === 2" class="slide">
+          <text class="scene-label">学生接单</text>
+          <view class="hero-card">
             <text class="badge-new">新订单</text>
             <text class="card-title">聊天陪伴 · 张奶奶</text>
-            <text class="meta">明天 14:00 · 60 分钟 · ¥50</text>
+            <text class="meta block">明天 14:00 · ¥50</text>
             <view class="btn-row">
-              <text class="btn-ghost">拒绝</text>
-              <text class="btn-primary glow">立即接单</text>
+              <text class="btn-primary glow sole">立即接单</text>
             </view>
           </view>
-          <view class="pool-hint">
-            <text>待接单池</text>
-            <text class="count-up">10</text>
-            <text>单滚动可接</text>
-          </view>
-          <text class="caption">学生看待接单池或附近 8 位老人</text>
+          <text class="caption">待接单池滚动 · 附近老人可接</text>
         </view>
 
-        <view v-else-if="scene === 3" class="slide fade-in">
-          <text class="scene-label">有偿闭环 · 家属代付</text>
-          <view class="pay-card anim-up">
-            <text class="pay-logo">微信支付</text>
+        <view v-else-if="scene === 3" class="slide">
+          <text class="scene-label">家属代付</text>
+          <view class="hero-card pay-card">
             <text class="pay-amt">¥50.00</text>
-            <view class="spinner" />
             <text class="pay-ok check-pop">✓ 支付成功</text>
           </view>
-          <text class="caption">演示 mock 支付 · 订单进入待服务</text>
+          <text class="caption">演示支付 · 订单进入待服务</text>
         </view>
 
-        <view v-else-if="scene === 4" class="slide fade-in">
-          <text class="scene-label">服务完成 · 收入到账</text>
-          <view class="timeline">
+        <view v-else-if="scene === 4" class="slide">
+          <text class="scene-label">完成闭环</text>
+          <view class="timeline compact">
             <view v-for="(s, i) in timeline" :key="s" class="tl-item" :class="'tl-' + i">
               <text class="tl-dot" />
               <text class="tl-text">{{ s }}</text>
             </view>
           </view>
-          <view class="income-card pop">
+          <view class="income-card">
+            <text class="income-num">¥285</text>
             <text class="income-label">林同学本月收入</text>
-            <text class="income-num">¥285.00</text>
           </view>
-          <text class="caption">平台记录结算 · 三端可追溯</text>
-          <text class="last-hint">即将选择演示身份 · 进入游客模式</text>
+          <text class="last-hint">即将选择演示身份</text>
         </view>
+      </view>
+    </view>
+
+    <view class="chrome-bottom">
+      <view class="dots">
+        <view
+          v-for="(s, i) in scenes"
+          :key="s.id"
+          class="dot-item"
+          :class="{ on: i === scene }"
+          @tap="goScene(i)"
+        />
+      </view>
+      <view class="actions">
+        <text class="action" @tap="replay">↺ 重播</text>
+        <text class="action primary" @tap="finishTour">进入体验 ›</text>
       </view>
     </view>
   </view>
@@ -96,28 +102,64 @@
 <script setup lang="ts">
 import { onHide, onShow, onUnload } from '@dcloudio/uni-app';
 import { computed, ref } from 'vue';
+import { markTourSeen } from '../../utils/tour-onboarding';
+
 const SCENE_COUNT = 5;
 const TOTAL_MS = 15000;
 const INTERVAL_MS = TOTAL_MS / SCENE_COUNT;
+
+const scenes = [
+  { id: 'intro', focus: '① 平台连接老人、学生与家属' },
+  { id: 'elder', focus: '② 老人按距离找大学生陪护' },
+  { id: 'student', focus: '③ 学生看待接单池并接单' },
+  { id: 'pay', focus: '④ 家属代付 · 订单履约' },
+  { id: 'done', focus: '⑤ 服务完成 · 收入结算' },
+];
 
 const scene = ref(0);
 let sceneTimer: ReturnType<typeof setInterval> | null = null;
 let maxTimer: ReturnType<typeof setTimeout> | null = null;
 let tourFinished = false;
 
-const timeline = ['接单', '到场签到', '服务中', '完成确认', '收入结算'];
+const timeline = ['接单', '签到', '服务', '确认', '结算'];
 
 const progressPct = computed(() => ((scene.value + 1) / SCENE_COUNT) * 100);
 
+function scheduleFromCurrentScene() {
+  stopTimers();
+  const remainingMs = (SCENE_COUNT - scene.value) * INTERVAL_MS;
+  sceneTimer = setInterval(autoAdvance, INTERVAL_MS);
+  maxTimer = setTimeout(finishTour, remainingMs);
+}
+
 function goScene(i: number) {
   scene.value = ((i % SCENE_COUNT) + SCENE_COUNT) % SCENE_COUNT;
+  scheduleFromCurrentScene();
 }
 
 function finishTour() {
   if (tourFinished) return;
   tourFinished = true;
   stopTimers();
+  markTourSeen();
   uni.reLaunch({ url: '/pages/common/guest-role-pick' });
+}
+
+function confirmSkip() {
+  uni.showModal({
+    title: '跳过动画',
+    content: '可直接选择老人/家属/学生演示数据进入游客模式',
+    confirmText: '跳过',
+    cancelText: '继续观看',
+    success: (res) => {
+      if (res.confirm) finishTour();
+    },
+  });
+}
+
+function replay() {
+  tourFinished = false;
+  startTour(0);
 }
 
 function autoAdvance() {
@@ -125,7 +167,7 @@ function autoAdvance() {
     finishTour();
     return;
   }
-  goScene(scene.value + 1);
+  scene.value += 1;
 }
 
 function stopTimers() {
@@ -139,151 +181,152 @@ function stopTimers() {
   }
 }
 
-function startTour() {
+function startTour(from = 0) {
   tourFinished = false;
-  stopTimers();
-  scene.value = 0;
-  sceneTimer = setInterval(autoAdvance, INTERVAL_MS);
-  maxTimer = setTimeout(finishTour, TOTAL_MS);
+  scene.value = from;
+  scheduleFromCurrentScene();
 }
 
-onShow(startTour);
+onShow(() => startTour(0));
 onHide(stopTimers);
 onUnload(stopTimers);
 </script>
 
 <style scoped>
 .tour {
+  box-sizing: border-box;
   min-height: 100vh;
+  min-height: 100dvh;
+  max-width: 430px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
   background: var(--nb-dark-gradient);
   color: var(--nb-dark-text);
-  padding: 24rpx;
-  padding-bottom: 48rpx;
-  box-sizing: border-box;
+  padding: 0 28rpx;
+  padding-bottom: calc(200rpx + env(safe-area-inset-bottom));
 }
-.top-bar {
-  display: flex;
-  justify-content: space-between;
+.safe-top {
+  height: env(safe-area-inset-top);
+  flex-shrink: 0;
+}
+.chrome-top {
+  display: grid;
+  grid-template-columns: 80rpx 1fr 64rpx;
   align-items: center;
-  margin-bottom: 16rpx;
+  gap: 12rpx;
+  padding: 8rpx 0 16rpx;
+  flex-shrink: 0;
 }
-.tag {
-  font-size: 22rpx;
-  color: var(--nb-primary-light);
-}
-.scene-counter {
-  font-size: 20rpx;
+.skip {
+  font-size: 26rpx;
   color: var(--nb-dark-text-muted);
-  letter-spacing: 2rpx;
+  padding: 8rpx 0;
 }
 .progress-wrap {
-  height: 6rpx;
+  height: 8rpx;
   background: var(--nb-dark-surface-alt);
-  border-radius: 6rpx;
-  margin-bottom: 24rpx;
+  border-radius: 8rpx;
   overflow: hidden;
 }
 .progress-bar {
   height: 100%;
   background: var(--nb-primary-gradient);
-  border-radius: 6rpx;
-  transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 8rpx;
+  transition: width 0.65s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.scene-counter {
+  font-size: 22rpx;
+  color: var(--nb-dark-text-muted);
+  text-align: right;
+}
+.focus-line {
+  display: block;
+  flex-shrink: 0;
+  margin-bottom: 20rpx;
+  padding: 14rpx 20rpx;
+  font-size: 26rpx;
+  font-weight: 600;
+  color: var(--nb-primary-light);
+  background: rgba(232, 139, 74, 0.12);
+  border-radius: 12rpx;
+  border-left: 6rpx solid var(--nb-primary-light);
+  line-height: 1.4;
 }
 .stage {
-  min-height: 720rpx;
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
+  min-height: 0;
   overflow: hidden;
 }
 .slide-wrap {
   width: 100%;
-  animation: sceneIn 0.85s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: sceneIn 0.55s cubic-bezier(0.22, 1, 0.36, 1);
 }
 @keyframes sceneIn {
   from {
     opacity: 0;
-    transform: translateX(48rpx) scale(0.98);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0) scale(1);
-  }
-}
-.slide {
-  width: 100%;
-  text-align: center;
-}
-.fade-in {
-  animation: fadeIn 0.7s cubic-bezier(0.22, 1, 0.36, 1);
-}
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(32rpx);
+    transform: translateY(24rpx);
   }
   to {
     opacity: 1;
     transform: translateY(0);
   }
 }
+.slide {
+  width: 100%;
+  text-align: center;
+}
 .slide-title {
   display: block;
-  font-size: 52rpx;
+  font-size: 48rpx;
   font-weight: 700;
   color: #fff;
+  letter-spacing: 2rpx;
 }
 .slide-sub {
   display: block;
-  margin: 16rpx 0 48rpx;
-  font-size: 28rpx;
+  margin: 12rpx 0 36rpx;
+  font-size: 26rpx;
   color: var(--nb-dark-text-muted);
 }
 .scene-label {
   display: block;
-  font-size: 24rpx;
-  color: var(--nb-primary-light);
-  margin-bottom: 32rpx;
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 28rpx;
 }
-.orbit {
+.chain {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 12rpx;
-  flex-wrap: wrap;
-  margin: 32rpx 0;
+  gap: 8rpx;
+  margin: 24rpx 0;
 }
-.node {
-  background: var(--nb-dark-surface);
-  padding: 20rpx 28rpx;
+.chain-node {
+  width: 72%;
+  max-width: 480rpx;
+  padding: 22rpx 28rpx;
   border-radius: var(--nb-radius-md);
-  font-size: 28rpx;
+  background: var(--nb-dark-surface);
+  font-size: 30rpx;
+  font-weight: 500;
 }
-.node.platform {
+.chain-node.platform {
   background: var(--nb-primary-gradient);
   color: #fff;
+  box-shadow: 0 8rpx 28rpx rgba(196, 92, 38, 0.35);
 }
-.link-line {
-  width: 48rpx;
-  height: 4rpx;
-  background: var(--nb-primary-light);
-  animation: drawLine 1s ease infinite alternate;
-}
-.link-line.delay {
-  animation-delay: 0.5s;
-}
-@keyframes drawLine {
-  from {
-    width: 24rpx;
-    opacity: 0.4;
-  }
-  to {
-    width: 64rpx;
-    opacity: 1;
-  }
+.chain-arrow {
+  font-size: 28rpx;
+  color: var(--nb-primary-light);
+  line-height: 1;
 }
 .pulse {
-  animation: pulse 2s ease infinite;
+  animation: pulse 2.2s ease infinite;
 }
 @keyframes pulse {
   0%,
@@ -291,44 +334,32 @@ onUnload(stopTimers);
     transform: scale(1);
   }
   50% {
-    transform: scale(1.05);
+    transform: scale(1.03);
   }
 }
 .caption {
   display: block;
-  margin-top: 40rpx;
+  margin-top: 28rpx;
   font-size: 24rpx;
   color: var(--nb-dark-text-muted);
+  line-height: 1.5;
+  padding: 0 16rpx;
 }
 .last-hint {
   display: block;
   margin-top: 20rpx;
-  font-size: 22rpx;
+  font-size: 24rpx;
   color: var(--nb-primary-light);
-  animation: fadeIn 1s ease 2s both;
 }
-.card {
+.hero-card {
   background: var(--nb-surface);
   color: var(--nb-text);
   border-radius: 20rpx;
-  padding: 32rpx;
-  margin: 0 16rpx;
+  padding: 28rpx 24rpx;
+  margin: 0 auto;
+  max-width: 620rpx;
   text-align: left;
-}
-.anim-up {
-  animation: slideUp 0.6s cubic-bezier(0.22, 1, 0.36, 1);
-}
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(40rpx);
-  }
-}
-.card-title {
-  display: block;
-  font-size: 32rpx;
-  font-weight: 600;
-  margin-bottom: 16rpx;
+  box-shadow: 0 12rpx 40rpx rgba(0, 0, 0, 0.2);
 }
 .row {
   display: flex;
@@ -344,9 +375,11 @@ onUnload(stopTimers);
   color: #fff;
   border-radius: 50%;
   font-size: 32rpx;
+  flex-shrink: 0;
 }
 .info {
   flex: 1;
+  min-width: 0;
 }
 .name {
   display: block;
@@ -359,10 +392,14 @@ onUnload(stopTimers);
   color: var(--nb-text-muted);
   margin-top: 6rpx;
 }
+.meta.block {
+  margin: 8rpx 0 20rpx;
+}
 .cta {
   color: var(--nb-primary);
-  font-weight: 600;
+  font-weight: 700;
   font-size: 28rpx;
+  flex-shrink: 0;
 }
 .blink {
   animation: blink 1.2s ease infinite;
@@ -373,55 +410,7 @@ onUnload(stopTimers);
     opacity: 1;
   }
   50% {
-    opacity: 0.4;
-  }
-}
-.map-dots {
-  position: relative;
-  height: 120rpx;
-  margin: 32rpx 48rpx;
-}
-.dot {
-  position: absolute;
-  width: 16rpx;
-  height: 16rpx;
-  background: var(--nb-primary-light);
-  border-radius: 50%;
-  animation: dotPulse 2s ease infinite;
-}
-.d1 {
-  left: 10%;
-  top: 20%;
-}
-.d2 {
-  left: 30%;
-  top: 60%;
-  animation-delay: 0.3s;
-}
-.d3 {
-  left: 50%;
-  top: 30%;
-  animation-delay: 0.6s;
-}
-.d4 {
-  left: 70%;
-  top: 70%;
-  animation-delay: 0.9s;
-}
-.d5 {
-  left: 85%;
-  top: 40%;
-  animation-delay: 1.2s;
-}
-@keyframes dotPulse {
-  0%,
-  100% {
-    transform: scale(1);
-    opacity: 0.6;
-  }
-  50% {
-    transform: scale(1.8);
-    opacity: 1;
+    opacity: 0.45;
   }
 }
 .badge-new {
@@ -431,29 +420,29 @@ onUnload(stopTimers);
   font-size: 20rpx;
   padding: 4rpx 12rpx;
   border-radius: 8rpx;
-  margin-bottom: 12rpx;
+  margin-bottom: 10rpx;
+}
+.card-title {
+  display: block;
+  font-size: 30rpx;
+  font-weight: 600;
+  margin-bottom: 4rpx;
 }
 .btn-row {
-  display: flex;
-  gap: 16rpx;
-  margin-top: 24rpx;
-}
-.btn-ghost {
-  flex: 1;
-  text-align: center;
-  padding: 16rpx;
-  border: 1rpx solid var(--nb-border);
-  border-radius: var(--nb-radius-sm);
-  font-size: 26rpx;
+  margin-top: 8rpx;
 }
 .btn-primary {
-  flex: 1;
+  display: block;
   text-align: center;
-  padding: 16rpx;
+  padding: 18rpx;
   background: var(--nb-primary-gradient);
   color: #fff;
   border-radius: var(--nb-radius-sm);
-  font-size: 26rpx;
+  font-size: 28rpx;
+  font-weight: 600;
+}
+.btn-primary.sole {
+  width: 100%;
 }
 .glow {
   animation: glow 1.5s ease infinite;
@@ -464,140 +453,141 @@ onUnload(stopTimers);
     box-shadow: 0 0 0 rgba(196, 92, 38, 0);
   }
   50% {
-    box-shadow: 0 0 24rpx rgba(196, 92, 38, 0.6);
+    box-shadow: 0 0 20rpx rgba(196, 92, 38, 0.55);
   }
 }
-.pool-hint {
-  margin-top: 32rpx;
-  font-size: 26rpx;
-  color: var(--nb-dark-text-muted);
-}
-.count-up {
-  color: var(--nb-primary-light);
-  font-size: 40rpx;
-  font-weight: 700;
-  margin: 0 8rpx;
-}
 .pay-card {
-  background: var(--nb-surface);
-  color: var(--nb-text);
-  border-radius: 20rpx;
-  padding: 48rpx;
-  margin: 0 32rpx;
-}
-.pay-logo {
-  display: block;
-  font-size: 32rpx;
-  color: #09bb07;
-  font-weight: 600;
+  text-align: center;
+  padding: 40rpx 32rpx;
 }
 .pay-amt {
   display: block;
-  font-size: 56rpx;
+  font-size: 52rpx;
   font-weight: 700;
-  margin: 24rpx 0;
-}
-.spinner {
-  width: 48rpx;
-  height: 48rpx;
-  border: 4rpx solid #eee;
-  border-top-color: #09bb07;
-  border-radius: 50%;
-  margin: 24rpx auto;
-  animation: spin 0.8s linear infinite;
-}
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+  color: var(--nb-text);
 }
 .pay-ok {
   display: block;
+  margin-top: 16rpx;
   color: #09bb07;
-  font-size: 32rpx;
+  font-size: 30rpx;
   font-weight: 600;
 }
 .check-pop {
-  animation: checkPop 0.5s ease 1.2s both;
+  animation: checkPop 0.45s ease 0.6s both;
 }
 @keyframes checkPop {
   from {
     opacity: 0;
-    transform: scale(0.5);
+    transform: scale(0.6);
   }
 }
-.timeline {
+.timeline.compact {
   text-align: left;
-  margin: 0 48rpx 32rpx;
+  margin: 0 auto 24rpx;
+  max-width: 360rpx;
 }
 .tl-item {
   display: flex;
   align-items: center;
-  gap: 16rpx;
-  margin-bottom: 16rpx;
+  gap: 14rpx;
+  margin-bottom: 12rpx;
   opacity: 0;
-  animation: tlIn 0.4s ease forwards;
+  animation: tlIn 0.35s ease forwards;
 }
-.tl-0 {
-  animation-delay: 0.1s;
-}
-.tl-1 {
-  animation-delay: 0.3s;
-}
-.tl-2 {
-  animation-delay: 0.5s;
-}
-.tl-3 {
-  animation-delay: 0.7s;
-}
-.tl-4 {
-  animation-delay: 0.9s;
-}
+.tl-0 { animation-delay: 0.05s; }
+.tl-1 { animation-delay: 0.15s; }
+.tl-2 { animation-delay: 0.25s; }
+.tl-3 { animation-delay: 0.35s; }
+.tl-4 { animation-delay: 0.45s; }
 @keyframes tlIn {
+  from {
+    opacity: 0;
+    transform: translateX(-12rpx);
+  }
   to {
     opacity: 1;
     transform: translateX(0);
   }
-  from {
-    opacity: 0;
-    transform: translateX(-20rpx);
-  }
 }
 .tl-dot {
-  width: 16rpx;
-  height: 16rpx;
+  width: 12rpx;
+  height: 12rpx;
   background: var(--nb-primary-light);
   border-radius: 50%;
+  flex-shrink: 0;
 }
 .tl-text {
-  font-size: 26rpx;
+  font-size: 24rpx;
   color: var(--nb-dark-text-muted);
 }
 .income-card {
   background: var(--nb-primary-gradient);
   border-radius: var(--nb-radius-md);
-  padding: 32rpx;
-  margin: 0 32rpx;
-}
-.pop {
-  animation: pop 0.5s ease 1s both;
-}
-@keyframes pop {
-  from {
-    opacity: 0;
-    transform: scale(0.9);
-  }
-}
-.income-label {
-  display: block;
-  font-size: 24rpx;
-  color: rgba(255, 255, 255, 0.9);
+  padding: 28rpx;
+  margin: 0 auto;
+  max-width: 400rpx;
+  text-align: center;
 }
 .income-num {
   display: block;
-  font-size: 48rpx;
+  font-size: 44rpx;
   font-weight: 700;
   color: #fff;
-  margin-top: 8rpx;
+}
+.income-label {
+  display: block;
+  margin-top: 6rpx;
+  font-size: 22rpx;
+  color: rgba(255, 255, 255, 0.9);
+}
+.chrome-bottom {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 0;
+  width: 100%;
+  max-width: 430px;
+  padding: 16rpx 28rpx calc(20rpx + env(safe-area-inset-bottom));
+  background: linear-gradient(180deg, transparent, rgba(26, 26, 46, 0.92) 24%);
+  box-sizing: border-box;
+  z-index: 10;
+}
+.dots {
+  display: flex;
+  justify-content: center;
+  gap: 12rpx;
+  margin-bottom: 20rpx;
+}
+.dot-item {
+  width: 14rpx;
+  height: 14rpx;
+  border-radius: 50%;
+  background: var(--nb-dark-surface-alt);
+  transition: all 0.3s ease;
+}
+.dot-item.on {
+  width: 36rpx;
+  border-radius: 8rpx;
+  background: var(--nb-primary-light);
+}
+.actions {
+  display: flex;
+  gap: 16rpx;
+}
+.action {
+  flex: 1;
+  text-align: center;
+  padding: 22rpx 0;
+  font-size: 28rpx;
+  color: var(--nb-dark-text-muted);
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 44rpx;
+}
+.action.primary {
+  flex: 1.4;
+  color: #fff;
+  font-weight: 600;
+  background: var(--nb-primary-gradient);
 }
 </style>
