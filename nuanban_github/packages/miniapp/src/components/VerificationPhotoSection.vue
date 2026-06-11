@@ -11,7 +11,7 @@
       <view v-else class="placeholder">
         <text class="cam-icon">📷</text>
         <text class="cam-text">点击拍摄核验照</text>
-        <text class="cam-sub">需使用相机 · 不支持相册</text>
+        <text class="cam-sub">需使用相机拍摄正面照</text>
       </view>
       <view v-if="displayUrl && editable" class="retake">
         <text>重新拍摄</text>
@@ -60,9 +60,9 @@ async function onCapture() {
     emit('change', url);
     uni.showToast({ title: '核验照已上传', icon: 'success' });
   } catch (e) {
-    const msg = pbErrorMessage(e);
-    if (msg && !msg.includes('cancel')) {
-      uni.showToast({ title: msg, icon: 'none' });
+    const raw = e instanceof Error ? e.message : pbErrorMessage(e);
+    if (raw && !/cancel|取消/i.test(raw)) {
+      uni.showToast({ title: pbErrorMessage(e), icon: 'none' });
     }
   } finally {
     uploading.value = false;
