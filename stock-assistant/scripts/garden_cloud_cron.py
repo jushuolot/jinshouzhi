@@ -52,20 +52,26 @@ def run_scan(*, max_picks: int = 5) -> dict:
             f"实际 {probe.bar_date or '无'}）。{probe.error}"
         )
     existing = merge_pick_logs(load_cloud_pick_log())
-    calibration = None
-    if existing:
-        try:
-            calibration = build_calibration_report(existing, C._fetch_one).as_dict()
-        except Exception:
-            calibration = None
-    cal_adj = load_calibration_adjustments(calibration)
 
     snap_pack = run_daily_snapshot_pipeline(
         _fetch_ranking,
+        fetch_fn=C._fetch_one,
         yesterday_picks=existing[-30:],
         day=date.today().isoformat(),
     )
     deep_uni = snap_pack.get("deep_universe")
+
+    calibration = None
+    if existing:
+        try:
+            calibration = build_calibration_report(
+                existing,
+                C._fetch_one,
+                snapshot_diff=snap_pack.get("diff"),
+            ).as_dict()
+        except Exception:
+            calibration = None
+    cal_adj = load_calibration_adjustments(calibration)
 
     a_picks, global_picks, src, stats = fetch_garden_picks_bundle(
         _fetch_ranking,
@@ -118,6 +124,7 @@ def run_scan(*, max_picks: int = 5) -> dict:
         "calibration": calibration,
         "snapshot_diff": snap_pack.get("diff"),
         "weekly_summary": snap_pack.get("weekly_summary"),
+        "deep_followups": snap_pack.get("deep_followups") or [],
         "snapshot_meta": {
             "count": (snap_pack.get("snapshot") or {}).get("count"),
             "deep_rows": snap_pack.get("deep_universe_rows"),

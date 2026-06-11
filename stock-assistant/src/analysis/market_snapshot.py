@@ -21,8 +21,10 @@ from src.storage.paths import project_root
 SNAPSHOT_DIR = project_root() / "cloud_state" / "market_snapshots"
 DIFF_JSON = project_root() / "cloud_state" / "market_snapshot_diff.json"
 WEEKLY_JSON = project_root() / "cloud_state" / "weekly_summary.json"
+FOLLOWUPS_JSON = project_root() / "cloud_state" / "deep_followups.json"
 
 FetchRankingFn = Callable[[], tuple[pd.DataFrame, str]]
+FetchFn = Callable[..., tuple[Any, str]]
 
 
 def _f(v: Any) -> float | None:
@@ -256,10 +258,12 @@ def select_deep_candidates(
 def run_daily_snapshot_pipeline(
     fetch_ranking: FetchRankingFn,
     *,
+    fetch_fn: FetchFn | None = None,
     yesterday_picks: list[dict[str, Any]] | None = None,
     day: str | None = None,
 ) -> dict[str, Any]:
-    """每日 cron：快照 → diff → 精选 universe。"""
+    """每日 cron：快照 → diff → 精选 universe → 异动再分析。"""
+    from src.analysis.deep_followup import build_deep_followups
     from src.analysis.tomorrow_picks import build_a_universe
 
     universe, src = build_a_universe(fetch_ranking)
@@ -280,12 +284,22 @@ def run_daily_snapshot_pipeline(
     deep_uni, reasons = select_deep_candidates(universe, diff_dict, yesterday_picks=yesterday_picks)
     weekly = append_weekly_rollup(diff_dict, snap, yesterday_picks=yesterday_picks)
 
+    followups: list[dict[str, Any]] = []
+    if fetch_fn and diff_dict:
+        followups = build_deep_followups(diff_dict, universe, fetch_fn)
+        FOLLOWUPS_JSON.parent.mkdir(parents=True, exist_ok=True)
+        FOLLOWUPS_JSON.write_text(
+            json.dumps({"date": today, "items": followups}, ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
+
     return {
         "snapshot": snap,
         "diff": diff_dict,
         "deep_universe_rows": len(deep_uni),
         "deep_reasons": reasons,
         "deep_universe": deep_uni,
+        "deep_followups": followups,
         "weekly_summary": weekly,
     }
 
@@ -334,3 +348,35 @@ def append_weekly_rollup(
     WEEKLY_JSON.parent.mkdir(parents=True, exist_ok=True)
     WEEKLY_JSON.write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
     return summary
+
+
+def weekly_summary_to_markdown(
+    weekly: dict[str, Any] | None,
+    *,
+    calibration: dict[str, Any] | None = None,
+    followups: list[dict[str, Any]] | None = None,
+) -> str:
+    """供每周汇总的可读 Markdown。"""
+    w = weekly or {}
+    lines = ["# 选股花园 · 周成果汇总", ""]
+    lines.append(f"**{w.get('headline') or '暂无数据'}**")
+    rate = w.get("week_hit_rate_pct")
+    if rate is not None:
+        lines.append(f"- 快照验证命中率：**{rate:.0f}%**（{w.get('week_checks')} 次）")
+    cal = calibration or {}
+    if cal.get("hit_rate_pct") is not None:
+        lines.append(
+            f"- K线校准命中率：**{cal['hit_rate_pct']:.0f}%**（样本 {cal.get('reviewed')}）"
+        )
+    for c in cal.get("conclusions") or []:
+        lines.append(f"- {c}")
+    lines.append("")
+    if followups:
+        lines.append("## 值得再分析")
+        for f in followups:
+            lines.append(
+                f"- **{f.get('name')}** `{f.get('code')}` · {f.get('tag')} · "
+                f"{f.get('verdict')} · {f.get('one_line')}"
+            )
+    lines.extend(["", "*规则分析，非投资建议。*"])
+    return "\n".join(lines)

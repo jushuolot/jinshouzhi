@@ -109,6 +109,7 @@ def build_calibration_report(
     *,
     today: date | None = None,
     review_limit: int = 30,
+    snapshot_diff: dict[str, Any] | None = None,
 ) -> CalibrationReport:
     """复盘全部可验证推荐 → 统计准确率 → 输出模型校准参数与可读结论。"""
     from datetime import datetime, timezone
@@ -190,6 +191,13 @@ def build_calibration_report(
             if delta < 0:
                 conclusions.append(f"「{pat}」近绩不佳，模式权重 {delta:+.1f}。")
 
+    score_floor_delta, buy_threshold_delta, conclusions = _apply_snapshot_calibration(
+        snapshot_diff,
+        score_floor_delta,
+        buy_threshold_delta,
+        conclusions,
+    )
+
     recent: list[dict[str, Any]] = []
     for r in verified[-8:][::-1]:
         recent.append(
@@ -215,9 +223,33 @@ def build_calibration_report(
         pattern_adjustments=pattern_adj,
         score_floor_delta=score_floor_delta,
         buy_threshold_delta=buy_threshold_delta,
-        conclusions=tuple(conclusions[:8]),
+        conclusions=tuple(conclusions[:10]),
         recent_rows=tuple(recent),
     )
+
+
+def _apply_snapshot_calibration(
+    diff: dict[str, Any] | None,
+    score_floor: float,
+    buy_delta: float,
+    conclusions: list[str],
+) -> tuple[float, float, list[str]]:
+    """快照次日验证并入校准（便宜层反馈）。"""
+    if not diff:
+        return score_floor, buy_delta, conclusions
+    checks = list(diff.get("pick_checks") or [])
+    if not checks:
+        return score_floor, buy_delta, conclusions
+    hits = sum(1 for c in checks if c.get("hit"))
+    rate = hits / len(checks) * 100.0
+    conclusions = list(conclusions)
+    conclusions.append(f"快照次日验证 {hits}/{len(checks)} 方向正确（{rate:.0f}%）。")
+    if rate < 40:
+        score_floor += 1.5
+        buy_delta += 1.0
+    elif rate < 55:
+        score_floor += 0.5
+    return score_floor, buy_delta, conclusions
 
 
 def load_calibration_adjustments(report: dict[str, Any] | None) -> dict[str, Any]:
