@@ -485,6 +485,15 @@ function persistDemoState() {
   saveDemoRuntimeState(state);
 }
 
+function resetRuntimeStateInMemory() {
+  const seed = buildSeedRuntimeState();
+  state.orders = seed.orders;
+  state.settlements = seed.settlements;
+  state.serviceLogs = seed.serviceLogs;
+  state.sosAlerts = seed.sosAlerts;
+  state.outdoorApprovals = seed.outdoorApprovals;
+}
+
 function familyUserFromFilter(filter: string): string | null {
   const raw = filter.match(/family_user = "([^"]+)"/)?.[1];
   return raw ? resolveDemoFamilyUserId(raw) : null;
@@ -597,15 +606,33 @@ function demoUserForRoles(roles: DemoAuthRole[]) {
   } catch {
     /* ignore */
   }
-  if (roles.some((r) => r.role === 'student' && r.status === 'active')) {
+  const active = roles.filter((r) => r.status === 'active');
+  if (
+    active.some((r) => r.role === 'student') &&
+    active.some((r) => r.role === 'family') &&
+    active.some((r) => r.role === 'elder')
+  ) {
+    return { ...DEMO_USERS.multi };
+  }
+  if (active.some((r) => r.role === 'student')) {
     return {
       ...DEMO_USERS.student,
       nickname: studentProfileState.displayName || DEMO_USERS.student.nickname,
     };
   }
-  if (roles.some((r) => r.role === 'family')) return DEMO_USERS.family;
-  if (roles.some((r) => r.role === 'elder')) return DEMO_USERS.elder;
+  if (active.some((r) => r.role === 'family')) return DEMO_USERS.family;
+  if (active.some((r) => r.role === 'elder')) return DEMO_USERS.elder;
   return { id: 'user-demo', nickname: '暖伴用户', email: 'demo@nuanban.dev' };
+}
+
+function currentDemoUser() {
+  syncMockRolesFromStorage();
+  const roles = mockRegisterRoles.length ? [...mockRegisterRoles] : readStoredRoles();
+  return demoUserForRoles(roles);
+}
+
+function currentStudentUserId() {
+  return currentDemoUser().id;
 }
 
 function loginDemoWx(pickRole?: RoleKey) {
@@ -921,6 +948,8 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
   if (method === 'POST' && path === '/nuanban/family/packages/purchase') {
     const roleErr = assertDemoActiveRole(options, path, 'family');
     if (roleErr) return Promise.reject({ message: roleErr, statusCode: 403 });
+    const user = currentDemoUser();
+    const familyUserId = resolveDemoFamilyUserId(user.id);
     const pkgId = String(data.packageId || SERVICE_PACKAGES[0].id);
     const pkg = SERVICE_PACKAGES.find((p) => p.id === pkgId) || SERVICE_PACKAGES[0];
     const id = `order-pkg-${Date.now()}`;
@@ -931,7 +960,7 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
       status: 'pending_payment',
       amount_cents: pkg.priceYuan * 100,
       payment_status: 'unpaid',
-      family_user: USERS.family.id,
+      family_user: familyUserId,
       scheduled_at: new Date(Date.now() + 86400000 * 3).toISOString(),
     });
     persistDemoState();
@@ -1006,7 +1035,7 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
     return delay({ ok: true, status: order?.status || 'pending_service' } as T);
   }
   if (method === 'GET' && path === '/nuanban/student/stats') {
-    const sid = USERS.student.id;
+    const sid = currentStudentUserId();
     const mine = state.orders.filter((o) => o.student_user === sid);
     const completed = mine.filter((o) => o.status === 'completed' && o.payment_status === 'paid');
     const pending = state.orders.filter((o) => o.status === 'pending_accept').length;
@@ -1035,9 +1064,9 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
       latitude: e.latitude,
       longitude: e.longitude,
       org: e.org,
-      orgName: e.expand?.org?.name || '暖伴示范养老院',
+      orgName: orgNameById(e.org),
       distanceKm: 0.8,
-      expand: e.expand,
+      expand: { org: { id: e.org, name: orgNameById(e.org) } },
     }));
     return delay({ list } as T);
   }
@@ -1048,9 +1077,10 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
     return delay({ list } as T);
   }
   if (method === 'GET' && path === '/nuanban/student/orders/active') {
+    const sid = currentStudentUserId();
     const list = state.orders
       .filter((o) => o.status === 'pending_service' || o.status === 'in_service')
-      .filter((o) => o.student_user === USERS.student.id || !o.student_user)
+      .filter((o) => o.student_user === sid || !o.student_user)
       .map(pendingOrderDto);
     return delay({ list } as T);
   }
@@ -1084,7 +1114,7 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
     const order = state.orders.find((o) => o.id === studentOrderComplete[1]);
     if (order && order.status === 'in_service') {
       order.status = 'pending_confirm';
-      order.student_user = USERS.student.id;
+      order.student_user = order.student_user || currentStudentUserId();
       persistDemoState();
     }
     return delay({
@@ -1093,9 +1123,10 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
     } as T);
   }
   if (method === 'GET' && path === '/nuanban/student/schedules') {
+    const sid = currentStudentUserId();
     const active = state.orders.filter(
       (o) =>
-        o.student_user === USERS.student.id &&
+        o.student_user === sid &&
         ['pending_service', 'in_service', 'pending_confirm', 'completed'].includes(o.status),
     );
     const list = active.map((o) => {
@@ -1113,11 +1144,12 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
     return delay({ list } as T);
   }
   if (method === 'GET' && path === '/nuanban/student/income') {
+    const sid = currentStudentUserId();
     const completed = state.orders.filter(
       (o) =>
         o.status === 'completed' &&
         o.payment_status === 'paid' &&
-        o.student_user === USERS.student.id,
+        o.student_user === sid,
     );
     const now = new Date();
     const monthPrefix = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
@@ -1163,9 +1195,26 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
     const id = orderAction[1];
     const action = orderAction[2];
     const order = state.orders.find((o) => o.id === id);
-    if (order && action === 'accept') {
-      order.status = 'pending_service';
-      order.student_user = USERS.student.id;
+    if (order && action === 'accept' && order.status === 'pending_accept') {
+      const svc = serviceById(order.service_item);
+      order.student_user = currentStudentUserId();
+      if (svc.requires_outdoor_approval) {
+        order.status = 'outdoor_pending';
+        if (!state.outdoorApprovals.some((a) => a.order === id)) {
+          state.outdoorApprovals.push({
+            id: `outdoor-${Date.now()}`,
+            order: id,
+            status: 'pending_family',
+            family_user: order.family_user || USERS.family.id,
+          });
+        }
+      } else {
+        order.status = 'pending_service';
+      }
+      persistDemoState();
+    } else if (order && action === 'reject') {
+      order.student_user = undefined;
+      order.status = 'pending_accept';
       persistDemoState();
     }
     return delay({ ok: true, status: order?.status || 'pending_service' } as T);
@@ -1398,6 +1447,7 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
     const id = `order-${Date.now()}`;
     const svc = serviceById(String(data.serviceItemId || 'svc-chat'));
     const needsOutdoor = svc.requires_outdoor_approval;
+    const familyUserId = resolveDemoFamilyUserId(currentDemoUser().id);
     state.orders.push({
       id,
       elder: normalizeElderId(String(data.elderId || 'elder-zhang'), ELDERS),
@@ -1405,7 +1455,7 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
       status: needsOutdoor ? 'outdoor_pending' : 'pending_payment',
       amount_cents: svc.price_cents,
       payment_status: 'unpaid',
-      family_user: USERS.family.id,
+      family_user: familyUserId,
       scheduled_at: new Date().toISOString(),
     });
     if (needsOutdoor) {
@@ -1413,7 +1463,7 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
         id: `outdoor-${Date.now()}`,
         order: id,
         status: 'pending_family',
-        family_user: USERS.family.id,
+        family_user: familyUserId,
       });
     }
     persistDemoState();
@@ -1488,6 +1538,7 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
 
   if (method === 'POST' && path === '/nuanban/platform/reset-demo') {
     clearAllDemoStorage();
+    resetRuntimeStateInMemory();
     return delay({ ok: true } as T);
   }
   if (method === 'GET' && path === '/nuanban/platform/overview') {

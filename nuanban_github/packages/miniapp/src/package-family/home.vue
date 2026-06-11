@@ -69,7 +69,7 @@
         <text class="todo-icon">📦</text>
         <view>
           <text class="todo-title">服务包购买</text>
-          <text class="todo-desc">演示占位 · 机构套餐</text>
+          <text class="todo-desc">3 档套餐 · 模拟购买</text>
         </view>
       </view>
       <text class="chevron">›</text>

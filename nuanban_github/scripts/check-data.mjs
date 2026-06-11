@@ -13,8 +13,8 @@ const rich = fs.readFileSync(
 );
 
 const checks = [
-  { name: 'pending_accept 待接单', pattern: /for \(let i = 0; i < 10; i\+\+\) push\(i, i, 'pending_accept'/, min: 1 },
-  { name: '老人 buildRichElders', pattern: /for \(let i = 0; i < 8; i\+\+\)/, min: 1 },
+  { name: 'pending_accept 待接单', pattern: /for \(let i = 0; i < 15; i\+\+\) push\(i, i, 'pending_accept'/, min: 1 },
+  { name: '老人 buildRichElders', pattern: /ELDER_NAMES\.map/, min: 1 },
   { name: 'SERVICE_PACKAGES', pattern: /id: 'pkg-/, min: 3 },
   { name: 'SETTLEMENTS', pattern: /id: 'stl-/, min: 3 },
   { name: '演示账号 multi1', pattern: /multi1@test\.nuanban\.dev/, min: 1 },
