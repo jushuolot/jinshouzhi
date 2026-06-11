@@ -6,15 +6,13 @@
 
 ## 环境对照
 
-| 项 | GitHub Pages（测试版） | 阿里云（正式版） |
-|----|------------------------|------------------|
-| 地址 | `https://jushuolot.github.io/jinshouzhi/nuanban/` | `http://101.200.128.82`（备案中）→ `https://nuanban.cc` |
-| 登录角标 | **测试版** | **正式版** |
-| `VITE_RELEASE_CHANNEL` | `test` | `production` |
-| `VITE_DEMO_MOCK` | `true` | **未设置** |
-| 数据 | 浏览器 Mock + `localStorage` | 真实 PocketBase（SQLite） |
-| 登录 | 任意 11 位号、验证码可空 | 演示号 `13800000001`–`06`，走 `phone-login` hooks |
-| 发布命令 | `./scripts/release-test.sh` | `./scripts/release-prod.sh` |
+| 项 | 本地测试机 | GitHub（正式制作） | 阿里云（对外发布） |
+|----|------------|-------------------|-------------------|
+| 地址 | `localhost:5174` | `jushuolot.github.io/.../nuanban` | `nuanban.cc` / IP |
+| 角标 | 开发版 | **正式版** | **发布版** |
+| `VITE_RELEASE_CHANNEL` | `development` | `formal` | `public` |
+| Mock | 可全量（`VITE_DEMO_MOCK`） | **仅游客** | 无 |
+| 发布命令 | `dev-test.sh` | `release-formal.sh` | `release-prod.sh` |
 | 服务器路径 | — | `/opt/jinshouzhi/nuanban_github` |
 
 原则：**先 GitHub 测试版验收，再显式 `release-prod.sh` 发阿里云**。本地 `git push` **不会**自动部署正式版。

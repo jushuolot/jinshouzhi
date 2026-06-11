@@ -1,7 +1,6 @@
 import type { RoleKey } from '../config/tabs';
 import { useRoleStore } from '../store/role';
 import { guestBrowseRole, isGuestBrowse } from './guest-browse';
-import { resolveUnauthenticatedEntry } from './tour-onboarding';
 
 const PACKAGE_ROLE: Record<string, RoleKey> = {
   'package-elder': 'elder',
@@ -20,7 +19,7 @@ export function guardPackageRoute(path: string): boolean {
       uni.showToast({ title: '请在本身份演示数据下操作', icon: 'none' });
       return false;
     }
-    uni.reLaunch({ url: resolveUnauthenticatedEntry() });
+    uni.reLaunch({ url: '/pages/common/login' });
     return false;
   }
   const pkg = Object.keys(PACKAGE_ROLE).find((p) => path.includes(p));

@@ -34,22 +34,22 @@ deploy_on_server() {
   printf 'channel=production\nsha=%s\nshort=%s\ndeployed_at=%s\n' \
     "$SHA" "$SHORT" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$ROOT/.release/prod.lock"
 
-  echo "==> 部署正式版 $SHORT"
+  echo "==> 部署对外发布版 $SHORT"
   "$ROOT/scripts/aliyun-fix-data.sh"
 
   echo ""
   echo "=============================================="
-  echo "正式版已部署: $SHORT"
+  echo "对外发布版已部署: $SHORT"
   IP="${NUANBAN_STAGING_IP:-你的IP}"
-  echo "  H5:  http://${IP}/#/pages/common/login"
-  echo "  登录页角标: 正式版"
+  echo "  H5:  http://${IP}/#/pages/common/launch"
+  echo "  登录页角标: 发布版"
   echo "  请强刷浏览器 (Cmd+Shift+R)"
   echo "=============================================="
 }
 
 if on_aliyun_server; then
   echo "=============================================="
-  echo "阿里云 · 发布正式版"
+  echo "阿里云 · 对外发布版"
   echo "=============================================="
   deploy_on_server
   exit 0

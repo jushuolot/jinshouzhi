@@ -142,13 +142,13 @@ function finishTour() {
   tourFinished = true;
   stopTimers();
   markTourSeen();
-  uni.reLaunch({ url: '/pages/common/guest-role-pick' });
+  uni.reLaunch({ url: '/pages/common/login?from=tour' });
 }
 
 function confirmSkip() {
   uni.showModal({
     title: '跳过动画',
-    content: '可直接选择老人/家属/学生演示数据进入游客模式',
+    content: '将进入登录页，可选择游客账号或注册登录',
     confirmText: '跳过',
     cancelText: '继续观看',
     success: (res) => {

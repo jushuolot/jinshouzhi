@@ -77,11 +77,13 @@
     </view>
 
     <RoleTabBar role="elder" current="/package-elder/home" />
+    <OpsSessionBar />
   </view>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
+import OpsSessionBar from '../components/OpsSessionBar.vue';
 import RoleTabBar from '../components/RoleTabBar.vue';
 import GuestBrowseBanner from '../components/GuestBrowseBanner.vue';
 import { onShow } from '@dcloudio/uni-app';

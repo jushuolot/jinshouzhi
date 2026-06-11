@@ -42,23 +42,20 @@
       </view>
       <text class="chev">›</text>
     </view>
+    <OpsSessionBar />
   </view>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue';
 import { MODULE_GROUPS, PRODUCT_PILLARS } from '../../config/modules';
-import { isOpsEntryHidden, openOpsMode } from '../../utils/ops-mode';
+import { openOpsMode } from '../../utils/ops-mode';
+import OpsSessionBar from '../../components/OpsSessionBar.vue';
 
 const pillars = PRODUCT_PILLARS;
 
-const groups = computed(() => {
-  if (!isOpsEntryHidden()) return MODULE_GROUPS;
-  return MODULE_GROUPS.map((g) => ({
-    ...g,
-    entries: g.entries.filter((e) => e.id !== 'admin'),
-  }));
-});
+/** 运营模式入口始终展示，避免验收时找不到 */
+const groups = computed(() => MODULE_GROUPS);
 
 function go(path: string) {
   if (path.includes('ops-gate') || path.includes('admin-hub')) {

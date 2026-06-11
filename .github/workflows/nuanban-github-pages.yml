@@ -29,8 +29,8 @@ jobs:
         working-directory: nuanban_github/packages/miniapp
         env:
           VITE_BASE: /${{ vars.GITHUB_REPO || 'jinshouzhi' }}/nuanban/
-          VITE_DEMO_MOCK: 'true'
-          VITE_RELEASE_CHANNEL: test
+          VITE_RELEASE_CHANNEL: formal
+          VITE_API_BASE_URL: ${{ vars.NUANBAN_FORMAL_API_URL || 'https://nuanban-demo.onrender.com/api' }}
         run: |
           npm install
           npm run build:h5

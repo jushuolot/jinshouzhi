@@ -1,146 +1,124 @@
 <template>
   <view class="page">
-    <image
-      class="bg-img"
-      :src="loginBg"
-      mode="aspectFill"
-    />
-    <view class="bg-mask" />
-
+    <view class="safe-top" />
     <view class="content">
-    <view class="hero">
-      <view class="logo-wrap" @tap="onLogoTap">
-        <text class="logo-char">暖</text>
-      </view>
-      <text class="title">{{ APP_TITLE }}</text>
-      <text v-if="releaseBadge" class="release-badge">{{ releaseBadge }}</text>
-      <text class="sub">{{ APP_TAGLINE }}</text>
-    </view>
-
-    <view class="card">
-      <text class="card-label">手机号登录</text>
-
-      <view class="field">
-        <text class="field-prefix">+86</text>
-        <input
-          class="field-input"
-          type="number"
-          maxlength="11"
-          :value="phone"
-          placeholder="请输入手机号"
-          placeholder-class="ph"
-          aria-label="手机号"
-          @input="onPhoneInput"
-        />
+      <view class="hero">
+        <view class="logo-wrap" @tap="onLogoTap">
+          <text class="logo-char">暖</text>
+        </view>
+        <text class="title">{{ APP_TITLE }}</text>
+        <text v-if="releaseBadge" class="release-badge">{{ releaseBadge }}</text>
+        <text class="sub">{{ APP_TAGLINE }}</text>
       </view>
 
-      <view class="field code-field">
-        <input
-          class="field-input flex"
-          type="number"
-          maxlength="6"
-          :value="smsCode"
-          placeholder="短信验证码"
-          placeholder-class="ph"
-          aria-label="短信验证码"
-          @input="onCodeInput"
+      <view class="form">
+        <view class="form-row region-row">
+          <text class="row-label">国家/地区</text>
+          <text class="row-value">中国 +86</text>
+        </view>
+
+        <view class="form-row">
+          <input
+            class="row-input"
+            type="number"
+            maxlength="11"
+            :value="phone"
+            placeholder="手机号"
+            placeholder-class="ph"
+            aria-label="手机号"
+            @input="onPhoneInput"
+          />
+        </view>
+
+        <view class="form-row code-row">
+          <input
+            class="row-input flex"
+            type="number"
+            maxlength="6"
+            :value="smsCode"
+            placeholder="短信验证码"
+            placeholder-class="ph"
+            aria-label="短信验证码"
+            @input="onCodeInput"
+          />
+          <text
+            class="code-link"
+            :class="{ off: codeCooldown > 0 || phone.length !== 11 }"
+            @tap="sendCode"
+          >
+            {{ codeBtnText }}
+          </text>
+        </view>
+
+        <AgreementRow
+          :model-value="agreed"
+          @update:model-value="onAgreedChange"
+          @open-agreement="goAgreement"
+          @open-privacy="goPrivacy"
         />
-        <button
-          class="btn-code"
-          :class="{ disabled: codeCooldown > 0 }"
-          :disabled="codeCooldown > 0"
-          @tap="sendCode"
+
+        <view
+          class="btn-submit"
+          :class="{ ready: agreed, loading }"
+          @tap="onPhoneLogin"
         >
-          {{ codeBtnText }}
-        </button>
+          <text v-if="loading">登录中…</text>
+          <text v-else>登录 / 注册</text>
+        </view>
       </view>
 
-      <button class="btn-primary" :loading="loading" @tap="onPhoneLogin">登录</button>
+      <text v-if="loginHint" class="hint">{{ loginHint }}</text>
 
-      <view class="divider">
-        <view class="line" />
-        <text class="or">或</text>
-        <view class="line" />
+      <view class="footer">
+        <text class="foot-link" @tap="goDemoTour">动画演示</text>
+        <text class="sep">|</text>
+        <text class="foot-link" @tap="goGuest">游客账号</text>
       </view>
-
-      <button class="btn-wx" :loading="loading" @tap="onWxLogin">
-        <text class="wx-icon">微</text>
-        <text>微信快捷登录（可关联）</text>
-      </button>
     </view>
-
-    <view v-if="virtualPhoneLogin" class="demo-chip" @tap="showDemoPhones">
-      <text>虚拟手机登录 · 点按选择测试号</text>
-    </view>
-
-    <SecurityStrip />
-
-    <text class="hint">{{ loginHint }}</text>
-
-    <view class="footer">
-      <text class="foot-link" @tap="goDemoTour">动画演示</text>
-      <text class="sep">·</text>
-      <text v-if="virtualPhoneLogin" class="foot-link" @tap="goScenario">深度验收</text>
-      <text v-if="virtualPhoneLogin" class="sep">·</text>
-      <text class="foot-link" @tap="goUserManual">用户手册</text>
-      <text class="sep">·</text>
-      <text class="foot-link" @tap="goAgreement">用户协议</text>
-      <template v-if="virtualPhoneLogin">
-        <text class="sep">·</text>
-        <text class="foot-link" @tap="showDemoPhones">测试账号</text>
-      </template>
-      <text class="sep">·</text>
-      <text class="foot-muted" @tap="showMore">更多</text>
-    </view>
-    </view>
+    <OpsSessionBar />
   </view>
 </template>
 
 <script setup lang="ts">
 import { computed, onUnmounted, ref } from 'vue';
 import { onLoad } from '@dcloudio/uni-app';
-import { loginWithPhone, loginWithWxCode, type LoginResult } from '../../api/auth';
+import { loginWithPhone, type LoginResult } from '../../api/auth';
 import { APP_TAGLINE, APP_TITLE } from '../../config/brand';
 import { releaseLabel } from '../../config/release';
 import { navigateAfterAuth } from '../../utils/profile-onboarding';
 import { exitGuestBrowse } from '../../utils/guest-browse';
-import { hasSeenTour } from '../../utils/tour-onboarding';
-import { isUserManualAccepted } from '../../utils/user-manual';
+import { isUserManualAccepted, markRegistrationConsent } from '../../utils/user-manual';
 import { useRoleStore } from '../../store/role';
 import { pbErrorMessage } from '../../utils/request';
-import { DEMO_TEST_PHONES } from '../../utils/demo-rich-data';
-import { isDemoMockEnabled } from '../../utils/demo-mock';
-import { isVirtualPhoneLoginEnabled } from '../../utils/virtual-phone-login';
-import SecurityStrip from '../../components/SecurityStrip.vue';
-import { isOpsEntryHidden, openOpsMode } from '../../utils/ops-mode';
-import loginBg from '@/static/images/login-bg-kawaii.png';
-
-const virtualPhoneLogin = isVirtualPhoneLoginEnabled();
-const releaseBadge = releaseLabel();
+import AgreementRow from '../../components/AgreementRow.vue';
+import OpsSessionBar from '../../components/OpsSessionBar.vue';
+import { openOpsMode } from '../../utils/ops-mode';
 
 const loading = ref(false);
 const phone = ref('');
 const smsCode = ref('');
 const codeCooldown = ref(0);
-let cooldownTimer: ReturnType<typeof setInterval> | null = null;
+const agreed = ref(isUserManualAccepted());
 const fromTour = ref(false);
 const fromGuest = ref(false);
+let cooldownTimer: ReturnType<typeof setInterval> | null = null;
+
+const roleStore = useRoleStore();
+const releaseBadge = releaseLabel();
 
 onLoad((query) => {
   fromTour.value = query?.from === 'tour';
   fromGuest.value = query?.from === 'guest';
-  if (fromTour.value) {
-    phone.value = '13800000001';
-  }
-  if (roleStore.isLoggedIn) return;
-  if (!isUserManualAccepted() && fromGuest.value) {
-    uni.redirectTo({ url: '/pages/common/user-manual?next=login&from=guest' });
-    return;
-  }
-  if (!isUserManualAccepted() && !fromGuest.value && !fromTour.value && !hasSeenTour()) {
-    uni.reLaunch({ url: '/pages/common/launch' });
+  agreed.value = isUserManualAccepted();
+  if (roleStore.isLoggedIn) {
+    void redirectLoggedIn();
   }
 });
+
+function onAgreedChange(val: boolean) {
+  agreed.value = val;
+  if (val) markRegistrationConsent();
+}
 
 onUnmounted(() => {
   if (cooldownTimer) clearInterval(cooldownTimer);
@@ -150,35 +128,25 @@ const codeBtnText = computed(() =>
   codeCooldown.value > 0 ? `${codeCooldown.value}s` : '获取验证码',
 );
 
+const canSubmit = computed(
+  () => phone.value.length === 11 && !loading.value && agreed.value,
+);
+
 const loginHint = computed(() => {
-  if (fromGuest.value) {
-    return '注册后才能下单 · 登录后将引导选择身份并完善资料';
-  }
-  if (fromTour.value) {
-    return '动画演示结束 · 登录后首次将引导选择身份';
-  }
-  return virtualPhoneLogin
-    ? '验证码可留空 · 点按上方测试号一键登录'
-    : '首次登录将引导完善身份资料';
+  if (fromGuest.value) return '注册登录后可正式下单';
+  if (fromTour.value) return '看完动画了？登录或选择游客账号继续体验';
+  return '';
 });
 
-const roleStore = useRoleStore();
-
-function showDemoPhones() {
-  uni.showActionSheet({
-    itemList: DEMO_TEST_PHONES.map((p) => `${p.phone.slice(-4)} · ${p.label}`),
-    success: (res) => {
-      const picked = DEMO_TEST_PHONES[res.tapIndex];
-      if (!picked) return;
-      phone.value = picked.phone;
-      uni.showToast({
-        title: picked.testHint || picked.label,
-        icon: 'none',
-        duration: 2200,
-      });
-      if (virtualPhoneLogin) void loginDemoPhone(picked.phone);
-    },
-  });
+async function redirectLoggedIn() {
+  const roles = roleStore.activeRoles.filter((r) => r.status === 'active');
+  if (roles.length > 1 && !roleStore.activeRole) {
+    uni.reLaunch({ url: '/pages/common/role-select' });
+    return;
+  }
+  const active = roleStore.activeRole ?? roles[0]?.role;
+  if (active) await navigateAfterAuth(active);
+  else uni.reLaunch({ url: '/pages/common/register' });
 }
 
 function onPhoneInput(e: { detail: { value: string } }) {
@@ -195,10 +163,7 @@ function sendCode() {
     return;
   }
   if (codeCooldown.value > 0) return;
-  uni.showToast({
-    title: virtualPhoneLogin ? '虚拟验证码（可留空直接登录）' : '验证码已发送',
-    icon: 'none',
-  });
+  uni.showToast({ title: '验证码已发送', icon: 'none' });
   codeCooldown.value = 60;
   cooldownTimer = setInterval(() => {
     codeCooldown.value -= 1;
@@ -209,9 +174,9 @@ function sendCode() {
   }, 1000);
 }
 
-function ensureManualAccepted(): boolean {
-  if (isUserManualAccepted()) return true;
-  uni.redirectTo({ url: '/pages/common/user-manual?next=login' });
+function ensureAgreed(): boolean {
+  if (agreed.value) return true;
+  uni.showToast({ title: '请先同意用户协议与隐私政策', icon: 'none' });
   return false;
 }
 
@@ -245,41 +210,17 @@ function afterLogin(res: LoginResult) {
   }
 }
 
-async function loginDemoPhone(demoPhone: string) {
-  loading.value = true;
-  try {
-    const code = smsCode.value || (isDemoMockEnabled() ? '1234' : undefined);
-    const res = await loginWithPhone(demoPhone, code);
-    afterLogin(res);
-  } catch (e) {
-    uni.showToast({ title: pbErrorMessage(e), icon: 'none' });
-  } finally {
-    loading.value = false;
-  }
-}
-
 async function onPhoneLogin() {
-  if (!ensureManualAccepted()) return;
+  if (!ensureAgreed()) return;
   if (phone.value.length !== 11) {
     uni.showToast({ title: '请输入 11 位手机号', icon: 'none' });
     return;
   }
-  await loginDemoPhone(phone.value);
-}
-
-async function onWxLogin() {
-  if (!ensureManualAccepted()) return;
+  if (!canSubmit.value || loading.value) return;
   loading.value = true;
   try {
-    if (isDemoMockEnabled()) {
-      const res = await loginWithWxCode('demo');
-      afterLogin(res);
-      return;
-    }
-    const { code } = await new Promise<UniApp.LoginRes>((resolve, reject) => {
-      uni.login({ provider: 'weixin', success: resolve, fail: reject });
-    });
-    const res = await loginWithWxCode(code);
+    const code = smsCode.value || undefined;
+    const res = await loginWithPhone(phone.value, code);
     afterLogin(res);
   } catch (e) {
     uni.showToast({ title: pbErrorMessage(e), icon: 'none' });
@@ -292,335 +233,175 @@ function onLogoTap() {
   openOpsMode();
 }
 
-function showMore() {
-  const labels = ['模块地图', '深度验收向导', '安全中心', '分享演示链接'];
-  const routes = [
-    '/pages/common/module-map',
-    '/pages/common/scenario-guide',
-    '/pages/common/security',
-    '/pages/common/share-demo',
-  ];
-  if (!isOpsEntryHidden()) {
-    labels.splice(3, 0, '运营模式');
-    routes.splice(3, 0, '/pages/common/ops-gate');
-  }
-  uni.showActionSheet({
-    itemList: labels,
-    success: (res) => {
-      const url = routes[res.tapIndex];
-      if (url) uni.navigateTo({ url });
-    },
-  });
-}
-
-function goUserManual() {
-  uni.navigateTo({ url: '/pages/common/user-manual?next=login' });
-}
-
 function goAgreement() {
   uni.navigateTo({ url: '/pages/common/agreement' });
 }
 
-function goDemoTour() {
-  uni.navigateTo({ url: '/pages/common/launch?tour=1' });
+function goPrivacy() {
+  uni.navigateTo({ url: '/pages/common/privacy-policy' });
 }
 
-function goScenario() {
-  uni.navigateTo({ url: '/pages/common/scenario-guide' });
+function goDemoTour() {
+  uni.reLaunch({ url: '/pages/common/demo-tour' });
+}
+
+function goGuest() {
+  uni.navigateTo({ url: '/pages/common/guest-role-pick' });
 }
 </script>
 
 <style scoped>
 .page {
-  position: relative;
-  min-height: 100%;
   min-height: 100vh;
+  min-height: 100dvh;
+  max-width: 430px;
+  margin: 0 auto;
+  background: #fff;
   box-sizing: border-box;
-  overflow: hidden;
-  background: var(--nb-peach);
 }
-
-.bg-img {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 0;
+.safe-top {
+  height: env(safe-area-inset-top);
 }
-
-.bg-mask {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 1;
-  pointer-events: none;
-  background: linear-gradient(
-    180deg,
-    rgba(255, 248, 240, 0.08) 0%,
-    rgba(255, 245, 235, 0.45) 38%,
-    rgba(255, 252, 248, 0.88) 62%,
-    rgba(255, 252, 248, 0.95) 100%
-  );
-}
-
 .content {
-  position: relative;
-  z-index: 2;
-  min-height: 100%;
-  min-height: 100vh;
+  min-height: calc(100dvh - env(safe-area-inset-top));
   box-sizing: border-box;
-  padding: 32rpx 40rpx 48rpx;
-  padding-top: calc(24rpx + env(safe-area-inset-top));
-  padding-bottom: calc(48rpx + env(safe-area-inset-bottom));
+  padding: 40rpx 56rpx calc(32rpx + env(safe-area-inset-bottom));
   display: flex;
   flex-direction: column;
 }
-
 .hero {
-  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-bottom: 36rpx;
-  padding-top: 280rpx;
+  margin-bottom: 64rpx;
+  padding-top: 16rpx;
 }
-
 .logo-wrap {
-  width: 100rpx;
-  height: 100rpx;
-  border-radius: 32rpx;
+  width: 88rpx;
+  height: 88rpx;
+  border-radius: 22rpx;
   background: var(--nb-primary-gradient);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: var(--nb-shadow-primary);
-  margin-bottom: 28rpx;
-  cursor: pointer;
+  margin-bottom: 20rpx;
 }
 .logo-wrap:active {
   opacity: 0.88;
-  transform: scale(0.97);
 }
-
 .logo-char {
-  font-size: 56rpx;
+  font-size: 48rpx;
   font-weight: 700;
   color: #fff;
 }
-
 .title {
-  font-size: 52rpx;
+  font-size: 40rpx;
   font-weight: 700;
-  color: var(--nb-text);
-  letter-spacing: 4rpx;
-  text-shadow: 0 2rpx 12rpx rgba(255, 255, 255, 0.9);
+  color: #1a1a1a;
+  letter-spacing: 2rpx;
 }
-
 .release-badge {
-  margin-top: 12rpx;
-  padding: 4rpx 16rpx;
+  margin-top: 10rpx;
+  padding: 2rpx 14rpx;
   font-size: 20rpx;
-  color: var(--nb-primary);
-  background: rgba(255, 255, 255, 0.85);
-  border: 1rpx solid var(--nb-border);
-  border-radius: 8rpx;
+  color: #888;
+  border: 1rpx solid #e8e8e8;
+  border-radius: 6rpx;
 }
-
 .sub {
-  margin-top: 16rpx;
-  font-size: 28rpx;
-  color: var(--nb-text-secondary);
+  margin-top: 14rpx;
+  font-size: 26rpx;
+  color: #999;
   text-align: center;
   line-height: 1.55;
-  max-width: 520rpx;
+  max-width: 560rpx;
 }
-
-.card {
-  position: relative;
-  background: rgba(255, 255, 255, 0.96);
-  border-radius: 28rpx;
-  padding: 40rpx 36rpx 36rpx;
-  box-shadow: 0 12rpx 48rpx rgba(61, 42, 31, 0.08);
-  border: 2rpx solid rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(12px);
+.form {
+  flex-shrink: 0;
 }
-
-.card-label {
-  display: block;
-  font-size: 30rpx;
-  font-weight: 600;
-  color: var(--nb-text);
-  margin-bottom: 28rpx;
-}
-
-.field {
+.form-row {
   display: flex;
   align-items: center;
-  height: 96rpx;
-  padding: 0 24rpx;
-  margin-bottom: 24rpx;
-  background: var(--nb-surface-muted);
-  border-radius: var(--nb-radius-md);
-  border: 2rpx solid var(--nb-border);
+  min-height: 100rpx;
+  border-bottom: 1rpx solid #f0f0f0;
 }
-
-.field-prefix {
-  flex-shrink: 0;
+.region-row {
+  justify-content: space-between;
+}
+.row-label {
   font-size: 30rpx;
-  font-weight: 500;
-  color: var(--nb-text);
-  padding-right: 20rpx;
-  margin-right: 20rpx;
-  border-right: 2rpx solid var(--nb-border-light);
+  color: #1a1a1a;
 }
-
-.field-input {
+.row-value {
+  font-size: 30rpx;
+  color: #333;
+}
+.row-input {
   flex: 1;
-  height: 96rpx;
-  font-size: 30rpx;
-  color: var(--nb-text);
-  background: transparent;
+  height: 88rpx;
+  font-size: 32rpx;
+  color: #1a1a1a;
 }
-
-.field-input.flex {
-  padding-left: 8rpx;
+.row-input.flex {
+  min-width: 0;
 }
-
-.code-field {
-  padding-right: 12rpx;
-}
-
 .ph {
-  color: var(--nb-text-placeholder);
+  color: #c8c8c8;
 }
-
-.btn-code {
+.code-row {
+  padding-right: 0;
+}
+.code-link {
   flex-shrink: 0;
-  margin: 0;
-  padding: 0 20rpx;
-  height: 72rpx;
-  line-height: 72rpx;
-  font-size: 24rpx;
-  font-weight: 500;
-  color: var(--nb-primary);
-  background: var(--nb-surface);
-  border: none;
-  border-radius: var(--nb-radius-sm);
-  box-shadow: 0 4rpx 12rpx rgba(196, 92, 38, 0.12);
+  font-size: 28rpx;
+  color: #c45c26;
+  padding: 12rpx 0 12rpx 16rpx;
 }
-
-.btn-code.disabled {
-  color: var(--nb-text-placeholder);
-  box-shadow: none;
-  background: var(--nb-cream-deep);
+.code-link.off {
+  color: #c8c8c8;
 }
-
-.btn-primary {
-  margin-top: 8rpx;
+.btn-submit {
+  margin-top: 32rpx;
   height: 96rpx;
   line-height: 96rpx;
+  text-align: center;
   font-size: 32rpx;
   font-weight: 600;
   color: #fff;
-  background: var(--nb-primary-gradient);
-  border: none;
-  border-radius: var(--nb-radius-pill);
-  box-shadow: 0 12rpx 32rpx rgba(196, 92, 38, 0.35);
+  border-radius: 48rpx;
+  background: #e0e0e0;
 }
-
-.btn-primary::after {
-  border: none;
+.btn-submit.ready {
+  background: linear-gradient(135deg, #e88b4a, #c45c26);
+  box-shadow: 0 8rpx 24rpx rgba(196, 92, 38, 0.28);
 }
-
-.divider {
-  display: flex;
-  align-items: center;
-  gap: 20rpx;
-  margin: 36rpx 0 28rpx;
+.btn-submit.ready:active {
+  opacity: 0.92;
 }
-
-.line {
-  flex: 1;
-  height: 2rpx;
-  background: var(--nb-border);
+.btn-submit.loading {
+  opacity: 0.75;
 }
-
-.or {
-  font-size: 24rpx;
-  color: var(--nb-text-placeholder);
-}
-
-.btn-wx {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12rpx;
-  height: 88rpx;
-  margin: 0;
-  font-size: 28rpx;
-  color: #2d8a4e;
-  background: #f0faf4;
-  border: 2rpx solid #c8e6d4;
-  border-radius: 44rpx;
-}
-
-.btn-wx::after {
-  border: none;
-}
-
-.wx-icon {
-  width: 40rpx;
-  height: 40rpx;
-  line-height: 40rpx;
-  text-align: center;
-  font-size: 22rpx;
-  font-weight: 700;
-  color: #fff;
-  background: #07c160;
-  border-radius: 8rpx;
-}
-
-.demo-chip {
-  margin-top: 28rpx;
-  padding: 16rpx 24rpx;
-  text-align: center;
-  font-size: 22rpx;
-  color: var(--nb-primary);
-  background: rgba(255, 255, 255, 0.75);
-  border: 2rpx dashed var(--nb-border-dashed);
-  border-radius: 999rpx;
-}
-
 .hint {
   display: block;
   margin-top: 24rpx;
-  font-size: 22rpx;
-  color: var(--nb-text-muted);
+  font-size: 24rpx;
+  color: #aaa;
   text-align: center;
-  line-height: 1.55;
-  padding: 0 16rpx;
+  line-height: 1.5;
 }
-
 .footer {
   margin-top: auto;
-  padding-top: 40rpx;
+  padding-top: 32rpx;
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 16rpx;
+  gap: 20rpx;
   font-size: 26rpx;
 }
-
 .foot-link {
-  color: var(--nb-primary);
+  color: #c45c26;
 }
-
-.foot-muted {
-  color: var(--nb-text-muted);
-}
-
 .sep {
-  color: #ddd0c6;
+  color: #e0e0e0;
 }
 </style>

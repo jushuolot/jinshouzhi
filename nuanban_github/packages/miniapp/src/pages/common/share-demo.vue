@@ -60,8 +60,14 @@ const links = [
   },
   {
     id: 'admin',
-    title: '运营模式',
-    desc: '口令进入 · KPI · 撮合动态 · 注入外出演示单',
+    title: '运营模式（推荐）',
+    desc: '口令 暖伴2026 · 资金管理 · KPI',
+    url: `${BASE}/#/pages/common/launch?ops=1`,
+  },
+  {
+    id: 'admin-gate',
+    title: '运营模式 · 直达口令页',
+    desc: '已知道入口时使用',
     url: `${BASE}/#/pages/common/ops-gate`,
   },
   {

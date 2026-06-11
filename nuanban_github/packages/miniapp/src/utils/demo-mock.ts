@@ -1004,7 +1004,6 @@ function parseBody(data: unknown): Record<string, unknown> {
   return data as Record<string, unknown>;
 }
 
-/** 构建时 VITE_DEMO_MOCK，或运行在 GitHub Pages 时自动启用 */
 /** 运营演示：重置 localStorage 并刷新页面 */
 export function resetDemoRuntimeState() {
   clearAllDemoStorage();
@@ -1013,18 +1012,13 @@ export function resetDemoRuntimeState() {
   }
 }
 
+/**
+ * 演示 Mock 仅用于游客模式（及本地开发显式开启）。
+ * GitHub 正式版 / 对外发布版登录用户一律走真实 PocketBase API。
+ */
 export function isDemoMockEnabled(): boolean {
-  if (import.meta.env.VITE_DEMO_MOCK === 'true') return true;
-  try {
-    if (typeof window !== 'undefined' && window.location) {
-      const { hostname, pathname } = window.location;
-      if (hostname.endsWith('.github.io') && pathname.includes('/nuanban')) {
-        return true;
-      }
-    }
-  } catch {
-    /* ignore */
-  }
+  if (isGuestBrowse()) return true;
+  if (import.meta.env.DEV && import.meta.env.VITE_DEMO_MOCK === 'true') return true;
   return false;
 }
 

@@ -109,11 +109,13 @@
     </view>
 
     <RoleTabBar role="student" current="/package-student/home" />
+    <OpsSessionBar />
   </view>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue';
+import OpsSessionBar from '../components/OpsSessionBar.vue';
 import { onShow } from '@dcloudio/uni-app';
 import RoleTabBar from '../components/RoleTabBar.vue';
 import GuestBrowseBanner from '../components/GuestBrowseBanner.vue';

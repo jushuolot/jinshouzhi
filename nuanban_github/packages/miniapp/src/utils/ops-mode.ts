@@ -69,12 +69,21 @@ export function setOpsEntryHidden(hidden: boolean) {
   uni.setStorageSync(OPS_HIDDEN_KEY, hidden);
 }
 
+function navigateOps(url: string) {
+  uni.navigateTo({
+    url,
+    fail: () => {
+      uni.reLaunch({ url });
+    },
+  });
+}
+
 export function openOpsMode() {
   if (isOpsSessionActive()) {
-    uni.navigateTo({ url: '/pages/common/admin-hub' });
+    navigateOps('/pages/common/admin-hub');
     return;
   }
-  uni.navigateTo({ url: '/pages/common/ops-gate' });
+  navigateOps('/pages/common/ops-gate');
 }
 
 /** admin-hub 等页 onShow 调用；未登录运营会话则跳转口令页 */

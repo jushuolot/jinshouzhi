@@ -19,25 +19,30 @@ export function markTourSeen(): void {
   }
 }
 
-/** 回访游客：有演示身份则进首页，否则选角色 */
-export function resolveGuestEntryPath(): string {
-  const role = guestBrowseRole();
-  if (isGuestBrowse() && role) {
-    return ROLE_HOME[role];
+/** 回访：游客会话有效则回演示首页，否则登录页 */
+export function resolveReturnEntryPath(): string {
+  if (isGuestBrowse()) {
+    const role = guestBrowseRole();
+    if (role) return ROLE_HOME[role];
   }
-  return '/pages/common/guest-role-pick';
+  return '/pages/common/login';
 }
 
-/** 未登录用户离开闪屏后的目标页 */
+/** @deprecated use resolveReturnEntryPath */
+export function resolveGuestEntryPath(): string {
+  return resolveReturnEntryPath();
+}
+
+/** 未登录用户离开 launch 后的目标页 */
 export function resolveUnauthenticatedEntry(forceTour = false): string {
   if (forceTour || !hasSeenTour()) {
     return '/pages/common/demo-tour';
   }
-  return resolveGuestEntryPath();
+  return resolveReturnEntryPath();
 }
 
-/** 闪屏展示时长（ms） */
-export function splashDurationMs(forceTour = false): number {
-  if (forceTour || !hasSeenTour()) return 1800;
-  return 800;
-}
+/** 已登录用户闪屏时长 */
+export const LOGGED_IN_SPLASH_MS = 3000;
+
+/** 回访未登录闪屏时长 */
+export const RETURN_SPLASH_MS = 800;

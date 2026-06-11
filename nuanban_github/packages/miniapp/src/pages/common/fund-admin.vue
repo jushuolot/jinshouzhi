@@ -158,11 +158,13 @@
     </template>
 
     <text v-if="overview?.updatedAt" class="ts">更新于 {{ formatTime(overview.updatedAt) }}</text>
+    <OpsSessionBar />
   </view>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
+import OpsSessionBar from '../../components/OpsSessionBar.vue';
 import { onShow } from '@dcloudio/uni-app';
 import {
   approveFundWithdrawal,

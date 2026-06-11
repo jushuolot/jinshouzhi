@@ -6,7 +6,7 @@
         <text class="guest-title">注册后才能下单</text>
         <text class="guest-desc">请先使用手机或微信完成注册登录，再选择身份并完善资料与收款方式。</text>
       </view>
-      <button class="btn-primary nb-btn-primary" @tap="goAuth">手机号 / 微信注册</button>
+      <view class="btn-primary nb-btn-primary" @tap="goAuth">手机号注册 / 登录</view>
       <text class="back" @tap="goBackBrowse">返回继续浏览</text>
     </template>
     <template v-else-if="step === 'pick'">
@@ -94,7 +94,7 @@ function pickRole(r: RoleKey) {
 }
 
 function goAuth() {
-  uni.navigateTo({ url: '/pages/common/user-manual?next=login&from=guest' });
+  uni.navigateTo({ url: '/pages/common/login?from=guest' });
 }
 
 function goBackBrowse() {
@@ -176,6 +176,8 @@ async function submit() {
 }
 .btn-primary {
   margin-top: 24rpx;
+  text-align: center;
+  line-height: 96rpx;
 }
 .back {
   display: block;

@@ -37,7 +37,7 @@ if [[ -n "$STAGING_IP" ]]; then
   if [[ ! -d node_modules ]]; then
     npm install
   fi
-  VITE_RELEASE_CHANNEL=production VITE_API_BASE_URL="http://${STAGING_IP}/api" npm run build:h5
+  VITE_RELEASE_CHANNEL=public VITE_API_BASE_URL="http://${STAGING_IP}/api" npm run build:h5
   cd "$ROOT"
   echo "==> 重启 Caddy"
   "${COMPOSE[@]}" --profile staging restart caddy 2>/dev/null || "${COMPOSE[@]}" --profile staging up -d caddy

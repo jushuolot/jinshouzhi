@@ -13,13 +13,20 @@
       "style": {
         "navigationBarTitleText": "登录",
         "navigationStyle": "custom",
-        "backgroundColor": "#fff5eb"
+        "backgroundColor": "#ffffff"
       }
     },
     { "path": "pages/common/role-select", "style": { "navigationBarTitleText": "选择身份" } },
     { "path": "pages/common/register", "style": { "navigationBarTitleText": "注册" } },
     { "path": "pages/common/agreement", "style": { "navigationBarTitleText": "用户协议" } },
-    { "path": "pages/common/user-manual", "style": { "navigationBarTitleText": "注册须知" } },
+    {
+      "path": "pages/common/user-manual",
+      "style": {
+        "navigationBarTitleText": "注册须知",
+        "navigationStyle": "custom",
+        "backgroundColor": "#ffffff"
+      }
+    },
     { "path": "pages/common/privacy-policy", "style": { "navigationBarTitleText": "隐私政策" } },
     { "path": "pages/common/guest-role-pick", "style": { "navigationBarTitleText": "选择演示数据" } },
     { "path": "pages/common/org-dispatch", "style": { "navigationBarTitleText": "机构派单" } },

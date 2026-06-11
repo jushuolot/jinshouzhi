@@ -1,25 +1,24 @@
 <template>
-  <view class="splash" @tap="skipSplash">
+  <view class="splash">
     <view class="safe-top" />
 
     <view class="center">
-      <view class="logo-mark">
+      <view class="logo-mark" @tap.stop="onLogoTap">
         <text class="logo-char">暖</text>
       </view>
       <text class="title">{{ APP_TITLE }}</text>
       <text class="tagline">{{ APP_TAGLINE }}</text>
-      <view class="demo-badge">
-        <text class="demo-badge-text">{{ DEMO_DISCLAIMER }}</text>
-      </view>
+      <text v-if="loggedInHint" class="welcome-hint">{{ loggedInHint }}</text>
     </view>
 
     <view class="bottom">
       <view class="load-track">
         <view class="load-bar" :style="{ width: progressPct + '%' }" />
       </view>
-      <text class="skip-hint">轻触跳过</text>
+      <text v-if="!loggedIn" class="skip-hint" @tap="skipSplash">轻触跳过</text>
       <text class="copyright">{{ COPYRIGHT_LINE }}</text>
     </view>
+    <OpsSessionBar />
   </view>
 </template>
 
@@ -30,25 +29,49 @@ import {
   APP_TAGLINE,
   APP_TITLE,
   COPYRIGHT_LINE,
-  DEMO_DISCLAIMER,
 } from '../../config/brand';
 import { DEEP_LINK_MAP, type RoleKey } from '../../config/tabs';
 import { navigateAfterAuth } from '../../utils/profile-onboarding';
 import { useRoleStore } from '../../store/role';
+import OpsSessionBar from '../../components/OpsSessionBar.vue';
+import { openOpsMode } from '../../utils/ops-mode';
 import {
+  hasSeenTour,
+  LOGGED_IN_SPLASH_MS,
+  resolveReturnEntryPath,
   resolveUnauthenticatedEntry,
-  splashDurationMs,
+  RETURN_SPLASH_MS,
 } from '../../utils/tour-onboarding';
 
 const roleStore = useRoleStore();
 
 const progressPct = ref(0);
+const loggedIn = ref(false);
+const loggedInHint = ref('');
 let splashTimer: ReturnType<typeof setTimeout> | null = null;
 let progressTimer: ReturnType<typeof setInterval> | null = null;
 let navigated = false;
 let launchQuery: Record<string, string | undefined> = {};
 let forceTour = false;
-let splashMs = 1800;
+let openOpsDirect = false;
+let splashMs = RETURN_SPLASH_MS;
+let lastLogoTap = 0;
+
+function openOps() {
+  navigated = true;
+  clearSplashTimers();
+  openOpsMode();
+}
+
+function onLogoTap() {
+  const now = Date.now();
+  if (now - lastLogoTap < 450) {
+    openOps();
+    lastLogoTap = 0;
+    return;
+  }
+  lastLogoTap = now;
+}
 
 function clearSplashTimers() {
   if (splashTimer) {
@@ -62,13 +85,14 @@ function clearSplashTimers() {
 }
 
 function skipSplash() {
-  if (navigated) return;
+  if (navigated || loggedIn.value) return;
   clearSplashTimers();
   progressPct.value = 100;
   proceedAfterSplash();
 }
 
-function startSplash() {
+function startSplash(ms: number) {
+  splashMs = ms;
   clearSplashTimers();
   progressPct.value = 0;
   const tickMs = 40;
@@ -137,8 +161,39 @@ function proceedAfterSplash() {
 onLoad((query) => {
   launchQuery = (query || {}) as Record<string, string | undefined>;
   forceTour = launchQuery.tour === '1';
-  splashMs = splashDurationMs(forceTour);
-  startSplash();
+  openOpsDirect = launchQuery.ops === '1';
+
+  if (openOpsDirect) {
+    openOps();
+    return;
+  }
+
+  if (launchQuery.share === '1' || launchQuery.ref) {
+    startSplash(RETURN_SPLASH_MS);
+    return;
+  }
+
+  if (roleStore.isLoggedIn) {
+    loggedIn.value = true;
+    loggedInHint.value = '欢迎回来，即将进入首页…';
+    startSplash(LOGGED_IN_SPLASH_MS);
+    return;
+  }
+
+  // 首次打开：直达动画
+  if (forceTour || !hasSeenTour()) {
+    uni.reLaunch({ url: '/pages/common/demo-tour' });
+    return;
+  }
+
+  // 回访游客：有演示身份则跳过闪屏直达首页
+  const returnTarget = resolveReturnEntryPath();
+  if (returnTarget !== '/pages/common/login') {
+    uni.reLaunch({ url: returnTarget });
+    return;
+  }
+
+  startSplash(RETURN_SPLASH_MS);
 });
 
 onUnload(clearSplashTimers);
@@ -153,9 +208,9 @@ onUnload(clearSplashTimers);
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  background: linear-gradient(165deg, #fff8f0 0%, #fff5eb 45%, #ffefe0 100%);
-  color: var(--nb-text, #3d2a1f);
-  padding: 0 48rpx  calc(48rpx + env(safe-area-inset-bottom));
+  background: #fff;
+  color: #1a1a1a;
+  padding: 0 48rpx calc(48rpx + env(safe-area-inset-bottom));
 }
 .safe-top {
   height: env(safe-area-inset-top);
@@ -171,47 +226,41 @@ onUnload(clearSplashTimers);
   padding: 24rpx 0;
 }
 .logo-mark {
-  width: 160rpx;
-  height: 160rpx;
-  border-radius: 40rpx;
+  width: 140rpx;
+  height: 140rpx;
+  border-radius: 36rpx;
   background: linear-gradient(145deg, #e88b4a 0%, #c45c26 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 16rpx 48rpx rgba(196, 92, 38, 0.28);
-  margin-bottom: 36rpx;
-  animation: logoIn 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  box-shadow: 0 12rpx 40rpx rgba(196, 92, 38, 0.22);
+  margin-bottom: 32rpx;
 }
 .logo-char {
-  font-size: 72rpx;
+  font-size: 68rpx;
   font-weight: 700;
   color: #fff;
   line-height: 1;
 }
 .title {
   display: block;
-  font-size: 52rpx;
+  font-size: 48rpx;
   font-weight: 700;
-  color: var(--nb-primary, #c45c26);
+  color: #1a1a1a;
   letter-spacing: 4rpx;
-  margin-bottom: 16rpx;
+  margin-bottom: 12rpx;
 }
 .tagline {
   display: block;
   font-size: 28rpx;
-  color: var(--nb-text-secondary, #6b5748);
+  color: #888;
   line-height: 1.5;
   max-width: 520rpx;
 }
-.demo-badge {
-  margin-top: 32rpx;
-  padding: 10rpx 24rpx;
-  border-radius: 999rpx;
-  background: rgba(196, 92, 38, 0.1);
-  border: 1rpx solid rgba(196, 92, 38, 0.22);
-}
-.demo-badge-text {
-  font-size: 22rpx;
+.welcome-hint {
+  display: block;
+  margin-top: 24rpx;
+  font-size: 26rpx;
   color: var(--nb-primary, #c45c26);
 }
 .bottom {
@@ -220,7 +269,7 @@ onUnload(clearSplashTimers);
 }
 .load-track {
   height: 6rpx;
-  background: rgba(196, 92, 38, 0.12);
+  background: #f0f0f0;
   border-radius: 6rpx;
   overflow: hidden;
   margin-bottom: 20rpx;
@@ -234,23 +283,13 @@ onUnload(clearSplashTimers);
 .skip-hint {
   display: block;
   font-size: 22rpx;
-  color: var(--nb-text-muted, #a89488);
-  margin-bottom: 28rpx;
+  color: #bbb;
+  margin-bottom: 20rpx;
 }
 .copyright {
   display: block;
   font-size: 20rpx;
-  color: var(--nb-text-muted, #a89488);
+  color: #ccc;
   line-height: 1.5;
-}
-@keyframes logoIn {
-  from {
-    opacity: 0;
-    transform: scale(0.88) translateY(16rpx);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
 }
 </style>

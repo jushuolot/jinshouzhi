@@ -1,60 +1,72 @@
-# 暖伴勤工 · 发布规则
+# 暖伴勤工 · 发布规则（三环境）
 
-## 双环境定义
+## 环境定义
 
-| 环境 | 角色 | 地址 | 数据/API |
-|------|------|------|----------|
-| **GitHub Pages** | **最新测试版** | https://jushuolot.github.io/jinshouzhi/nuanban/ | 前端 Mock，无需服务器 |
-| **阿里云** | **正式发布版** | http://101.200.128.82（备案后 `https://nuanban.cc`） | 真实 PocketBase |
+| 环境 | 角色 | 地址 | 角标 | 数据 |
+|------|------|------|------|------|
+| **本地** | 测试机 | `http://localhost:5174` | 开发版 | Docker PB + 可选全量 Mock |
+| **GitHub Pages** | **正式制作** | https://jushuolot.github.io/jinshouzhi/nuanban/ | **正式版** | 真实 API；**仅游客** Mock |
+| **阿里云** | **对外发布** | https://nuanban.cc（备案中可用 IP） | **发布版** | 真实 PocketBase |
 
-原则：**先测后发** — 所有功能先在 GitHub 测试版验收，再发布到阿里云正式版。
+原则：**本地测通 → GitHub 正式验收 → 阿里云对外发布**。
 
-写代码、改 API、排查正式版网络问题时，请先读 **[ALIYUN_ENV.md](./ALIYUN_ENV.md)**（API 同域、Mock 分流、防火墙与常见踩坑）。
+外部信息准备见 **[FORMAL_PREP.md](./FORMAL_PREP.md)**。
 
 ---
 
 ## 日常流程
 
-### 1. 开发完成 → 发布测试版
+### 1. 本地测试机
+
+```bash
+./scripts/dev-test.sh
+cd packages/miniapp && npm run dev:h5
+```
+
+`.env` 推荐：
+
+```env
+VITE_RELEASE_CHANNEL=development
+VITE_DEMO_MOCK=true
+VITE_API_BASE_URL=/api
+```
+
+### 2. 发布 GitHub 正式版
 
 ```bash
 git add … && git commit -m "feat: …"
-./scripts/release-test.sh
+./scripts/release-formal.sh
 ```
 
-- 推送 `main` 到 GitHub
-- GitHub Actions 自动构建 Pages（约 2～5 分钟）
-- 登录页显示 **「测试版」** 角标
-- 验收链接：https://jushuolot.github.io/jinshouzhi/nuanban/#/pages/common/login  
-完整测试文档：[TEST_VERSION.md](./TEST_VERSION.md)
+- 推送 `main` → Actions 构建（`VITE_RELEASE_CHANNEL=formal`）
+- 需配置仓库 Variable：`NUANBAN_FORMAL_API_URL`
+- 验收：https://jushuolot.github.io/jinshouzhi/nuanban/#/pages/common/launch
 
-### 2. 测试版验收通过 → 发布正式版
-
-**方式 A — 本地一键（已配置 SSH）**
+### 3. 发布阿里云对外版
 
 ```bash
 ./scripts/release-prod.sh
 ```
 
-**方式 B — 阿里云 Workbench**
+- `VITE_RELEASE_CHANNEL=public`
+- 无 Mock，同域 `/api`
 
-```bash
-cd /opt/jinshouzhi/nuanban_github && ./scripts/release-prod.sh
-```
-
-- 拉取与 GitHub `main` 相同提交
-- 重建 H5（`VITE_RELEASE_CHANNEL=production`，无 Mock）
-- 重启 PocketBase + Caddy
-- 登录页显示 **「正式版」** 角标
-- 浏览器 **Cmd+Shift+R** 强刷
-
-### 3. 查看当前版本
+### 4. 查看版本
 
 ```bash
 ./scripts/release-status.sh
 ```
 
-对比：本地 HEAD、GitHub `main`、阿里云已部署 SHA。
+---
+
+## 构建差异
+
+| 变量 | 本地测试机 | GitHub 正式版 | 阿里云发布版 |
+|------|------------|---------------|--------------|
+| `VITE_RELEASE_CHANNEL` | `development` | `formal` | `public` |
+| `VITE_DEMO_MOCK` | `true`（可选） | **不设** | **不设** |
+| 游客 Mock | 是 | 是（仅游客） | 否 |
+| 登录用户 API | 本地 PB / Mock | 正式制作 API | 发布 API |
 
 ---
 
@@ -62,32 +74,8 @@ cd /opt/jinshouzhi/nuanban_github && ./scripts/release-prod.sh
 
 | 脚本 | 用途 |
 |------|------|
-| `release-test.sh` | 发布 **测试版** → 仅推 GitHub |
-| `release-prod.sh` | 发布 **正式版** → 仅部署阿里云 |
-| `release-status.sh` | 查看测试/正式版本是否一致 |
-| `sync-all.sh` | 自动识别环境：本地=测试发布，服务器=正式发布 |
-| `sync-check.sh` | 检测代码与 API 健康 |
-
-> **不要**在本地 `git push` 后自动部署阿里云。正式版必须显式执行 `release-prod.sh`。
-
----
-
-## 构建差异
-
-| 变量 | GitHub 测试版 | 阿里云正式版 |
-|------|---------------|--------------|
-| `VITE_RELEASE_CHANNEL` | `test` | `production` |
-| `VITE_DEMO_MOCK` | `true` | 未设置（真实 API） |
-| `VITE_API_BASE_URL` | `/api`（Mock） | `http://IP/api` 或 `https://域名/api` |
-
----
-
-## 备案通过后首次 HTTPS
-
-```bash
-cd /opt/jinshouzhi/nuanban_github
-# 配置 config/demo.env 中 NUANBAN_DOMAIN=nuanban.cc
-./scripts/deploy-public.sh
-```
-
-之后日常更新仍用 `./scripts/release-prod.sh`（内部调用 `aliyun-fix-data.sh`）。
+| `dev-test.sh` | 本地启动 PocketBase + seed |
+| `release-formal.sh` | 推 **GitHub 正式版** |
+| `release-prod.sh` | 部署 **阿里云发布版** |
+| `release-status.sh` | 对比各环境 SHA |
+| `release-test.sh` | 兼容旧名 → `release-formal.sh` |

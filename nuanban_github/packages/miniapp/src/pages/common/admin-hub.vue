@@ -136,17 +136,20 @@
     </view>
 
     <text v-if="overview?.updatedAt" class="ts">数据更新 {{ formatTime(overview.updatedAt) }}</text>
+    <OpsSessionBar />
   </view>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue';
+import OpsSessionBar from '../../components/OpsSessionBar.vue';
 import { onShow } from '@dcloudio/uni-app';
 import { fetchPlatformActivity, fetchPlatformOverview, seedDemoScenario, type PlatformOverview } from '../../api/platform';
 import { listDispatchableOrders } from '../../api/org';
 import { activityIcon } from '../../utils/demo-activity';
 import type { ActivityEvent } from '../../utils/demo-activity';
-import { isDemoMockEnabled, resetDemoRuntimeState } from '../../utils/demo-mock';
+import { isGuestBrowse } from '../../utils/guest-browse';
+import { resetDemoRuntimeState } from '../../utils/demo-mock';
 import { formatRelativeTime, formatShortTime } from '../../utils/format-time';
 import {
   clearOpsSession,
@@ -156,7 +159,7 @@ import {
 } from '../../utils/ops-mode';
 import { pbErrorMessage } from '../../utils/request';
 
-const demoMode = isDemoMockEnabled();
+const demoMode = import.meta.env.DEV || isGuestBrowse();
 const hiddenEntry = ref(isOpsEntryHidden());
 
 const pendingCount = ref(0);
