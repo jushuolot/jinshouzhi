@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>LOT 世界核 v12 · 全球控制塔</title>
+  <title>LOT C4I · 雨林指挥 v13</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <style>
@@ -136,6 +136,35 @@
     .doc-act { padding: 6px 10px; border-radius: 6px; border: 1px solid var(--accent); background: #0f2a22; color: var(--accent); font-size: 10px; cursor: pointer; }
     .doc-act.off, .doc-act:disabled { opacity: 0.35; border-color: var(--line); color: var(--muted); }
     .doc-card-head { margin-bottom: 4px; }
+    .ops-link { display: block; text-align: center; text-decoration: none; line-height: 2.4; }
+    .ops-readonly { border-color: #1a5a80; background: #0a1424; }
+    .map-wrap { position: relative; min-height: 360px; height: 100%; }
+    .map-hud { position: absolute; left: 10px; bottom: 10px; right: 10px; z-index: 500; pointer-events: none; }
+    .map-hud > * { pointer-events: auto; }
+    .layer-row { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
+    .layer-chip { font-size: 9px; padding: 4px 8px; border-radius: 6px; border: 1px solid var(--line); background: rgba(13,21,36,0.92); color: var(--muted); cursor: pointer; }
+    .layer-chip.on { border-color: var(--accent); color: var(--accent); }
+    #symbiosis-panel { max-height: 42vh; overflow: auto; padding: 10px; border-radius: 10px; border: 1px solid var(--line); background: rgba(5,10,20,0.92); backdrop-filter: blur(6px); }
+    .sym-head { display: flex; justify-content: space-between; font-size: 10px; margin-bottom: 6px; color: var(--accent); }
+    .sym-count { color: var(--muted); font-size: 9px; }
+    .sym-legend { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 6px; }
+    .sym-leg { font-size: 8px; padding: 2px 5px; border-radius: 4px; background: #152238; color: var(--muted); }
+    .sym-grid { display: flex; flex-wrap: wrap; gap: 5px; }
+    .sym-node { font-size: 9px; padding: 5px 7px; border-radius: 6px; border: 2px solid var(--ph, var(--line)); background: #0d1524; min-width: 64px; }
+    .sym-node b { display: block; font-size: 10px; color: var(--text); }
+    .sym-kind { font-size: 8px; color: var(--muted); }
+    .sym-phase { font-size: 8px; color: var(--ph); }
+    .sym-edges { margin-top: 6px; font-size: 8px; color: var(--muted); max-height: 60px; overflow: auto; }
+    .sym-edge i { color: var(--warn); font-style: normal; }
+    .sym-empty { font-size: 10px; color: var(--muted); margin: 0; }
+    #tour-bar { border-bottom: 1px solid var(--line); background: #0a1828; padding: 6px 12px; font-size: 10px; overflow-x: auto; }
+    .tour-inner { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+    .tour-title { color: var(--orange); font-weight: 700; margin-right: 4px; }
+    .tour-step { padding: 3px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
+    .tour-step.done { border-color: var(--accent); color: var(--accent); opacity: 0.7; }
+    .tour-step.cur { border-color: var(--orange); color: var(--orange); box-shadow: 0 0 8px rgba(255,140,42,0.3); }
+    .tour-go { padding: 4px 10px; border-radius: 6px; border: 1px solid var(--accent); background: #0f2a22; color: var(--accent); font-size: 10px; cursor: pointer; text-decoration: none; white-space: nowrap; }
+    .c4i-note { font-size: 9px; color: var(--muted); margin-bottom: 8px; line-height: 1.4; }
   </style>
 </head>
 <body>
@@ -151,6 +180,7 @@
     </div>
     <div class="chain-pills" id="chain-pills"></div>
   </header>
+  <div id="tour-bar"></div>
   <main>
     <aside>
       <p class="sec-title">空间 zoom · 宇宙 → 乡村</p>
@@ -167,7 +197,13 @@
         <a href="driver.html">司机端</a>
       </div>
     </aside>
-    <section id="map" aria-label="世界地图"></section>
+    <section class="map-wrap" aria-label="态势地图">
+      <div id="map"></div>
+      <div class="map-hud">
+        <div class="layer-row" id="layer-toggles"></div>
+        <div id="symbiosis-panel"></div>
+      </div>
+    </section>
     <div class="quest">
       <p class="sec-title">角色镜头</p>
       <div class="actor-row" id="actors"></div>
@@ -175,7 +211,8 @@
       <div id="ops-console"></div>
       <div id="doc-workbench"></div>
       <div id="next-hint" hidden class="next-hint"></div>
-      <p class="sec-title">辅助动作 · 须匹配角色与待办</p>
+      <p class="c4i-note">C4I 指挥只读 · 履约执行请用 <a href="field/index.html" style="color:var(--accent)">Field 现场</a> · 单据可在下方预览</p>
+      <p class="sec-title">辅助动作 · 调试（生产请用 Field）</p>
       <div class="actions" id="actions"></div>
       <p class="sec-title">轨道电子 · 事件账本</p>
       <div id="event-log"></div>
@@ -220,15 +257,17 @@
     </div>
   </div>
   <script type="module">
-    import { defaultChain, PLATFORM_VERSION } from '../kernel/lot-chain.js?v=12.1.0';
+    import { defaultChain, PLATFORM_VERSION } from '../kernel/lot-chain.js?v=13.1.0';
     import { projectLOState, ACTOR_LENSES, SPATIAL_LEVELS } from '../kernel/lot-nucleus.js';
     import { CHAIN_STATUS, legMeta } from '../kernel/lot-chain-order.js';
     import { ENTERPRISES, getEnterprise } from '../kernel/lot-ecosystem.js';
     import { SETTLEMENT_STATUS } from '../kernel/lot-settlement.js';
     import { settlementActionsForViewer } from '../kernel/lot-business.js';
     import { getDomain } from '../kernel/lot-domains.js';
-    import { bindOrderIntake } from './intake-modal.js?v=12.1.0';
-    import { bindOperationConsole, renderOperationConsole } from './operation-console.js?v=12.1.0';
+    import { bindOrderIntake } from './intake-modal.js?v=13.1.0';
+    import { bindOperationConsole, renderOperationConsole } from './operation-console.js?v=13.1.0';
+    import { renderSymbiosisPanel, renderLayerToggles } from './c4i-symbiosis.js?v=13.1.0';
+    import { detectTourStep, renderTourBar } from './tour-hint.js?v=13.1.0';
 
     const state = {
       chain: defaultChain,
@@ -243,7 +282,12 @@
       autoTimer: null,
       evolveLog: [],
       routeLayers: [],
+      layers: { routes: true, nodes: true, symbiosis: true },
     };
+
+    const qs = new URLSearchParams(location.search);
+    if (qs.get('co')) state.activeCoId = qs.get('co');
+    if (qs.get('actor')) state.actor = qs.get('actor');
 
     document.getElementById('ver-badge').textContent = 'v' + (PLATFORM_VERSION || '12.0.0');
 
@@ -364,29 +408,33 @@
       const cellMap = new Map(spatial.map((c) => [c.id, c]));
 
       const routes = await state.chain.getGlobalRoutes();
-      for (const r of routes) {
-        const a = cellMap.get(r.from);
-        const b = cellMap.get(r.to);
-        if (!a?.lat || !b?.lat) continue;
-        const line = L.polyline([[a.lat, a.lng], [b.lat, b.lng]], { color: r.color || '#3d9dff', weight: 3, opacity: 0.75, dashArray: r.mode === 'ocean' ? '8 6' : null });
-        line.addTo(state.map);
-        state.routeLayers.push(line);
+      if (state.layers.routes !== false) {
+        for (const r of routes) {
+          const a = cellMap.get(r.from);
+          const b = cellMap.get(r.to);
+          if (!a?.lat || !b?.lat) continue;
+          const line = L.polyline([[a.lat, a.lng], [b.lat, b.lng]], { color: r.color || '#3d9dff', weight: 3, opacity: 0.75, dashArray: r.mode === 'ocean' ? '8 6' : null });
+          line.addTo(state.map);
+          state.routeLayers.push(line);
+        }
       }
 
-      for (const lo of los) {
-        for (const cellId of [lo.originCellId, lo.destCellId]) {
-          const c = spatial.find((x) => x.id === cellId);
-          if (!c?.lat) continue;
-          const active = lo.loId === state.activeLoId;
-          const m = L.circleMarker([c.lat, c.lng], {
-            radius: active ? 11 : 7,
-            color: active ? '#ff6b9d' : '#3dff9a',
-            fillColor: active ? '#ff6b9d' : '#1a4d3a',
-            fillOpacity: 0.9, weight: 2,
-          }).addTo(state.map);
-          m.bindPopup(`<b>${labels.get(cellId)}</b><br/>${lo.loId}<br/>${lo.chainOrderId || ''}`);
-          m.on('click', () => { state.activeLoId = lo.loId; renderAll(); });
-          state.markers.push(m);
+      if (state.layers.nodes !== false) {
+        for (const lo of los) {
+          for (const cellId of [lo.originCellId, lo.destCellId]) {
+            const c = spatial.find((x) => x.id === cellId);
+            if (!c?.lat) continue;
+            const active = lo.loId === state.activeLoId;
+            const m = L.circleMarker([c.lat, c.lng], {
+              radius: active ? 11 : 7,
+              color: active ? '#ff6b9d' : '#3dff9a',
+              fillColor: active ? '#ff6b9d' : '#1a4d3a',
+              fillOpacity: 0.9, weight: 2,
+            }).addTo(state.map);
+            m.bindPopup(`<b>${labels.get(cellId)}</b><br/>${lo.loId}<br/>${lo.chainOrderId || ''}`);
+            m.on('click', () => { state.activeLoId = lo.loId; renderAll(); });
+            state.markers.push(m);
+          }
         }
       }
 
@@ -587,7 +635,16 @@
       await renderActions();
       await renderEvents();
       await renderSettlements();
-      await renderOperationConsole(state.chain, state.activeCoId, state.actor);
+      const symEl = document.getElementById('symbiosis-panel');
+      if (state.layers.symbiosis !== false) {
+        symEl.style.display = '';
+        await renderSymbiosisPanel(state.chain, state.activeCoId, symEl);
+      } else {
+        symEl.style.display = 'none';
+      }
+      const tourStep = await detectTourStep(state.chain, state.activeCoId);
+      renderTourBar(document.getElementById('tour-bar'), tourStep, { chainOrderId: state.activeCoId });
+      await renderOperationConsole(state.chain, state.activeCoId, state.actor, {}, { c4iMode: true });
     }
 
     bindOrderIntake({ state, chain: state.chain, onRefresh: renderAll, logEvolve });
@@ -595,6 +652,11 @@
 
     document.getElementById('btn-advance').onclick = async () => {
       if (!state.activeCoId) return;
+      const pending = await state.chain.getPendingOperation(state.activeCoId, state.actor);
+      if (pending?.actor) {
+        location.href = `field/role.html?role=${pending.actor}&co=${encodeURIComponent(state.activeCoId)}`;
+        return;
+      }
       const r = await state.chain.executeOperation(state.activeCoId, state.actor);
       if (!r.ok) logEvolve(`<b>受阻</b> ${r.reason}`);
       else if (r.step?.loId) state.activeLoId = r.step.loId;
@@ -654,6 +716,7 @@
     };
 
     initEnt();
+    renderLayerToggles(state, document.getElementById('layer-toggles'), () => renderAll());
     state.autoFission = await state.chain.getAutoPilot();
     const status = await state.chain.init();
     renderChainPills(status);

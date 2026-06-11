@@ -17,7 +17,7 @@ const CARBON_KG = {
   rail: 9,
 };
 
-export const PLATFORM_VERSION = '13.0.0';
+export const PLATFORM_VERSION = '13.1.0';
 
 export async function computeControlTower(chain, { viewerEnterpriseId } = {}) {
   const orders = await chain.listChainOrders(viewerEnterpriseId ? { viewerEnterpriseId } : {});

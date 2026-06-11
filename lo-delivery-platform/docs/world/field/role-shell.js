@@ -2,7 +2,7 @@
  * Field 现场壳 — 全角色统一移动作业（司机端范式）
  */
 import { ACTOR_LENSES } from '../../kernel/lot-nucleus.js';
-import { actorLabel } from '../../kernel/lot-document-ops.js?v=13';
+import { renderFieldDocs } from './field-docs.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -11,11 +11,18 @@ export function parseRole() {
   return q.get('role') || localStorage.getItem('lot_field_role') || 'driver';
 }
 
+export function parseCoId() {
+  return new URLSearchParams(location.search).get('co') || null;
+}
+
 export function bindFieldShell({ chain, role, onReady }) {
   localStorage.setItem('lot_field_role', role);
   const lens = ACTOR_LENSES[role] || { labelZh: role };
   $('role-title').textContent = lens.labelZh + ' · 现场';
   $('role-badge').textContent = role;
+
+  let pinnedCo = parseCoId();
+  let active = null;
 
   async function refresh() {
     await chain.init();
@@ -37,15 +44,25 @@ export function bindFieldShell({ chain, role, onReady }) {
 
     $('task-count').textContent = `${tasks.length} 待办`;
     const list = $('task-list');
+
     if (!tasks.length) {
       list.innerHTML = '';
       $('empty').hidden = false;
       $('actions').hidden = true;
+      $('field-docs').hidden = true;
       return;
     }
     $('empty').hidden = true;
 
-    let active = tasks.find((t) => t.pending.canExecute) || tasks[0];
+    if (pinnedCo) {
+      active = tasks.find((t) => t.co.chainOrderId === pinnedCo) || tasks[0];
+      pinnedCo = null;
+    } else if (!active || !tasks.some((t) => t.co.chainOrderId === active.co.chainOrderId)) {
+      active = tasks.find((t) => t.pending.canExecute) || tasks[0];
+    } else {
+      active = tasks.find((t) => t.co.chainOrderId === active.co.chainOrderId) || tasks[0];
+    }
+
     list.innerHTML = tasks
       .map(({ co, pending }) => {
         const on = co.chainOrderId === active.co.chainOrderId ? ' active' : '';
@@ -76,16 +93,19 @@ export function bindFieldShell({ chain, role, onReady }) {
       await refresh();
     };
 
-    const docBtn = $('btn-docs');
-    if (docBtn) {
-      const docs = await chain.getDocumentsForChain(active.co.chainOrderId);
-      docBtn.hidden = !docs.length;
-      docBtn.onclick = () => {
-        location.href = `../index.html?co=${active.co.chainOrderId}&actor=${role}#doc-workbench`;
-      };
-    }
-
     $('actions').hidden = false;
+
+    await renderFieldDocs(chain, active.co.chainOrderId, role, $('field-docs'), {
+      onAction: async (r) => {
+        toast(r.ok ? `单据 → ${r.doc.status}` : r.reason || '单据受阻');
+        await refresh();
+      },
+    });
+
+    const c4i = $('link-c4i');
+    if (c4i) {
+      c4i.href = `../index.html?co=${encodeURIComponent(active.co.chainOrderId)}&actor=${role}`;
+    }
   }
 
   function toast(msg) {

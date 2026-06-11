@@ -15,10 +15,11 @@
 | `kernel/` | LOT 内核（链订单、业务裂变、点对点结算、IndexedDB） |
 | `LICENSE` | MIT |
 
-## 在线演示（v13.0.0）
+## 在线演示（v13.1.0）
 
-- **C4I 指挥大屏**：https://jushuolot.github.io/lotplatform/world/?v=13.0.0
+- **C4I 指挥大屏**：https://jushuolot.github.io/lotplatform/world/?v=13.1.0
 - **Field 手机现场**（货主/仓管/司机…）：https://jushuolot.github.io/lotplatform/world/field/
+- 顶栏 **「跑一圈」** 引导：C4I 下单 → Field 逐步执行
 - 设计总纲：[docs/06-rainforest-ecosystem.md](docs/06-rainforest-ecosystem.md)
 - **运营模拟壳（旧版）**：https://jushuolot.github.io/lotplatform/
 

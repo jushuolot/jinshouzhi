@@ -6,7 +6,7 @@ import {
   getDocumentActions,
   renderDocWorkbenchHtml,
   actorLabel,
-} from '../kernel/lot-document-ops.js?v=12.1.0';
+} from '../kernel/lot-document-ops.js?v=13.1.0';
 
 let ctx = null;
 
@@ -14,7 +14,8 @@ function $(id) {
   return document.getElementById(id);
 }
 
-export async function renderOperationConsole(chain, chainOrderId, viewerActor, containers = {}) {
+export async function renderOperationConsole(chain, chainOrderId, viewerActor, containers = {}, options = {}) {
+  const c4iMode = options.c4iMode !== false;
   const opsEl = containers.ops || $('ops-console');
   const docsEl = containers.docs || $('doc-workbench');
   const flowEl = containers.flow || $('sales-flow');
@@ -62,17 +63,24 @@ export async function renderOperationConsole(chain, chainOrderId, viewerActor, c
       ? `<p class="ops-warn">${pending.blockedReason}</p>`
       : '';
     const leg = pending.legLabel ? `<span class="lo-meta">${pending.legLabel}</span>` : '';
+    const fieldRole = pending.actor || viewerActor;
+    const fieldUrl = `field/role.html?role=${fieldRole}&co=${encodeURIComponent(chainOrderId)}`;
+    const execBtn = c4iMode
+      ? `<a class="ops-primary ops-link" href="${fieldUrl}">📱 Field · ${pending.buttonLabel}</a>` +
+        `<p class="lo-meta" style="margin-top:6px">C4I 只读态势 · 执行请用手机现场</p>`
+      : `<button type="button" id="btn-exec-op" class="ops-primary" ${disabled}>${pending.buttonLabel}</button>`;
+
     opsEl.innerHTML =
-      `<div class="ops-card">` +
-      `<p class="sec-title" style="margin:0">待办操作 · ${pending.phase === 'sales_flow' ? '销售下单' : pending.phase === 'exception' ? '异常闭环' : '履约作业'}</p>` +
-      `<div class="ops-actor">操作人：<b>${pending.actorLabel}</b> · 当前镜头：${actorLabel(viewerActor)}</div>` +
+      `<div class="ops-card ops-readonly">` +
+      `<p class="sec-title" style="margin:0">待办态势 · ${pending.phase === 'sales_flow' ? '销售下单' : pending.phase === 'exception' ? '异常闭环' : '履约作业'}</p>` +
+      `<div class="ops-actor">须由：<b>${pending.actorLabel}</b> · 镜头 ${actorLabel(viewerActor)}</div>` +
       leg +
       warn +
-      `<button type="button" id="btn-exec-op" class="ops-primary" ${disabled}>${pending.buttonLabel}</button>` +
+      execBtn +
       `</div>`;
 
     const btn = $('btn-exec-op');
-    if (btn && pending.canExecute) {
+    if (btn && pending.canExecute && !c4iMode) {
       btn.onclick = async () => {
         const r = await chain.executeOperation(chainOrderId, viewerActor);
         if (!r.ok) {
