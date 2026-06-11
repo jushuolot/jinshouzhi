@@ -1,15 +1,19 @@
 #!/usr/bin/env bash
 # 暖伴勤工 H5 本地开发（端口 5174）
-set -euo pipefail
+# 用法：在 nuanban_github 目录执行 ./scripts/start-h5.sh
+set -eo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-PORT="${NUANBAN_DEV_PORT:-5174}"
+PORT=5174
+if [ -n "${NUANBAN_DEV_PORT:-}" ]; then
+  PORT="$NUANBAN_DEV_PORT"
+fi
 MINIAPP="$ROOT/packages/miniapp"
 
-echo "==> 检查端口 $PORT（暖伴勤工专用）"
-pids=$(lsof -ti :"$PORT" 2>/dev/null || true)
+echo "==> 检查端口 ${PORT} (暖伴勤工)"
+pids="$(lsof -ti :"${PORT}" 2>/dev/null || true)"
 if [ -n "$pids" ]; then
-  echo "    端口 $PORT 被占用，正在释放: $pids"
+  echo "    端口 ${PORT} 被占用，正在释放: $pids"
   kill -9 $pids 2>/dev/null || true
   sleep 0.5
 fi
@@ -24,7 +28,7 @@ if ! grep -q '^VITE_DEMO_MOCK=true' "$MINIAPP/.env" 2>/dev/null; then
 fi
 
 echo ""
-echo "==> 启动暖伴 H5 → http://localhost:$PORT/#/pages/common/launch"
+echo "==> 启动暖伴 H5 -> http://localhost:${PORT}/#/pages/common/launch"
 echo ""
 
 cd "$MINIAPP"
