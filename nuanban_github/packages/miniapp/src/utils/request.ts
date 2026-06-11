@@ -48,8 +48,11 @@ function backendDownHint(): string {
     const { hostname } = window.location;
     const onGithubPages = hostname.endsWith('.github.io');
     const onDevHost = hostname === 'localhost' || hostname === '127.0.0.1';
-    if (!onDevHost && !onGithubPages) {
-      return '无法连接服务器，请检查网络后重试（可 Cmd+Shift+R 强刷）';
+    if (onGithubPages) {
+      return '网络或服务暂不可用，请稍后重试，或点底部「游客账号」先体验';
+    }
+    if (!onDevHost) {
+      return '无法连接服务器，请检查网络后重试';
     }
   }
   return '后端未启动。请先打开 Docker Desktop，再在项目根目录执行：docker compose up -d pocketbase';

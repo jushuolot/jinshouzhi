@@ -1027,12 +1027,15 @@ export function resetDemoRuntimeState() {
 }
 
 /**
- * 演示 Mock 仅用于游客模式（及本地开发显式开启）。
- * GitHub 正式版 / 对外发布版登录用户一律走真实 PocketBase API。
+ * 演示 Mock：游客、本地显式开启、GitHub Pages（远端 API 未就绪前）。
+ * 阿里云等发布版登录用户走真实 PocketBase API。
  */
 export function isDemoMockEnabled(): boolean {
   if (isGuestBrowse()) return true;
-  if (import.meta.env.DEV && import.meta.env.VITE_DEMO_MOCK === 'true') return true;
+  if (import.meta.env.VITE_DEMO_MOCK === 'true') return true;
+  if (typeof window !== 'undefined' && window.location.hostname.endsWith('.github.io')) {
+    return true;
+  }
   return false;
 }
 
