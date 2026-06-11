@@ -78,6 +78,13 @@
       </view>
       <text class="chevron">›</text>
     </view>
+    <view class="link-card highlight" @tap="goStudentProfiles">
+      <view class="link-main">
+        <text class="link-title">学生资料管理</text>
+        <text class="link-desc">卡通头像 · 实名核验照 · 审核参考</text>
+      </view>
+      <text class="chevron">›</text>
+    </view>
     <view class="link-card highlight" @tap="goFunds">
       <view class="link-main">
         <text class="link-title">资金管理</text>
@@ -232,6 +239,10 @@ function goDispatch() {
 
 function goFunds() {
   uni.navigateTo({ url: '/pages/common/fund-admin' });
+}
+
+function goStudentProfiles() {
+  uni.navigateTo({ url: '/pages/common/student-profiles' });
 }
 
 function goSchoolCoop() {

@@ -367,6 +367,26 @@
         "cascadeDelete": false,
         "minSelect": 0,
         "maxSelect": 1
+      },
+      {
+        "id": "fld_ur_cartoon_avatar",
+        "name": "cartoon_avatar_id",
+        "type": "text",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "max": 64
+      },
+      {
+        "id": "fld_ur_verification_photo",
+        "name": "verification_photo",
+        "type": "file",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "maxSelect": 1,
+        "maxSize": 5242880,
+        "mimeTypes": ["image/jpeg", "image/png", "image/webp"]
       }
     ],
     "indexes": [],

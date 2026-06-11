@@ -2,11 +2,20 @@
   <view class="page">
     <view v-if="onboarding" class="banner">首次登录 · 请完善学生资料与收款账户</view>
 
-    <text class="section">头像</text>
+    <text class="section">卡通头像</text>
     <view class="avatar-row">
-      <ProfileAvatar :avatar-url="avatarUrl" :name="displayName" @change="onAvatarChange" />
-      <text class="avatar-hint">点击更换头像</text>
+      <CartoonAvatarPicker
+        :avatar-id="cartoonAvatarId"
+        :name="displayName"
+        @change="onCartoonChange"
+      />
+      <text class="avatar-hint">选择对外展示的卡通形象</text>
     </view>
+
+    <VerificationPhotoSection
+      :photo-url="verificationPhotoUrl"
+      @change="onVerificationChange"
+    />
 
     <text class="section">显示名称</text>
     <input v-model="displayName" class="input nb-input" placeholder="如：林同学" />
@@ -48,9 +57,12 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { onLoad, onShow } from '@dcloudio/uni-app';
-import ProfileAvatar from '../../components/ProfileAvatar.vue';
+import CartoonAvatarPicker from '../../components/CartoonAvatarPicker.vue';
+import VerificationPhotoSection from '../../components/VerificationPhotoSection.vue';
 import PaymentAccountSection from '../../components/PaymentAccountSection.vue';
 import { fetchStudentProfile, updateStudentProfile } from '../../api/student';
+import { useRoleStore } from '../../store/role';
+import { resolveCartoonAvatarUrl, defaultCartoonAvatarId } from '../../utils/cartoon-avatars';
 import { finishProfileOnboarding } from '../../utils/profile-onboarding';
 import { DEMO_SCHOOLS } from '../../utils/demo-rich-data';
 import { pbErrorMessage } from '../../utils/request';
@@ -58,7 +70,8 @@ import { pbErrorMessage } from '../../utils/request';
 const schools = [...DEMO_SCHOOLS];
 const grades = ['大一', '大二', '大三', '大四', '研一', '研二'];
 const displayName = ref('');
-const avatarUrl = ref('');
+const cartoonAvatarId = ref('');
+const verificationPhotoUrl = ref('');
 const schoolIdx = ref(0);
 const gradeIdx = ref(2);
 const major = ref('');
@@ -86,7 +99,8 @@ onShow(async () => {
   try {
     const p = await fetchStudentProfile();
     displayName.value = p.displayName || p.nickname;
-    avatarUrl.value = p.avatarUrl || '';
+    cartoonAvatarId.value = p.cartoonAvatarId || defaultCartoonAvatarId(p.displayName || p.nickname);
+    verificationPhotoUrl.value = p.verificationPhotoUrl || '';
     const idx = schools.indexOf(p.schoolName as (typeof schools)[number]);
     schoolIdx.value = idx >= 0 ? idx : 0;
     major.value = p.major || '';
@@ -100,8 +114,12 @@ onShow(async () => {
   }
 });
 
-function onAvatarChange(url: string) {
-  avatarUrl.value = url;
+function onCartoonChange(id: string) {
+  cartoonAvatarId.value = id;
+}
+
+function onVerificationChange(url: string) {
+  verificationPhotoUrl.value = url;
 }
 
 function onSchoolPick(e: { detail: { value: string } }) {
@@ -145,7 +163,9 @@ async function save() {
       bio: bio.value,
       serviceAreas: splitAreas(serviceAreasText.value),
       availableHours: splitHours(availableHoursText.value),
+      cartoonAvatarId: cartoonAvatarId.value,
     });
+    useRoleStore().setUserAvatar(resolveCartoonAvatarUrl(cartoonAvatarId.value));
     uni.showToast({ title: '已保存', icon: 'success' });
     if (onboarding.value) {
       setTimeout(() => finishProfileOnboarding('student'), 500);

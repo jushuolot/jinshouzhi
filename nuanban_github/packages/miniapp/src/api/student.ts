@@ -48,6 +48,10 @@ export interface StudentProfile {
   nickname: string;
   email: string;
   avatarUrl?: string;
+  /** 卡通头像预设 id（学生端专用，非真实照片） */
+  cartoonAvatarId?: string;
+  /** 实名核验照 URL（仅学生、仅运营可见） */
+  verificationPhotoUrl?: string;
   profileComplete?: boolean;
   schoolName: string;
   displayName: string;
@@ -111,12 +115,17 @@ export async function updateStudentProfile(data: {
   grade?: string;
   availableHours?: string[];
   serviceAreas?: string[];
+  cartoonAvatarId?: string;
 }) {
   return request<{ ok: boolean } & Partial<StudentProfile>>({
     url: '/nuanban/student/profile',
     method: 'PATCH',
     data,
   });
+}
+
+export async function updateStudentCartoonAvatar(cartoonAvatarId: string) {
+  return updateStudentProfile({ cartoonAvatarId });
 }
 
 export async function fetchElderProfile(elderId: string) {

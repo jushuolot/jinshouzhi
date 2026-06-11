@@ -774,6 +774,11 @@ routerAdd("GET", "/api/nuanban/student/profile", function (e) {
           schoolName = nb.safeRecordString(s, "name", "");
         } catch (_) {}
       }
+      var cartoonAvatarId = nb.safeRecordString(r, "cartoon_avatar_id", "");
+      var verificationPhotoUrl = nb.roleFileUrlForClient(r, "verification_photo", e);
+    } else {
+      var cartoonAvatarId = "";
+      var verificationPhotoUrl = "";
     }
     var av = nb.userAvatarFields(auth, e);
     const profileComplete = !!(displayName && schoolName);
@@ -783,7 +788,9 @@ routerAdd("GET", "/api/nuanban/student/profile", function (e) {
       schoolName: schoolName,
       displayName: displayName,
       profileComplete: profileComplete,
+      cartoonAvatarId: cartoonAvatarId,
       avatarUrl: av.avatarUrl,
+      verificationPhotoUrl: verificationPhotoUrl,
       gender: "女",
       major: "护理学",
       grade: "大三",
@@ -851,6 +858,9 @@ routerAdd("PATCH", "/api/nuanban/student/profile", function (e) {
       } catch (_) {}
     }
   }
+  if (body.cartoonAvatarId) {
+    roleRec.set("cartoon_avatar_id", String(body.cartoonAvatarId));
+  }
   $app.save(roleRec);
   if (body.displayName) {
     auth.set("name", displayName);
@@ -861,11 +871,33 @@ routerAdd("PATCH", "/api/nuanban/student/profile", function (e) {
     displayName: displayName,
     schoolName: schoolName,
     profileComplete: !!(displayName && schoolName),
+    cartoonAvatarId: roleRec.getString("cartoon_avatar_id") || "",
+    verificationPhotoUrl: nb.roleFileUrlForClient(roleRec, "verification_photo", e),
     bio: body.bio || "热心公益的在校女生，擅长陪伴聊天与康复协助。",
     major: body.major || "护理学",
     grade: body.grade || "大三",
     availableHours: body.availableHours || ["周一至周五 14:00–18:00", "周六 9:00–12:00"],
     serviceAreas: body.serviceAreas || ["浦东新区", "黄浦区"],
+  });
+});
+
+routerAdd("POST", "/api/nuanban/student/verification-photo", function (e) {
+  var nb = require(__hooks + "/nuanban_lib.js");
+  const rc = nb.assertActiveRoleHeader(e, "student");
+  if (!rc.ok) return e.json(rc.code, rc.body);
+  const auth = e.auth;
+  if (!auth) return e.json(401, { message: "需要登录" });
+  const roleRec = nb.studentRoleRecord(auth.id);
+  if (!roleRec) return e.json(404, { message: "学生角色不存在" });
+  const files = e.findUploadedFiles("photo");
+  if (!files || files.length === 0 || !files[0]) {
+    return e.json(400, { message: "请拍摄核验照片" });
+  }
+  roleRec.set("verification_photo", files[0]);
+  $app.save(roleRec);
+  return e.json(200, {
+    ok: true,
+    verificationPhotoUrl: nb.roleFileUrlForClient(roleRec, "verification_photo", e),
   });
 });
 
@@ -2301,6 +2333,54 @@ routerAdd("POST", "/api/nuanban/platform/seed-scenario", function (e) {
 });
 
 /** 平台运营看板：撮合漏斗与核心指标（演示） */
+routerAdd("GET", "/api/nuanban/platform/students", function (e) {
+  var nb = require(__hooks + "/nuanban_lib.js");
+  var list = [];
+  try {
+    var roleRecords = $app.findRecordsByFilter(
+      "user_roles",
+      'role = "student"',
+      "-created",
+      100,
+      0
+    );
+    for (var i = 0; i < roleRecords.length; i++) {
+      var r = roleRecords[i];
+      var uid = r.getString("user");
+      var user = null;
+      try {
+        user = $app.findRecordById("users", uid);
+      } catch (_) {}
+      var schoolName = "";
+      var schoolId = nb.safeRecordString(r, "school", "");
+      if (schoolId) {
+        try {
+          var s = $app.findRecordById("school_dict", schoolId);
+          schoolName = nb.safeRecordString(s, "name", "");
+        } catch (_) {}
+      }
+      var displayName = nb.safeRecordString(r, "display_name", "");
+      list.push({
+        userId: uid,
+        displayName: displayName || (user ? user.getString("name") : "学生"),
+        nickname: user ? user.getString("name") : displayName,
+        email: user ? user.getString("email") : "",
+        schoolName: schoolName,
+        status: nb.safeRecordString(r, "status", "active"),
+        cartoonAvatarId: nb.safeRecordString(r, "cartoon_avatar_id", ""),
+        avatarUrl: user ? nb.userAvatarUrlForClient(user, e) : "",
+        verificationPhotoUrl: nb.roleFileUrlForClient(r, "verification_photo", e),
+        major: "护理学",
+        grade: "大三",
+        phone: "138****1234",
+      });
+    }
+  } catch (err) {
+    return e.json(400, { message: String(err && err.message ? err.message : err), list: [] });
+  }
+  return e.json(200, { list: list });
+});
+
 routerAdd("GET", "/api/nuanban/platform/overview", function (e) {
   var nb = require(__hooks + "/nuanban_lib.js");
   let pending = 0;

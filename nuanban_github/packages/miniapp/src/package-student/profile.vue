@@ -1,11 +1,18 @@
 <template>
   <view class="page">
+    <view class="top-bar">
+      <view class="back-btn" @tap="goBack">
+        <text class="back-icon">‹</text>
+        <text class="back-text">返回</text>
+      </view>
+    </view>
+
     <view class="hero">
-      <ProfileAvatar
+      <CartoonAvatarPicker
         class="hero-avatar"
-        :avatar-url="profile?.avatarUrl"
+        :avatar-id="profile?.cartoonAvatarId"
         :name="profile?.nickname"
-        @change="onAvatarChange"
+        @change="onCartoonChange"
       />
       <view class="hero-info">
         <text class="name">{{ profile?.nickname || '学生' }}</text>
@@ -32,6 +39,12 @@
       </view>
     </view>
     <text v-if="stats && stats.incomeCents === 0" class="stats-hint">完成订单并确认后计入收入</text>
+
+    <VerificationPhotoSection
+      :photo-url="profile?.verificationPhotoUrl"
+      :editable="true"
+      @change="onVerificationChange"
+    />
 
     <ProfileDetailCard v-if="profileSections.length" :sections="profileSections" />
 
@@ -103,13 +116,16 @@
 import { computed, ref } from 'vue';
 import { onShow } from '@dcloudio/uni-app';
 import RoleTabBar from '../components/RoleTabBar.vue';
-import ProfileAvatar from '../components/ProfileAvatar.vue';
+import CartoonAvatarPicker from '../components/CartoonAvatarPicker.vue';
+import VerificationPhotoSection from '../components/VerificationPhotoSection.vue';
 import ProfileDetailCard, { type ProfileDetailSection } from '../components/ProfileDetailCard.vue';
+import { resolveCartoonAvatarUrl } from '../utils/cartoon-avatars';
 import {
   fetchStudentProfile,
   fetchStudentStats,
   fetchStudentWithdrawal,
   listPendingOrders,
+  updateStudentCartoonAvatar,
   type StudentProfile,
   type StudentStats,
 } from '../api/student';
@@ -122,8 +138,29 @@ const profile = ref<StudentProfile | null>(null);
 const stats = ref<StudentStats | null>(null);
 const withdrawAvailable = ref('');
 
-function onAvatarChange(url: string) {
-  if (profile.value) profile.value = { ...profile.value, avatarUrl: url };
+function onVerificationChange(url: string) {
+  if (profile.value) profile.value = { ...profile.value, verificationPhotoUrl: url };
+}
+
+async function onCartoonChange(id: string) {
+  if (profile.value) {
+    profile.value = { ...profile.value, cartoonAvatarId: id };
+    roleStore.setUserAvatar(resolveCartoonAvatarUrl(id));
+  }
+  try {
+    await updateStudentCartoonAvatar(id);
+  } catch (e) {
+    uni.showToast({ title: pbErrorMessage(e), icon: 'none' });
+  }
+}
+
+function goBack() {
+  const pages = getCurrentPages();
+  if (pages.length > 1) {
+    uni.navigateBack();
+    return;
+  }
+  uni.redirectTo({ url: '/package-student/home' });
 }
 
 const profileSections = computed((): ProfileDetailSection[] => {
@@ -179,7 +216,8 @@ onShow(async () => {
   });
   if (p) {
     profile.value = p;
-    if (p.avatarUrl) roleStore.setUserAvatar(p.avatarUrl);
+    const cartoonUrl = resolveCartoonAvatarUrl(p.cartoonAvatarId);
+    roleStore.setUserAvatar(cartoonUrl);
   }
   if (s) stats.value = s;
   if (wd) withdrawAvailable.value = wd.availableYuan;
@@ -269,6 +307,23 @@ function logout() {
   background: #f5f5f5;
   padding: 24rpx;
   padding-bottom: 120rpx;
+}
+.top-bar {
+  margin: -8rpx 0 8rpx;
+}
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 8rpx 0;
+  color: var(--nb-primary, #c45c26);
+}
+.back-icon {
+  font-size: 44rpx;
+  line-height: 1;
+  margin-right: 4rpx;
+}
+.back-text {
+  font-size: 28rpx;
 }
 .hero {
   display: flex;

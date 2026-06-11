@@ -58,3 +58,26 @@ export async function seedDemoScenario() {
     method: 'POST',
   });
 }
+
+export interface OpsStudentProfile {
+  userId: string;
+  displayName: string;
+  nickname: string;
+  email: string;
+  schoolName: string;
+  status: string;
+  cartoonAvatarId?: string;
+  avatarUrl?: string;
+  verificationPhotoUrl?: string;
+  major?: string;
+  grade?: string;
+  phone?: string;
+}
+
+export async function fetchOpsStudentProfiles() {
+  const res = await request<{ list: OpsStudentProfile[] }>({
+    url: '/nuanban/platform/students',
+    method: 'GET',
+  });
+  return res.list ?? [];
+}

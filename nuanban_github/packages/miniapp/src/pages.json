@@ -33,6 +33,7 @@
     { "path": "pages/common/ops-gate", "style": { "navigationBarTitleText": "运营模式" } },
     { "path": "pages/common/admin-hub", "style": { "navigationBarTitleText": "运营模式" } },
     { "path": "pages/common/fund-admin", "style": { "navigationBarTitleText": "资金管理" } },
+    { "path": "pages/common/student-profiles", "style": { "navigationBarTitleText": "学生资料" } },
     { "path": "pages/common/school-coop", "style": { "navigationBarTitleText": "学校合作" } },
     { "path": "pages/common/student-pending", "style": { "navigationBarTitleText": "审核中" } },
     {

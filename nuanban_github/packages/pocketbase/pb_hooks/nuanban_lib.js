@@ -384,6 +384,28 @@ function userAvatarFields(auth, e) {
   };
 }
 
+function roleFileUrlForClient(record, fieldName, e) {
+  var fn = safeRecordString(record, fieldName, "");
+  if (!fn) return "";
+  var origin = requestOrigin(e);
+  if (!origin) return "";
+  var tok = requestBearerToken(e);
+  var q = tok ? "?token=" + encodeURIComponent(tok) : "";
+  return origin + "/api/files/user_roles/" + record.id + "/" + fn + q;
+}
+
+function studentRoleRecord(uid) {
+  var roles = $app.findRecordsByFilter(
+    "user_roles",
+    'user = {:uid} && role = "student"',
+    "",
+    1,
+    0,
+    { uid: uid }
+  );
+  return roles.length > 0 ? roles[0] : null;
+}
+
 function studentWithdrawalOverview(uid) {
   var store = studentWithdrawalsMap();
   var settlements = demoStudentSettlements();

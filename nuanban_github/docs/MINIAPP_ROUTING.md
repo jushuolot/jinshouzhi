@@ -13,6 +13,7 @@
   agreement        用户协议与隐私说明
   org-dispatch     机构派单演示（零成本 Mock）
   admin-hub        运营演示入口（派单 + 学校合作 + 资金管理）
+  student-profiles 学生资料管理（卡通头像 · 核验照）
   fund-admin       资金管理（储值/支付/提现审批 · 运营模式）
   school-coop      学校合作配置（只读）
   student-pending  学生资质审核中拦截页

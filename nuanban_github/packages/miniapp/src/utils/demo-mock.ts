@@ -38,6 +38,12 @@ import type { RoleKey } from '../config/tabs';
 import { isGuestBrowse, notifyGuestSimulate } from './guest-browse';
 import { getMockAvatarUrl } from './mock-avatar-storage';
 import {
+  getMockCartoonAvatarId,
+  getMockVerificationPhotoUrl,
+  setMockCartoonAvatarId,
+} from './mock-verification-storage';
+import { defaultCartoonAvatarId, resolveCartoonAvatarUrl } from './cartoon-avatars';
+import {
   buildRichCaregivers,
   buildRichElders,
   buildRichOrders,
@@ -308,9 +314,17 @@ function seedDemoRoleProfiles(email: string) {
 
 function studentProfileDto() {
   const dto = getStudentFullProfile(studentProfileState);
-  const url = getMockAvatarUrl(USERS.student.id);
-  const base = url ? { ...dto, avatarUrl: url } : dto;
-  return { ...base, profileComplete: studentProfileComplete() };
+  const userId = USERS.student.id;
+  const cartoonId =
+    getMockCartoonAvatarId(userId) || defaultCartoonAvatarId(dto.displayName || dto.nickname);
+  const verificationPhotoUrl = getMockVerificationPhotoUrl(userId);
+  return {
+    ...dto,
+    cartoonAvatarId: cartoonId,
+    avatarUrl: resolveCartoonAvatarUrl(cartoonId),
+    verificationPhotoUrl: verificationPhotoUrl || undefined,
+    profileComplete: studentProfileComplete(),
+  };
 }
 
 function familyProfileDto() {
@@ -1149,6 +1163,9 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
     if (data.bio != null) studentProfileState.bio = String(data.bio);
     if (data.major) studentProfileState.major = String(data.major);
     if (data.grade) studentProfileState.grade = String(data.grade);
+    if (data.cartoonAvatarId) {
+      setMockCartoonAvatarId(USERS.student.id, String(data.cartoonAvatarId));
+    }
     if (Array.isArray(data.availableHours)) {
       studentProfileState.availableHours = data.availableHours.map(String);
     }
@@ -1156,6 +1173,14 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
       studentProfileState.serviceAreas = data.serviceAreas.map(String);
     }
     return delay({ ok: true, ...studentProfileDto(), profileComplete: studentProfileComplete() } as T);
+  }
+  if (method === 'POST' && path === '/nuanban/student/verification-photo') {
+    const roleErr = assertDemoActiveRole(options, path, 'student');
+    if (roleErr) return Promise.reject({ message: roleErr, statusCode: 403 });
+    return delay({
+      ok: true,
+      verificationPhotoUrl: getMockVerificationPhotoUrl(USERS.student.id) || '',
+    } as T);
   }
   if (method === 'PATCH' && path === '/nuanban/family/profile') {
     const roleErr = assertDemoActiveRole(options, path, 'family');
@@ -1856,6 +1881,32 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
     const recordId = String(data.recordId || '');
     if (!recordId) return Promise.reject({ message: '缺少 recordId', statusCode: 400 });
     return delay(markFundReconciled(recordId) as T);
+  }
+
+  if (method === 'GET' && path === '/nuanban/platform/students') {
+    const caregivers = buildRichCaregivers();
+    const list = caregivers.map((c) => {
+      const profile = getRichCaregiverProfile(c.userId)!;
+      const cartoonId = getMockCartoonAvatarId(c.userId) || defaultCartoonAvatarId(c.name);
+      return {
+        userId: c.userId,
+        displayName: c.name,
+        nickname: c.name,
+        email:
+          c.userId === DEMO_USERS.student.id
+            ? DEMO_USERS.student.email
+            : `${c.userId}@test.nuanban.dev`,
+        schoolName: c.school,
+        status: 'active',
+        cartoonAvatarId: cartoonId,
+        avatarUrl: resolveCartoonAvatarUrl(cartoonId),
+        verificationPhotoUrl: getMockVerificationPhotoUrl(c.userId) || undefined,
+        major: profile.major,
+        grade: profile.grade,
+        phone: profile.phone,
+      };
+    });
+    return delay({ list } as T);
   }
 
   if (method === 'GET' && path === '/nuanban/platform/overview') {
