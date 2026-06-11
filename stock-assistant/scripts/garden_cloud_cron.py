@@ -26,7 +26,12 @@ from src.analysis.tomorrow_picks import fetch_garden_picks_bundle, picks_to_mark
 from src.analysis.market_outlook import compute_market_outlook, outlook_to_markdown  # noqa: E402
 from src.providers import market_data  # noqa: E402
 from src.ui import app_core as C  # noqa: E402
-from src.storage.cloud_pick_log import sync_cloud_pick_log  # noqa: E402
+from src.analysis.prediction_calibration import (
+    build_calibration_report,
+    load_calibration_adjustments,
+    merge_pick_logs,
+)
+from src.storage.cloud_pick_log import load_cloud_pick_log, sync_cloud_pick_log  # noqa: E402
 from src.util.buddha_nightly_brief import build_nightly_brief  # noqa: E402
 from src.util.buddha_ritual import build_ritual_meta, probe_a_market  # noqa: E402
 
@@ -45,11 +50,22 @@ def run_scan(*, max_picks: int = 5) -> dict:
             f"佛祖金标准：A股数据不新鲜（需 {probe.expected_lo}~{probe.expected_hi}，"
             f"实际 {probe.bar_date or '无'}）。{probe.error}"
         )
+    existing = merge_pick_logs(load_cloud_pick_log())
+    calibration = None
+    if existing:
+        try:
+            calibration = build_calibration_report(existing, C._fetch_one).as_dict()
+        except Exception:
+            calibration = None
+    cal_adj = load_calibration_adjustments(calibration)
+
     a_picks, global_picks, src, stats = fetch_garden_picks_bundle(
         _fetch_ranking,
         C._fetch_one,
         max_a=max_picks,
         max_global_per_market=2,
+        pick_log=existing,
+        calibration=cal_adj,
     )
     now = datetime.now(timezone.utc).astimezone().isoformat(timespec="seconds")
     tgt = stats.get("predict_for") or tomorrow_trading_date()
@@ -64,8 +80,9 @@ def run_scan(*, max_picks: int = 5) -> dict:
     pick_meta = sync_cloud_pick_log(
         [p.as_dict() for p in a_picks],
         pick_day=pick_day,
-        fetch_ranking=_fetch_ranking,
+        fetch_fn=C._fetch_one,
     )
+    calibration = pick_meta.get("calibration") or calibration
     nightly = build_nightly_brief(
         ritual=ritual,
         predict_for=tgt,
@@ -86,6 +103,7 @@ def run_scan(*, max_picks: int = 5) -> dict:
         "nightly_brief": nightly,
         "hit_summary": pick_meta.get("hit_summary"),
         "strategy_hints": pick_meta.get("strategy_hints") or [],
+        "calibration": calibration,
         "data_probe": probe.as_dict(),
         "picks": [p.as_dict() for p in a_picks],
         "global_picks": [p.as_dict() for p in global_picks],

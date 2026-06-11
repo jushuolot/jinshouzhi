@@ -1,14 +1,15 @@
-"""花园搜索透镜 UI（P121–P123）：搜索置顶 + 体检卡 + 图片识股。"""
+"""花园搜索：单股全维档案 + 可读结论（P125）。"""
 
 from __future__ import annotations
 
 import streamlit as st
 
-from src.analysis.garden_stock_lens import GardenLensCard, build_garden_lens_card
+from src.analysis.prediction_calibration import load_calibration_adjustments, merge_pick_logs
+from src.analysis.stock_dossier import StockDossier, build_stock_dossier
 from src.providers import eastmoney, symbol_search
-from src.providers.image_ticker_ocr import extract_ticker_candidates, image_to_search_terms
+from src.providers.image_ticker_ocr import image_to_search_terms
+from src.storage.cloud_pick_log import load_cloud_pick_log
 from src.storage.history_store import mark_dirty
-from src.ui import app_core as C
 from src.util.readonly_mode import is_readonly_mode
 from src.util.search_history import normalize_search_history, push_search
 from src.util.watchlist_add import add_hit_to_watchlist, is_in_watchlist
@@ -38,55 +39,50 @@ def _resolve_hit(keyword: str) -> eastmoney.SearchHit | None:
     return hits[0]
 
 
-def _render_lens_card(card: GardenLensCard, hit: eastmoney.SearchHit, *, readonly: bool) -> None:
-    pct_s = f"{card.pct:+.2f}%" if card.pct is not None else "—"
-    score_s = f"{card.score:.0f}" if card.score is not None else "—"
-    price_s = f"{card.price:.2f}" if card.price is not None else "—"
+def _merged_pick_log(local_log: list) -> list:
+    return merge_pick_logs(local_log, load_cloud_pick_log())
 
-    st.markdown(f"#### {card.name} `{card.code}` · {card.market}")
-    c1, c2, c3, c4 = st.columns(4)
-    c1.metric("现价", price_s)
-    c2.metric("今日涨跌", pct_s)
-    c3.metric("技术评分", score_s)
-    c4.metric("机构持股", card.fund_tags[:12] if card.fund_tags else "—")
 
-    st.caption(f"**一句话：** {card.one_line}")
-    st.caption(f"**推荐记忆：** {card.pick_history} · {card.hit_rate_label}")
-    if card.cohort_note:
-        st.caption(card.cohort_note)
-    if card.google_note:
-        if card.google_url:
-            st.caption(f"**对照：** {card.google_note} · [Google 财经]({card.google_url})")
-        else:
-            st.caption(f"**对照：** {card.google_note}")
+def _pattern_adj() -> dict[str, float]:
+    rep = st.session_state.get("_calibration_report") or {}
+    cal = load_calibration_adjustments(rep)
+    return dict(cal.get("pattern") or {})
 
-    wl = list(st.session_state.get("watchlist") or [])
-    code = str(card.code)
+
+def _render_dossier(dossier: StockDossier, hit: eastmoney.SearchHit, *, readonly: bool) -> None:
+    st.markdown(f"## {dossier.name} `{dossier.code}` · **{dossier.verdict}**")
+    st.markdown("**核心结论（供参考，非投资建议）**")
+    for b in dossier.bullets:
+        st.markdown(f"- {b}")
+
+    import pandas as pd
+
+    st.dataframe(pd.DataFrame(list(dossier.rows)), use_container_width=True, hide_index=True)
+
+    st.download_button(
+        "📥 下载该股一页纸 (.md)",
+        data=dossier.markdown.encode("utf-8"),
+        file_name=f"{dossier.code}_{dossier.name}.md",
+        mime="text/markdown",
+        key=f"garden_dossier_dl_{dossier.code}",
+    )
+
     if not readonly:
-        b1, b2 = st.columns(2)
-        with b1:
-            if not is_in_watchlist(wl, code) and st.button(
-                "➕ 加入自选", key=f"garden_lens_add_{code}", use_container_width=True
-            ):
-                wl, added = add_hit_to_watchlist(wl, hit)
-                if added:
-                    st.session_state.watchlist = wl
-                    mark_dirty()
-                    st.success("已加入自选")
-                else:
-                    st.info("已在自选")
-        with b2:
-            if st.button("🔬 进专家模式分析", key=f"garden_lens_pro_{code}", use_container_width=True):
-                st.session_state.ui_mode = "pro"
-                st.session_state.active_tab = "watch"
-                st.query_params["tab"] = "watch"
-                st.rerun()
+        wl = list(st.session_state.get("watchlist") or [])
+        if not is_in_watchlist(wl, dossier.code) and st.button(
+            "➕ 加入自选", key=f"garden_dossier_add_{dossier.code}"
+        ):
+            wl, added = add_hit_to_watchlist(wl, hit)
+            if added:
+                st.session_state.watchlist = wl
+                mark_dirty()
+                st.success("已加入自选")
 
 
 def render_garden_search_lens(pick_log: list, *, fetch_fn) -> None:
-    """花园第一屏：搜索 + 可选图片识股 → 简化体检卡。"""
-    st.markdown("### 🔍 搜一只，看体检卡")
-    st.caption("输入名称/代码，或点 📷 上传截图识股；展开下方可看今晚明日推荐。")
+    """花园第一屏：搜索 → 全维档案 + 可读结论。"""
+    st.markdown("### 🔍 搜一只，看全维结论")
+    st.caption("输入代码/名称，从行情、技术、质量、预测复盘各维度归纳可读结论。")
 
     st.session_state.setdefault("garden_lens_kw", "茅台")
     history = normalize_search_history(st.session_state.get("search_history"))
@@ -110,19 +106,18 @@ def render_garden_search_lens(pick_log: list, *, fetch_fn) -> None:
     with col_cam:
         popover = getattr(st, "popover", None)
         if popover is not None:
-            with popover("📷", use_container_width=True, help="上传 K 线截图识股（需 GEMINI_API_KEY）"):
-                st.caption("选一张行情/K 线截图，自动识别代码")
+            with popover("📷", use_container_width=True, help="上传 K 线截图识股"):
                 uploaded = st.file_uploader(
                     "截图",
                     type=["png", "jpg", "jpeg", "webp"],
                     key="garden_lens_image",
                     label_visibility="collapsed",
                 )
-        elif st.button("📷", key="garden_lens_img_toggle", use_container_width=True, help="截图识股"):
+        elif st.button("📷", key="garden_lens_img_toggle", use_container_width=True):
             st.session_state.garden_lens_show_img = True
     if uploaded is None and st.session_state.get("garden_lens_show_img"):
         uploaded = st.file_uploader(
-            "上传 K 线截图识股",
+            "上传截图",
             type=["png", "jpg", "jpeg", "webp"],
             key="garden_lens_image",
         )
@@ -138,25 +133,20 @@ def render_garden_search_lens(pick_log: list, *, fetch_fn) -> None:
         sig = f"{uploaded.name}:{uploaded.size}"
         if st.session_state.get("_garden_lens_img_sig") != sig:
             st.session_state._garden_lens_img_sig = sig
-            raw = uploaded.getvalue()
-            mime = str(uploaded.type or "image/png")
             api_key = _gemini_key_from_secrets()
             with st.spinner("识图中…"):
-                candidates, ocr_text = image_to_search_terms(raw, gemini_api_key=api_key, mime=mime)
-            if not api_key:
-                st.caption("识图需配置 **GEMINI_API_KEY**；也可直接在左侧输入代码搜索。")
-            elif ocr_text:
-                st.caption(f"识图：{ocr_text[:80]}")
+                candidates, ocr_text = image_to_search_terms(
+                    uploaded.getvalue(), gemini_api_key=api_key, mime=str(uploaded.type or "image/png")
+                )
             if candidates:
                 st.session_state.garden_lens_kw = candidates[0]
                 st.session_state._garden_lens_pending_kw = candidates[0]
                 st.rerun()
-            elif api_key:
-                st.warning("未能识别代码，请换截图或手动输入。")
 
+    merged_log = _merged_pick_log(pick_log)
     readonly = is_readonly_mode()
     if do_search and kw.strip():
-        with st.spinner("拉取行情、机构持股与对照价…"):
+        with st.spinner("汇总各维度数据…"):
             hit = _resolve_hit(kw)
             if not hit:
                 st.warning("未找到匹配标的，请换关键词。")
@@ -168,14 +158,16 @@ def render_garden_search_lens(pick_log: list, *, fetch_fn) -> None:
                     "kind": hit.kind,
                     "yahoo": hit.yahoo,
                 }
-                card = build_garden_lens_card(hit, fetch_fn, pick_log)
-                st.session_state.garden_lens_card = card.as_dict()
+                dossier = build_stock_dossier(
+                    hit, fetch_fn, merged_log, pattern_adj=_pattern_adj()
+                )
+                st.session_state.garden_dossier = dossier.as_dict()
                 st.session_state.search_history = push_search(
                     st.session_state.get("search_history"), kw.strip()
                 )
                 mark_dirty()
 
-    cached = st.session_state.get("garden_lens_card")
+    cached = st.session_state.get("garden_dossier")
     hit_d = st.session_state.get("garden_lens_hit")
     if cached and hit_d:
         hit = eastmoney.SearchHit(
@@ -185,20 +177,14 @@ def render_garden_search_lens(pick_log: list, *, fetch_fn) -> None:
             kind=str(hit_d.get("kind") or "A"),
             yahoo=str(hit_d.get("yahoo") or "") or None,
         )
-        card = GardenLensCard(
+        dossier = StockDossier(
             code=str(cached.get("code") or ""),
             name=str(cached.get("name") or ""),
             market=str(cached.get("market") or ""),
-            price=cached.get("price"),
-            pct=cached.get("pct"),
-            score=cached.get("score"),
-            one_line=str(cached.get("one_line") or ""),
-            fund_tags=str(cached.get("fund_tags") or ""),
-            pick_history=str(cached.get("pick_history") or ""),
-            hit_rate_label=str(cached.get("hit_rate_label") or ""),
-            google_note=str(cached.get("google_note") or ""),
-            google_url=str(cached.get("google_url") or ""),
-            cohort_note=str(cached.get("cohort_note") or ""),
+            verdict=str(cached.get("verdict") or ""),
+            bullets=tuple(cached.get("bullets") or []),
+            rows=tuple(cached.get("rows") or []),
+            markdown=str(cached.get("markdown") or ""),
         )
         st.divider()
-        _render_lens_card(card, hit, readonly=readonly)
+        _render_dossier(dossier, hit, readonly=readonly)

@@ -8,16 +8,25 @@ alwaysApply: false
 
 用户说「自己进化」「按计划进化」「记住进化」时：
 
-1. **读当前版本**：`stock-assistant/src/util/app_meta.py`（PHASE / step / version）
-2. **下一阶命名**：`P{N}` + 必要时 `P{N}b` 小修；step +1；版本按语义递增（小改 patch，功能 minor）
-3. **优先方向**（按价值排序）：
-   - 花园主流程：搜 → 体检卡 → 佛祖查岗 → 明日推荐 → 复盘闭环
-   - 云端零本地：`cloud_state/`、nightly cron、GitHub raw 热更新
-   - 多人 cohort 画像与汇总
-   - 可读一页纸 / 简报导出
-   - 修复 Streamlit 布局与嵌套 expander 问题
-4. **每次交付**：单元测试 + `bash scripts/evolve_verify.sh` → commit → push `main`（用户未反对时默认推送以便 Streamlit 部署）
-5. **克制**：最小 diff；不堆无关功能；不提交 secrets
-6. **文档**：只更新 `app_meta.py` CHANGELOG；除非用户要求，不改大段 EVOLUTION.md
+## 唯一主线（P125 起）
 
-当前基线：**P124 · v5.9.0 · step 1166**
+**预测 → K 线真实验证 → 校准模型 → 再预测**
+
+1. 每次推荐必须写入 log，到期用 **推荐日收盘价 vs D+1~D+3 K 线** 验证（禁止用榜单涨跌幅糊弄）
+2. `prediction_calibration.py` 产出命中率、模式权重、门槛调整，反哺 `tomorrow_picks`
+3. 展示一只股票 = **全维档案 + 可读结论**（`stock_dossier.py`），不散落功能
+
+## 花园页结构（保持聚焦）
+
+1. 搜一只 → 全维结论
+2. 预测 vs 真实（校准面板，常显）
+3. 可选：明日预测明细
+
+不要加：cohort 条、多余复盘区、嵌套 expander。
+
+## 交付
+
+- 读 `app_meta.py` → bump 版本 → 测试 + `evolve_verify.sh` → push `main`
+- 最小 diff；不提交 secrets
+
+当前基线：**P125 · v6.0.0 · step 1167**

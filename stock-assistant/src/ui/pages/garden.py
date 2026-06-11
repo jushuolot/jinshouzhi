@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import date, timedelta
+from datetime import date
 
 import pandas as pd
 import streamlit as st
@@ -18,14 +18,13 @@ from src.analysis.market_outlook import (
     enrich_picks_with_long_term,
     outlook_to_markdown,
 )
-from src.analysis.pick_review import review_recent_picks, strategy_hints_from_reviews
+from src.analysis.prediction_calibration import load_calibration_adjustments, verify_log_with_kline
 from src.analysis.pick_tracker import (
     append_today_picks,
     has_due_verifications,
     hit_rate_summary,
     normalize_pick_log,
     records_for_display,
-    verify_log,
 )
 from src.providers import market_data
 from src.storage.history_store import mark_dirty
@@ -36,7 +35,7 @@ from src.util.cloud_runtime import cloud_mode_label, is_streamlit_cloud
 from src.util.buddha_nightly_brief import build_nightly_brief, brief_to_markdown
 from src.util.buddha_ritual import build_ritual_meta, probe_a_market, ritual_banner_lines
 from src.util.data_date_label import build_listing_caption, today_label_cn
-from src.ui.garden_cohort_strip import render_garden_cohort_strip
+from src.ui.calibration_panel import render_calibration_panel
 from src.ui.garden_search_lens import render_garden_search_lens
 from src.util.garden_selection_doc import SELECTION_CRITERIA_MD
 from src.util.readonly_mode import is_readonly_mode
@@ -67,25 +66,6 @@ def _pct_map_from_ranking(df: pd.DataFrame) -> dict[str, float | None]:
     return out
 
 
-def _try_auto_pick_review(pick_log: list, *, readonly: bool) -> None:
-    """每天打开花园自动跑一次 3 日复盘（缓存，限 8 条）。"""
-    if readonly or not pick_log:
-        return
-    today_s = date.today().isoformat()
-    if st.session_state.get("_pick_review_auto_date") == today_s:
-        return
-    if st.session_state.get("pick_reviews") is not None:
-        st.session_state._pick_review_auto_date = today_s
-        return
-    st.session_state._pick_review_auto_date = today_s
-    with st.spinner("自动复盘近几日推荐（D+1~D+3）…"):
-        try:
-            reviews = review_recent_picks(pick_log, C._fetch_one, limit=8)
-            st.session_state.pick_reviews = [r.as_dict() for r in reviews]
-        except Exception:
-            pass
-
-
 def _fund_tag_display(p: dict) -> str:
     tag = p.get("fund_tag")
     if tag:
@@ -96,90 +76,6 @@ def _fund_tag_display(p: dict) -> str:
     qpart = reason.split("质量：", 1)[-1]
     bits = [t.strip() for t in qpart.split("、") if any(k in t for k in ("基金", "QFII", "机构"))]
     return "、".join(bits[:2]) if bits else "—"
-
-
-def _render_pick_review(pick_log: list, *, readonly: bool) -> None:
-    """昨日及近几日推荐的 3 日内涨跌对比，用于优化策略。"""
-    st.markdown("### 📊 推荐复盘 · 3日对比")
-    st.caption("对比推荐日收盘价 vs 之后 3 个交易日，统计各模式跑赢率并反哺明日扫盘。")
-
-    if not pick_log:
-        st.info("尚无推荐记录；完成一次「预测明日」后会自动记入。")
-        return
-
-    _try_auto_pick_review(pick_log, readonly=readonly)
-
-    col_r1, col_r2 = st.columns([2, 1])
-    with col_r1:
-        do_refresh = not readonly and st.button(
-            "🔄 刷新 3 日复盘", use_container_width=False, key="garden_refresh_pick_review"
-        )
-    with col_r2:
-        pass
-
-    cached = st.session_state.get("pick_reviews")
-    if do_refresh:
-        with st.spinner("拉取推荐标的 K 线，计算 D+1~D+3…"):
-            reviews = review_recent_picks(pick_log, C._fetch_one, limit=8)
-            st.session_state.pick_reviews = [r.as_dict() for r in reviews]
-            cached = st.session_state.pick_reviews
-    elif cached is None:
-        st.info("复盘数据加载中；也可点 **「刷新 3 日复盘」** 手动更新。")
-        return
-
-    reviews_objs = []
-    if cached:
-        from src.analysis.pick_review import Pick3dReview
-
-        for d in cached:
-            reviews_objs.append(
-                Pick3dReview(
-                    pick_date=str(d.get("pick_date") or ""),
-                    code=str(d.get("code") or ""),
-                    name=str(d.get("name") or ""),
-                    pattern=str(d.get("pattern") or ""),
-                    pick_close=d.get("pick_close"),
-                    ret_d1_pct=d.get("ret_d1_pct"),
-                    ret_d2_pct=d.get("ret_d2_pct"),
-                    ret_d3_pct=d.get("ret_d3_pct"),
-                    max_ret_3d_pct=d.get("max_ret_3d_pct"),
-                    hit_3d=d.get("hit_3d"),
-                    note=str(d.get("note") or ""),
-                )
-            )
-
-    if not reviews_objs:
-        st.info("推荐满 **1 个交易日** 后可复盘（或点上方刷新）。")
-        return
-
-    yesterday = (date.today() - timedelta(days=1)).isoformat()
-    yrows = [r for r in reviews_objs if r.pick_date == yesterday]
-    show = yrows if yrows else reviews_objs[:8]
-
-    rows = []
-    for r in show:
-        hit = "—"
-        if r.hit_3d is True:
-            hit = "✅"
-        elif r.hit_3d is False:
-            hit = "❌"
-        rows.append(
-            {
-                "推荐日": r.pick_date,
-                "名称": r.name,
-                "代码": r.code,
-                "模式": r.pattern,
-                "D+1%": r.ret_d1_pct,
-                "D+2%": r.ret_d2_pct,
-                "D+3%": r.ret_d3_pct,
-                "3日最高%": r.max_ret_3d_pct,
-                "跑赢": hit,
-            }
-        )
-    st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
-
-    for hint in strategy_hints_from_reviews(reviews_objs):
-        st.caption(f"💡 {hint}")
 
 
 def _render_market_outlook(readonly: bool, fetch_ranking) -> None:
@@ -352,17 +248,16 @@ def _render_nightly_brief(
 
 
 def _try_auto_verify_garden(*, pick_log: list, readonly: bool) -> list:
-    """到期推荐每天自动核对一次。"""
+    """到期推荐每天自动用 K 线核对一次。"""
     if readonly or not has_due_verifications(pick_log):
         return pick_log
     if st.session_state.get("_verify_auto_date") == date.today().isoformat():
         return pick_log
     st.session_state._verify_auto_date = date.today().isoformat()
     try:
-        rank_df, _ = _fetch_ranking()
-        pct_map = _pct_map_from_ranking(rank_df)
-        pick_log = verify_log(pick_log, pct_map)
+        pick_log = verify_log_with_kline(pick_log, C._fetch_one)
         st.session_state.pick_log = pick_log
+        st.session_state.pop("_calibration_report", None)
         mark_dirty()
     except Exception:
         pass
@@ -404,11 +299,14 @@ def _try_auto_fill_garden(
     st.session_state._auto_fill_date = date.today().isoformat()
     with st.spinner("正在自动预测明日 A 股 + 全球（首次约 1–3 分钟）…"):
         try:
+            cal_adj = load_calibration_adjustments(st.session_state.get("_calibration_report"))
             a_picks, global_picks, src, stats = fetch_garden_picks_bundle(
                 _fetch_ranking,
                 C._fetch_one,
                 max_a=5,
                 max_global_per_market=2,
+                pick_log=pick_log,
+                calibration=cal_adj,
             )
             st.session_state.today_picks = [p.as_dict() for p in a_picks]
             st.session_state.global_picks = [p.as_dict() for p in global_picks]
@@ -496,6 +394,8 @@ def render() -> None:
             st.session_state["_cloud_hit_summary"] = cloud["hit_summary"]
         if cloud.get("strategy_hints"):
             st.session_state["_cloud_strategy_hints"] = cloud["strategy_hints"]
+        if cloud.get("calibration"):
+            st.session_state["_calibration_report"] = cloud["calibration"]
         ap = len(st.session_state.get("today_picks") or [])
         gp = len(st.session_state.get("global_picks") or [])
         if ap or gp:
@@ -517,10 +417,10 @@ def render() -> None:
     pick_log = _try_auto_fill_garden(readonly=readonly, pick_log=pick_log, tgt_date=tgt_date)
 
     render_garden_search_lens(pick_log, fetch_fn=C._fetch_one)
-    render_garden_cohort_strip()
+    render_calibration_panel(pick_log, fetch_fn=C._fetch_one, readonly=readonly)
 
     show_full_garden = st.checkbox(
-        "显示今晚花园（查岗简报 / 明日推荐 / 复盘）",
+        "显示明日预测明细",
         value=st.session_state.get("garden_show_full", False),
         key="garden_show_full",
     )
@@ -546,6 +446,7 @@ def render() -> None:
         elif st.button(
             "🔮 预测明日 A 股 + 全球", type="primary", use_container_width=True, key="garden_predict_btn"
         ):
+            cal_adj = load_calibration_adjustments(st.session_state.get("_calibration_report"))
             with st.spinner("分析今日收盘与历史K线，预测明日偏强标的（约 1–3 分钟）…"):
                 a_picks, global_picks, src, stats = fetch_garden_picks_bundle(
                     _fetch_ranking,
@@ -553,6 +454,7 @@ def render() -> None:
                     max_a=5,
                     max_global_per_market=2,
                     pick_log=pick_log,
+                    calibration=cal_adj,
                 )
                 st.session_state.today_picks = enrich_picks_with_long_term(
                     [p.as_dict() for p in a_picks],
@@ -596,15 +498,14 @@ def render() -> None:
     else:
         st.caption(f"📅 今天：**{today_label_cn()}**")
 
-    # 核对历史推荐（轻量，可手动触发）
-    if not readonly and st.button("📊 核对推荐成绩单", use_container_width=False, key="garden_verify_picks"):
+    # 核对历史推荐（K 线真实涨跌）
+    if not readonly and st.button("📊 用 K 线核对历史预测", use_container_width=False, key="garden_verify_picks"):
         verified_ok = False
-        with st.spinner("拉取最新涨跌核对历史推荐…"):
+        with st.spinner("对比推荐日与 D+1~D+3 K 线真实涨跌…"):
             try:
-                rank_df, _ = _fetch_ranking()
-                pct_map = _pct_map_from_ranking(rank_df)
-                pick_log = verify_log(pick_log, pct_map)
+                pick_log = verify_log_with_kline(pick_log, C._fetch_one)
                 st.session_state.pick_log = pick_log
+                st.session_state.pop("_calibration_report", None)
                 mark_dirty()
                 verified_ok = True
             except Exception as e:
@@ -692,12 +593,6 @@ def render() -> None:
             use_container_width=True,
             key="garden_download_picks_md",
         )
-
-    st.divider()
-    try:
-        _render_pick_review(pick_log, readonly=readonly)
-    except Exception as exc:
-        st.warning(f"推荐复盘暂时无法显示：{exc}")
 
     st.divider()
     try:

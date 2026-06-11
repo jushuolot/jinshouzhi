@@ -3,12 +3,7 @@ from unittest.mock import MagicMock
 
 import pandas as pd
 
-from src.storage.cloud_pick_log import (
-    load_cloud_pick_log,
-    pct_map_from_ranking,
-    save_cloud_pick_log,
-    sync_cloud_pick_log,
-)
+from src.storage.cloud_pick_log import load_cloud_pick_log, save_cloud_pick_log, sync_cloud_pick_log
 
 
 class TestCloudPickLog(unittest.TestCase):
@@ -18,12 +13,17 @@ class TestCloudPickLog(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as td:
             path = Path(td) / "cloud_pick_log.json"
-            ranking = pd.DataFrame(
-                [{"代码": "600519", "名称": "茅台", "涨跌幅%": 3.0}]
-            )
 
-            def fetch_ranking():
-                return ranking, "test"
+            def fetch_fn(item, **kwargs):
+                dates = pd.date_range("2020-01-01", periods=5, freq="B")
+                df = pd.DataFrame(
+                    {
+                        "日期": dates,
+                        "收盘": [100.0, 101.0, 102.0, 103.0, 104.0],
+                        "成交量": [1e6] * 5,
+                    }
+                )
+                return df, "test"
 
             picks = [
                 {
@@ -40,7 +40,7 @@ class TestCloudPickLog(unittest.TestCase):
             meta = sync_cloud_pick_log(
                 picks,
                 pick_day="2020-01-01",
-                fetch_ranking=fetch_ranking,
+                fetch_fn=fetch_fn,
                 path=path,
             )
             self.assertEqual(len(meta["log"]), 1)
@@ -49,11 +49,6 @@ class TestCloudPickLog(unittest.TestCase):
             self.assertEqual(len(loaded), 1)
             save_cloud_pick_log(loaded, path=path)
             self.assertTrue(path.is_file())
-
-    def test_pct_map(self):
-        df = pd.DataFrame([{"代码": "000001", "涨跌幅%": 2.5}])
-        m = pct_map_from_ranking(df)
-        self.assertEqual(m["000001"], 2.5)
 
 
 if __name__ == "__main__":

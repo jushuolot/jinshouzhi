@@ -248,15 +248,15 @@ def _fund_tag_from_quality(qv: QualityVerdict) -> str | None:
     return "、".join(bits[:3])
 
 
-def _a_buy_threshold(code: str, adj: float, qv: QualityVerdict) -> bool:
+def _a_buy_threshold(code: str, adj: float, qv: QualityVerdict, *, extra: float = 0) -> bool:
     """P120：成长板明日偏多需更高综合分与质量加分。"""
     c = str(code).zfill(6)
     delta = qv.score_delta
     if c.startswith("301"):
-        return adj >= 82 and delta >= 1.0
+        return adj >= 82 + extra and delta >= 1.0
     if c.startswith(_GROWTH_PREFIXES):
-        return adj >= 80 and delta >= 0.0
-    return adj >= 74
+        return adj >= 80 + extra and delta >= 0.0
+    return adj >= 74 + extra
 
 
 def _merge_ranking_frames(frames: list[pd.DataFrame]) -> pd.DataFrame:
@@ -296,6 +296,7 @@ def rank_tomorrow_a_picks(
     max_scan: int = 28,
     max_picks: int = 5,
     pick_log: list[dict[str, Any]] | None = None,
+    calibration: dict[str, Any] | None = None,
 ) -> tuple[list[DailyPick], dict[str, Any]]:
     stats: dict[str, Any] = {
         "scanned": 0,
@@ -313,6 +314,11 @@ def rank_tomorrow_a_picks(
     target = tomorrow_trading_date()
     work = universe.copy()
     pattern_adj = pattern_score_adjustments_from_log(pick_log or [])
+    cal = calibration or {}
+    for k, v in (cal.get("pattern") or {}).items():
+        pattern_adj[str(k)] = pattern_adj.get(str(k), 0.0) + float(v)
+    score_floor = float(cal.get("score_floor_delta") or 0)
+    buy_delta = float(cal.get("buy_threshold_delta") or 0)
 
     def _sort_key(row: pd.Series) -> float:
         pct = _f(row.get("涨跌幅%"))
@@ -384,10 +390,13 @@ def rank_tomorrow_a_picks(
             stats["skipped_quality"] = int(stats.get("skipped_quality") or 0) + 1
             continue
         adj = float(np.clip(ta.tomorrow_score + qv.score_delta, 0, 88))
-        if adj < 62:
+        min_score = 62.0 + score_floor
+        if adj < min_score:
             stats["low_score"] += 1
             continue
-        buy_ok = ta.signal == SIGNAL_TOMORROW_BUY and _a_buy_threshold(item["代码"], adj, qv)
+        buy_ok = ta.signal == SIGNAL_TOMORROW_BUY and _a_buy_threshold(
+            item["代码"], adj, qv, extra=buy_delta
+        )
         sig = SIGNAL_BUY if buy_ok else SIGNAL_WATCH
         reason = f"[{ta.pattern}] {ta.reason}{qv.reason_suffix()}"
         pick = DailyPick(
@@ -451,6 +460,7 @@ def fetch_tomorrow_a_picks(
     *,
     max_picks: int = 5,
     pick_log: list[dict[str, Any]] | None = None,
+    calibration: dict[str, Any] | None = None,
 ) -> tuple[list[DailyPick], str, dict[str, Any]]:
     universe, src = build_a_universe(fetch_ranking)
     picks, stats = rank_tomorrow_a_picks(
@@ -459,6 +469,7 @@ def fetch_tomorrow_a_picks(
         max_scan=30,
         max_picks=max_picks,
         pick_log=pick_log,
+        calibration=calibration,
     )
     stats["source"] = src
     stats["market"] = "A股"
@@ -525,10 +536,11 @@ def fetch_garden_picks_bundle(
     max_a: int = 5,
     max_global_per_market: int = 2,
     pick_log: list[dict[str, Any]] | None = None,
+    calibration: dict[str, Any] | None = None,
 ) -> tuple[list[DailyPick], list[DailyPick], str, dict[str, Any]]:
     """花园扫盘：明日 A 股预测 + 全球明日关注。"""
     a_picks, src, stats = fetch_tomorrow_a_picks(
-        fetch_ranking, fetch_fn, max_picks=max_a, pick_log=pick_log
+        fetch_ranking, fetch_fn, max_picks=max_a, pick_log=pick_log, calibration=calibration
     )
     global_picks, gstats = fetch_tomorrow_global_picks(max_per_market=max_global_per_market)
     stats["global"] = gstats
