@@ -72,6 +72,10 @@
         <text class="quick-icon">💰</text>
         <text class="quick-text">收入明细</text>
       </view>
+      <view class="quick-item" @tap="goServiceLog">
+        <text class="quick-icon">📝</text>
+        <text class="quick-text">服务日志</text>
+      </view>
       <view v-if="withdrawAvailableYuan" class="quick-item highlight" @tap="goWithdraw">
         <text class="quick-icon">💸</text>
         <text class="quick-text">提现</text>
@@ -200,6 +204,9 @@ function goActive() {
 }
 function goIncome() {
   uni.navigateTo({ url: '/package-student/income' });
+}
+function goServiceLog() {
+  uni.navigateTo({ url: '/package-student/schedule/log' });
 }
 function handleSos() {
   const alert = sosAlerts.value[0];

@@ -11,7 +11,7 @@
     </view>
 
     <view class="tip">
-      <text>建议顺序：动画演示 → 13800000001 接单 → 13800000004 代付/服务包 → 运营演示重置</text>
+      <text>建议顺序：动画演示 → 13800000001 接单 → 13800000004 代付/服务记录 → 13800000005 老人端 → 运营演示重置</text>
     </view>
 
     <button class="btn-outline" @tap="goBack">返回</button>
@@ -59,10 +59,28 @@ const links = [
     url: `${BASE}/#/package-elder/home`,
   },
   {
+    id: 'elder-logs',
+    title: '老人 · 服务记录',
+    desc: '需先登录 13800000005 · 已完成归档',
+    url: `${BASE}/#/package-elder/service/log`,
+  },
+  {
     id: 'packages',
     title: '家属 · 服务包购买',
     desc: '3 档套餐 · 模拟购买',
     url: `${BASE}/#/package-family/package/buy`,
+  },
+  {
+    id: 'family-logs',
+    title: '家属 · 服务记录',
+    desc: '需先登录 13800000004 · 已完成服务归档',
+    url: `${BASE}/#/package-family/service/log`,
+  },
+  {
+    id: 'student-logs',
+    title: '学生 · 服务日志',
+    desc: '需先登录 13800000001',
+    url: `${BASE}/#/package-student/schedule/log`,
   },
   {
     id: 'tour-deeplink',

@@ -34,6 +34,12 @@
         </view>
       </view>
 
+      <view
+        v-if="order.status === 'pending_accept' && order.requiresOutdoorApproval"
+        class="outdoor-hint"
+      >
+        本单含外出陪同，接单后需家属审批通过方可服务
+      </view>
       <button v-if="order.status === 'pending_accept'" class="btn-ok" :loading="loading" @tap="accept">
         接受订单
       </button>
@@ -206,6 +212,15 @@ async function complete() {
   color: #666;
   border: 2rpx solid #ddd;
   border-radius: 12rpx;
+}
+.outdoor-hint {
+  margin-bottom: 20rpx;
+  padding: 20rpx 24rpx;
+  background: #fff8e6;
+  border-radius: 12rpx;
+  font-size: 26rpx;
+  color: #8a6d3b;
+  line-height: 1.5;
 }
 .wait-hint {
   text-align: center;

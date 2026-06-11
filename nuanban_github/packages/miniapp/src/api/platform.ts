@@ -20,6 +20,7 @@ export interface PlatformOverview {
   ordersCompleted: number;
   walletPaidTotalCents?: number;
   walletPaidTotalYuan?: string;
+  serviceLogCount?: number;
   caregiversNearby: number;
   eldersNearby: number;
   todayMatches: number;

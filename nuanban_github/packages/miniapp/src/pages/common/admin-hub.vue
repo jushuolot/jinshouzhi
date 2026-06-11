@@ -31,6 +31,10 @@
         <text class="kpi-num">¥{{ overview.walletPaidTotalYuan ?? '0.00' }}</text>
         <text class="kpi-label">已付总额</text>
       </view>
+      <view class="kpi">
+        <text class="kpi-num">{{ overview.serviceLogCount ?? 0 }}</text>
+        <text class="kpi-label">服务归档</text>
+      </view>
     </view>
 
     <view v-if="overview" class="meta-row">

@@ -6,6 +6,7 @@
       <text class="svc">{{ serviceName }}</text>
       <text class="meta">预约：{{ formatTime(order.scheduled_at) }}</text>
       <text class="meta">费用：¥{{ ((order.amount_cents || 0) / 100).toFixed(0) }}</text>
+      <text v-if="caregiverName" class="meta">陪护同学：{{ caregiverName }}</text>
       <text v-if="order.payment_status" class="meta">
         支付：{{ order.payment_status === 'paid' ? '已支付' : '待支付' }}
       </text>
@@ -43,9 +44,12 @@ const order = ref<
     payment_status?: string;
     expand?: {
       service_item?: { name: string; requires_outdoor_approval?: boolean };
+      student?: { id: string; name: string };
     };
   }) | null
 >(null);
+
+const caregiverName = computed(() => order.value?.expand?.student?.name);
 
 const confirmBtnLabel = computed(() =>
   order.value?.payment_status === 'unpaid' ? '确认服务并付款' : '确认服务完成',

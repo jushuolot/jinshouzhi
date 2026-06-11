@@ -189,7 +189,26 @@ export interface FamilyOrderDetail {
   payment_status?: string;
   elderName?: string;
   serviceName?: string;
+  studentName?: string;
   requiresOutdoorApproval?: boolean;
+}
+
+export interface FamilyServiceLogItem {
+  id: string;
+  orderId: string;
+  elderId: string;
+  elderName: string;
+  serviceName: string;
+  summary: string;
+  createdAt: string;
+}
+
+export async function listFamilyServiceLogs() {
+  const res = await request<{ list: FamilyServiceLogItem[] }>({
+    url: '/nuanban/family/service-logs',
+    method: 'GET',
+  });
+  return res.list ?? [];
 }
 
 export async function getFamilyOrder(orderId: string) {

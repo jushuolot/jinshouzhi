@@ -774,6 +774,7 @@ function orderRecord(o: MockOrder) {
     amount_cents: o.amount_cents,
     payment_status: o.payment_status,
     scheduled_at: o.scheduled_at,
+    student_user: o.student_user,
     expand: {
       elder: elder ? { id: elder.id, name: elder.name } : undefined,
       service_item: {
@@ -783,6 +784,9 @@ function orderRecord(o: MockOrder) {
         duration_minutes: svc.duration_minutes,
         requires_outdoor_approval: svc.requires_outdoor_approval,
       },
+      student: o.student_user
+        ? { id: o.student_user, name: caregiverNameByUserId(o.student_user) }
+        : undefined,
     },
   };
 }
@@ -804,6 +808,35 @@ function pendingOrderDto(o: MockOrder) {
     orgName: elder ? orgNameById(elder.org) : ORG.name,
     elderIntro: elder?.intro,
   };
+}
+
+function caregiverNameByUserId(userId?: string) {
+  if (!userId) return undefined;
+  return CAREGIVERS.find((c) => c.userId === userId)?.name || '陪护同学';
+}
+
+function currentElderId(): string {
+  syncMockRolesFromStorage();
+  const storedRoles = mockRegisterRoles.length ? [...mockRegisterRoles] : readStoredRoles();
+  const elderRole = storedRoles.find((r) => r.role === 'elder' && r.status === 'active');
+  return normalizeElderId(elderRole?.elderProfileId || 'elder-zhang', ELDERS);
+}
+
+function familyServiceLogs() {
+  return state.serviceLogs.filter((log) => PRIMARY_FAMILY_ELDER_IDS.includes(log.elderId));
+}
+
+function elderServiceLogs() {
+  const eid = currentElderId();
+  return state.serviceLogs.filter((log) => log.elderId === eid);
+}
+
+function studentServiceLogs() {
+  const sid = currentStudentUserId();
+  const orderIds = new Set(
+    state.orders.filter((o) => o.student_user === sid).map((o) => o.id),
+  );
+  return state.serviceLogs.filter((log) => orderIds.has(log.orderId));
 }
 
 function sosDto(a: MockSosAlert) {
@@ -1060,7 +1093,17 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
     } as T);
   }
   if (method === 'GET' && path === '/nuanban/student/service-logs') {
-    return delay({ list: state.serviceLogs } as T);
+    return delay({ list: studentServiceLogs() } as T);
+  }
+  if (method === 'GET' && path === '/nuanban/family/service-logs') {
+    const roleErr = assertDemoActiveRole(options, path, 'family');
+    if (roleErr) return Promise.reject({ message: roleErr, statusCode: 403 });
+    return delay({ list: familyServiceLogs() } as T);
+  }
+  if (method === 'GET' && path === '/nuanban/elder/service-logs') {
+    const roleErr = assertDemoActiveRole(options, path, 'elder');
+    if (roleErr) return Promise.reject({ message: roleErr, statusCode: 403 });
+    return delay({ list: elderServiceLogs() } as T);
   }
   if (method === 'GET' && path.startsWith('/nuanban/student/elders/nearby')) {
     const list = ELDERS.map((e) => ({
@@ -1327,6 +1370,7 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
       payment_status: order.payment_status,
       elderName: dto.elderName,
       serviceName: dto.serviceName,
+      studentName: caregiverNameByUserId(order.student_user),
       requiresOutdoorApproval: dto.requiresOutdoorApproval,
     } as T);
   }
@@ -1565,6 +1609,7 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
       ordersCompleted: done,
       walletPaidTotalCents: walletPaidCents,
       walletPaidTotalYuan: (walletPaidCents / 100).toFixed(2),
+      serviceLogCount: state.serviceLogs.length,
       caregiversNearby: CAREGIVERS.length,
       eldersNearby: ELDERS.length,
       todayMatches: inSvc + Math.min(done, 12),

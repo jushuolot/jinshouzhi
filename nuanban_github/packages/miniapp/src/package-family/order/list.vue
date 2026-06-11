@@ -22,7 +22,10 @@
       <view v-for="o in shown" :key="o.id" class="card" @tap="onTap(o)">
         <view class="head">
           <text class="svc">{{ o.expand?.service_item?.name || '陪护服务' }}</text>
-          <text class="status">{{ statusLabel(o.status) }}</text>
+          <view class="badges">
+            <text v-if="o.payment_status === 'unpaid'" class="pay-badge">待付</text>
+            <text class="status">{{ statusLabel(o.status) }}</text>
+          </view>
         </view>
         <text class="elder">{{ o.expand?.elder?.name || '老人' }}</text>
         <text class="meta">
@@ -51,6 +54,7 @@ type OrderItem = PbRecord & {
   status: string;
   amount_cents?: number;
   scheduled_at?: string;
+  payment_status?: string;
   expand?: {
     elder?: { name: string };
     service_item?: { name: string };
@@ -168,6 +172,18 @@ function onTap(o: OrderItem) {
 .svc {
   font-size: 30rpx;
   font-weight: 600;
+}
+.badges {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+.pay-badge {
+  font-size: 20rpx;
+  color: #fff;
+  background: #e65100;
+  padding: 2rpx 10rpx;
+  border-radius: 6rpx;
 }
 .status {
   font-size: 22rpx;

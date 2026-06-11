@@ -8,6 +8,10 @@
         <text class="label">老人</text>
         <text class="value">{{ elderName }}</text>
       </view>
+      <view v-if="order.studentName" class="row">
+        <text class="label">陪护同学</text>
+        <text class="value">{{ order.studentName }}</text>
+      </view>
       <view class="row">
         <text class="label">预约时间</text>
         <text class="value">{{ formatTime(order.scheduled_at) }}</text>
@@ -55,6 +59,7 @@ interface FamilyOrderDetail {
   payment_status?: string;
   elderName?: string;
   serviceName?: string;
+  studentName?: string;
   requiresOutdoorApproval?: boolean;
 }
 

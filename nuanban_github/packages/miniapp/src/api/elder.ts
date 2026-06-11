@@ -199,6 +199,24 @@ export async function listOrdersForElder(elderId: string) {
   return res.items;
 }
 
+export interface ElderServiceLogItem {
+  id: string;
+  orderId: string;
+  elderId: string;
+  elderName: string;
+  serviceName: string;
+  summary: string;
+  createdAt: string;
+}
+
+export async function listElderServiceLogs() {
+  const res = await request<{ list: ElderServiceLogItem[] }>({
+    url: '/nuanban/elder/service-logs',
+    method: 'GET',
+  });
+  return res.list ?? [];
+}
+
 export async function getOrder(id: string) {
   const res = await pbList<
     OrderRow & {

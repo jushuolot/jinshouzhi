@@ -64,6 +64,16 @@
       </view>
       <text class="chevron">›</text>
     </view>
+    <view class="todo-card" @tap="goServiceLogs">
+      <view class="todo-left">
+        <text class="todo-icon">📝</text>
+        <view>
+          <text class="todo-title">服务记录</text>
+          <text class="todo-desc">{{ serviceLogCount }} 条已完成归档</text>
+        </view>
+      </view>
+      <text class="chevron">›</text>
+    </view>
     <view class="todo-card" @tap="goPackageBuy">
       <view class="todo-left">
         <text class="todo-icon">📦</text>
@@ -109,6 +119,7 @@ import {
   listActiveSosAlerts,
   listBoundElders,
   listFamilyPackages,
+  listFamilyServiceLogs,
   listPendingConfirmOrders,
   listPendingOutdoorApprovals,
   listPendingPaymentOrders,
@@ -128,6 +139,7 @@ const bindings = ref<
 const loading = ref(false);
 const outdoorList = ref<{ order: string }[]>([]);
 const walletBalanceYuan = ref('0.00');
+const serviceLogCount = ref(0);
 const packageCount = ref(3);
 
 const packageSummary = computed(() => {
@@ -147,17 +159,19 @@ async function reload() {
   loading.value = true;
   try {
     const uid = roleStore.user.id;
-    const [st, binds, outdoor, wallet, pkgs] = await Promise.all([
+    const [st, binds, outdoor, wallet, pkgs, logs] = await Promise.all([
       fetchFamilyStats(),
       listBoundElders(uid),
       listPendingOutdoorApprovals(uid).catch(() => []),
       fetchFamilyWallet().catch(() => null),
       listFamilyPackages().catch(() => []),
+      listFamilyServiceLogs().catch(() => []),
     ]);
     stats.value = st;
     bindings.value = binds;
     outdoorList.value = outdoor;
     packageCount.value = pkgs.length || 3;
+    serviceLogCount.value = logs.length;
     if (wallet) walletBalanceYuan.value = wallet.balanceYuan;
   } catch (e) {
     uni.showToast({ title: pbErrorMessage(e), icon: 'none' });
@@ -236,6 +250,10 @@ function goWallet() {
 
 function goPackageBuy() {
   uni.navigateTo({ url: '/package-family/package/buy' });
+}
+
+function goServiceLogs() {
+  uni.navigateTo({ url: '/package-family/service/log' });
 }
 
 async function goSos() {

@@ -105,6 +105,14 @@ function haversineM(lat1, lng1, lat2, lng2) {
 
 function orderToFamilyDto(order) {
   const svc = serviceInfoById(order.getString("service_item"));
+  let studentName;
+  try {
+    const su = order.getString("student_user");
+    if (su) {
+      const u = $app.findRecordById("users", su);
+      studentName = u.getString("name") || u.getString("nickname") || "陪护同学";
+    }
+  } catch (_) {}
   return {
     id: order.id,
     status: order.getString("status"),
@@ -113,6 +121,7 @@ function orderToFamilyDto(order) {
     payment_status: order.getString("payment_status"),
     elderName: elderNameById(order.getString("elder")),
     serviceName: svc.name,
+    studentName: studentName,
     requiresOutdoorApproval: svc.requiresOutdoor,
   };
 }

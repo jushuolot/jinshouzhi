@@ -1992,6 +1992,84 @@ routerAdd("POST", "/api/nuanban/student/withdrawal", function (e) {
   return e.json(200, nb.studentWithdrawalOverview(auth.id));
 });
 
+routerAdd("GET", "/api/nuanban/elder/service-logs", function (e) {
+  var nb = require(__hooks + "/nuanban_lib.js");
+  const rc = nb.assertActiveRoleHeader(e, "elder");
+  if (!rc.ok) return e.json(rc.code, rc.body);
+  const auth = e.auth;
+  if (!auth) return e.json(401, { message: "需要登录" });
+  const elderId = nb.elderProfileIdForUser(auth.id);
+  if (!elderId) return e.json(200, { list: [] });
+  const records = $app.findRecordsByFilter(
+    "orders",
+    'elder = {:eid} && status = "completed"',
+    "-scheduled_at",
+    50,
+    0,
+    { eid: elderId }
+  );
+  const summaries = [
+    "陪老人读报，情绪稳定",
+    "完成康复操，血压正常",
+    "陪同散步约 1km",
+    "用药提醒已执行",
+    "棋牌陪伴，兴致良好",
+  ];
+  const list = [];
+  for (let i = 0; i < records.length; i++) {
+    const o = records[i];
+    const svc = nb.serviceInfoById(o.getString("service_item"));
+    list.push({
+      id: "log-" + o.id,
+      orderId: o.id,
+      elderId: o.getString("elder"),
+      elderName: nb.elderNameById(o.getString("elder")),
+      serviceName: svc.name,
+      summary: summaries[i % summaries.length],
+      createdAt: o.getString("scheduled_at"),
+    });
+  }
+  return e.json(200, { list: list });
+});
+
+routerAdd("GET", "/api/nuanban/family/service-logs", function (e) {
+  var nb = require(__hooks + "/nuanban_lib.js");
+  const rc = nb.assertActiveRoleHeader(e, "family");
+  if (!rc.ok) return e.json(rc.code, rc.body);
+  const auth = e.auth;
+  if (!auth) return e.json(401, { message: "需要登录" });
+  const records = $app.findRecordsByFilter(
+    "orders",
+    'family_user = {:uid} && status = "completed"',
+    "-scheduled_at",
+    50,
+    0,
+    { uid: auth.id }
+  );
+  const summaries = [
+    "陪老人读报，情绪稳定",
+    "完成康复操，血压正常",
+    "陪同散步约 1km",
+    "用药提醒已执行",
+    "棋牌陪伴，兴致良好",
+  ];
+  const list = [];
+  for (let i = 0; i < records.length; i++) {
+    const o = records[i];
+    const svc = nb.serviceInfoById(o.getString("service_item"));
+    list.push({
+      id: "log-" + o.id,
+      orderId: o.id,
+      elderId: o.getString("elder"),
+      elderName: nb.elderNameById(o.getString("elder")),
+      serviceName: svc.name,
+      summary: summaries[i % summaries.length],
+      createdAt: o.getString("scheduled_at"),
+    });
+  }
+  return e.json(200, { list: list });
+});
+
 routerAdd("GET", "/api/nuanban/family/packages", function (e) {
   var nb = require(__hooks + "/nuanban_lib.js");
   const rc = nb.assertActiveRoleHeader(e, "family");
@@ -2072,6 +2150,7 @@ routerAdd("GET", "/api/nuanban/platform/overview", function (e) {
     ordersCompleted: done,
     walletPaidTotalCents: walletPaidCents,
     walletPaidTotalYuan: (walletPaidCents / 100).toFixed(2),
+    serviceLogCount: done,
     caregiversNearby: 8,
     eldersNearby: elders,
     todayMatches: inSvc + Math.min(done, 12),

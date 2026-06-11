@@ -5,6 +5,7 @@
     <ListCountBar :count="list.length" hint="pending_accept 全局池" />
     <view v-for="o in list" :key="o.id" class="card">
       <text class="svc">{{ o.serviceName }}</text>
+      <text v-if="o.requiresOutdoorApproval" class="outdoor-tag">外出陪同</text>
       <text class="meta">{{ o.elderName }} · ¥{{ ((o.amountCents || 0) / 100).toFixed(0) }}</text>
       <button class="btn-sm" size="mini" :loading="dispatching === o.id" @tap="dispatch(o.id)">
         派给林同学
@@ -80,6 +81,15 @@ async function dispatch(id: string) {
   display: block;
   font-size: 30rpx;
   font-weight: 600;
+}
+.outdoor-tag {
+  display: inline-block;
+  margin-top: 8rpx;
+  font-size: 22rpx;
+  color: #8a6d3b;
+  background: #fff8e6;
+  padding: 4rpx 12rpx;
+  border-radius: 8rpx;
 }
 .meta {
   display: block;

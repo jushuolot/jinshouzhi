@@ -59,6 +59,11 @@
         <text class="quick-icon">📋</text>
         <text class="quick-text">我的服务</text>
       </view>
+      <view class="quick-item" @tap="goServiceLogs">
+        <text class="quick-icon">📝</text>
+        <text class="quick-text">服务记录</text>
+        <text class="quick-desc">{{ serviceLogCount }} 条归档</text>
+      </view>
       <view class="quick-item warn" @tap="sos">
         <text class="quick-icon">🆘</text>
         <text class="quick-text">一键求助</text>
@@ -75,6 +80,7 @@ import RoleTabBar from '../components/RoleTabBar.vue';
 import { onShow } from '@dcloudio/uni-app';
 import {
   fetchElderStats,
+  listElderServiceLogs,
   listOrdersForElder,
   resolveElderIdForApi,
   triggerSos,
@@ -96,6 +102,7 @@ const fontClass = computed(() => elderFontClass());
 const orgName = ref('暖伴示范养老院');
 const roleStore = useRoleStore();
 const walletBalanceYuan = ref('0.00');
+const serviceLogCount = ref(0);
 
 function serviceName(o: (typeof recentOrders.value)[0]) {
   return o.expand?.service_item?.name || '陪护服务';
@@ -115,12 +122,14 @@ function formatTime(iso?: string) {
 onShow(async () => {
   guardPackageRoute('/package-elder/home');
   try {
-    const [st, wallet] = await Promise.all([
+    const [st, wallet, logs] = await Promise.all([
       fetchElderStats(),
       fetchElderWallet().catch(() => null),
+      listElderServiceLogs().catch(() => []),
     ]);
     stats.value = st;
     if (wallet) walletBalanceYuan.value = wallet.balanceYuan;
+    serviceLogCount.value = logs.length;
     if (stats.value?.elderProfileId) {
       roleStore.setElderProfileId(stats.value.elderProfileId);
     }
@@ -146,6 +155,9 @@ function goFind() {
 }
 function goOrders() {
   uni.redirectTo({ url: '/package-elder/order/list' });
+}
+function goServiceLogs() {
+  uni.navigateTo({ url: '/package-elder/service/log' });
 }
 function goOrderDetail(id: string) {
   uni.navigateTo({ url: `/package-elder/order/detail?id=${id}` });
