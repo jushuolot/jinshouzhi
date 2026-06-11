@@ -40,7 +40,7 @@ jobs:
           rm -rf docs/nuanban
           mkdir -p docs/nuanban
           cp -r nuanban_github/packages/miniapp/dist/build/h5/* docs/nuanban/
-          printf '%s\n' '<!DOCTYPE html><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=nuanban/#/pages/common/login"><title>暖伴勤工</title>' > docs/index.html
+          printf '%s\n' '<!DOCTYPE html><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=nuanban/#/pages/common/launch"><title>暖伴勤工</title>' > docs/index.html
           touch docs/.nojekyll
 
       - name: Commit & push docs

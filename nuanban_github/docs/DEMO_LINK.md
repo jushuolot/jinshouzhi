@@ -7,7 +7,7 @@
 ## 测试版 · 一键打开
 
 ```
-https://jushuolot.github.io/jinshouzhi/nuanban/#/pages/common/login
+https://jushuolot.github.io/jinshouzhi/nuanban/#/pages/common/launch
 ```
 
 1. 微信 / 手机 / 电脑浏览器打开  

@@ -11,7 +11,7 @@ if [[ -f config/github.env ]]; then
 fi
 
 GIT_ROOT="$(git -C "$ROOT" rev-parse --show-toplevel 2>/dev/null || echo "$ROOT")"
-TEST_URL="${NUANBAN_DEMO_URL:-https://jushuolot.github.io/jinshouzhi/nuanban/#/pages/common/login}"
+TEST_URL="${NUANBAN_DEMO_URL:-https://jushuolot.github.io/jinshouzhi/nuanban/#/pages/common/launch}"
 
 echo "=============================================="
 echo "发布测试版（GitHub Pages）"

@@ -131,8 +131,13 @@ onLoad((query) => {
   if (fromTour.value) {
     phone.value = '13800000001';
   }
-  if (!isUserManualAccepted()) {
-    uni.redirectTo({ url: '/pages/common/user-manual?next=login' });
+  if (roleStore.isLoggedIn) return;
+  if (!isUserManualAccepted() && fromGuest.value) {
+    uni.redirectTo({ url: '/pages/common/user-manual?next=login&from=guest' });
+    return;
+  }
+  if (!isUserManualAccepted() && !fromGuest.value && !fromTour.value) {
+    uni.reLaunch({ url: '/pages/common/demo-tour' });
   }
 });
 
