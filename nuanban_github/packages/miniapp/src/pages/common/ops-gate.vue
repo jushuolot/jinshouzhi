@@ -4,8 +4,8 @@
       <view class="logo-wrap">
         <text class="logo-char">暖</text>
       </view>
-      <text class="title">运营模式</text>
-      <text class="sub">平台 KPI · 派单 · 学校合作 · 演示工具</text>
+      <text class="title">暖伴运营台</text>
+      <text class="sub">平台 KPI · 派单 · 学生审核 · 资金</text>
     </view>
 
     <view class="card nb-card">
@@ -18,8 +18,7 @@
         placeholder-class="ph"
         @confirm="submit"
       />
-      <text class="entry-tip">入口：登录页底部「运营模式」· 闪屏连点 Logo · 模块地图 · 会话期内右下角「运营台」</text>
-      <button class="btn nb-btn-primary" :loading="loading" @tap="submit">进入运营模式</button>
+      <button class="btn nb-btn-primary" :loading="loading" @tap="submit">进入运营台</button>
     </view>
 
     <view class="card nb-card settings">
@@ -27,7 +26,7 @@
       <view class="row">
         <view class="row-text">
           <text class="row-label">隐藏运营入口</text>
-          <text class="row-desc">开启后菜单不再显示「运营模式」，仅登录页点按「暖」图标进入</text>
+          <text class="row-desc">开启后菜单不再显示运营入口，仅登录页点按「暖」图标进入</text>
         </view>
         <switch :checked="hiddenEntry" color="#c45c26" @change="onHiddenChange" />
       </view>
@@ -42,6 +41,7 @@ import OpsSessionBar from '../../components/OpsSessionBar.vue';
 import { onLoad } from '@dcloudio/uni-app';
 import {
   isOpsEntryHidden,
+  OPS_HOME_PATH,
   setOpsEntryHidden,
   startOpsSession,
   verifyOpsPassphrase,
@@ -72,10 +72,10 @@ function submit() {
   }
   loading.value = true;
   startOpsSession();
-  uni.showToast({ title: '已进入运营模式', icon: 'success' });
+  uni.showToast({ title: '已进入运营台', icon: 'success' });
   setTimeout(() => {
     loading.value = false;
-    uni.redirectTo({ url: '/pages/common/admin-hub' });
+    uni.redirectTo({ url: OPS_HOME_PATH });
   }, 400);
 }
 </script>

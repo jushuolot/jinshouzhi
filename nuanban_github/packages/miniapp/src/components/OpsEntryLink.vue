@@ -9,7 +9,7 @@ withDefaults(
   defineProps<{
     label?: string;
   }>(),
-  { label: '运营模式' },
+  { label: '运营台' },
 );
 
 function onTap() {

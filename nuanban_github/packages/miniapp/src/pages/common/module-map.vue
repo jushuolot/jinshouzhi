@@ -58,7 +58,7 @@ const pillars = PRODUCT_PILLARS;
 const groups = computed(() => MODULE_GROUPS);
 
 function go(path: string) {
-  if (path.includes('ops-gate') || path.includes('admin-hub')) {
+  if (path.includes('ops-gate') || path.includes('admin-hub') || path.includes('ops-home')) {
     openOpsMode();
     return;
   }

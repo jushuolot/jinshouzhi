@@ -29,7 +29,7 @@ export function isPhonePreviewWindow(): boolean {
 /** 上帝视角：桌面全屏，不进手机框 */
 function isFullPageRoute() {
   const h = window.location.hash || '';
-  return h.includes('admin-hub') || h.includes('ops-gate') || h.includes('fund-admin');
+  return h.includes('ops-home') || h.includes('admin-hub') || h.includes('ops-gate') || h.includes('fund-admin') || h.includes('ops-more');
 }
 
 function phonePopupUrl(): string {

@@ -11,10 +11,13 @@
   role-select      多角色选择
   register         注册角色（写 user_roles）
   agreement        用户协议与隐私说明
-  org-dispatch     机构派单演示（零成本 Mock）
-  admin-hub        运营演示入口（派单 + 学校合作 + 资金管理）
-  student-profiles 学生资料管理（卡通头像 · 核验照）
-  fund-admin       资金管理（储值/支付/提现审批 · 运营模式）
+  org-dispatch     机构派单（运营台 Tab）
+  ops-gate         运营口令门禁
+  ops-home         运营台首页（KPI · 动态 · 待办）
+  ops-more         运营台更多（配置 · 验收 · 设置）
+  admin-hub        兼容跳转 → ops-home
+  student-profiles 学生资料（卡通头像 · 核验照）
+  fund-admin       资金管理（储值/支付/提现 · 运营台 Tab）
   school-coop      学校合作配置（只读）
   student-pending  学生资质审核中拦截页
   god-view-gate    超级管理密码门（默认演示密码见 VITE_GOD_VIEW_PASSWORD）
@@ -97,7 +100,8 @@
 | 路径 | 说明 |
 |------|------|
 | login → 用户协议 | 合规说明 |
-| login → 机构派单 | 替代 Admin 后台，派 pending_accept 给林同学 |
+| login → 机构派单 | 已并入运营台「派单」Tab |
+| ops-gate → ops-home | 口令门禁 → 五 Tab 运营台（概览/学生/派单/资金/更多） |
 | family/home → 服务包购买 | 套餐占位，无真实支付 |
 
 产品说明见 [PRODUCT.md](./PRODUCT.md) §10、§12。

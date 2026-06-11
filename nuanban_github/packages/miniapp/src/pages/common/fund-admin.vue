@@ -158,13 +158,13 @@
     </template>
 
     <text v-if="overview?.updatedAt" class="ts">更新于 {{ formatTime(overview.updatedAt) }}</text>
-    <OpsSessionBar />
+    <OpsTabBar current="/pages/common/fund-admin" />
   </view>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import OpsSessionBar from '../../components/OpsSessionBar.vue';
+import OpsTabBar from '../../components/OpsTabBar.vue';
 import { onShow } from '@dcloudio/uni-app';
 import {
   approveFundWithdrawal,
@@ -344,8 +344,7 @@ onShow(() => {
 <style scoped>
 .page {
   min-height: 100vh;
-  padding: 24rpx;
-  padding-bottom: 48rpx;
+  padding: 24rpx 24rpx calc(140rpx + env(safe-area-inset-bottom));
 }
 .title {
   display: block;

@@ -71,7 +71,7 @@ export const MODULE_GROUPS: ModuleGroup[] = [
     color: '#6d4c9a',
     entries: [
       { id: 'guide', title: '深度验收向导', desc: '9 步闭环 · 进度保存', icon: '🧭', path: '/pages/common/scenario-guide', highlight: true },
-      { id: 'admin', title: '运营模式', desc: '口令 · KPI · 派单', icon: '📊', path: '/pages/common/ops-gate' },
+      { id: 'admin', title: '运营台', desc: '口令 · KPI · 派单', icon: '📊', path: '/pages/common/ops-gate' },
       { id: 'dispatch', title: '机构派单', desc: '指定学生接单', icon: '🏢', path: '/pages/common/org-dispatch' },
       { id: 'tour', title: '动画演示', desc: '22 秒五幕', icon: '🎬', path: '/pages/common/demo-tour' },
       { id: 'share', title: '分享链接', desc: '复制给验收人', icon: '🔗', path: '/pages/common/share-demo' },

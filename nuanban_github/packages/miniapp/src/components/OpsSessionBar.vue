@@ -12,20 +12,20 @@
 <script setup lang="ts">
 import { onShow } from '@dcloudio/uni-app';
 import { ref } from 'vue';
-import { isOpsSessionActive, openOpsMode } from '../utils/ops-mode';
+import { isOnOpsShellPage, isOpsSessionActive, openOpsMode, OPS_HOME_PATH } from '../utils/ops-mode';
 
 const visible = ref(false);
 
 function refresh() {
-  visible.value = isOpsSessionActive();
+  visible.value = isOpsSessionActive() && !isOnOpsShellPage();
 }
 
 function goHub() {
   if (isOpsSessionActive()) {
     uni.navigateTo({
-      url: '/pages/common/admin-hub',
+      url: OPS_HOME_PATH,
       fail: () => {
-        uni.reLaunch({ url: '/pages/common/admin-hub' });
+        uni.reLaunch({ url: OPS_HOME_PATH });
       },
     });
     return;

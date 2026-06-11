@@ -1,5 +1,7 @@
 /** 运营模式：口令门禁 + 可隐藏入口（登录页「暖」图标唤起） */
 
+import { OPS_HOME_PATH, OPS_SHELL_ROUTE_KEYS } from '../config/ops-tabs';
+
 const OPS_SESSION_KEY = 'ops_mode_session_v1';
 const OPS_HIDDEN_KEY = 'ops_mode_hidden_v1';
 const OPS_PASS_KEY = 'ops_mode_pass_v1';
@@ -80,15 +82,28 @@ function navigateOps(url: string) {
 
 export function openOpsMode() {
   if (isOpsSessionActive()) {
-    navigateOps('/pages/common/admin-hub');
+    navigateOps(OPS_HOME_PATH);
     return;
   }
   navigateOps('/pages/common/ops-gate');
 }
 
-/** admin-hub 等页 onShow 调用；未登录运营会话则跳转口令页 */
+/** 运营台 shell 内页：底部 Tab 已导航，隐藏右下角 FAB */
+export function isOnOpsShellPage(): boolean {
+  try {
+    const pages = getCurrentPages();
+    const route = pages[pages.length - 1]?.route ?? '';
+    return OPS_SHELL_ROUTE_KEYS.some((key) => route.includes(key));
+  } catch {
+    return false;
+  }
+}
+
+/** ops-home 等页 onShow 调用；未登录运营会话则跳转口令页 */
 export function requireOpsSession(): boolean {
   if (isOpsSessionActive()) return true;
   uni.redirectTo({ url: '/pages/common/ops-gate' });
   return false;
 }
+
+export { OPS_HOME_PATH };

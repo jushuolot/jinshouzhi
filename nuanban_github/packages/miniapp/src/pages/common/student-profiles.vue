@@ -1,7 +1,7 @@
 <template>
   <view class="page nb-page">
     <text class="title">学生资料管理</text>
-    <text class="sub">查看学生卡通头像与实名核验照 · 仅运营模式</text>
+    <text class="sub">查看卡通头像与实名核验照 · 审核参考</text>
 
     <view v-if="loading" class="state">加载中…</view>
     <view v-else-if="!list.length" class="state">暂无学生资料</view>
@@ -29,12 +29,15 @@
         <view v-else class="verify-empty">未上传</view>
       </view>
     </view>
+
+    <OpsTabBar current="/pages/common/student-profiles" />
   </view>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue';
 import { onShow } from '@dcloudio/uni-app';
+import OpsTabBar from '../../components/OpsTabBar.vue';
 import { fetchOpsStudentProfiles, type OpsStudentProfile } from '../../api/platform';
 import { resolveCartoonAvatarUrl } from '../../utils/cartoon-avatars';
 import { requireOpsSession } from '../../utils/ops-mode';
@@ -84,8 +87,7 @@ onShow(() => {
 .page {
   min-height: 100vh;
   background: var(--nb-page-bg, #f5f5f5);
-  padding: 24rpx;
-  padding-bottom: 48rpx;
+  padding: 24rpx 24rpx calc(140rpx + env(safe-area-inset-bottom));
 }
 .title {
   display: block;

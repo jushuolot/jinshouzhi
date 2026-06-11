@@ -1,7 +1,7 @@
 <template>
-  <view class="page">
-    <text class="title">机构派单（演示）</text>
-    <text class="sub">将待接单订单指定给学生，零成本 Mock，无需 Admin 后台</text>
+  <view class="page nb-page">
+    <text class="title">机构派单</text>
+    <text class="sub">将待接单指定给学生 · 演示 Mock</text>
     <ListCountBar :count="list.length" hint="pending_accept 全局池" />
     <view v-for="o in list" :key="o.id" class="card">
       <text class="svc">{{ o.serviceName }}</text>
@@ -12,6 +12,8 @@
       </button>
     </view>
     <view v-if="!loading && !list.length" class="empty">暂无待派单</view>
+
+    <OpsTabBar current="/pages/common/org-dispatch" />
   </view>
 </template>
 
@@ -19,6 +21,7 @@
 import { ref } from 'vue';
 import { onShow } from '@dcloudio/uni-app';
 import ListCountBar from '../../components/ListCountBar.vue';
+import OpsTabBar from '../../components/OpsTabBar.vue';
 import { dispatchOrder, listDispatchableOrders, type DispatchOrderItem } from '../../api/org';
 import { requireOpsSession } from '../../utils/ops-mode';
 import { pbErrorMessage } from '../../utils/request';
@@ -61,8 +64,8 @@ async function dispatch(id: string) {
 <style scoped>
 .page {
   min-height: 100vh;
-  background: #f5f5f5;
-  padding: 24rpx;
+  background: var(--nb-page-bg, #f5f5f5);
+  padding: 24rpx 24rpx calc(140rpx + env(safe-area-inset-bottom));
 }
 .title {
   display: block;
