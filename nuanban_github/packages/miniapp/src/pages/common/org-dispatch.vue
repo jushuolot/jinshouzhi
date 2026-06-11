@@ -20,6 +20,7 @@ import { ref } from 'vue';
 import { onShow } from '@dcloudio/uni-app';
 import ListCountBar from '../../components/ListCountBar.vue';
 import { dispatchOrder, listDispatchableOrders, type DispatchOrderItem } from '../../api/org';
+import { requireOpsSession } from '../../utils/ops-mode';
 import { pbErrorMessage } from '../../utils/request';
 
 const list = ref<DispatchOrderItem[]>([]);
@@ -38,7 +39,10 @@ async function reload() {
   }
 }
 
-onShow(reload);
+onShow(() => {
+  if (!requireOpsSession()) return;
+  void reload();
+});
 
 async function dispatch(id: string) {
   dispatching.value = id;

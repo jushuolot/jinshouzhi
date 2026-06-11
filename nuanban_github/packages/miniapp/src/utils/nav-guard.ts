@@ -1,6 +1,6 @@
 import type { RoleKey } from '../config/tabs';
 import { useRoleStore } from '../store/role';
-import { isGuestBrowse, isGuestHomePath, promptLoginForAction } from './guest-browse';
+import { guestBrowseRole, isGuestBrowse } from './guest-browse';
 
 const PACKAGE_ROLE: Record<string, RoleKey> = {
   'package-elder': 'elder',
@@ -11,11 +11,12 @@ const PACKAGE_ROLE: Record<string, RoleKey> = {
 export function guardPackageRoute(path: string): boolean {
   const roleStore = useRoleStore();
   if (!roleStore.isLoggedIn) {
-    if (isGuestBrowse() && isGuestHomePath(path)) {
-      return true;
-    }
     if (isGuestBrowse()) {
-      promptLoginForAction();
+      const guestRole = guestBrowseRole();
+      const pkg = Object.keys(PACKAGE_ROLE).find((p) => path.includes(p));
+      if (!pkg) return true;
+      if (guestRole && PACKAGE_ROLE[pkg] === guestRole) return true;
+      uni.showToast({ title: '请在本身份演示数据下操作', icon: 'none' });
       return false;
     }
     uni.reLaunch({ url: '/pages/common/demo-tour' });

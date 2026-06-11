@@ -9,7 +9,7 @@
 
     <view class="content">
     <view class="hero">
-      <view class="logo-wrap">
+      <view class="logo-wrap" @tap="onLogoTap">
         <text class="logo-char">暖</text>
       </view>
       <text class="title">{{ APP_TITLE }}</text>
@@ -111,6 +111,7 @@ import { DEMO_TEST_PHONES } from '../../utils/demo-rich-data';
 import { isDemoMockEnabled } from '../../utils/demo-mock';
 import { isVirtualPhoneLoginEnabled } from '../../utils/virtual-phone-login';
 import SecurityStrip from '../../components/SecurityStrip.vue';
+import { isOpsEntryHidden, openOpsMode } from '../../utils/ops-mode';
 import loginBg from '@/static/images/login-bg-kawaii.png';
 
 const virtualPhoneLogin = isVirtualPhoneLoginEnabled();
@@ -122,9 +123,11 @@ const smsCode = ref('');
 const codeCooldown = ref(0);
 let cooldownTimer: ReturnType<typeof setInterval> | null = null;
 const fromTour = ref(false);
+const fromGuest = ref(false);
 
 onLoad((query) => {
   fromTour.value = query?.from === 'tour';
+  fromGuest.value = query?.from === 'guest';
   if (fromTour.value) {
     phone.value = '13800000001';
   }
@@ -142,6 +145,9 @@ const codeBtnText = computed(() =>
 );
 
 const loginHint = computed(() => {
+  if (fromGuest.value) {
+    return '注册后才能下单 · 登录后将引导选择身份并完善资料';
+  }
   if (fromTour.value) {
     return '动画演示结束 · 登录后首次将引导选择身份';
   }
@@ -276,17 +282,25 @@ async function onWxLogin() {
   }
 }
 
+function onLogoTap() {
+  openOpsMode();
+}
+
 function showMore() {
+  const labels = ['模块地图', '深度验收向导', '安全中心', '分享演示链接'];
+  const routes = [
+    '/pages/common/module-map',
+    '/pages/common/scenario-guide',
+    '/pages/common/security',
+    '/pages/common/share-demo',
+  ];
+  if (!isOpsEntryHidden()) {
+    labels.splice(3, 0, '运营模式');
+    routes.splice(3, 0, '/pages/common/ops-gate');
+  }
   uni.showActionSheet({
-    itemList: ['模块地图', '深度验收向导', '安全中心', '运营演示', '分享演示链接'],
+    itemList: labels,
     success: (res) => {
-      const routes = [
-        '/pages/common/module-map',
-        '/pages/common/scenario-guide',
-        '/pages/common/security',
-        '/pages/common/admin-hub',
-        '/pages/common/share-demo',
-      ];
       const url = routes[res.tapIndex];
       if (url) uni.navigateTo({ url });
     },
@@ -376,6 +390,11 @@ function goScenario() {
   justify-content: center;
   box-shadow: var(--nb-shadow-primary);
   margin-bottom: 28rpx;
+  cursor: pointer;
+}
+.logo-wrap:active {
+  opacity: 0.88;
+  transform: scale(0.97);
 }
 
 .logo-char {

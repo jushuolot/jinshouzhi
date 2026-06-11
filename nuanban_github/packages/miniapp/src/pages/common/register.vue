@@ -1,7 +1,15 @@
 <template>
   <view class="page nb-page-onboard">
-    <AuthBrandHeader compact subtitle="选择身份 · 系统分配功能与权限" />
-    <template v-if="step === 'pick'">
+    <AuthBrandHeader compact :subtitle="guestEntry ? '注册后才能下单、接单' : '选择身份 · 系统分配功能与权限'" />
+    <template v-if="guestEntry && !roleStore.isLoggedIn">
+      <view class="guest-banner">
+        <text class="guest-title">注册后才能下单</text>
+        <text class="guest-desc">请先使用手机或微信完成注册登录，再选择身份并完善资料与收款方式。</text>
+      </view>
+      <button class="btn-primary nb-btn-primary" @tap="goAuth">手机号 / 微信注册</button>
+      <text class="back" @tap="goBackBrowse">返回继续浏览</text>
+    </template>
+    <template v-else-if="step === 'pick'">
       <view
         v-for="opt in roleOptions"
         :key="opt.key"
@@ -43,6 +51,7 @@ const loading = ref(false);
 const step = ref<'pick' | 'form'>('pick');
 const referralCode = ref('');
 const roleStore = useRoleStore();
+const guestEntry = ref(false);
 
 const roleLabel: Record<RoleKey, string> = {
   elder: '老人',
@@ -57,7 +66,9 @@ const roleOptions = [
 ];
 
 onLoad((q) => {
+  guestEntry.value = q?.from === 'guest';
   if (!roleStore.isLoggedIn) {
+    if (guestEntry.value) return;
     uni.reLaunch({ url: '/pages/common/login' });
     return;
   }
@@ -80,6 +91,14 @@ onLoad((q) => {
 function pickRole(r: RoleKey) {
   role.value = r;
   step.value = 'form';
+}
+
+function goAuth() {
+  uni.navigateTo({ url: '/pages/common/user-manual?next=login&from=guest' });
+}
+
+function goBackBrowse() {
+  uni.navigateBack();
 }
 
 function goLogin() {
@@ -164,5 +183,25 @@ async function submit() {
   text-align: center;
   color: var(--nb-primary);
   font-size: 28rpx;
+}
+.guest-banner {
+  margin-bottom: 32rpx;
+  padding: 28rpx 24rpx;
+  background: var(--nb-primary-soft);
+  border: 2rpx dashed var(--nb-border-dashed);
+  border-radius: var(--nb-radius-md);
+}
+.guest-title {
+  display: block;
+  font-size: 32rpx;
+  font-weight: 600;
+  color: var(--nb-primary);
+}
+.guest-desc {
+  display: block;
+  margin-top: 12rpx;
+  font-size: 26rpx;
+  color: var(--nb-text-secondary);
+  line-height: 1.55;
 }
 </style>

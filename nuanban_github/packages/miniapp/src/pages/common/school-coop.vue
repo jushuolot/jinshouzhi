@@ -22,7 +22,13 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
+import { onShow } from '@dcloudio/uni-app';
 import { ORG_SCHOOL_PARTNERS, orgNameById } from '../../utils/demo-rich-data';
+import { requireOpsSession } from '../../utils/ops-mode';
+
+onShow(() => {
+  requireOpsSession();
+});
 
 const rows = computed(() =>
   Object.entries(ORG_SCHOOL_PARTNERS).map(([orgId, schools]) => ({

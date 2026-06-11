@@ -1,29 +1,62 @@
 <template>
   <view class="page nb-page">
-    <text class="title">用户协议与隐私说明</text>
-    <view class="card nb-card">
-      <text class="p">欢迎使用暖伴勤工。我们致力于便捷、安全、清晰的养老陪护撮合体验。</text>
-      <text class="h">一、服务说明</text>
-      <text class="p">平台连接老人、家属、高校学生与养老机构，提供陪护、康复协助等明码标价服务。</text>
-      <text class="h">二、数据与安全</text>
-      <text class="p">正式版经 HTTPS 加密传输；接口使用 Bearer 令牌与角色头鉴权。请勿在演示环境输入真实身份证号、银行卡号。</text>
-      <text class="h">三、演示模式</text>
-      <text class="p">测试版使用浏览器内 Mock 数据，不产生真实扣款；本地验收进度经混淆存储。</text>
-      <text class="h">四、隐私</text>
-      <text class="p">我们仅收集提供服务所必需的信息，包括：手机号（登录）、角色与资料（学生/家属/老人）、订单与服务记录、储值卡流水（正式版存服务端）。</text>
-      <text class="p">我们不会出售您的个人信息。测试版数据仅存于本机浏览器，清除站点数据即可删除；正式版可联系平台申请注销。</text>
-      <text class="p">验收进度等偏好经客户端混淆存储（非登录令牌）；令牌经 HTTPS 传输，退出登录即清除。</text>
-      <text class="h">五、免责</text>
-      <text class="p">SOS、外出审批等在演示中为模拟流程，不构成真实紧急救援承诺。</text>
-    </view>
-    <button class="btn nb-btn-primary" @tap="goSecurity">打开安全中心</button>
-    <button class="btn-outline" @tap="back">我已阅读</button>
+    <text class="title">用户服务协议</text>
+    <text class="updated">更新日期：2026年6月5日</text>
+
+    <scroll-view class="scroll" scroll-y>
+      <view class="card nb-card">
+        <text class="p">欢迎使用暖伴勤工。请您仔细阅读本协议。点击同意或实际使用服务，即表示您已阅读并同意受本协议约束。</text>
+
+        <text class="h">第一条 定义</text>
+        <text class="p">1.1 「平台」指暖伴勤工运营方提供的移动应用、网站及相关服务。</text>
+        <text class="p">1.2 「用户」包括老人用户、家属用户、学生用户及合作机构授权人员。</text>
+        <text class="p">1.3 「服务」指平台提供的陪护需求发布、信息撮合、订单管理、支付结算、客服支持等。</text>
+
+        <text class="h">第二条 账号注册与使用</text>
+        <text class="p">2.1 您应具备完全民事行为能力；学生用户应为在校大学生或经平台审核。</text>
+        <text class="p">2.2 您应提供真实、准确、完整的注册信息，并及时更新。</text>
+        <text class="p">2.3 账号仅限本人使用，请妥善保管登录凭证。因您保管不善导致的损失由您自行承担。</text>
+
+        <text class="h">第三条 服务规则</text>
+        <text class="p">3.1 平台展示的服务价格、时长、范围以订单页面为准。</text>
+        <text class="p">3.2 老人/家属下单并支付后，学生可接单履约；各方应诚信完成服务与确认。</text>
+        <text class="p">3.3 禁止发布违法信息、虚假订单、线下绕开平台交易及任何损害平台或其他用户的行为。</text>
+
+        <text class="h">第四条 费用与支付</text>
+        <text class="p">4.1 家属/老人可通过储值卡、微信支付或平台接入的第三方支付（如扫呗）完成付款。</text>
+        <text class="p">4.2 学生收款账户须经平台认证后方可提现；结算规则以平台公示为准。</text>
+        <text class="p">4.3 测试/演示环境不产生真实资金往来，仅用于功能体验。</text>
+
+        <text class="h">第五条 知识产权</text>
+        <text class="p">平台内的商标、界面、文案、代码等知识产权归平台或权利人所有。未经授权不得复制或用于商业用途。</text>
+
+        <text class="h">第六条 隐私保护</text>
+        <text class="p">我们如何处理个人信息，详见《隐私政策》。使用服务即表示您亦已阅读该政策。</text>
+
+        <text class="h">第七条 免责与责任限制</text>
+        <text class="p">7.1 平台作为撮合方，不对用户线下行为承担担保责任。</text>
+        <text class="p">7.2 SOS、外出审批等功能为辅助工具，不构成紧急救援、医疗或监护义务。</text>
+        <text class="p">7.3 因网络、设备、不可抗力或第三方原因导致的服务中断，平台将尽力修复但不承担超出法律规定的责任。</text>
+
+        <text class="h">第八条 协议变更与终止</text>
+        <text class="p">平台有权修订本协议，并通过应用内公告等方式通知。您可停止使用服务；继续使用视为接受修订。平台可在用户违约时暂停或终止服务。</text>
+
+        <text class="h">第九条 适用法律与争议解决</text>
+        <text class="p">本协议适用中华人民共和国法律。争议应友好协商；协商不成的，提交平台所在地有管辖权的人民法院诉讼解决。</text>
+
+        <text class="h">第十条 联系我们</text>
+        <text class="p">客服邮箱：support@nuanban.cc（示例）</text>
+      </view>
+    </scroll-view>
+
+    <button class="btn-outline" @tap="goPrivacy">查看《隐私政策》</button>
+    <button class="btn-outline" @tap="back">返回</button>
   </view>
 </template>
 
 <script setup lang="ts">
-function goSecurity() {
-  uni.navigateTo({ url: '/pages/common/security' });
+function goPrivacy() {
+  uni.navigateTo({ url: '/pages/common/privacy-policy' });
 }
 
 function back() {
@@ -34,18 +67,28 @@ function back() {
 <style scoped>
 .page {
   min-height: 100vh;
-  background: #f5f5f5;
   padding: 24rpx;
+  padding-bottom: calc(48rpx + env(safe-area-inset-bottom));
+  background: #f5f5f5;
+  display: flex;
+  flex-direction: column;
 }
 .title {
   display: block;
   font-size: 36rpx;
   font-weight: 600;
-  margin-bottom: 24rpx;
+}
+.updated {
+  display: block;
+  margin: 8rpx 0 16rpx;
+  font-size: 22rpx;
+  color: #999;
+}
+.scroll {
+  flex: 1;
+  max-height: 72vh;
 }
 .card {
-  background: #fff;
-  border-radius: 16rpx;
   padding: 28rpx 24rpx;
 }
 .h {
@@ -57,14 +100,10 @@ function back() {
 }
 .p {
   display: block;
-  margin-top: 12rpx;
+  margin-top: 10rpx;
   font-size: 26rpx;
   color: #555;
   line-height: 1.6;
-}
-.btn {
-  margin-top: 24rpx;
-  width: 100%;
 }
 .btn-outline {
   margin-top: 16rpx;

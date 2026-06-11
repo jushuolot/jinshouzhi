@@ -1,4 +1,5 @@
 import { normalizeElderId } from '../utils/elder-id';
+import { guestBrowseRole, isGuestBrowse } from '../utils/guest-browse';
 import { request } from '../utils/request';
 import { useRoleStore } from '../store/role';
 import { pbList, type PbRecord } from './pb';
@@ -80,6 +81,7 @@ export async function fetchElderStats() {
 
 /** 列表/下单用：优先 store，缺失时从 stats 回填 elderProfileId */
 export async function resolveElderIdForApi(): Promise<string | null> {
+  if (isGuestBrowse() && guestBrowseRole() === 'elder') return normalizeElderId('elder-1');
   const roleStore = useRoleStore();
   const fromStore = roleStore.currentElderId;
   if (fromStore) return normalizeElderId(fromStore);

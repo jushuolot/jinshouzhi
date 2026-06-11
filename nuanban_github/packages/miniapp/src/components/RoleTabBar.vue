@@ -16,17 +16,11 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { ROLE_TABS, type RoleKey } from '../config/tabs';
-import { isGuestBrowse, requireOperableAuth } from '../utils/guest-browse';
-
 const props = defineProps<{ role: RoleKey; current: string }>();
 const tabs = computed(() => ROLE_TABS[props.role]);
 
 function go(url: string) {
   if (url === props.current) return;
-  if (isGuestBrowse() && !url.endsWith('/home')) {
-    requireOperableAuth();
-    return;
-  }
   uni.redirectTo({ url });
 }
 </script>

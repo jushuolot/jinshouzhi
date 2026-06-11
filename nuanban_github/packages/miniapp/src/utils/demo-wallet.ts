@@ -1,6 +1,7 @@
 /** 演示栈 · 储值卡（家属/老人各一钱包，本地持久化） */
 
 import { DEMO_USERS } from './demo-rich-data';
+import { isGuestBrowse } from './guest-browse';
 
 export interface WalletTransaction {
   id: string;
@@ -62,6 +63,7 @@ function loadStore(): WalletStore {
 }
 
 function saveStore(store: WalletStore) {
+  if (isGuestBrowse()) return;
   uni.setStorageSync(STORAGE_KEY, store);
 }
 

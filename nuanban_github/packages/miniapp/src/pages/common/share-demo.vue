@@ -11,7 +11,7 @@
     </view>
 
     <view class="tip">
-      <text>建议顺序：动画演示 → 13800000001 接单 → 13800000004 代付/服务记录 → 13800000005 老人端 → 运营演示重置</text>
+      <text>建议顺序：动画演示 → 13800000001 接单 → 13800000004 代付/服务记录 → 13800000005 老人端 → 运营模式重置</text>
     </view>
 
     <button class="btn-outline" @tap="goBack">返回</button>
@@ -54,9 +54,9 @@ const links = [
   },
   {
     id: 'admin',
-    title: '运营演示',
-    desc: '平台 KPI · 撮合动态 · 注入外出演示单',
-    url: `${BASE}/#/pages/common/admin-hub`,
+    title: '运营模式',
+    desc: '口令进入 · KPI · 撮合动态 · 注入外出演示单',
+    url: `${BASE}/#/pages/common/ops-gate`,
   },
   {
     id: 'student-pending',

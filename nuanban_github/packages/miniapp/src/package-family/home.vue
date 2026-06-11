@@ -147,6 +147,7 @@ import type { ActivityEvent } from '../utils/demo-activity';
 import { useRoleStore } from '../store/role';
 import { GUEST_FAMILY_PREVIEW } from '../utils/guest-preview-data';
 import { isGuestBrowse, requireOperableAuth } from '../utils/guest-browse';
+import { openOpsMode } from '../utils/ops-mode';
 import { guardPackageRoute } from '../utils/nav-guard';
 import { formatRelativeTime } from '../utils/format-time';
 import { pbErrorMessage } from '../utils/request';
@@ -305,7 +306,7 @@ function goServiceLogs() {
 
 function goActivities() {
   if (!requireOperableAuth()) return;
-  uni.navigateTo({ url: '/pages/common/admin-hub' });
+  openOpsMode();
 }
 
 async function goSos() {

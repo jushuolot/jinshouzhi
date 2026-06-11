@@ -46,17 +46,26 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue';
 import { MODULE_GROUPS, PRODUCT_PILLARS } from '../../config/modules';
+import { isOpsEntryHidden, openOpsMode } from '../../utils/ops-mode';
 
-const groups = MODULE_GROUPS;
 const pillars = PRODUCT_PILLARS;
 
+const groups = computed(() => {
+  if (!isOpsEntryHidden()) return MODULE_GROUPS;
+  return MODULE_GROUPS.map((g) => ({
+    ...g,
+    entries: g.entries.filter((e) => e.id !== 'admin'),
+  }));
+});
+
 function go(path: string) {
-  if (path.startsWith('/pages/')) {
-    uni.navigateTo({ url: path });
-  } else {
-    uni.navigateTo({ url: path });
+  if (path.includes('ops-gate') || path.includes('admin-hub')) {
+    openOpsMode();
+    return;
   }
+  uni.navigateTo({ url: path });
 }
 
 function goSecurity() {

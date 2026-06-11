@@ -100,9 +100,9 @@ const steps = [
   {
     id: 'outdoor-seed',
     title: '外出陪同演示',
-    desc: '运营演示注入外出单 → 家属审批',
-    account: '运营演示页操作',
-    url: '/pages/common/admin-hub',
+    desc: '运营模式注入外出单 → 家属审批',
+    account: '运营模式页操作',
+    url: '/pages/common/ops-gate',
   },
   {
     id: 'elder-sos',
@@ -115,8 +115,8 @@ const steps = [
     id: 'admin-kpi',
     title: '运营 KPI 与动态',
     desc: '查看撮合数据、服务归档与撮合动态',
-    account: '登录页 → 更多 → 运营演示',
-    url: '/pages/common/admin-hub',
+    account: '登录页点「暖」或更多 → 运营模式',
+    url: '/pages/common/ops-gate',
   },
   {
     id: 'share',

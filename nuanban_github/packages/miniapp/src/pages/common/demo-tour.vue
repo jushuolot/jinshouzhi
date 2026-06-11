@@ -1,15 +1,8 @@
 <template>
   <view class="tour">
     <view class="top-bar">
-      <view class="top-left">
-        <text class="tag">动画演示 · 自动播放</text>
-        <text class="scene-counter">{{ scene + 1 }}/{{ SCENE_COUNT }}</text>
-      </view>
-      <view class="controls">
-        <text class="ctrl" @tap="togglePlay">{{ playing ? '⏸' : '▶' }}</text>
-        <text class="ctrl" @tap="prevScene">‹</text>
-        <text class="ctrl" @tap="nextSceneManual">›</text>
-      </view>
+      <text class="tag">动画演示 · 自动播放</text>
+      <text class="scene-counter">{{ scene + 1 }}/{{ SCENE_COUNT }}</text>
     </view>
 
     <view class="progress-wrap">
@@ -18,7 +11,6 @@
 
     <view class="stage" :class="'scene-' + scene">
       <view :key="scene" class="slide-wrap">
-        <!-- 场景 0：总览 -->
         <view v-if="scene === 0" class="slide fade-in">
           <text class="slide-title">暖伴勤工</text>
           <text class="slide-sub">让陪伴有温度，让勤工有意义</text>
@@ -32,7 +24,6 @@
           <text class="caption">邻里陪伴 · 高校助学 · 平台安心撮合</text>
         </view>
 
-        <!-- 场景 1：老人找同学 -->
         <view v-else-if="scene === 1" class="slide fade-in">
           <text class="scene-label">路径 ② 老人找同学</text>
           <view class="card anim-up">
@@ -52,7 +43,6 @@
           <text class="caption">老人按距离浏览大学生志愿者并下单</text>
         </view>
 
-        <!-- 场景 2：学生接单 -->
         <view v-else-if="scene === 2" class="slide fade-in">
           <text class="scene-label">路径 ③ 同学找需求</text>
           <view class="card anim-up">
@@ -72,7 +62,6 @@
           <text class="caption">学生看待接单池或附近 8 位老人</text>
         </view>
 
-        <!-- 场景 3：家属代付 -->
         <view v-else-if="scene === 3" class="slide fade-in">
           <text class="scene-label">有偿闭环 · 家属代付</text>
           <view class="pay-card anim-up">
@@ -84,7 +73,6 @@
           <text class="caption">演示 mock 支付 · 订单进入待服务</text>
         </view>
 
-        <!-- 场景 4：完成撮合 -->
         <view v-else-if="scene === 4" class="slide fade-in">
           <text class="scene-label">服务完成 · 收入到账</text>
           <view class="timeline">
@@ -98,25 +86,9 @@
             <text class="income-num">¥285.00</text>
           </view>
           <text class="caption">平台记录结算 · 三端可追溯</text>
-          <text class="last-hint">即将进入预览模式 · 可先浏览三端首页</text>
+          <text class="last-hint">即将选择演示身份 · 进入游客模式</text>
         </view>
       </view>
-    </view>
-
-    <view class="dots">
-      <view
-        v-for="(_, i) in SCENE_COUNT"
-        :key="i"
-        class="dot-item"
-        :class="{ on: i === scene }"
-        @tap="goScene(i)"
-      />
-    </view>
-
-    <view class="foot">
-      <button class="btn" @tap="goBrowse">开始浏览演示</button>
-      <button class="btn-outline" @tap="goLoginRegister">登录/注册</button>
-      <button class="btn-outline" @tap="goAdminHub">运营演示</button>
     </view>
   </view>
 </template>
@@ -124,15 +96,14 @@
 <script setup lang="ts">
 import { onHide, onShow, onUnload } from '@dcloudio/uni-app';
 import { computed, ref } from 'vue';
-import { ROLE_HOME } from '../../config/tabs';
-import { enterGuestBrowse } from '../../utils/guest-browse';
-
 const SCENE_COUNT = 5;
-const INTERVAL_MS = 4500;
+const TOTAL_MS = 15000;
+const INTERVAL_MS = TOTAL_MS / SCENE_COUNT;
 
 const scene = ref(0);
-const playing = ref(true);
-let timer: ReturnType<typeof setInterval> | null = null;
+let sceneTimer: ReturnType<typeof setInterval> | null = null;
+let maxTimer: ReturnType<typeof setTimeout> | null = null;
+let tourFinished = false;
 
 const timeline = ['接单', '到场签到', '服务中', '完成确认', '收入结算'];
 
@@ -142,67 +113,43 @@ function goScene(i: number) {
   scene.value = ((i % SCENE_COUNT) + SCENE_COUNT) % SCENE_COUNT;
 }
 
-function nextSceneManual() {
-  goScene(scene.value + 1);
-}
-
-function prevScene() {
-  goScene(scene.value - 1);
+function finishTour() {
+  if (tourFinished) return;
+  tourFinished = true;
+  stopTimers();
+  uni.reLaunch({ url: '/pages/common/guest-role-pick' });
 }
 
 function autoAdvance() {
   if (scene.value >= SCENE_COUNT - 1) {
-    goBrowseFromTour();
+    finishTour();
     return;
   }
   goScene(scene.value + 1);
 }
 
-function startAuto() {
-  stopAuto();
-  if (!playing.value) return;
-  timer = setInterval(autoAdvance, INTERVAL_MS);
-}
-
-function stopAuto() {
-  if (timer) {
-    clearInterval(timer);
-    timer = null;
+function stopTimers() {
+  if (sceneTimer) {
+    clearInterval(sceneTimer);
+    sceneTimer = null;
+  }
+  if (maxTimer) {
+    clearTimeout(maxTimer);
+    maxTimer = null;
   }
 }
 
-function togglePlay() {
-  playing.value = !playing.value;
-  if (playing.value) startAuto();
-  else stopAuto();
+function startTour() {
+  tourFinished = false;
+  stopTimers();
+  scene.value = 0;
+  sceneTimer = setInterval(autoAdvance, INTERVAL_MS);
+  maxTimer = setTimeout(finishTour, TOTAL_MS);
 }
 
-onShow(() => {
-  playing.value = true;
-  startAuto();
-});
-
-onHide(stopAuto);
-onUnload(stopAuto);
-
-function goBrowseFromTour() {
-  stopAuto();
-  enterGuestBrowse('elder');
-  uni.reLaunch({ url: ROLE_HOME.elder });
-}
-
-function goBrowse() {
-  goBrowseFromTour();
-}
-
-function goLoginRegister() {
-  stopAuto();
-  uni.navigateTo({ url: '/pages/common/user-manual?next=login' });
-}
-
-function goAdminHub() {
-  uni.navigateTo({ url: '/pages/common/admin-hub' });
-}
+onShow(startTour);
+onHide(stopTimers);
+onUnload(stopTimers);
 </script>
 
 <style scoped>
@@ -220,11 +167,6 @@ function goAdminHub() {
   align-items: center;
   margin-bottom: 16rpx;
 }
-.top-left {
-  display: flex;
-  flex-direction: column;
-  gap: 6rpx;
-}
 .tag {
   font-size: 22rpx;
   color: var(--nb-primary-light);
@@ -233,14 +175,6 @@ function goAdminHub() {
   font-size: 20rpx;
   color: var(--nb-dark-text-muted);
   letter-spacing: 2rpx;
-}
-.controls {
-  display: flex;
-  gap: 24rpx;
-  font-size: 36rpx;
-}
-.ctrl {
-  padding: 8rpx 16rpx;
 }
 .progress-wrap {
   height: 6rpx;
@@ -665,38 +599,5 @@ function goAdminHub() {
   font-weight: 700;
   color: #fff;
   margin-top: 8rpx;
-}
-.dots {
-  display: flex;
-  justify-content: center;
-  gap: 12rpx;
-  margin: 32rpx 0;
-}
-.dot-item {
-  width: 16rpx;
-  height: 16rpx;
-  border-radius: 50%;
-  background: var(--nb-dark-surface-alt);
-  transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
-}
-.dot-item.on {
-  background: var(--nb-primary-light);
-  width: 32rpx;
-  border-radius: 8rpx;
-}
-.foot {
-  margin-top: 16rpx;
-}
-.btn {
-  background: var(--nb-primary-gradient);
-  color: #fff;
-  border-radius: var(--nb-radius-sm);
-}
-.btn-outline {
-  margin-top: 16rpx;
-  background: transparent;
-  color: var(--nb-primary-light);
-  border: 1rpx solid var(--nb-primary-light);
-  border-radius: var(--nb-radius-sm);
 }
 </style>

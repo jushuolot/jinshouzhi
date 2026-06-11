@@ -1,5 +1,6 @@
 import { useRoleStore } from '../store/role';
 import { demoMockRequest, isDemoMockEnabled } from './demo-mock';
+import { guestBrowseRole, isGuestBrowse } from './guest-browse';
 
 /** 构建时 API 根；在阿里云等线上环境自动纠正 localhost / 相对路径 */
 export function resolveApiBase(): string {
@@ -87,11 +88,13 @@ export function pbErrorMessage(err: unknown): string {
 
 export function request<T>(options: UniApp.RequestOptions): Promise<T> {
   const role = useRoleStore();
+  const guestRole = isGuestBrowse() ? guestBrowseRole() : null;
+  const activeRole = role.activeRole ?? guestRole ?? undefined;
   const headers = {
     'Content-Type': 'application/json',
     ...(options.header || {}),
     ...(role.token ? { Authorization: `Bearer ${role.token}` } : {}),
-    ...(role.activeRole ? { 'X-Active-Role': role.activeRole } : {}),
+    ...(activeRole ? { 'X-Active-Role': activeRole } : {}),
   };
   if (isDemoMockEnabled()) {
     return demoMockRequest<T>({ ...options, header: headers });

@@ -1,6 +1,6 @@
 <template>
   <view class="page nb-page">
-    <text class="title">运营演示</text>
+    <text class="title">运营模式</text>
     <text class="sub">平台撮合数据 · 机构派单 · 学校合作</text>
 
     <view class="kpi-grid">
@@ -116,6 +116,18 @@
       <text class="reset-desc">清除本地订单/储值卡状态，恢复种子数据</text>
     </view>
 
+    <view class="ops-settings nb-card">
+      <text class="section-title">运营设置</text>
+      <view class="setting-row">
+        <view class="setting-text">
+          <text class="setting-label">隐藏运营入口</text>
+          <text class="setting-desc">仅通过登录页「暖」图标进入</text>
+        </view>
+        <switch :checked="hiddenEntry" color="#c45c26" @change="onHiddenChange" />
+      </view>
+      <button class="btn-logout" @tap="logoutOps">退出运营模式</button>
+    </view>
+
     <text v-if="overview?.updatedAt" class="ts">数据更新 {{ formatTime(overview.updatedAt) }}</text>
   </view>
 </template>
@@ -129,9 +141,16 @@ import { activityIcon } from '../../utils/demo-activity';
 import type { ActivityEvent } from '../../utils/demo-activity';
 import { isDemoMockEnabled, resetDemoRuntimeState } from '../../utils/demo-mock';
 import { formatRelativeTime, formatShortTime } from '../../utils/format-time';
+import {
+  clearOpsSession,
+  isOpsEntryHidden,
+  requireOpsSession,
+  setOpsEntryHidden,
+} from '../../utils/ops-mode';
 import { pbErrorMessage } from '../../utils/request';
 
 const demoMode = isDemoMockEnabled();
+const hiddenEntry = ref(isOpsEntryHidden());
 
 const pendingCount = ref(0);
 const overview = ref<PlatformOverview | null>(null);
@@ -162,7 +181,32 @@ async function reload() {
   }
 }
 
-onShow(reload);
+onShow(() => {
+  if (!requireOpsSession()) return;
+  hiddenEntry.value = isOpsEntryHidden();
+  void reload();
+});
+
+function onHiddenChange(e: { detail: { value: boolean } }) {
+  hiddenEntry.value = e.detail.value;
+  setOpsEntryHidden(e.detail.value);
+  uni.showToast({
+    title: e.detail.value ? '已隐藏运营入口' : '已显示运营入口',
+    icon: 'none',
+  });
+}
+
+function logoutOps() {
+  uni.showModal({
+    title: '退出运营模式',
+    content: '退出后需重新输入口令',
+    success: (res) => {
+      if (!res.confirm) return;
+      clearOpsSession();
+      uni.navigateBack();
+    },
+  });
+}
 
 function goModuleMap() {
   uni.navigateTo({ url: '/pages/common/module-map' });
@@ -414,5 +458,44 @@ function confirmReset() {
   text-align: center;
   font-size: 22rpx;
   color: #bbb;
+}
+.ops-settings {
+  margin-top: 28rpx;
+  padding: 24rpx;
+  background: var(--nb-surface);
+  border-radius: var(--nb-radius-md);
+  box-shadow: var(--nb-shadow-soft);
+}
+.setting-row {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  margin-bottom: 20rpx;
+}
+.setting-text {
+  flex: 1;
+}
+.setting-label {
+  display: block;
+  font-size: 28rpx;
+  font-weight: 500;
+}
+.setting-desc {
+  display: block;
+  margin-top: 6rpx;
+  font-size: 22rpx;
+  color: var(--nb-text-muted);
+}
+.btn-logout {
+  width: 100%;
+  margin: 0;
+  font-size: 26rpx;
+  color: var(--nb-text-secondary);
+  background: var(--nb-page-bg, #f5f5f5);
+  border: 2rpx solid var(--nb-border);
+  border-radius: var(--nb-radius-sm);
+}
+.btn-logout::after {
+  border: none;
 }
 </style>

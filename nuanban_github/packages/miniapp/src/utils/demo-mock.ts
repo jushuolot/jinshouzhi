@@ -26,6 +26,7 @@ import {
 } from './demo-mock-state';
 import { getStudentWithdrawalOverview, submitStudentWithdrawal } from './demo-student-wallet';
 import type { RoleKey } from '../config/tabs';
+import { isGuestBrowse, notifyGuestSimulate } from './guest-browse';
 import { getMockAvatarUrl } from './mock-avatar-storage';
 import {
   buildRichCaregivers,
@@ -571,6 +572,10 @@ function recordActivity(
 }
 
 function persistDemoState() {
+  if (isGuestBrowse()) {
+    notifyGuestSimulate();
+    return;
+  }
   saveDemoRuntimeState(state);
 }
 

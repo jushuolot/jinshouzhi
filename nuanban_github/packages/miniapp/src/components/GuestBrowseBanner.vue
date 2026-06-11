@@ -1,10 +1,10 @@
 <template>
   <view class="banner">
     <view class="banner-text">
-      <text class="title">预览模式</text>
-      <text class="desc">可浏览界面，操作需登录并完善资料</text>
+      <text class="title">{{ bannerTitle }}</text>
+      <text class="desc">可模拟操作演示数据，不会保存；注册后可正式下单</text>
     </view>
-    <button class="btn-login" size="mini" @tap="goLogin">登录/注册</button>
+    <button class="btn-login" size="mini" @tap="goRegister">注册下单</button>
     <view class="roles">
       <text
         v-for="r in roles"
@@ -20,7 +20,12 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { ROLE_HOME, type RoleKey } from '../config/tabs';
-import { enterGuestBrowse, guestBrowseRole } from '../utils/guest-browse';
+import {
+  enterGuestBrowse,
+  guestBannerTitle,
+  guestBrowseRole,
+  promptRegisterForOrder,
+} from '../utils/guest-browse';
 
 const roles: { key: RoleKey; label: string }[] = [
   { key: 'elder', label: '老人' },
@@ -29,14 +34,15 @@ const roles: { key: RoleKey; label: string }[] = [
 ];
 
 const currentRole = computed(() => guestBrowseRole() || 'elder');
+const bannerTitle = computed(() => guestBannerTitle());
 
 function switchRole(role: RoleKey) {
   enterGuestBrowse(role);
   uni.reLaunch({ url: ROLE_HOME[role] });
 }
 
-function goLogin() {
-  uni.navigateTo({ url: '/pages/common/user-manual?next=login' });
+function goRegister() {
+  promptRegisterForOrder();
 }
 </script>
 

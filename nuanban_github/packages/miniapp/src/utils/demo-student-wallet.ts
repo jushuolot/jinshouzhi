@@ -1,6 +1,8 @@
 /** 演示栈 · 学生提现（可提现余额 = 已结算 − 已提现） */
 
 import type { SettlementRecord } from './demo-rich-data';
+import { isGuestBrowse } from './guest-browse';
+import { isGuestBrowse } from './guest-browse';
 
 export type WithdrawalChannel = 'wechat' | 'bank';
 
@@ -53,6 +55,7 @@ function loadStore(): StudentWalletStore {
 }
 
 function saveStore(store: StudentWalletStore) {
+  if (isGuestBrowse()) return;
   uni.setStorageSync(STORAGE_KEY, store);
 }
 
