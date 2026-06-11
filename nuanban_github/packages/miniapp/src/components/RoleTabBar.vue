@@ -7,7 +7,8 @@
       :class="{ active: current === tab.pagePath }"
       @tap="go(tab.pagePath)"
     >
-      <text>{{ tab.text }}</text>
+      <text class="tab-icon">{{ tab.icon }}</text>
+      <text class="tab-text">{{ tab.text }}</text>
     </view>
   </view>
 </template>
@@ -40,13 +41,29 @@ function go(url: string) {
 }
 .item {
   flex: 1;
-  text-align: center;
-  padding: 20rpx 0;
-  font-size: 26rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 12rpx 0 16rpx;
   color: var(--nb-text-secondary);
+}
+.tab-icon {
+  font-size: 36rpx;
+  line-height: 1.1;
+  opacity: 0.85;
+}
+.tab-text {
+  margin-top: 4rpx;
+  font-size: 22rpx;
 }
 .item.active {
   color: var(--nb-primary);
+}
+.item.active .tab-icon {
+  opacity: 1;
+}
+.item.active .tab-text {
   font-weight: 600;
 }
 </style>

@@ -41,6 +41,18 @@ const links = [
     url: `${BASE}/#/pages/common/scenario-guide`,
   },
   {
+    id: 'modules',
+    title: '产品模块地图',
+    desc: '三端分包 · 便捷直达',
+    url: `${BASE}/#/pages/common/module-map`,
+  },
+  {
+    id: 'security',
+    title: '安全中心',
+    desc: '传输加密 · 隐私说明',
+    url: `${BASE}/#/pages/common/security`,
+  },
+  {
     id: 'admin',
     title: '运营演示',
     desc: '平台 KPI · 撮合动态 · 注入外出演示单',

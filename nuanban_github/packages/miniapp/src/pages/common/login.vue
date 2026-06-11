@@ -71,6 +71,8 @@
       <text>虚拟手机登录 · 点按选择测试号</text>
     </view>
 
+    <SecurityStrip />
+
     <text class="hint">{{ loginHint }}</text>
 
     <view class="footer">
@@ -100,6 +102,7 @@ import { pbErrorMessage } from '../../utils/request';
 import { DEMO_TEST_PHONES } from '../../utils/demo-rich-data';
 import { isDemoMockEnabled } from '../../utils/demo-mock';
 import { isVirtualPhoneLoginEnabled } from '../../utils/virtual-phone-login';
+import SecurityStrip from '../../components/SecurityStrip.vue';
 import loginBg from '@/static/images/login-bg-kawaii.png';
 
 const virtualPhoneLogin = isVirtualPhoneLoginEnabled();
@@ -250,15 +253,17 @@ async function onWxLogin() {
 
 function showMore() {
   uni.showActionSheet({
-    itemList: ['深度验收向导', '运营演示', '分享演示链接'],
+    itemList: ['模块地图', '深度验收向导', '安全中心', '运营演示', '分享演示链接'],
     success: (res) => {
-      if (res.tapIndex === 0) {
-        uni.navigateTo({ url: '/pages/common/scenario-guide' });
-      } else if (res.tapIndex === 1) {
-        uni.navigateTo({ url: '/pages/common/admin-hub' });
-      } else if (res.tapIndex === 2) {
-        uni.navigateTo({ url: '/pages/common/share-demo' });
-      }
+      const routes = [
+        '/pages/common/module-map',
+        '/pages/common/scenario-guide',
+        '/pages/common/security',
+        '/pages/common/admin-hub',
+        '/pages/common/share-demo',
+      ];
+      const url = routes[res.tapIndex];
+      if (url) uni.navigateTo({ url });
     },
   });
 }

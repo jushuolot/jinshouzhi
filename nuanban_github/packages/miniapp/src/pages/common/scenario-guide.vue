@@ -41,6 +41,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { onShow } from '@dcloudio/uni-app';
+import { getSecureJson, removeSecure, setSecureJson } from '../../utils/secure-storage';
 
 const STORAGE_KEY = 'nuanban_scenario_v1';
 
@@ -113,16 +114,12 @@ const steps = [
 const completed = ref<string[]>([]);
 
 function loadProgress() {
-  try {
-    const raw = uni.getStorageSync(STORAGE_KEY) as { completed?: string[] } | null;
-    completed.value = Array.isArray(raw?.completed) ? raw.completed : [];
-  } catch {
-    completed.value = [];
-  }
+  const raw = getSecureJson<{ completed?: string[] }>(STORAGE_KEY, { completed: [] });
+  completed.value = Array.isArray(raw.completed) ? raw.completed : [];
 }
 
 function saveProgress() {
-  uni.setStorageSync(STORAGE_KEY, { completed: completed.value });
+  setSecureJson(STORAGE_KEY, { completed: completed.value });
 }
 
 const doneCount = computed(() => completed.value.length);
@@ -152,7 +149,7 @@ function resetProgress() {
     success: (res) => {
       if (res.confirm) {
         completed.value = [];
-        saveProgress();
+        removeSecure(STORAGE_KEY);
         uni.showToast({ title: '已清除', icon: 'success' });
       }
     },

@@ -53,6 +53,20 @@
     </view>
 
     <view class="section-title">功能入口</view>
+    <view class="link-card" @tap="goModuleMap">
+      <view class="link-main">
+        <text class="link-title">产品模块地图</text>
+        <text class="link-desc">三端分包 · 便捷直达各功能</text>
+      </view>
+      <text class="chevron">›</text>
+    </view>
+    <view class="link-card" @tap="goSecurity">
+      <view class="link-main">
+        <text class="link-title">安全中心</text>
+        <text class="link-desc">传输加密 · 隐私与权限</text>
+      </view>
+      <text class="chevron">›</text>
+    </view>
     <view class="link-card highlight" @tap="goScenario">
       <view class="link-main">
         <text class="link-title">深度验收向导</text>
@@ -149,6 +163,14 @@ async function reload() {
 }
 
 onShow(reload);
+
+function goModuleMap() {
+  uni.navigateTo({ url: '/pages/common/module-map' });
+}
+
+function goSecurity() {
+  uni.navigateTo({ url: '/pages/common/security' });
+}
 
 function goDispatch() {
   uni.navigateTo({ url: '/pages/common/org-dispatch' });

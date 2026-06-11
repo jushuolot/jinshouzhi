@@ -208,9 +208,14 @@ const menuItems = computed(() => {
     roleStore.activeRoles.length > 1
       ? [{ label: '切换身份', action: goRoleSelect }]
       : [];
+  const security = [
+    { label: '安全中心', action: () => uni.navigateTo({ url: '/pages/common/security' }) },
+    { label: '模块地图', action: () => uni.navigateTo({ url: '/pages/common/module-map' }) },
+  ];
   if (props.role === 'family') {
     return [
       ...switchRole,
+      ...security,
       { label: '编辑资料', action: () => uni.navigateTo({ url: '/package-family/profile/edit' }) },
       {
         label: '储值卡',
@@ -228,6 +233,7 @@ const menuItems = computed(() => {
   if (props.role === 'elder') {
     return [
       ...switchRole,
+      ...security,
       { label: '编辑资料', action: () => uni.navigateTo({ url: '/package-elder/profile/edit' }) },
       {
         label: '储值卡',

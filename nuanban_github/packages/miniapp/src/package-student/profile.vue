@@ -70,6 +70,14 @@
         <text>服务日志</text>
         <text class="arrow">›</text>
       </view>
+      <view class="menu-item" @tap="goSecurity">
+        <text>安全中心</text>
+        <text class="arrow">›</text>
+      </view>
+      <view class="menu-item" @tap="goModuleMap">
+        <text>模块地图</text>
+        <text class="arrow">›</text>
+      </view>
       <view class="menu-item" @tap="goEditProfile">
         <text>编辑资料</text>
         <text class="arrow">›</text>
@@ -219,6 +227,14 @@ function goSchedule() {
 
 function goLogs() {
   uni.navigateTo({ url: '/package-student/schedule/log' });
+}
+
+function goSecurity() {
+  uni.navigateTo({ url: '/pages/common/security' });
+}
+
+function goModuleMap() {
+  uni.navigateTo({ url: '/pages/common/module-map' });
 }
 
 function goEditProfile() {
