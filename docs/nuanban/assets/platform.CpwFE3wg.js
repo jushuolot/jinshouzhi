@@ -1,0 +1,1 @@
+import{r as n}from"./request.BLZO4olI.js";async function a(){return n({url:"/nuanban/platform/overview",method:"GET"})}async function r(){return(await n({url:"/nuanban/platform/activity",method:"GET"})).list??[]}async function t(){return n({url:"/nuanban/platform/seed-scenario",method:"POST"})}export{a,r as f,t as s};
