@@ -1,6 +1,6 @@
-# 项目合集（jushuolot/cursor 单仓）
+# 项目合集（jushuolot/jinshouzhi 单仓）
 
-本仓库汇总多个可独立运行的子项目，便于同事 **GitHub 克隆 / Codespaces / 云部署** 测试。
+本仓库汇总多个可独立运行的子项目，便于 **GitHub 克隆 / Codespaces / 云部署**。
 
 仓库地址：**https://github.com/jushuolot/jinshouzhi**
 
@@ -10,37 +10,35 @@
 
 | 目录 | 说明 | 公网 / 同事测试方式 |
 |------|------|---------------------|
-| **根目录 `client/` + `server/`** | **金手指** — 邀请制社交 MVP（React + Node + SQLite） | **推荐** [GitHub Codespaces](docs/方案A-Codespaces从零开始.md)：`npm run dev` → 打开端口 **5173**；可选 [Render](docs/在GitHub上运行.md#render-公网可选) |
-| [`stock-assistant/`](stock-assistant/README.md) | Streamlit 股票助手（自选、K 线、板块、可读简报） | [Streamlit Cloud](https://streamlit.io/cloud) 或 Railway；Secrets 配置 `STOCK_ASSISTANT_PASSWORD`；文档：[产品说明](stock-assistant/docs/PRODUCT.md) · [使用手册](stock-assistant/docs/USER_GUIDE.md) · [部署](stock-assistant/DEPLOY_STREAMLIT.md) · [进化路线](stock-assistant/EVOLUTION.md) |
-| [`python-stock-mini/`](python-stock-mini/使用说明.txt) | 轻量 Streamlit 行情页 | 同 stock-assistant：`STOCK_APP_PASSWORD` + Streamlit Cloud |
-| [`nuanban_github/`](nuanban_github/README.md) | **暖伴勤工** — uni-app + PocketBase | **GitHub Pages** 公网演示（内置 Mock，无需信用卡）；本地 Docker 联调 |
-| [`lo-delivery-platform/`](lo-delivery-platform/README.md) | 物流订单平台 — 产品文档 + Web 演示壳 | GitHub Pages：`Settings → Pages → /docs`；本地 `cd web && python3 -m http.server 8080` |
-| [`match3-game/`](match3-game/README.md) | 三消游戏广告结算占位（WIP） | 暂无完整可玩版本；见目录 README |
-
-> 本地重复的 `nuanban/`、`jinshouzhi/` 子目录已加入 `.gitignore`，请以根目录金手指与 `nuanban_github/` 为准。
+| [`nuanban_github/`](nuanban_github/README.md) | **暖伴勤工** — uni-app + PocketBase | **GitHub Pages** 演示；本地 `./scripts/start-h5.sh` |
+| [`stock-assistant/`](stock-assistant/README.md) | Streamlit 股票助手 | [Streamlit Cloud](https://streamlit.io/cloud) |
+| [`python-stock-mini/`](python-stock-mini/使用说明.txt) | 轻量 Streamlit 行情页 | Streamlit Cloud |
+| [`lo-delivery-platform/`](lo-delivery-platform/README.md) | 物流订单平台演示 | GitHub Pages `/docs` |
+| [`match3-game/`](match3-game/README.md) | 三消游戏（WIP） | 见目录 README |
 
 ---
 
-## 金手指 · 最快上手（Codespaces）
-
-👉 **[docs/方案A-Codespaces从零开始.md](docs/方案A-Codespaces从零开始.md)**
+## 暖伴勤工 · 最快上手
 
 ```bash
-# 本机
-npm install && cd server && npm install && cd ../client && npm install && cd ..
-npm run seed && npm run dev
-# 浏览器 http://localhost:5173  账号 13800001001 / 123456
+cd nuanban_github
+./scripts/dev-test.sh          # 终端 1：PocketBase + 种子数据
+./scripts/start-h5.sh          # 终端 2：H5 开发
 ```
 
-生产一体构建：`npm run build && npm start` → http://localhost:3001
+浏览器：**http://localhost:5174/#/pages/common/launch**
+
+公网演示：**https://jushuolot.github.io/jinshouzhi/nuanban/#/pages/common/launch**
+
+详见 [nuanban_github/docs/LOCAL_TEST.md](nuanban_github/docs/LOCAL_TEST.md)
 
 ---
 
 ## 推送与更新
 
-见 [docs/发布与更新.md](docs/发布与更新.md)
+各子项目在其目录内开发；暖伴推送 `main` 后会由 Actions 更新 GitHub Pages。
 
-**切勿提交**：`.env`、`.streamlit/secrets.toml`、`pb_data/`、SQLite WAL/SHM、真实密码。
+**切勿提交**：`.env`、`pb_data/`、真实密码与密钥。
 
 ---
 

@@ -1,6 +1,5 @@
 node_modules/
 dist/
-client/dist/
 *.db
 *.db-shm
 *.db-wal
@@ -34,7 +33,6 @@ pb_data.bak*/
 .hbuilderx/
 
 # Nested duplicate copies (do not publish)
-jinshouzhi/
 nuanban/nuanban/
 
 # temp

@@ -1,21 +1,6 @@
 {
-  "name": "jinshouzhi",
+  "name": "jushuolot-monorepo",
   "version": "1.0.0",
   "private": true,
-  "description": "金手指 - 成熟男士邀请制社交 MVP",
-  "scripts": {
-    "install:all": "npm install && cd server && npm install && cd ../client && npm install",
-    "dev": "concurrently -n server,client -c blue,green \"npm run dev:server\" \"npm run dev:client\"",
-    "dev:server": "cd server && npm run dev",
-    "dev:client": "cd client && npm run dev",
-    "build": "cd client && npm run build",
-    "build:deploy": "npm install && cd server && npm install && cd ../client && npm install && cd .. && npm run build",
-    "start": "cd server && npm start",
-    "seed": "cd server && node scripts/seed.js",
-    "stop": "lsof -ti :3001,:5173,:5174,:5175,:5176 2>/dev/null | xargs kill -9 2>/dev/null; echo 已尝试关闭旧进程",
-    "reset": "node -e \"const fs=require('fs');const p='data';fs.existsSync(p)&&fs.readdirSync(p).forEach(f=>fs.unlinkSync(p+'/'+f));\" && npm run seed"
-  },
-  "devDependencies": {
-    "concurrently": "^9.1.2"
-  }
+  "description": "多项目合集（暖伴勤工、股票助手等）"
 }

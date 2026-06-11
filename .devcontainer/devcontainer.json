@@ -1,17 +1,17 @@
 {
-  "name": "金手指",
+  "name": "暖伴勤工",
   "image": "mcr.microsoft.com/devcontainers/javascript-node:20",
-  "forwardPorts": [3001, 5173],
+  "forwardPorts": [5174, 8090],
   "portsAttributes": {
-    "5173": {
-      "label": "金手指-网页",
+    "5174": {
+      "label": "暖伴-H5",
       "onAutoForward": "openBrowser"
     },
-    "3001": {
-      "label": "金手指-API",
+    "8090": {
+      "label": "暖伴-PocketBase",
       "onAutoForward": "notify"
     }
   },
-  "postCreateCommand": "npm run install:all && npm run seed",
-  "postAttachCommand": "printf '\\n✅ Codespaces 环境已就绪\\n   请在终端执行: npm run dev\\n   浏览器打开端口 5173\\n   登录: 13800001001 / 123456\\n\\n'"
+  "postCreateCommand": "cd nuanban_github/packages/miniapp && npm install",
+  "postAttachCommand": "printf '\\n✅ Codespaces 环境已就绪\\n   终端 1: cd nuanban_github && ./scripts/dev-test.sh\\n   终端 2: cd nuanban_github && ./scripts/start-h5.sh\\n   浏览器: http://localhost:5174/#/pages/common/launch\\n\\n'"
 }

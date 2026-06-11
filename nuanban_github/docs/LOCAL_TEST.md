@@ -47,9 +47,15 @@ npm install             # 首次需要
 npm run dev:h5
 ```
 
-浏览器打开终端提示的地址（一般为 **http://localhost:5174** 或 **5175**；若 5174 已被占用会自动换端口）：
+浏览器请用暖伴专用启动脚本：
 
-**http://localhost:5174/#/pages/common/login**（或把 `5174` 换成实际端口）
+```bash
+./scripts/start-h5.sh
+```
+
+打开：**http://localhost:5174/#/pages/common/launch**
+
+若端口被占用，脚本会自动释放 5174 后启动；页面标题应为 **暖伴勤工**。
 
 `.env` 默认：
 

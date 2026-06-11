@@ -4,6 +4,28 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
+ENV_FILE="$ROOT/packages/miniapp/.env"
+ENV_EXAMPLE="$ROOT/packages/miniapp/.env.example"
+
+ensure_local_env() {
+  if [ ! -f "$ENV_FILE" ]; then
+    cp "$ENV_EXAMPLE" "$ENV_FILE"
+    echo "    已从 .env.example 创建 packages/miniapp/.env"
+    return
+  fi
+  for key in VITE_RELEASE_CHANNEL VITE_DEMO_MOCK; do
+    if ! grep -q "^${key}=" "$ENV_FILE" 2>/dev/null; then
+      grep "^${key}=" "$ENV_EXAMPLE" >> "$ENV_FILE" || true
+      echo "    已补全 .env: ${key}"
+    fi
+  done
+  if grep -q '^VITE_DEMO_MOCK=' "$ENV_FILE" && ! grep -q '^VITE_DEMO_MOCK=true' "$ENV_FILE"; then
+    echo "    提示: 本地联调建议 VITE_DEMO_MOCK=true（见 .env.example）"
+  fi
+}
+
+echo "==> 0/3 检查前端 .env（Mock 演示数据）"
+ensure_local_env
 
 echo "==> 1/3 启动 PocketBase (docker compose)"
 if docker ps -a --format '{{.Names}}' | grep -qx 'nuanban-pocketbase'; then
@@ -37,9 +59,10 @@ echo "   API:   $BASE/api"
 echo "   Admin: $BASE/_/"
 echo ""
 echo " 下一步（新开终端）："
-echo "   cd packages/miniapp"
-echo "   cp .env.example .env && npm install && npm run dev:h5"
-echo "   浏览器打开 http://localhost:5174"
+echo "   ./scripts/start-h5.sh"
+echo "   浏览器打开 http://localhost:5174/#/pages/common/launch"
+echo "   确认 .env 含 VITE_DEMO_MOCK=true → 运营台/三端有演示数据"
+echo "   学生核验照落盘: dev-data/verification-photos/（拍照后生成）"
 echo ""
 "$ROOT/scripts/print-phone-dev-url.sh"
 echo "详细说明: docs/LOCAL_TEST.md"
