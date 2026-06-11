@@ -23,6 +23,8 @@ https://jushuolot.github.io/jinshouzhi/nuanban/#/pages/common/login
 
 **运营演示**：登录页 **更多 → 运营演示**（派单、学校合作、平台 KPI）
 
+**深度验收**：登录页底部 **深度验收** 直达 9 步向导；**安全中心** 见登录区加密状态条
+
 ---
 
 ## 正式版（验收通过后对外）

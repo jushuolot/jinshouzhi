@@ -94,8 +94,11 @@
       </view>
       <text class="chevron">›</text>
     </view>
-    <view v-if="recentActivities.length" class="activity-preview">
-      <text class="activity-label">最新动态</text>
+    <view v-if="recentActivities.length" class="activity-preview" @tap="goActivities">
+      <view class="activity-head">
+        <text class="activity-label">最新动态</text>
+        <text class="activity-more">查看全部 ›</text>
+      </view>
       <view v-for="a in recentActivities" :key="a.id" class="activity-item">
         <text class="activity-title">{{ a.title }}</text>
         <text class="activity-detail">{{ a.detail }}</text>
@@ -269,6 +272,10 @@ function goServiceLogs() {
   uni.navigateTo({ url: '/package-family/service/log' });
 }
 
+function goActivities() {
+  uni.navigateTo({ url: '/pages/common/admin-hub' });
+}
+
 async function goSos() {
   try {
     const list = await listActiveSosAlerts();
@@ -421,11 +428,19 @@ async function goSos() {
   margin-bottom: 16rpx;
   box-shadow: var(--nb-shadow-soft);
 }
+.activity-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12rpx;
+}
 .activity-label {
-  display: block;
   font-size: 24rpx;
   color: var(--nb-text-muted);
-  margin-bottom: 12rpx;
+}
+.activity-more {
+  font-size: 24rpx;
+  color: var(--nb-primary);
 }
 .activity-item {
   padding: 10rpx 0;

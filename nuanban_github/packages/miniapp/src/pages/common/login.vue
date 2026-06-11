@@ -29,6 +29,7 @@
           :value="phone"
           placeholder="请输入手机号"
           placeholder-class="ph"
+          aria-label="手机号"
           @input="onPhoneInput"
         />
       </view>
@@ -41,6 +42,7 @@
           :value="smsCode"
           placeholder="短信验证码"
           placeholder-class="ph"
+          aria-label="短信验证码"
           @input="onCodeInput"
         />
         <button
@@ -78,6 +80,8 @@
     <view class="footer">
       <text class="foot-link" @tap="goDemoTour">动画演示</text>
       <text class="sep">·</text>
+      <text v-if="virtualPhoneLogin" class="foot-link" @tap="goScenario">深度验收</text>
+      <text v-if="virtualPhoneLogin" class="sep">·</text>
       <text class="foot-link" @tap="goAgreement">用户协议</text>
       <template v-if="virtualPhoneLogin">
         <text class="sep">·</text>
@@ -148,6 +152,11 @@ function showDemoPhones() {
       const picked = DEMO_TEST_PHONES[res.tapIndex];
       if (!picked) return;
       phone.value = picked.phone;
+      uni.showToast({
+        title: picked.testHint || picked.label,
+        icon: 'none',
+        duration: 2200,
+      });
       if (virtualPhoneLogin) void loginDemoPhone(picked.phone);
     },
   });
@@ -274,6 +283,10 @@ function goAgreement() {
 
 function goDemoTour() {
   uni.navigateTo({ url: '/pages/common/demo-tour' });
+}
+
+function goScenario() {
+  uni.navigateTo({ url: '/pages/common/scenario-guide' });
 }
 </script>
 

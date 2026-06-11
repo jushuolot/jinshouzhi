@@ -34,6 +34,13 @@
       <text class="topup-hint">演示环境，点击即充值成功，不产生真实扣款</text>
     </view>
 
+    <view v-if="isDemo" class="security-note nb-card">
+      <text class="security-icon">🔐</text>
+      <text class="security-text">
+        测试版余额存于浏览器 localStorage（演示明文）；正式版在服务端 PocketBase，经 HTTPS 传输。
+      </text>
+    </view>
+
     <text class="section nb-section-title">最近记录</text>
     <view v-if="loading" class="empty nb-card">加载中…</view>
     <view v-else-if="!transactions.length" class="empty nb-card">暂无记录，充值后即可用于支付</view>
@@ -63,6 +70,7 @@ import {
   type WalletTransaction,
 } from '../api/wallet';
 import { elderFontClass } from '../utils/elder-accessibility';
+import { isDemoMockEnabled } from '../utils/demo-mock';
 import { guardPackageRoute } from '../utils/nav-guard';
 import { pbErrorMessage } from '../utils/request';
 import type { RoleKey } from '../config/tabs';
@@ -77,6 +85,7 @@ const transactions = ref<WalletTransaction[]>([]);
 const selectedCents = ref(10000);
 const customYuan = ref('');
 const elderFontCls = ref(elderFontClass());
+const isDemo = isDemoMockEnabled();
 
 const balanceYuan = computed(() => (balanceCents.value / 100).toFixed(2));
 const profileTab = computed(() =>
@@ -245,6 +254,25 @@ onShow(() => {
   font-size: 22rpx;
   color: var(--nb-text-muted, #a89488);
   text-align: center;
+}
+.security-note {
+  display: flex;
+  gap: 12rpx;
+  align-items: flex-start;
+  margin-bottom: 24rpx;
+  padding: 20rpx 24rpx;
+  background: var(--nb-peach, #fff8f2);
+  border: 2rpx solid var(--nb-border-dashed, #f0e0d4);
+}
+.security-icon {
+  font-size: 32rpx;
+  flex-shrink: 0;
+}
+.security-text {
+  flex: 1;
+  font-size: 22rpx;
+  color: var(--nb-text-secondary, #6b5748);
+  line-height: 1.55;
 }
 .empty {
   text-align: center;

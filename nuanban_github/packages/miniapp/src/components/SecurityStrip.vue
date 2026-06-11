@@ -1,5 +1,11 @@
 <template>
-  <view class="strip" :class="{ secure: status.isSecureContext }" @tap="goSecurity">
+  <view
+    class="strip"
+    :class="{ secure: status.isSecureContext }"
+    role="button"
+    aria-label="查看安全中心"
+    @tap="goSecurity"
+  >
     <text class="icon">{{ status.isSecureContext ? '🔒' : '🛡️' }}</text>
     <view class="text">
       <text class="line1">{{ status.connectionLabel }}</text>
