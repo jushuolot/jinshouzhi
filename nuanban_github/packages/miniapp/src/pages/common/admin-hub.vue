@@ -1,5 +1,5 @@
 <template>
-  <view class="page">
+  <view class="page nb-page">
     <text class="title">运营演示</text>
     <text class="sub">平台撮合数据 · 机构派单 · 学校合作</text>
 
@@ -42,13 +42,17 @@
       <text>今日撮合 {{ overview.todayMatches }}</text>
     </view>
 
-    <view v-if="activities.length" class="section-title">撮合动态</view>
+    <view class="section-title">撮合动态</view>
+    <view v-if="!activities.length" class="empty-activity">
+      <text class="empty-icon">📭</text>
+      <text class="empty-text">暂无动态 · 接单或支付后将自动记录</text>
+    </view>
     <view v-for="a in activities" :key="a.id" class="activity-row">
       <text class="act-icon">{{ actIcon(a.kind) }}</text>
       <view class="act-body">
         <text class="act-title">{{ a.title }}</text>
         <text class="act-detail">{{ a.detail }}</text>
-        <text class="act-time">{{ formatTime(a.createdAt) }}</text>
+        <text class="act-time">{{ formatRelativeTime(a.createdAt) }}</text>
       </view>
     </view>
 
@@ -124,6 +128,7 @@ import { listDispatchableOrders } from '../../api/org';
 import { activityIcon } from '../../utils/demo-activity';
 import type { ActivityEvent } from '../../utils/demo-activity';
 import { isDemoMockEnabled, resetDemoRuntimeState } from '../../utils/demo-mock';
+import { formatRelativeTime, formatShortTime } from '../../utils/format-time';
 import { pbErrorMessage } from '../../utils/request';
 
 const demoMode = isDemoMockEnabled();
@@ -138,12 +143,7 @@ function actIcon(kind: ActivityEvent['kind']) {
 }
 
 function formatTime(iso: string) {
-  try {
-    const d = new Date(iso);
-    return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-  } catch {
-    return iso;
-  }
+  return formatShortTime(iso);
 }
 
 async function reload() {
@@ -225,7 +225,6 @@ function confirmReset() {
 <style scoped>
 .page {
   min-height: 100vh;
-  background: #f5f5f5;
   padding: 24rpx;
   padding-bottom: 48rpx;
 }
@@ -233,12 +232,13 @@ function confirmReset() {
   display: block;
   font-size: 36rpx;
   font-weight: 600;
+  color: var(--nb-text);
 }
 .sub {
   display: block;
   margin: 8rpx 0 24rpx;
   font-size: 24rpx;
-  color: #888;
+  color: var(--nb-text-muted);
 }
 .kpi-grid {
   display: grid;
@@ -250,25 +250,26 @@ function confirmReset() {
   margin-bottom: 20rpx;
 }
 .kpi {
-  background: #fff;
-  border-radius: 12rpx;
+  background: var(--nb-surface);
+  border-radius: var(--nb-radius-md);
   padding: 24rpx;
   text-align: center;
+  box-shadow: var(--nb-shadow-soft);
 }
 .kpi-num {
   display: block;
   font-size: 40rpx;
   font-weight: 600;
-  color: #333;
+  color: var(--nb-text);
 }
 .kpi-num.accent {
-  color: #c45c26;
+  color: var(--nb-primary);
 }
 .kpi-label {
   display: block;
   margin-top: 6rpx;
   font-size: 22rpx;
-  color: #888;
+  color: var(--nb-text-muted);
 }
 .meta-row {
   display: flex;
@@ -287,13 +288,31 @@ function confirmReset() {
   border: 1rpx solid #f0dcc8;
   background: #fffaf5;
 }
+.empty-activity {
+  text-align: center;
+  padding: 32rpx 24rpx;
+  background: var(--nb-surface);
+  border-radius: var(--nb-radius-md);
+  margin-bottom: 16rpx;
+  box-shadow: var(--nb-shadow-soft);
+}
+.empty-icon {
+  display: block;
+  font-size: 40rpx;
+  margin-bottom: 8rpx;
+}
+.empty-text {
+  font-size: 24rpx;
+  color: var(--nb-text-muted);
+}
 .link-card {
   display: flex;
   align-items: center;
-  background: #fff;
+  background: var(--nb-surface);
   padding: 28rpx 24rpx;
-  border-radius: 12rpx;
+  border-radius: var(--nb-radius-md);
   margin-bottom: 12rpx;
+  box-shadow: var(--nb-shadow-soft);
 }
 .link-main {
   flex: 1;
@@ -316,10 +335,11 @@ function confirmReset() {
 .activity-row {
   display: flex;
   gap: 12rpx;
-  background: #fff;
+  background: var(--nb-surface);
   padding: 20rpx;
-  border-radius: 12rpx;
+  border-radius: var(--nb-radius-md);
   margin-bottom: 10rpx;
+  box-shadow: var(--nb-shadow-soft);
 }
 .act-icon {
   font-size: 28rpx;

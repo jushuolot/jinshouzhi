@@ -24,6 +24,10 @@
         <text class="label">数据模式</text>
         <text class="value">{{ status.isDemoMock ? '浏览器 Mock' : '服务端 PocketBase' }}</text>
       </view>
+      <view class="status-row">
+        <text class="label">偏好加密</text>
+        <text class="value ok">验收进度混淆存储</text>
+      </view>
       <text class="note">{{ status.localDataNote }}</text>
     </view>
 
@@ -49,6 +53,7 @@
 import { computed } from 'vue';
 import { getSecurityStatus } from '../../utils/security';
 import { resetDemoRuntimeState, isDemoMockEnabled } from '../../utils/demo-mock';
+import { removeSecure } from '../../utils/secure-storage';
 
 const status = computed(() => getSecurityStatus());
 
@@ -101,11 +106,7 @@ function clearLocal() {
     success: (res) => {
       if (res.confirm) {
         resetDemoRuntimeState();
-        try {
-          uni.removeStorageSync('nuanban_scenario_v1');
-        } catch {
-          /* ignore */
-        }
+        removeSecure('nuanban_scenario_v1');
         uni.showToast({ title: '已清除', icon: 'success' });
       }
     },

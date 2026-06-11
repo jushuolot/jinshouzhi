@@ -1,5 +1,6 @@
 <template>
-  <view class="timeline">
+  <view v-if="isCancelled" class="cancelled-banner">订单已取消</view>
+  <view class="timeline" :class="{ cancelled: isCancelled }">
     <view
       v-for="(step, idx) in steps"
       :key="step.key"
@@ -29,8 +30,9 @@ const props = defineProps<{
 }>();
 
 const steps = computed(() => orderTimelineSteps(props.requiresOutdoor));
+const isCancelled = computed(() => props.status === 'cancelled');
 const currentIndex = computed(() =>
-  props.status === 'cancelled' ? -1 : orderTimelineIndex(props.status, props.requiresOutdoor),
+  isCancelled.value ? -1 : orderTimelineIndex(props.status, props.requiresOutdoor),
 );
 </script>
 
@@ -59,7 +61,7 @@ const currentIndex = computed(() =>
   width: 20rpx;
   height: 20rpx;
   border-radius: 50%;
-  background: #ddd;
+  background: var(--nb-border, #ddd);
   z-index: 1;
 }
 .line {
@@ -68,30 +70,42 @@ const currentIndex = computed(() =>
   right: -50%;
   top: 50%;
   height: 4rpx;
-  background: #eee;
+  background: var(--nb-border-light, #eee);
   transform: translateY(-50%);
   z-index: 0;
 }
 .step.done .dot {
-  background: #c45c26;
+  background: var(--nb-primary, #c45c26);
 }
 .step.done .line {
-  background: #f0c9b0;
+  background: var(--nb-border-dashed, #f0c9b0);
 }
 .step.active .dot {
-  background: #c45c26;
+  background: var(--nb-primary, #c45c26);
   box-shadow: 0 0 0 6rpx rgba(196, 92, 38, 0.2);
 }
 .label {
   margin-top: 12rpx;
   font-size: 20rpx;
-  color: #999;
+  color: var(--nb-text-muted, #999);
   text-align: center;
   white-space: nowrap;
 }
 .step.active .label,
 .step.done .label {
-  color: #c45c26;
+  color: var(--nb-primary, #c45c26);
   font-weight: 500;
+}
+.timeline.cancelled {
+  opacity: 0.45;
+}
+.cancelled-banner {
+  text-align: center;
+  font-size: 24rpx;
+  color: #b71c1c;
+  background: #ffebee;
+  padding: 12rpx 16rpx;
+  border-radius: var(--nb-radius-sm, 12rpx);
+  margin-bottom: 12rpx;
 }
 </style>

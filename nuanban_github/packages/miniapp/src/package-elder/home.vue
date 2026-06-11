@@ -22,7 +22,7 @@
       </view>
     </view>
 
-    <view v-if="recentOrders.length" class="section-title">最近服务</view>
+    <view class="section-title">最近服务</view>
     <view v-if="recentOrders.length" class="order-preview">
       <view
         v-for="o in recentOrders"
@@ -36,6 +36,11 @@
         </view>
         <text class="order-meta">{{ formatTime(o.scheduled_at) }} · ¥{{ ((o.amount_cents || 0) / 100).toFixed(0) }}</text>
       </view>
+    </view>
+    <view v-else class="empty-orders" @tap="goFind">
+      <text class="empty-icon">📋</text>
+      <text class="empty-text">暂无服务记录</text>
+      <text class="empty-cta">找附近大学生陪护 ›</text>
     </view>
 
     <view class="section-title">快捷服务</view>
@@ -273,6 +278,31 @@ async function sos() {
 }
 .order-preview {
   margin-bottom: 28rpx;
+}
+.empty-orders {
+  text-align: center;
+  padding: 36rpx 24rpx;
+  background: var(--nb-surface);
+  border-radius: var(--nb-radius-md);
+  margin-bottom: 28rpx;
+  box-shadow: var(--nb-shadow-soft);
+}
+.empty-icon {
+  display: block;
+  font-size: 44rpx;
+  margin-bottom: 8rpx;
+}
+.empty-text {
+  display: block;
+  font-size: 28rpx;
+  color: var(--nb-text-muted);
+}
+.empty-cta {
+  display: block;
+  margin-top: 12rpx;
+  font-size: 26rpx;
+  color: var(--nb-primary);
+  font-weight: 500;
 }
 .order-card {
   background: var(--nb-surface);

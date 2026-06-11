@@ -8,13 +8,29 @@
       <text class="progress-text">{{ doneCount }}/{{ steps.length }} 已完成</text>
     </view>
 
+    <view v-if="allDone" class="complete-banner">
+      <text class="complete-icon">🎉</text>
+      <view>
+        <text class="complete-title">验收闭环已完成</text>
+        <text class="complete-desc">三角色主流程已走通，可分享链接给验收人</text>
+      </view>
+      <button class="btn-share" size="mini" @tap="goShare">去分享</button>
+    </view>
+
     <view v-for="(step, idx) in steps" :key="step.id" class="step-card" :class="{ done: isDone(step.id) }">
       <view class="step-head">
         <text class="step-num">{{ idx + 1 }}</text>
         <view class="step-main">
           <text class="step-title">{{ step.title }}</text>
           <text class="step-desc">{{ step.desc }}</text>
-          <text class="step-account">{{ step.account }}</text>
+          <view class="account-row">
+            <text class="step-account">{{ step.account }}</text>
+            <text
+              v-if="isPhoneAccount(step.account)"
+              class="copy-phone"
+              @tap.stop="copyPhone(step.account)"
+            >复制</text>
+          </view>
         </view>
         <text v-if="isDone(step.id)" class="check">✓</text>
       </view>
@@ -124,6 +140,22 @@ function saveProgress() {
 
 const doneCount = computed(() => completed.value.length);
 const progressPct = computed(() => Math.round((doneCount.value / steps.length) * 100));
+const allDone = computed(() => doneCount.value >= steps.length);
+
+function isPhoneAccount(account: string) {
+  return /^1\d{10}$/.test(account.trim());
+}
+
+function copyPhone(phone: string) {
+  uni.setClipboardData({
+    data: phone.trim(),
+    success: () => uni.showToast({ title: '已复制手机号', icon: 'success' }),
+  });
+}
+
+function goShare() {
+  uni.navigateTo({ url: '/pages/common/share-demo' });
+}
 
 function isDone(id: string) {
   return completed.value.includes(id);
@@ -201,6 +233,50 @@ onShow(loadProgress);
   margin-bottom: 20rpx;
   font-size: 22rpx;
   color: #666;
+}
+.complete-banner {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  background: linear-gradient(135deg, #fff8f0, #fff);
+  border: 2rpx solid #c8e6c9;
+  border-radius: 12rpx;
+  padding: 24rpx;
+  margin-bottom: 20rpx;
+}
+.complete-icon {
+  font-size: 40rpx;
+}
+.complete-title {
+  display: block;
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #2e7d32;
+}
+.complete-desc {
+  display: block;
+  margin-top: 4rpx;
+  font-size: 22rpx;
+  color: #666;
+}
+.btn-share {
+  margin-left: auto;
+  background: #c45c26;
+  color: #fff;
+  flex-shrink: 0;
+}
+.account-row {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin-top: 6rpx;
+}
+.copy-phone {
+  font-size: 22rpx;
+  color: #c45c26;
+  padding: 2rpx 12rpx;
+  border: 1rpx solid #e8c4a8;
+  border-radius: 8rpx;
 }
 .step-card {
   background: #fff;

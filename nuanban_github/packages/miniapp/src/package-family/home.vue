@@ -100,7 +100,10 @@
         <text class="activity-more">查看全部 ›</text>
       </view>
       <view v-for="a in recentActivities" :key="a.id" class="activity-item">
-        <text class="activity-title">{{ a.title }}</text>
+        <view class="activity-row-head">
+          <text class="activity-title">{{ a.title }}</text>
+          <text class="activity-time">{{ formatRelativeTime(a.createdAt) }}</text>
+        </view>
         <text class="activity-detail">{{ a.detail }}</text>
       </view>
     </view>
@@ -141,6 +144,7 @@ import { fetchPlatformActivity } from '../api/platform';
 import type { ActivityEvent } from '../utils/demo-activity';
 import { useRoleStore } from '../store/role';
 import { guardPackageRoute } from '../utils/nav-guard';
+import { formatRelativeTime } from '../utils/format-time';
 import { pbErrorMessage } from '../utils/request';
 import type { PbRecord } from '../api/pb';
 
@@ -449,10 +453,21 @@ async function goSos() {
 .activity-item:first-of-type {
   border-top: none;
 }
+.activity-row-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12rpx;
+}
 .activity-title {
-  display: block;
   font-size: 26rpx;
   font-weight: 600;
+  flex: 1;
+}
+.activity-time {
+  font-size: 20rpx;
+  color: var(--nb-text-placeholder);
+  flex-shrink: 0;
 }
 .activity-detail {
   display: block;
