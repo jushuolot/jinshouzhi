@@ -39,6 +39,16 @@
     </view>
 
     <view class="section-title">快捷服务</view>
+    <view class="wallet-card" @tap="goWallet">
+      <view class="wallet-left">
+        <text class="wallet-icon">💰</text>
+        <view>
+          <text class="wallet-title">储值卡</text>
+          <text class="wallet-desc">余额 ¥{{ walletBalanceYuan }} · 确认服务时可抵扣</text>
+        </view>
+      </view>
+      <text class="chevron">›</text>
+    </view>
     <view class="quick-grid">
       <view class="quick-item primary" @tap="goFind">
         <text class="quick-icon">🤝</text>
@@ -71,6 +81,7 @@ import {
   type ElderStats,
   type OrderRow,
 } from '../api/elder';
+import { fetchElderWallet } from '../api/wallet';
 import { useRoleStore } from '../store/role';
 import { elderFontClass } from '../utils/elder-accessibility';
 import { guardPackageRoute } from '../utils/nav-guard';
@@ -84,6 +95,7 @@ const recentOrders = ref<
 const fontClass = computed(() => elderFontClass());
 const orgName = ref('暖伴示范养老院');
 const roleStore = useRoleStore();
+const walletBalanceYuan = ref('0.00');
 
 function serviceName(o: (typeof recentOrders.value)[0]) {
   return o.expand?.service_item?.name || '陪护服务';
@@ -103,7 +115,12 @@ function formatTime(iso?: string) {
 onShow(async () => {
   guardPackageRoute('/package-elder/home');
   try {
-    stats.value = await fetchElderStats();
+    const [st, wallet] = await Promise.all([
+      fetchElderStats(),
+      fetchElderWallet().catch(() => null),
+    ]);
+    stats.value = st;
+    if (wallet) walletBalanceYuan.value = wallet.balanceYuan;
     if (stats.value?.elderProfileId) {
       roleStore.setElderProfileId(stats.value.elderProfileId);
     }
@@ -119,6 +136,10 @@ onShow(async () => {
     uni.showToast({ title: pbErrorMessage(e), icon: 'none' });
   }
 });
+
+function goWallet() {
+  uni.navigateTo({ url: '/package-elder/wallet/index' });
+}
 
 function goFind() {
   uni.navigateTo({ url: '/package-elder/caregivers/list' });
@@ -202,6 +223,41 @@ async function sos() {
   font-weight: 600;
   margin-bottom: 16rpx;
   color: var(--nb-text);
+}
+.wallet-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--nb-peach, #fff8f0);
+  border: 2rpx solid var(--nb-border-dashed, #e8c4a8);
+  padding: 28rpx 24rpx;
+  border-radius: var(--nb-radius-md);
+  margin-bottom: 20rpx;
+  box-shadow: var(--nb-shadow-soft);
+}
+.wallet-left {
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+.wallet-icon {
+  font-size: 40rpx;
+  margin-right: 20rpx;
+}
+.wallet-title {
+  display: block;
+  font-size: 32rpx;
+  font-weight: 600;
+}
+.wallet-desc {
+  display: block;
+  margin-top: 6rpx;
+  font-size: 24rpx;
+  color: var(--nb-text-muted);
+}
+.chevron {
+  font-size: 36rpx;
+  color: var(--nb-text-placeholder);
 }
 .order-preview {
   margin-bottom: 28rpx;

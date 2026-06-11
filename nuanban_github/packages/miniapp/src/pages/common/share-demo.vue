@@ -11,7 +11,7 @@
     </view>
 
     <view class="tip">
-      <text>建议顺序：动画演示 → 登录并选择学生身份 → 待接单完成 → 运营演示查看派单</text>
+      <text>建议顺序：动画演示 → 13800000001 接单 → 13800000004 代付/服务包 → 运营演示重置</text>
     </view>
 
     <button class="btn-outline" @tap="goBack">返回</button>
@@ -37,8 +37,32 @@ const links = [
   {
     id: 'admin',
     title: '运营演示',
-    desc: '平台 KPI · 机构派单 · 学校合作',
+    desc: '平台 KPI · 机构派单 · 重置演示数据',
     url: `${BASE}/#/pages/common/admin-hub`,
+  },
+  {
+    id: 'student-pending',
+    title: '学生 · 待接单',
+    desc: '需先登录 13800000001',
+    url: `${BASE}/#/package-student/order/pending`,
+  },
+  {
+    id: 'family-pay',
+    title: '家属 · 订单列表',
+    desc: '需先登录 13800000004 · 待支付/待确认',
+    url: `${BASE}/#/package-family/order/list`,
+  },
+  {
+    id: 'elder-home',
+    title: '老人首页',
+    desc: '需先登录 13800000005 · 含储值卡入口',
+    url: `${BASE}/#/package-elder/home`,
+  },
+  {
+    id: 'packages',
+    title: '家属 · 服务包购买',
+    desc: '3 档套餐 · 模拟购买',
+    url: `${BASE}/#/package-family/package/buy`,
   },
   {
     id: 'tour-deeplink',

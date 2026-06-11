@@ -30,6 +30,15 @@
       </view>
     </view>
 
+    <view v-if="withdrawAvailableYuan" class="withdraw-banner" @tap="goWithdraw">
+      <text class="wd-icon">💸</text>
+      <view class="wd-text">
+        <text class="wd-title">可提现 ¥{{ withdrawAvailableYuan }}</text>
+        <text class="wd-desc">结算到账 · 微信/银行卡演示提现</text>
+      </view>
+      <text class="wd-arrow">›</text>
+    </view>
+
     <view class="stats-card">
       <view class="stat-item" @tap="goPending">
         <text class="stat-num accent">{{ pendingCount }}</text>
@@ -62,6 +71,10 @@
       <view class="quick-item" @tap="goIncome">
         <text class="quick-icon">💰</text>
         <text class="quick-text">收入明细</text>
+      </view>
+      <view v-if="withdrawAvailableYuan" class="quick-item highlight" @tap="goWithdraw">
+        <text class="quick-icon">💸</text>
+        <text class="quick-text">提现</text>
       </view>
       <view class="quick-item" @tap="goDiscover">
         <text class="quick-icon">📍</text>
@@ -107,6 +120,7 @@ import {
   listActiveSosAlerts,
   listNearbyElders,
   listPendingOrders,
+  fetchStudentWithdrawal,
   type SosAlert,
   type StudentStats,
 } from '../api/student';
@@ -130,6 +144,7 @@ const profileName = ref('同学');
 const schoolName = ref('示范大学');
 const previewElders = ref<ElderPreview[]>([]);
 const errorMsg = ref('');
+const withdrawAvailableYuan = ref('');
 
 function formatDistance(km: number) {
   if (km < 1) return `${Math.round(km * 1000)}m`;
@@ -138,12 +153,13 @@ function formatDistance(km: number) {
 
 async function reload() {
   errorMsg.value = '';
-  const [profile, st, pendingList, activeRes, sosRes] = await Promise.all([
+  const [profile, st, pendingList, activeRes, sosRes, withdrawal] = await Promise.all([
     fetchStudentProfile().catch(() => null),
     fetchStudentStats().catch(() => null),
     listPendingOrders().catch(() => []),
     listActiveOrders().catch(() => []),
     listActiveSosAlerts().catch(() => []),
+    fetchStudentWithdrawal().catch(() => null),
   ]);
   if (profile) {
     profileName.value = profile.displayName || profile.nickname;
@@ -153,6 +169,8 @@ async function reload() {
   pendingCount.value = pendingList.length || st?.pendingCount || 0;
   activeCount.value = activeRes.length;
   sosAlerts.value = sosRes;
+  withdrawAvailableYuan.value =
+    withdrawal && withdrawal.availableCents > 0 ? withdrawal.availableYuan : '';
 
   try {
     const loc = await getLocationWithFallback(2000);
@@ -212,6 +230,9 @@ function goProfile() {
 
 function goReferral() {
   uni.navigateTo({ url: '/package-student/referral/index' });
+}
+function goWithdraw() {
+  uni.navigateTo({ url: '/package-student/withdrawal/index' });
 }
 function openElder(e: ElderPreview) {
   const q = [
@@ -358,6 +379,38 @@ function openElder(e: ElderPreview) {
   font-size: 24rpx;
   color: var(--nb-text-muted);
 }
+.withdraw-banner {
+  display: flex;
+  align-items: center;
+  background: linear-gradient(135deg, #f0fff4, #fff);
+  border: 2rpx solid #a5d6a7;
+  padding: 24rpx;
+  border-radius: var(--nb-radius-md);
+  margin-bottom: 20rpx;
+}
+.wd-icon {
+  font-size: 40rpx;
+  margin-right: 16rpx;
+}
+.wd-text {
+  flex: 1;
+}
+.wd-title {
+  display: block;
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #2e7d32;
+}
+.wd-desc {
+  display: block;
+  margin-top: 4rpx;
+  font-size: 22rpx;
+  color: var(--nb-text-muted);
+}
+.wd-arrow {
+  font-size: 36rpx;
+  color: #66bb6a;
+}
 .quick-grid {
   display: flex;
   flex-wrap: wrap;
@@ -372,6 +425,10 @@ function openElder(e: ElderPreview) {
   box-shadow: var(--nb-shadow-soft);
   text-align: center;
   position: relative;
+}
+.quick-item.highlight {
+  border: 2rpx solid #a5d6a7;
+  background: #f1f8f4;
 }
 .quick-icon {
   display: block;
