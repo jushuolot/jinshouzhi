@@ -15,7 +15,7 @@ from __future__ import annotations
 import json
 import os
 import sys
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -31,6 +31,7 @@ from src.analysis.prediction_calibration import (
     load_calibration_adjustments,
     merge_pick_logs,
 )
+from src.analysis.market_snapshot import run_daily_snapshot_pipeline
 from src.storage.cloud_pick_log import load_cloud_pick_log, sync_cloud_pick_log  # noqa: E402
 from src.util.buddha_nightly_brief import build_nightly_brief  # noqa: E402
 from src.util.buddha_ritual import build_ritual_meta, probe_a_market  # noqa: E402
@@ -59,6 +60,13 @@ def run_scan(*, max_picks: int = 5) -> dict:
             calibration = None
     cal_adj = load_calibration_adjustments(calibration)
 
+    snap_pack = run_daily_snapshot_pipeline(
+        _fetch_ranking,
+        yesterday_picks=existing[-30:],
+        day=date.today().isoformat(),
+    )
+    deep_uni = snap_pack.get("deep_universe")
+
     a_picks, global_picks, src, stats = fetch_garden_picks_bundle(
         _fetch_ranking,
         C._fetch_one,
@@ -66,7 +74,11 @@ def run_scan(*, max_picks: int = 5) -> dict:
         max_global_per_market=2,
         pick_log=existing,
         calibration=cal_adj,
+        universe_override=deep_uni if deep_uni is not None and not deep_uni.empty else None,
     )
+    if snap_pack.get("deep_reasons"):
+        stats["snapshot_deep_reasons"] = snap_pack.get("deep_reasons")
+        stats["snapshot_deep_rows"] = snap_pack.get("deep_universe_rows")
     now = datetime.now(timezone.utc).astimezone().isoformat(timespec="seconds")
     tgt = stats.get("predict_for") or tomorrow_trading_date()
     outlook = compute_market_outlook()
@@ -104,6 +116,12 @@ def run_scan(*, max_picks: int = 5) -> dict:
         "hit_summary": pick_meta.get("hit_summary"),
         "strategy_hints": pick_meta.get("strategy_hints") or [],
         "calibration": calibration,
+        "snapshot_diff": snap_pack.get("diff"),
+        "weekly_summary": snap_pack.get("weekly_summary"),
+        "snapshot_meta": {
+            "count": (snap_pack.get("snapshot") or {}).get("count"),
+            "deep_rows": snap_pack.get("deep_universe_rows"),
+        },
         "data_probe": probe.as_dict(),
         "picks": [p.as_dict() for p in a_picks],
         "global_picks": [p.as_dict() for p in global_picks],

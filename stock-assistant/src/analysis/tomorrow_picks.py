@@ -461,8 +461,12 @@ def fetch_tomorrow_a_picks(
     max_picks: int = 5,
     pick_log: list[dict[str, Any]] | None = None,
     calibration: dict[str, Any] | None = None,
+    universe_override: pd.DataFrame | None = None,
 ) -> tuple[list[DailyPick], str, dict[str, Any]]:
-    universe, src = build_a_universe(fetch_ranking)
+    if universe_override is not None and not universe_override.empty:
+        universe, src = universe_override, "快照精选池"
+    else:
+        universe, src = build_a_universe(fetch_ranking)
     picks, stats = rank_tomorrow_a_picks(
         universe,
         fetch_fn,
@@ -537,10 +541,16 @@ def fetch_garden_picks_bundle(
     max_global_per_market: int = 2,
     pick_log: list[dict[str, Any]] | None = None,
     calibration: dict[str, Any] | None = None,
+    universe_override: pd.DataFrame | None = None,
 ) -> tuple[list[DailyPick], list[DailyPick], str, dict[str, Any]]:
     """花园扫盘：明日 A 股预测 + 全球明日关注。"""
     a_picks, src, stats = fetch_tomorrow_a_picks(
-        fetch_ranking, fetch_fn, max_picks=max_a, pick_log=pick_log, calibration=calibration
+        fetch_ranking,
+        fetch_fn,
+        max_picks=max_a,
+        pick_log=pick_log,
+        calibration=calibration,
+        universe_override=universe_override,
     )
     global_picks, gstats = fetch_tomorrow_global_picks(max_per_market=max_global_per_market)
     stats["global"] = gstats

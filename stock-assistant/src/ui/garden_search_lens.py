@@ -82,7 +82,7 @@ def _render_dossier(dossier: StockDossier, hit: eastmoney.SearchHit, *, readonly
 def render_garden_search_lens(pick_log: list, *, fetch_fn) -> None:
     """花园第一屏：搜索 → 全维档案 + 可读结论。"""
     st.markdown("### 🔍 搜一只，看全维结论")
-    st.caption("输入代码/名称，从行情、技术、质量、预测复盘各维度归纳可读结论。")
+    st.caption("一个输入框完成搜索；右侧 📷 可识图。")
 
     st.session_state.setdefault("garden_lens_kw", "茅台")
     history = normalize_search_history(st.session_state.get("search_history"))
@@ -94,35 +94,38 @@ def render_garden_search_lens(pick_log: list, *, fetch_fn) -> None:
                     st.session_state.garden_lens_kw = term
                     st.session_state._garden_lens_pending_kw = term
 
-    col_t, col_cam, col_b = st.columns([6, 1, 1])
     uploaded = None
-    with col_t:
-        kw = st.text_input(
-            "股票",
-            key="garden_lens_kw",
-            placeholder="茅台、600519、AAPL、0700…",
-            label_visibility="collapsed",
-        )
-    with col_cam:
-        popover = getattr(st, "popover", None)
-        if popover is not None:
-            with popover("📷", use_container_width=True, help="上传 K 线截图识股"):
-                uploaded = st.file_uploader(
-                    "截图",
-                    type=["png", "jpg", "jpeg", "webp"],
-                    key="garden_lens_image",
-                    label_visibility="collapsed",
-                )
-        elif st.button("📷", key="garden_lens_img_toggle", use_container_width=True):
-            st.session_state.garden_lens_show_img = True
+    do_search = False
+    with st.container(border=True):
+        c_in, c_cam, c_go = st.columns([9, 0.75, 1.25], gap="small")
+        with c_in:
+            kw = st.text_input(
+                "股票",
+                key="garden_lens_kw",
+                placeholder="茅台 · 600519 · AAPL",
+                label_visibility="collapsed",
+            )
+        with c_cam:
+            popover = getattr(st, "popover", None)
+            if popover is not None:
+                with popover("📷", use_container_width=True):
+                    uploaded = st.file_uploader(
+                        "截图",
+                        type=["png", "jpg", "jpeg", "webp"],
+                        key="garden_lens_image",
+                        label_visibility="collapsed",
+                    )
+            elif st.button("📷", key="garden_lens_img_toggle", use_container_width=True):
+                st.session_state.garden_lens_show_img = True
+        with c_go:
+            do_search = st.button("搜索", type="primary", use_container_width=True, key="garden_lens_search")
+
     if uploaded is None and st.session_state.get("garden_lens_show_img"):
         uploaded = st.file_uploader(
-            "上传截图",
+            "上传截图识股",
             type=["png", "jpg", "jpeg", "webp"],
-            key="garden_lens_image",
+            key="garden_lens_image_fb",
         )
-    with col_b:
-        do_search = st.button("搜索", type="primary", use_container_width=True, key="garden_lens_search")
 
     pending = st.session_state.pop("_garden_lens_pending_kw", None)
     if pending:

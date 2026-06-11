@@ -37,6 +37,7 @@ from src.util.buddha_ritual import build_ritual_meta, probe_a_market, ritual_ban
 from src.util.data_date_label import build_listing_caption, today_label_cn
 from src.ui.calibration_panel import render_calibration_panel
 from src.ui.garden_search_lens import render_garden_search_lens
+from src.ui.snapshot_panel import render_snapshot_panel
 from src.util.garden_selection_doc import SELECTION_CRITERIA_MD
 from src.util.readonly_mode import is_readonly_mode
 
@@ -396,6 +397,10 @@ def render() -> None:
             st.session_state["_cloud_strategy_hints"] = cloud["strategy_hints"]
         if cloud.get("calibration"):
             st.session_state["_calibration_report"] = cloud["calibration"]
+        if cloud.get("snapshot_diff"):
+            st.session_state["_snapshot_diff"] = cloud["snapshot_diff"]
+        if cloud.get("weekly_summary"):
+            st.session_state["_weekly_summary"] = cloud["weekly_summary"]
         ap = len(st.session_state.get("today_picks") or [])
         gp = len(st.session_state.get("global_picks") or [])
         if ap or gp:
@@ -417,6 +422,7 @@ def render() -> None:
     pick_log = _try_auto_fill_garden(readonly=readonly, pick_log=pick_log, tgt_date=tgt_date)
 
     render_garden_search_lens(pick_log, fetch_fn=C._fetch_one)
+    render_snapshot_panel()
     render_calibration_panel(pick_log, fetch_fn=C._fetch_one, readonly=readonly)
 
     show_full_garden = st.checkbox(
