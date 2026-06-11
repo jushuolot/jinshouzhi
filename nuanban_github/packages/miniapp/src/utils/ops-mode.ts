@@ -4,7 +4,7 @@ const OPS_SESSION_KEY = 'ops_mode_session_v1';
 const OPS_HIDDEN_KEY = 'ops_mode_hidden_v1';
 const OPS_PASS_KEY = 'ops_mode_pass_v1';
 
-const DEFAULT_PASSPHRASE = import.meta.env.VITE_OPS_PASSPHRASE || '暖伴2026';
+const DEFAULT_PASSPHRASE = import.meta.env.VITE_OPS_PASSPHRASE || 'nuanban2026';
 const SESSION_HOURS = 8;
 
 function hashPassphrase(input: string): string {

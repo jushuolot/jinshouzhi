@@ -61,7 +61,7 @@ const links = [
   {
     id: 'admin',
     title: '运营模式（推荐）',
-    desc: '口令 暖伴2026 · 资金管理 · KPI',
+    desc: '口令门禁 · 资金管理 · KPI',
     url: `${BASE}/#/pages/common/launch?ops=1`,
   },
   {

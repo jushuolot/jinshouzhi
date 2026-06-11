@@ -18,7 +18,6 @@
         placeholder-class="ph"
         @confirm="submit"
       />
-      <text class="hint">测试版默认口令：暖伴2026 · 正式环境请向管理员索取。</text>
       <text class="entry-tip">入口：登录页底部「运营模式」· 闪屏连点 Logo · 模块地图 · 会话期内右下角「运营台」</text>
       <button class="btn nb-btn-primary" :loading="loading" @tap="submit">进入运营模式</button>
     </view>
@@ -138,16 +137,9 @@ function submit() {
   padding: 0 24rpx;
   font-size: 30rpx;
 }
-.hint {
-  display: block;
-  margin: 16rpx 0 12rpx;
-  font-size: 22rpx;
-  color: var(--nb-text-muted);
-  line-height: 1.5;
-}
 .entry-tip {
   display: block;
-  margin-bottom: 28rpx;
+  margin: 16rpx 0 28rpx;
   font-size: 22rpx;
   color: var(--nb-primary);
   line-height: 1.55;
