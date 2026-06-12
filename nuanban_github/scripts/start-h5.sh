@@ -32,7 +32,8 @@ else
 fi
 
 echo ""
-echo "==> 启动暖伴 H5 -> http://localhost:${PORT}/#/pages/common/launch"
+echo "==> 启动暖伴 H5 -> http://localhost:${PORT}/#/pages/common/login"
+echo "    勿用 /login（已废弃，访问会 301 跳转）"
 echo ""
 
 cd "$MINIAPP"

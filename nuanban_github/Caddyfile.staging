@@ -21,6 +21,13 @@
 		redir /game/ permanent
 	}
 
+	handle /login {
+		redir /#/pages/common/login permanent
+	}
+	handle /login/* {
+		redir /#/pages/common/login permanent
+	}
+
 	handle {
 		root * /srv/h5
 		@html path /index.html

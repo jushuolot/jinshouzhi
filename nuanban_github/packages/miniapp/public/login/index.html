@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="refresh" content="0;url=../#/pages/common/login" />
+    <title>暖伴勤工 · 跳转登录</title>
+    <script>
+      (function () {
+        var base = location.pathname.replace(/\/login\/?$/, '').replace(/\/$/, '') || '';
+        location.replace(location.origin + base + '/#/pages/common/login');
+      })();
+    </script>
+  </head>
+  <body>
+    <p>正在跳转到暖伴登录页…</p>
+  </body>
+</html>
