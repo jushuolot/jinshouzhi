@@ -191,6 +191,8 @@ export interface FamilyOrderDetail {
   serviceName?: string;
   studentName?: string;
   requiresOutdoorApproval?: boolean;
+  timeline?: import('../utils/order-timeline').OrderTimelineEvent[];
+  chatOpen?: boolean;
 }
 
 export interface FamilyServiceLogItem {

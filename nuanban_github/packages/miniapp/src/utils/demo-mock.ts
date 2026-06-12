@@ -44,6 +44,7 @@ import {
 } from './mock-verification-storage';
 import { defaultCartoonAvatarId, resolveCartoonAvatarUrl } from './cartoon-avatars';
 import { isKnownSchool } from './known-schools';
+import { haversineKm } from './geo';
 import {
   buildRichCaregivers,
   buildRichElders,
@@ -150,11 +151,13 @@ function formatKm(km: number) {
 }
 
 function caregiverToListItem(c: (typeof CAREGIVERS)[0]) {
+  const profile = getRichCaregiverProfile(c.userId);
   return {
     id: c.id,
     userId: c.userId,
     name: c.name,
     school: c.school,
+    gender: profile?.gender,
     distance: formatKm(c.distanceKm),
     distanceKm: c.distanceKm,
     tags: c.tags,
@@ -167,6 +170,7 @@ function caregiverToListItem(c: (typeof CAREGIVERS)[0]) {
 const studentProfileState = {
   displayName: '林同学',
   schoolName: '示范大学',
+  gender: '女',
   bio: '热心公益的在校女生，擅长陪伴聊天与康复协助，希望用课余时间为附近老人送去温暖。',
   major: '护理学',
   grade: '大三',
@@ -273,6 +277,7 @@ function resetRoleProfileState(role: RoleKey, displayName?: string) {
   if (role === 'student') {
     studentProfileState.displayName = displayName || '';
     studentProfileState.schoolName = '';
+    studentProfileState.gender = '女';
     studentProfileState.major = '';
     studentProfileState.bio = '';
     studentProfileState.serviceAreas = [];
@@ -502,7 +507,13 @@ function walletPayOrderForUser(
   );
   if (!result.ok) return result;
   order.payment_status = 'paid';
-  if (order.status === 'pending_payment') order.status = 'pending_accept';
+  if (order.status === 'pending_payment') {
+    mockAppendTimeline(order.id, 'pending_payment', '储值卡支付完成', scope === 'elder' ? 'elder' : 'family');
+    order.status = 'pending_accept';
+    mockAppendTimeline(order.id, 'pending_accept', '等待同学接单', 'system');
+  } else {
+    mockAppendTimeline(order.id, 'pending_payment', '储值卡支付完成', scope === 'elder' ? 'elder' : 'family');
+  }
   const elder = elderById(order.elder);
   const svc = serviceById(order.service_item);
   recordActivity(
@@ -518,7 +529,9 @@ function walletPayOrderForUser(
 function finalizeOrderAfterConfirm(order: MockOrder) {
   if (order.payment_status === 'unpaid') {
     order.payment_status = 'paid';
+    mockAppendTimeline(order.id, 'pending_payment', '确认时完成支付', 'family');
   }
+  mockAppendTimeline(order.id, 'completed', '已确认完成，收入将计入结算', 'family');
   order.status = 'completed';
   const elder = elderById(order.elder);
   const svc = serviceById(order.service_item);
@@ -875,6 +888,26 @@ function currentStudentUserId() {
   return currentDemoUser().id;
 }
 
+const mockWechatByUser: Record<string, string> = {};
+
+function currentActiveRole(): RoleKey | undefined {
+  syncMockRolesFromStorage();
+  const roles = mockRegisterRoles.length ? [...mockRegisterRoles] : readStoredRoles();
+  return roles.find((r) => r.status === 'active')?.role;
+}
+
+function currentChatSender() {
+  const user = currentDemoUser();
+  const role = currentActiveRole();
+  if (role === 'family') {
+    return { userId: user.id, role: 'family' as const, alias: '家属·我' };
+  }
+  if (role === 'elder') {
+    return { userId: user.id, role: 'elder' as const, alias: '老人·我' };
+  }
+  return { userId: user.id, role: 'student' as const, alias: '陪护同学·我' };
+}
+
 function loginDemoWx(pickRole?: RoleKey) {
   syncMockRolesFromStorage();
   const roles = mockRegisterRoles.length ? [...mockRegisterRoles] : readStoredRoles();
@@ -1188,6 +1221,12 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
       });
     }
     resetRoleProfileState(role, displayName);
+    if (role === 'student' && data.gender) {
+      studentProfileState.gender = String(data.gender);
+    }
+    if (role === 'elder' && data.gender) {
+      elderProfileState.gender = String(data.gender);
+    }
     const roles = [...mockRegisterRoles];
     let user: { id: string; nickname: string; email: string };
     try {
@@ -1199,6 +1238,7 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
       user = demoUserForRoles(roles);
     }
     if (displayName) user.nickname = displayName;
+    if (data.wechatId) mockWechatByUser[user.id] = String(data.wechatId);
     persistDemoRoles(roles, user);
     try {
       const phone = uni.getStorageSync(DEMO_LOGIN_PHONE_KEY) as string;
@@ -1326,6 +1366,7 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
       studentProfileState.schoolName = name;
     }
     if (data.bio != null) studentProfileState.bio = String(data.bio);
+    if (data.gender) studentProfileState.gender = String(data.gender);
     if (data.major) studentProfileState.major = String(data.major);
     if (data.grade) studentProfileState.grade = String(data.grade);
     if (data.cartoonAvatarId) {
@@ -1435,16 +1476,29 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
     return delay({ list: elderServiceLogs() } as T);
   }
   if (method === 'GET' && path.startsWith('/nuanban/student/elders/nearby')) {
-    const list = ELDERS.map((e) => ({
-      id: e.id,
-      name: e.name,
-      latitude: e.latitude,
-      longitude: e.longitude,
-      org: e.org,
-      orgName: orgNameById(e.org),
-      distanceKm: 0.8,
-      expand: { org: { id: e.org, name: orgNameById(e.org) } },
-    }));
+    const lat = parseFloat(query.get('lat') || '0');
+    const lng = parseFloat(query.get('lng') || '0');
+    const radiusKm = parseFloat(query.get('radiusKm') || '5');
+    const list = ELDERS.map((e) => {
+      const distanceKm =
+        lat && lng && e.latitude && e.longitude
+          ? Math.round(haversineKm(lat, lng, e.latitude, e.longitude) * 100) / 100
+          : 999;
+      const profile = getRichElderProfile(e.id);
+      return {
+        id: e.id,
+        name: e.name,
+        gender: profile?.gender,
+        latitude: e.latitude,
+        longitude: e.longitude,
+        org: e.org,
+        orgName: orgNameById(e.org),
+        distanceKm,
+        expand: { org: { id: e.org, name: orgNameById(e.org) } },
+      };
+    })
+      .filter((e) => e.distanceKm <= radiusKm)
+      .sort((a, b) => a.distanceKm - b.distanceKm);
     return delay({ list } as T);
   }
   if (method === 'GET' && path === '/nuanban/student/orders/pending') {
@@ -1782,6 +1836,8 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
     if (order) {
       order.status = 'pending_accept';
       order.payment_status = 'paid';
+      mockAppendTimeline(order.id, 'pending_payment', '支付完成', 'family');
+      mockAppendTimeline(order.id, 'pending_accept', '等待同学接单', 'system');
       const dto = pendingOrderDto(order);
       recordActivity('order_paid', '微信支付（演示）', `${dto.elderName} · ${dto.serviceName}`, {
         role: 'family',
@@ -1840,6 +1896,11 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
     if (order) {
       order.status = approved ? 'pending_service' : 'cancelled';
       changed = true;
+      if (approved) {
+        mockAppendTimeline(order.id, 'pending_service', '外出已批准，等待到场服务', 'family');
+      } else {
+        mockAppendTimeline(order.id, 'cancelled', '外出申请未通过，订单已取消', 'family');
+      }
       const dto = pendingOrderDto(order);
       recordActivity(
         approved ? 'outdoor_approved' : 'outdoor_rejected',
@@ -1910,6 +1971,24 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
     persistDemoState();
     return delay({ id, ok: true } as T);
   }
+  const elderOrderGet = path.match(/^\/nuanban\/elder\/orders\/([^/]+)$/);
+  if (method === 'GET' && elderOrderGet) {
+    const order = state.orders.find((o) => o.id === elderOrderGet[1]);
+    if (!order) return Promise.reject({ message: '订单不存在' });
+    const dto = pendingOrderDto(order);
+    return delay({
+      id: order.id,
+      status: order.status,
+      amount_cents: order.amount_cents,
+      scheduled_at: order.scheduled_at,
+      payment_status: order.payment_status,
+      serviceName: dto.serviceName,
+      studentName: caregiverNameByUserId(order.student_user),
+      requiresOutdoorApproval: dto.requiresOutdoorApproval,
+      timeline: dto.timeline,
+      chatOpen: dto.chatOpen,
+    } as T);
+  }
   if (method === 'POST' && path === '/nuanban/elder/orders') {
     const id = `order-${Date.now()}`;
     const svc = serviceById(String(data.serviceItemId || 'svc-chat'));
@@ -1925,6 +2004,12 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
       family_user: familyUserId,
       scheduled_at: new Date().toISOString(),
     });
+    mockAppendTimeline(id, 'created', '订单已创建', 'elder');
+    if (needsOutdoor) {
+      mockAppendTimeline(id, 'outdoor_pending', '等待家属审批外出', 'system');
+    } else {
+      mockAppendTimeline(id, 'pending_payment', '待支付', 'system');
+    }
     if (needsOutdoor) {
       state.outdoorApprovals.push({
         id: `outdoor-${Date.now()}`,
@@ -2078,6 +2163,7 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
         major: profile.major,
         grade: profile.grade,
         phone: profile.phone,
+        gender: profile.gender,
       };
     });
     list.push({
@@ -2092,6 +2178,7 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
       major: '社会学',
       grade: '大二',
       phone: '138****0003',
+      gender: '女',
     });
     const statusQ = query.get('status') || '';
     const filtered =
@@ -2134,7 +2221,7 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
     if (!order) return Promise.reject({ message: '订单不存在' });
     const list = (mockOrderMessages[oid] || []).map((m) => ({
       ...m,
-      mine: m.senderUser === currentStudentUserId(),
+      mine: m.senderUser === currentChatSender().userId,
     }));
     return delay({ list, threadOpen: mockChatOpen(order.status) } as T);
   }
@@ -2147,12 +2234,13 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
     }
     const body = String(data.body || '').trim();
     if (!body) return Promise.reject({ message: '消息不能为空' });
+    const sender = currentChatSender();
     const msg = {
       id: `msg_${oid}_${Date.now()}`,
       orderId: oid,
-      senderUser: currentStudentUserId(),
-      senderRole: 'student',
-      senderAlias: '陪护同学·我',
+      senderUser: sender.userId,
+      senderRole: sender.role,
+      senderAlias: sender.alias,
       body,
       createdAt: new Date().toISOString(),
     };

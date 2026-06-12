@@ -2,7 +2,11 @@
   <view class="page elder-mode">
     <view v-if="order" class="card">
       <text class="status">{{ statusLabel(order.status) }}</text>
-      <OrderTimeline :status="order.status" :requires-outdoor="requiresOutdoor" />
+      <OrderTimeline
+        :status="order.status"
+        :requires-outdoor="requiresOutdoor"
+        :timeline="order.timeline"
+      />
       <text class="svc">{{ serviceName }}</text>
       <text class="meta">预约：{{ formatTime(order.scheduled_at) }}</text>
       <text class="meta">费用：¥{{ ((order.amount_cents || 0) / 100).toFixed(0) }}</text>
@@ -14,6 +18,7 @@
     <text v-else-if="!loading" class="hint">订单不存在或加载失败</text>
     <text v-else class="hint">加载中…</text>
 
+    <button v-if="order?.chatOpen" class="btn-outline" @tap="goChat">联系对方（订单密聊）</button>
     <button
       v-if="order?.status === 'pending_confirm'"
       class="btn"
@@ -29,7 +34,7 @@
 import { computed, ref } from 'vue';
 import { onLoad, onShow } from '@dcloudio/uni-app';
 import OrderTimeline from '../../components/OrderTimeline.vue';
-import { confirmOrderComplete, getOrder, type OrderRow } from '../../api/elder';
+import { confirmOrderComplete, getOrder, type ElderOrderDetail } from '../../api/elder';
 import { fetchElderWallet } from '../../api/wallet';
 import { orderStatusLabel } from '../../utils/order-status';
 import { readRouteQuery } from '../../utils/route-query';
@@ -39,26 +44,16 @@ const orderId = ref('');
 const loading = ref(false);
 const confirming = ref(false);
 const walletBalanceCents = ref(0);
-const order = ref<
-  (OrderRow & {
-    payment_status?: string;
-    expand?: {
-      service_item?: { name: string; requires_outdoor_approval?: boolean };
-      student?: { id: string; name: string };
-    };
-  }) | null
->(null);
+const order = ref<ElderOrderDetail | null>(null);
 
-const caregiverName = computed(() => order.value?.expand?.student?.name);
+const caregiverName = computed(() => order.value?.studentName);
 
 const confirmBtnLabel = computed(() =>
   order.value?.payment_status === 'unpaid' ? '确认服务并付款' : '确认服务完成',
 );
 
-const serviceName = computed(() => order.value?.expand?.service_item?.name || '陪护服务');
-const requiresOutdoor = computed(
-  () => order.value?.expand?.service_item?.requires_outdoor_approval === true,
-);
+const serviceName = computed(() => order.value?.serviceName || '陪护服务');
+const requiresOutdoor = computed(() => order.value?.requiresOutdoorApproval === true);
 
 function statusLabel(s: string) {
   return orderStatusLabel(s);
@@ -97,6 +92,10 @@ onLoad((q) => {
 });
 
 onShow(load);
+
+function goChat() {
+  uni.navigateTo({ url: `/pages/common/order-chat?orderId=${orderId.value}` });
+}
 
 async function confirmComplete() {
   if (!orderId.value || !order.value) return;
@@ -171,6 +170,13 @@ async function confirmComplete() {
   margin-top: 32rpx;
   background: #c45c26;
   color: #fff;
+  border-radius: 12rpx;
+}
+.btn-outline {
+  margin-top: 24rpx;
+  background: #fff;
+  color: #c45c26;
+  border: 1rpx solid #c45c26;
   border-radius: 12rpx;
 }
 </style>

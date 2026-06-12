@@ -24,19 +24,26 @@ function redirectLegacyLogin(req: Connect.IncomingMessage, res: Connect.ServerRe
   res.end();
 }
 
+/** Prepend middleware so /login is handled before SPA history fallback. */
+function prependMiddleware(
+  stack: Array<{ route: string; handle: Connect.NextHandleFunction }>,
+  middleware: Connect.NextHandleFunction,
+) {
+  stack.unshift({ route: '', handle: middleware });
+}
+
 /** 废弃 /login 物理路径：开发/预览 301 到 hash 登录页 */
 export function eliminateLegacyLoginPlugin(): Plugin {
+  const install = (middlewares: Connect.Server) => {
+    prependMiddleware(middlewares.stack, redirectLegacyLogin);
+  };
   return {
     name: 'eliminate-legacy-login',
     configureServer(server) {
-      return () => {
-        server.middlewares.use(redirectLegacyLogin);
-      };
+      return () => install(server.middlewares);
     },
     configurePreviewServer(server) {
-      return () => {
-        server.middlewares.use(redirectLegacyLogin);
-      };
+      return () => install(server.middlewares);
     },
   };
 }

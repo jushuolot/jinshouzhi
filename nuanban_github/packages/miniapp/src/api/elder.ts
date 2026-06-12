@@ -1,5 +1,6 @@
 import { normalizeElderId } from '../utils/elder-id';
 import { guestBrowseRole, isGuestBrowse } from '../utils/guest-browse';
+import type { OrderTimelineEvent } from '../utils/order-timeline';
 import { request } from '../utils/request';
 import { useRoleStore } from '../store/role';
 import { pbList, type PbRecord } from './pb';
@@ -9,6 +10,7 @@ export interface CaregiverItem {
   userId?: string;
   name: string;
   school: string;
+  gender?: string;
   distance: string;
   distanceKm?: number;
   tags?: string[];
@@ -219,20 +221,24 @@ export async function listElderServiceLogs() {
   return res.list ?? [];
 }
 
+export interface ElderOrderDetail {
+  id: string;
+  status: string;
+  amount_cents?: number;
+  scheduled_at?: string;
+  payment_status?: string;
+  serviceName?: string;
+  studentName?: string;
+  requiresOutdoorApproval?: boolean;
+  timeline?: OrderTimelineEvent[];
+  chatOpen?: boolean;
+}
+
 export async function getOrder(id: string) {
-  const res = await pbList<
-    OrderRow & {
-      payment_status?: string;
-      expand?: {
-        service_item?: { name: string; requires_outdoor_approval?: boolean };
-      };
-    }
-  >('orders', {
-    filter: `id = "${id}"`,
-    expand: 'service_item',
-    perPage: 1,
+  return request<ElderOrderDetail | null>({
+    url: `/nuanban/elder/orders/${id}`,
+    method: 'GET',
   });
-  return res.items[0] ?? null;
 }
 
 export async function confirmOrderComplete(orderId: string, payMethod?: 'wallet') {

@@ -315,6 +315,7 @@ routerAdd("POST", "/api/nuanban/auth/register", function (e) {
   rec.set("status", role === "student" ? "pending" : "active");
   if (body.displayName) rec.set("display_name", body.displayName);
   if (body.wechatId) rec.set("wechat_id", String(body.wechatId).trim().slice(0, 64));
+  if (body.gender) rec.set("gender", String(body.gender));
   $app.save(rec);
   const roleRecords2 = $app.findRecordsByFilter(
     "user_roles",
@@ -388,6 +389,7 @@ routerAdd("GET", "/api/nuanban/elder/caregivers/nearby", function (e) {
         userId: r.getString("user"),
         name: r.getString("display_name") || "同学",
         school: schoolName || "高校志愿者",
+        gender: nb.safeRecordString(r, "gender", "未填"),
         distanceKm: Math.round(distanceKm * 10) / 10,
         distance:
           distanceKm < 1
@@ -441,7 +443,7 @@ routerAdd("GET", "/api/nuanban/elder/caregivers/{id}", function (e) {
     orderCount: 28,
     intro: name + "——暖伴勤工志愿者",
     tags: ["陪伴聊天", "康复协助"],
-    gender: "女",
+    gender: nb.safeRecordString(roleRec, "gender", "未填"),
     major: "护理学",
     grade: "大三",
     age: 21,
@@ -770,6 +772,7 @@ routerAdd("GET", "/api/nuanban/student/elders/nearby", function (e) {
       list.push({
         id: rec.id,
         name: nb.safeRecordString(rec, "name", "老人"),
+        gender: nb.safeRecordString(rec, "gender", "未填"),
         latitude: elat,
         longitude: elng,
         org: orgId,
@@ -831,7 +834,7 @@ routerAdd("GET", "/api/nuanban/student/profile", function (e) {
       cartoonAvatarId: cartoonAvatarId,
       avatarUrl: av.avatarUrl,
       verificationPhotoUrl: verificationPhotoUrl,
-      gender: "女",
+      gender: roles.length > 0 ? nb.safeRecordString(roles[0], "gender", "未填") : "未填",
       major: "护理学",
       grade: "大三",
       age: 21,
@@ -894,6 +897,9 @@ routerAdd("PATCH", "/api/nuanban/student/profile", function (e) {
   }
   if (body.cartoonAvatarId) {
     roleRec.set("cartoon_avatar_id", String(body.cartoonAvatarId));
+  }
+  if (body.gender) {
+    roleRec.set("gender", String(body.gender));
   }
   $app.save(roleRec);
   if (body.displayName) {
@@ -1732,6 +1738,27 @@ routerAdd("POST", "/api/nuanban/family/orders/{id}/confirm-complete", function (
   });
 });
 
+routerAdd("GET", "/api/nuanban/elder/orders/{id}", function (e) {
+  var nb = require(__hooks + "/nuanban_lib.js");
+  const rc = nb.assertActiveRoleHeader(e, "elder");
+  if (!rc.ok) return e.json(rc.code, rc.body);
+  const auth = e.auth;
+  if (!auth) return e.json(401, { message: "需要登录" });
+  const orderId = e.request.pathValue("id");
+  const elderId = nb.elderProfileIdForUser(auth.id);
+  if (!elderId) return e.json(403, { message: "未绑定老人档案" });
+  let order;
+  try {
+    order = $app.findRecordById("orders", orderId);
+  } catch (_) {
+    return e.json(404, { message: "订单不存在" });
+  }
+  if (order.getString("elder") !== elderId) {
+    return e.json(403, { message: "无权查看该订单" });
+  }
+  return e.json(200, nb.orderToElderDto(order));
+});
+
 routerAdd("POST", "/api/nuanban/elder/orders/{id}/confirm-complete", function (e) {
   var nb = require(__hooks + "/nuanban_lib.js");
   const rc = nb.assertActiveRoleHeader(e, "elder");
@@ -2424,6 +2451,7 @@ routerAdd("GET", "/api/nuanban/platform/students", function (e) {
         cartoonAvatarId: nb.safeRecordString(r, "cartoon_avatar_id", ""),
         avatarUrl: user ? nb.userAvatarUrlForClient(user, e) : "",
         verificationPhotoUrl: nb.roleFileUrlForClient(r, "verification_photo", e),
+        gender: nb.safeRecordString(r, "gender", "未填"),
         major: "护理学",
         grade: "大三",
         phone: "138****1234",

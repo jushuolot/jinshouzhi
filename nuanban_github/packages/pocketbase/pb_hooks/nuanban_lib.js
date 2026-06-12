@@ -233,6 +233,30 @@ function orderToFamilyDto(order) {
   };
 }
 
+function orderToElderDto(order) {
+  const svc = serviceInfoById(order.getString("service_item"));
+  let studentName;
+  try {
+    const su = order.getString("student_user");
+    if (su) {
+      const u = $app.findRecordById("users", su);
+      studentName = u.getString("name") || u.getString("nickname") || "陪护同学";
+    }
+  } catch (_) {}
+  return {
+    id: order.id,
+    status: order.getString("status"),
+    amount_cents: order.getInt("amount_cents"),
+    scheduled_at: order.getString("scheduled_at"),
+    payment_status: order.getString("payment_status"),
+    serviceName: svc.name,
+    studentName: studentName,
+    requiresOutdoorApproval: svc.requiresOutdoor,
+    timeline: readOrderTimeline(order),
+    chatOpen: orderChatThreadOpen(order.getString("status")),
+  };
+}
+
 function orderChatThreadOpen(status) {
   return (
     status === "pending_accept" ||
@@ -795,7 +819,7 @@ function adminMarkReconciled(recordId) {
 module.exports = {
   KNOWN_SCHOOLS, isKnownSchool, findOrCreateSchoolByName,
   elderNameById, safeRecordString, safeRecordInt, safeRecordBool, safeRecordFloat,
-  serviceInfoById, orderToStudentDto, sosToDto, haversineM, orderToFamilyDto,
+  serviceInfoById, orderToStudentDto, sosToDto, haversineM, orderToFamilyDto, orderToElderDto,
   elderProfileIdForUser, familyCanAccessOrder, completeOrderSchedule, finalizeOrderAfterConfirm,
   walletDemoStoreMap, walletEnsureUser, walletOverviewDto, walletTopup, walletPayLabel,
   walletDeductForOrder, walletPayOrderRecord, userHasRole, assertActiveRoleHeader,
