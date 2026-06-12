@@ -20,7 +20,8 @@
     "stress:10000": "./scripts/run-stress.sh 10000",
     "stress:10000-full": "./scripts/run-stress.sh 10000-full",
     "check:api": "node scripts/check-api-parity.mjs",
-    "check:routes": "node scripts/check-routes.mjs"
+    "check:routes": "node scripts/check-routes.mjs",
+    "verify:prod": "bash scripts/verify-prod-smoke.sh"
   },
   "engines": {
     "node": ">=18"

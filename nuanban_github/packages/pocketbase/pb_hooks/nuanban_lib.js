@@ -587,7 +587,22 @@ function requestBearerToken(e) {
 
 function requestOrigin(e) {
   try {
-    return e.request.scheme + "://" + e.request.host;
+    var proto = "";
+    var host = "";
+    try {
+      proto = e.request.header.get("X-Forwarded-Proto") || "";
+    } catch (_) {}
+    try {
+      host = e.request.header.get("X-Forwarded-Host") || e.request.host || "";
+    } catch (_) {}
+    if (!proto) {
+      try {
+        proto = e.request.scheme || "";
+      } catch (_) {}
+    }
+    if (!proto) proto = "http";
+    if (!host) return "";
+    return proto + "://" + host;
   } catch (_) {}
   return "";
 }
