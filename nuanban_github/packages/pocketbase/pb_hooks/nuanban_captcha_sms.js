@@ -1,6 +1,8 @@
 /// 自建短信验证码 + 人工图画点选（无第三方短信平台）
 /// 验证码在服务器生成、校验；发件记录供运营人工核对。
 
+var nb = require(__hooks + "/nuanban_lib.js");
+
 var CAPTCHA_STORE = {};
 var CAPTCHA_TOKEN_STORE = {};
 var SMS_OTP_STORE = {};
@@ -131,6 +133,7 @@ function captchaVerifyChallenge(challengeId, selectedIds) {
 }
 
 function smsExposeCodeToClient(e) {
+  if (nb.isFormalAuthMode()) return false;
   try {
     var origin = "";
     var hdr = e.request.header.get("Origin") || e.request.header.get("origin") || "";
@@ -211,7 +214,7 @@ function smsVerifyCode(phone, code) {
   phone = normalizePhone(phone);
   code = String(code || "").trim();
   if (!code || code.length !== 6) return false;
-  if (isPresetDemoPhone(phone) && code === DEMO_MASTER_CODE) return true;
+  if (!nb.isFormalAuthMode() && isPresetDemoPhone(phone) && code === DEMO_MASTER_CODE) return true;
   var row = SMS_OTP_STORE[phone];
   if (!row || row.expiresAt < nowMs()) return false;
   row.attempts = (row.attempts || 0) + 1;

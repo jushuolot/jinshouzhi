@@ -18,33 +18,60 @@ else
   docker compose up -d pocketbase
 fi
 
-echo "==> 2/3 等待 API 就绪"
+wait_pb_health() {
+  local base="$1"
+  for i in $(seq 1 30); do
+    if curl -sf "$base/api/health" >/dev/null 2>&1; then
+      return 0
+    fi
+    sleep 1
+  done
+  return 1
+}
+
+hooks_need_reload() {
+  local base="$1"
+  local code
+  code="$(curl -s -o /dev/null -w '%{http_code}' "$base/api/nuanban/captcha/challenge" || true)"
+  [[ "$code" != "200" ]]
+}
+
+echo "==> 2/3 等待 API 就绪并校验 hooks（验证码路由）"
 BASE="${NUANBAN_API:-http://localhost:8090}"
-for i in $(seq 1 30); do
-  if curl -sf "$BASE/api/health" >/dev/null 2>&1; then
-    echo "    API OK: $BASE/api/health"
-    break
-  fi
-  if [ "$i" -eq 30 ]; then
-    echo "超时：请执行 docker compose logs pocketbase"
+if ! wait_pb_health "$BASE"; then
+  echo "超时：请执行 docker compose logs pocketbase"
+  exit 1
+fi
+echo "    API OK: $BASE/api/health"
+
+if hooks_need_reload "$BASE"; then
+  echo "    hooks 未加载完整（captcha 404），重启 PocketBase 以挂载最新 pb_hooks…"
+  docker compose restart pocketbase >/dev/null
+  if ! wait_pb_health "$BASE"; then
+    echo "重启后仍无法访问 API，请执行 docker compose logs pocketbase"
     exit 1
   fi
-  sleep 1
-done
+  if hooks_need_reload "$BASE"; then
+    echo "错误: /api/nuanban/captcha/challenge 仍不可用，请检查 packages/pocketbase/pb_hooks"
+    exit 1
+  fi
+  echo "    hooks 已重载（captcha OK）"
+fi
 
 echo "==> 3/3 写入测试数据（seed-demo）"
 "$ROOT/scripts/seed-demo.sh"
 
 echo ""
 echo "=========================================="
-echo " 后端已就绪（PocketBase 测试数据，非浏览器 Mock）"
+echo " 后端已就绪（正式鉴权 · PocketBase 测试数据）"
 echo "   API:   $BASE/api"
 echo "   Admin: $BASE/_/"
+echo "   NUANBAN_FORMAL_AUTH=true（无 000000 万能码 · 验证码见运营发件箱）"
 echo ""
 echo " 下一步（新开终端）："
 echo "   ./scripts/start-h5.sh"
-echo "   浏览器打开 http://localhost:5174/#/pages/common/launch"
-echo "   .env 已固定 VITE_DEMO_MOCK=false · 与阿里云同 PocketBase 逻辑"
+echo "   浏览器打开 http://localhost:5174/#/pages/common/login"
+echo "   角标「正式版」· 完整短信流程（连点「暖」→ 运营 → 短信发件箱）"
 echo "   万人压测数据: npm run stress:seed-10k（见 docs/STRESS_AND_FLOW_TEST.md）"
 echo "   学生核验照落盘: dev-data/verification-photos/（拍照后生成）"
 echo ""

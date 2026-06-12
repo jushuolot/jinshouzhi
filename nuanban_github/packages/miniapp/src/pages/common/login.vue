@@ -49,7 +49,7 @@
             {{ codeBtnText }}
           </text>
         </view>
-        <text v-if="isDemoPhone" class="demo-fill" @tap="fillDemoCode">
+        <text v-if="isDemoPhone && !formalAuth" class="demo-fill" @tap="fillDemoCode">
           演示号免短信：点此处填入 {{ demoMasterCode }}
         </text>
 
@@ -71,11 +71,14 @@
       </view>
 
       <text v-if="loginHint" class="hint">{{ loginHint }}</text>
-      <text class="hint sms-hint">获取验证码前需完成安全验证；演示号可用 {{ demoMasterCode }}</text>
+      <text v-if="formalAuth" class="hint sms-hint">
+        正式流程：获取验证码 → 完成安全验证 → 在运营「短信发件箱」查看验证码（登录页连点「暖」字进入）
+      </text>
+      <text v-else class="hint sms-hint">获取验证码前需完成安全验证；演示号可用 {{ demoMasterCode }}</text>
 
       <CaptchaPicker :visible="captchaVisible" @verified="onCaptchaVerified" @cancel="captchaVisible = false" />
 
-      <view class="footer">
+      <view v-if="!formalAuth" class="footer">
         <text class="foot-link" @tap="goDemoTour">动画演示</text>
         <text class="sep">|</text>
         <text class="foot-link" @tap="goGuest">游客账号</text>
@@ -90,6 +93,7 @@ import { computed, onUnmounted, ref } from 'vue';
 import { onLoad } from '@dcloudio/uni-app';
 import { loginWithPhone, type LoginResult } from '../../api/auth';
 import { APP_TAGLINE, APP_TITLE } from '../../config/brand';
+import { isFormalAuthMode } from '../../config/formal-auth';
 import { releaseLabel } from '../../config/release';
 import { navigateAfterAuth } from '../../utils/profile-onboarding';
 import { exitGuestBrowse } from '../../utils/guest-browse';
@@ -115,6 +119,7 @@ let cooldownTimer: ReturnType<typeof setInterval> | null = null;
 
 const roleStore = useRoleStore();
 const releaseBadge = releaseLabel();
+const formalAuth = isFormalAuthMode();
 
 onLoad((query) => {
   fromTour.value = query?.from === 'tour';
@@ -198,11 +203,18 @@ async function onCaptchaVerified(token: string) {
   captchaVisible.value = false;
   try {
     const res = await sendSelfHostedSms(phone.value, token);
-    if (res.devCode) {
+    if (res.devCode && !formalAuth) {
       smsCode.value = res.devCode;
       uni.showModal({
         title: '开发环境验证码',
         content: `验证码：${res.devCode}\n（已自动填入，生产环境请查运营发件箱）`,
+        showCancel: false,
+      });
+    } else if (formalAuth) {
+      uni.showModal({
+        title: '验证码已发出',
+        content:
+          '请进入运营中心 → 短信发件箱查看 6 位验证码。\n入口：本页连点左上角「暖」字 → 运营演示 → 更多 → 短信发件箱。',
         showCancel: false,
       });
     } else {

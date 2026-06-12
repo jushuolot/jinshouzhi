@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# 对比测试版（GitHub main）与正式版（阿里云已部署）版本
+# 对比发布版（GitHub Pages）与发布稳定版（阿里云已部署）版本
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -39,12 +39,12 @@ echo "=============================================="
 echo "暖伴勤工 · 版本状态"
 echo "=============================================="
 echo ""
-echo "【测试版 · GitHub Pages】"
+echo "【发布版 · GitHub Pages】"
 echo "  链接:   ${TEST_URL}"
 echo "  main:   ${GITHUB}"
 echo "  本地:   ${LOCAL}"
 echo ""
-echo "【正式版 · 阿里云】"
+echo "【发布稳定版 · 阿里云】"
 echo "  链接:   ${PROD_URL}"
 echo "  已部署: ${PROD_SHA}"
 if [[ -n "$PROD_AT" ]]; then
@@ -53,10 +53,10 @@ fi
 echo ""
 
 if [[ "$GITHUB" == "$PROD_SHA" ]]; then
-  echo "✓ 测试版与正式版提交一致"
+  echo "✓ 发布版与发布稳定版提交一致"
 elif [[ "$PROD_SHA" == "未部署" ]]; then
-  echo "→ 正式版尚未部署，验收测试版后执行: ./scripts/release-prod.sh"
+  echo "→ 发布稳定版尚未部署，验收发布版后执行: ./scripts/release-prod.sh"
 else
-  echo "→ 正式版落后于测试版，验收后执行: ./scripts/release-prod.sh"
+  echo "→ 发布稳定版落后于发布版，验收后执行: ./scripts/release-prod.sh"
 fi
 echo "=============================================="

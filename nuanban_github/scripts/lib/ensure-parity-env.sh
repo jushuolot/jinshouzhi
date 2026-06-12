@@ -29,7 +29,16 @@ ensure_parity_env() {
     changed=1
   fi
 
-  if [ "$changed" -eq 0 ] && grep -q '^VITE_DEMO_MOCK=false' "$env_file"; then
+  if grep -q '^VITE_RELEASE_CHANNEL=' "$env_file" && ! grep -q '^VITE_RELEASE_CHANNEL=formal' "$env_file"; then
+    local tmp="${env_file}.tmp.$$"
+    awk 'BEGIN{done=0} /^VITE_RELEASE_CHANNEL=/{print "VITE_RELEASE_CHANNEL=formal"; done=1; next} {print} END{if(!done) print "VITE_RELEASE_CHANNEL=formal"}' \
+      "$env_file" > "$tmp"
+    mv "$tmp" "$env_file"
+    echo "    已修正 .env: VITE_RELEASE_CHANNEL=formal（本地正式产品流程，无演示捷径）"
+    changed=1
+  fi
+
+  if [ "$changed" -eq 0 ] && grep -q '^VITE_DEMO_MOCK=false' "$env_file" && grep -q '^VITE_RELEASE_CHANNEL=formal' "$env_file"; then
     : # already parity
   fi
 }

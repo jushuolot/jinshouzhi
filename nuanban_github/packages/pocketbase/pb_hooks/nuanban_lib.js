@@ -867,6 +867,14 @@ function adminMarkReconciled(recordId) {
   return { ok: true };
 }
 
+/** 正式鉴权：禁用演示万能码、禁止 dev 登录、不向客户端泄露 devCode */
+function isFormalAuthMode() {
+  try {
+    var v = $os.getenv("NUANBAN_FORMAL_AUTH");
+    return v === "true" || v === "1";
+  } catch (_) {}
+  return false;
+}
 
 module.exports = {
   KNOWN_SCHOOLS, isKnownSchool, findOrCreateSchoolByName,
@@ -882,5 +890,6 @@ module.exports = {
   roleFileUrlForClient, studentRoleRecord,
   readOrderTimeline, appendOrderTimeline, backfillOrderTimeline,
   orderChatThreadOpen, orderChatCanAccess, orderChatAlias,
-  orderMessagesDto, orderMessageToDto, orderMessagePushText, orderMessagePushVoice
+  orderMessagesDto, orderMessageToDto, orderMessagePushText, orderMessagePushVoice,
+  isFormalAuthMode
 };

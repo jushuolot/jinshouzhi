@@ -24,7 +24,7 @@ fi
 echo "==> 检查前端 .env（parity · PocketBase 测试数据）"
 ensure_parity_env "$ROOT"
 
-echo "    模式: parity（PocketBase 测试数据，与阿里云一致）"
+echo "    模式: 正式版（formal · PocketBase 真实登录流，无演示捷径）"
 echo "    Mock 仅用于 GitHub Pages；本地请勿设 VITE_DEMO_MOCK=true"
 
 echo ""

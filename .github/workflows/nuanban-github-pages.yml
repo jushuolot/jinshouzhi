@@ -29,7 +29,7 @@ jobs:
         working-directory: nuanban_github/packages/miniapp
         env:
           VITE_BASE: /${{ vars.GITHUB_REPO || 'jinshouzhi' }}/nuanban/
-          VITE_RELEASE_CHANNEL: test
+          VITE_RELEASE_CHANNEL: release
           VITE_DEMO_MOCK: 'true'
           VITE_API_BASE_URL: /api
         run: |

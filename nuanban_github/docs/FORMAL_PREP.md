@@ -4,9 +4,9 @@
 
 | 环境 | 角色 | 角标 | 数据 |
 |------|------|------|------|
-| **本地** | 测试机 | 开发版 | PocketBase **测试数据**（`VITE_DEMO_MOCK=false`） |
-| **GitHub Pages** | **测试备份** | 测试版 | 浏览器 **Mock**（硬约束）；游客 Mock |
-| **阿里云** | **对外发布** | 发布版 | PocketBase 生产数据；无 Mock |
+| **本地** | **最新产品验证** | **正式版** | PocketBase 测试数据 + `NUANBAN_FORMAL_AUTH=true` |
+| **GitHub Pages** | **发布版** | **发布版** | Pages Mock（`VITE_RELEASE_CHANNEL=release`） |
+| **阿里云** | **发布稳定版** | **发布稳定版** | PocketBase 生产数据（`VITE_RELEASE_CHANNEL=stable`） |
 
 ---
 
@@ -106,8 +106,8 @@ VITE_API_BASE_URL=${NUANBAN_FORMAL_API_URL}
 
 | 目标 | 命令 | 结果 |
 |------|------|------|
-| 推 **GitHub 正式版** | `./scripts/release-formal.sh` | Pages 角标「正式版」 |
-| 推 **对外发布版** | `./scripts/release-prod.sh` | 阿里云角标「发布版」 |
+| 推 **GitHub 发布版** | `./scripts/release-formal.sh` | Pages 角标「发布版」 |
+| 推 **阿里云稳定版** | `./scripts/release-prod.sh` | 角标「发布稳定版」 |
 | 看版本是否一致 | `./scripts/release-status.sh` | 对比 SHA |
 
 原则：**本地测通 → GitHub 正式制作验收 → 阿里云对外发布**。

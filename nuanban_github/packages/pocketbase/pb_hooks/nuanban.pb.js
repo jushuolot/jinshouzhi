@@ -66,6 +66,9 @@ routerAdd("POST", "/api/nuanban/wx-login", function (e) {
 /** 本地 H5 开发登录：不校验密码，仅按邮箱发 token（须先 seed-demo） */
 routerAdd("POST", "/api/nuanban/dev-login", function (e) {
   var nb = require(__hooks + "/nuanban_lib.js");
+  if (nb.isFormalAuthMode()) {
+    return e.json(403, { message: "正式模式请使用手机验证码登录" });
+  }
   const raw = toString(e.request.body);
   const body = raw ? JSON.parse(raw) : {};
   const email = ((body.email || "student1@test.nuanban.dev") + "").trim();

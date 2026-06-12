@@ -44,39 +44,50 @@ curl http://localhost:8090/api/health    # 应返回 API is healthy
 ./scripts/start-h5.sh
 ```
 
-打开：**http://localhost:5174/#/pages/common/launch**
+打开：**http://localhost:5174/#/pages/common/login**
 
-脚本会创建/修正 `packages/miniapp/.env`，**强制** `VITE_DEMO_MOCK=false`（PocketBase 测试数据，与阿里云一致）。  
+脚本会创建/修正 `packages/miniapp/.env`，**强制**：
+
+- `VITE_DEMO_MOCK=false`（走 PocketBase，非浏览器 Mock）
+- `VITE_RELEASE_CHANNEL=formal`（角标 **正式版**，与发布版相同的真实登录流）
+
 浏览器 Mock（`demo-mock.ts`）**仅**用于 GitHub Pages，本地不要开。
 
-若端口被占用，脚本会自动释放 5174 后启动；页面标题应为 **暖伴勤工**。
+若端口被占用，脚本会自动释放 5174 后启动；登录页角标应为 **正式版**。
 
 `.env` 默认：
 
 ```env
 VITE_API_BASE_URL=/api
 VITE_DEV_AUTH_EMAIL=student1@test.nuanban.dev
-VITE_RELEASE_CHANNEL=development
+VITE_RELEASE_CHANNEL=formal
 VITE_DEMO_MOCK=false
 ```
 
-Vite 会把 `/api` 代理到 `http://localhost:8090`。本地自动启用**虚拟手机登录**（无需短信）。
+Vite 会把 `/api` 代理到 `http://localhost:8090`。后端 `NUANBAN_FORMAL_AUTH=true`：**无** `000000` 万能码、**无** 验证码弹窗直显，须走运营发件箱。
 
 万人压测测试数据（可选）：`npm run stress:seed-10k`，见 [STRESS_AND_FLOW_TEST.md](./STRESS_AND_FLOW_TEST.md)。
 
 ---
 
-## 四、登录与三角色体验
+## 四、登录与三角色体验（正式流程）
 
-登录页输入手机号 → **获取验证码**（先完成安全图画点选）→ 输入 6 位验证码登录。  
-演示号 `13800000001`–`06` 可直接填验证码 **`000000`**（无需发短信）。
+本地 = **最新产品正式版**，按真实用户操作，不用演示捷径：
+
+1. 输入 **11 位手机号**（可用自己的号，或 seed 账号 `13800000001`–`06`）
+2. 点 **获取验证码** → 完成 **九宫格安全验证**
+3. 打开 **短信发件箱** 查看 6 位码：登录页 **连点左上角「暖」字** → 运营演示（口令 `nuanban2026`）→ **更多** → **短信发件箱**
+4. 输入验证码 → **登录 / 注册**
+
+> 不可用 `000000` 跳过；不可用底部「游客账号」「动画演示」（正式版已隐藏）。  
+> 新手机号会走注册流程；seed 账号见下表。
 
 | 手机号 | 角色 | 登录后首页 |
 |--------|------|------------|
 | `13800000001` | 学生主流程 | 学生端首页，「待接单 N」 |
 | `13800000004` | 家属 | 家属端首页，「待支付订单」 |
 | `13800000005` | 老人 | 老人端首页，「找陪护」「一键求助」 |
-| `13800000006` | 三角色 | 身份切换演示 |
+| `13800000006` | 三角色 | 身份切换 |
 
 ### 学生端预期
 

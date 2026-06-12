@@ -41,7 +41,7 @@ cd packages/miniapp
 if [[ ! -d node_modules ]]; then
   npm install
 fi
-VITE_RELEASE_CHANNEL=public VITE_API_BASE_URL="https://${NUANBAN_DOMAIN}/api" npm run build:h5
+VITE_RELEASE_CHANNEL=stable VITE_API_BASE_URL="https://${NUANBAN_DOMAIN}/api" npm run build:h5
 cd "$ROOT"
 
 echo "==> 5/5 启动 Caddy（80/443，HTTPS 常驻）"

@@ -4,51 +4,44 @@
 
 | 环境 | 角色 | 地址 | 角标 | 数据 |
 |------|------|------|------|------|
-| **本地测试机** | 与正式一致验收 | `http://localhost:5174` | 开发版 | PocketBase **测试数据**（`VITE_DEMO_MOCK=false`） |
-| **GitHub Pages** | **测试备份** | https://jushuolot.github.io/jinshouzhi/nuanban/ | **测试版** | 浏览器 **Mock**（硬约束：无服务端） |
-| **阿里云** | **正式发布** | https://nuanban.cc（备案中可用 IP） | **发布版** | PocketBase 生产数据 |
+| **本地** | 最新产品验证 | `http://localhost:5174` | **正式版** | PocketBase 测试数据 + 正式登录流 |
+| **GitHub Pages** | **发布版** | https://jushuolot.github.io/jinshouzhi/nuanban/ | **发布版** | Pages Mock（无服务端） |
+| **阿里云** | **发布稳定版** | http://101.200.128.82（备案后 nuanban.cc） | **发布稳定版** | PocketBase 生产数据 |
 
-原则：**本地 parity 测通 → push 更新 GitHub 测试备份 → 阿里云正式发布**。  
-环境差异与硬约束见 **[ENV_PARITY.md](./ENV_PARITY.md)**。
+原则：**本地正式版测通 → GitHub 发布版 → 阿里云发布稳定版**。  
+环境差异见 **[ENV_PARITY.md](./ENV_PARITY.md)**。
 
 ---
 
 ## 日常流程
 
-### 1. 本地测试机（与阿里云同逻辑）
+### 1. 本地（正式版 · 真实流程）
 
 ```bash
 ./scripts/dev-test.sh
 ./scripts/start-h5.sh
 ```
 
-`.env` 推荐（parity 模式）：
+`.env`：`VITE_RELEASE_CHANNEL=formal`，`VITE_DEMO_MOCK=false`
 
-```env
-VITE_RELEASE_CHANNEL=development
-VITE_DEMO_MOCK=false
-VITE_API_BASE_URL=/api
-```
-
-本地脚本会自动将 `VITE_DEMO_MOCK` 设为 `false`；**不要**在本地手动开 Mock（易与测试数据混淆）。
-
-### 2. 更新 GitHub 测试备份
+### 2. 发布 GitHub 发布版
 
 ```bash
 git add … && git commit -m "feat: …"
-./scripts/release-test.sh   # → release-formal.sh，push main
+./scripts/release-formal.sh   # push main → Actions 构建 Pages
 ```
 
-- Actions 构建：`VITE_RELEASE_CHANNEL=test`，`VITE_DEMO_MOCK=true`
-- 验收：https://jushuolot.github.io/jinshouzhi/nuanban/#/pages/common/launch
+- Actions：`VITE_RELEASE_CHANNEL=release`，`VITE_DEMO_MOCK=true`
+- 验收角标：**发布版**
 
-### 3. 发布阿里云正式版
+### 3. 发布阿里云稳定版
 
 ```bash
 ./scripts/release-prod.sh
 ```
 
-- `VITE_RELEASE_CHANNEL=public`，无 Mock，同域 `/api`
+- 构建：`VITE_RELEASE_CHANNEL=stable`，无 Mock，同域 `/api`
+- 角标：**发布稳定版**
 
 ### 4. 查看版本
 
@@ -60,12 +53,11 @@ git add … && git commit -m "feat: …"
 
 ## 构建差异
 
-| 变量 | 本地 parity | GitHub 测试备份 | 阿里云发布 |
-|------|-------------|-----------------|------------|
-| `VITE_RELEASE_CHANNEL` | `development` | `test` | `public` |
-| `VITE_DEMO_MOCK` | `false`（脚本强制） | **`true`** | **不设** |
-| 登录用户 API | PocketBase 测试数据 | 浏览器 Mock | PocketBase |
-| 业务 hooks | `nuanban.pb.js` | `demo-mock.ts` 镜像 | `nuanban.pb.js` |
+| 变量 | 本地 | GitHub 发布版 | 阿里云稳定版 |
+|------|------|---------------|--------------|
+| `VITE_RELEASE_CHANNEL` | `formal` | `release` | `stable` |
+| `VITE_DEMO_MOCK` | `false` | `true` | 不设 |
+| 角标 | 正式版 | 发布版 | 发布稳定版 |
 
 ---
 
@@ -73,12 +65,9 @@ git add … && git commit -m "feat: …"
 
 | 脚本 | 用途 |
 |------|------|
-| `dev-test.sh` | 本地启动 PocketBase + 测试数据 seed |
-| `start-h5.sh` | 本地 H5 parity（强制 `VITE_DEMO_MOCK=false`） |
-| `start-h5-parity.sh` | 同 `start-h5.sh` |
-| `release-formal.sh` | 推 **GitHub 测试备份** |
-| `release-prod.sh` | 部署 **阿里云发布版** |
-| `release-status.sh` | 对比各环境 SHA |
+| `dev-test.sh` | 本地 PocketBase + seed |
+| `start-h5.sh` | 本地 H5 正式版 |
+| `release-formal.sh` | 推 **GitHub 发布版** |
+| `release-prod.sh` | 部署 **阿里云发布稳定版** |
 | `release-test.sh` | 兼容旧名 → `release-formal.sh` |
-| `deploy-staging.sh` | 备案中 HTTP 临时部署 |
-| `deploy-public.sh` | 备案后 HTTPS 正式部署 |
+| `release-status.sh` | 对比发布版 / 稳定版 SHA |
