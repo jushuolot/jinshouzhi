@@ -2157,7 +2157,7 @@ routerAdd("GET", "/api/nuanban/platform/funds/withdrawals", function (e) {
   return e.json(200, { list: list });
 });
 
-routerAdd("POST", "/api/nuanban/platform/funds/withdrawals/:id/approve", function (e) {
+routerAdd("POST", "/api/nuanban/platform/funds/withdrawals/{id}/approve", function (e) {
   var nb = require(__hooks + "/nuanban_lib.js");
   var id = e.request.pathValue("id");
   var record = nb.adminApproveWithdrawal(id);
@@ -2165,7 +2165,7 @@ routerAdd("POST", "/api/nuanban/platform/funds/withdrawals/:id/approve", functio
   return e.json(200, { ok: true, record: record });
 });
 
-routerAdd("POST", "/api/nuanban/platform/funds/withdrawals/:id/reject", function (e) {
+routerAdd("POST", "/api/nuanban/platform/funds/withdrawals/{id}/reject", function (e) {
   var nb = require(__hooks + "/nuanban_lib.js");
   var id = e.request.pathValue("id");
   var body = {};
@@ -2429,7 +2429,7 @@ routerAdd("GET", "/api/nuanban/platform/students", function (e) {
   });
 });
 
-routerAdd("POST", "/api/nuanban/platform/students/:userId/status", function (e) {
+routerAdd("POST", "/api/nuanban/platform/students/{userId}/status", function (e) {
   var nb = require(__hooks + "/nuanban_lib.js");
   var uid = e.request.pathValue("userId");
   var raw = toString(e.request.body);
