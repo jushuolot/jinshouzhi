@@ -38,3 +38,7 @@ packages/pocketbase/pb_data.bak*/
 # 本地 dev 核验照（学生拍照测试）
 dev-data/verification-photos/*
 !dev-data/verification-photos/.gitkeep
+
+# 压测真实数据报告（本地生成，可复现）
+dev-data/load-test/*
+!dev-data/load-test/.gitkeep

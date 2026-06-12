@@ -29,11 +29,20 @@ case "$MODE" in
   2000)
     node scripts/stress/stress-2000.mjs
     ;;
+  seed-10k)
+    node scripts/stress/seed-real-data.mjs
+    ;;
+  10000)
+    node scripts/stress/stress-10000.mjs
+    ;;
+  10000-full)
+    node scripts/stress/run-10000-full.mjs
+    ;;
   failures)
     node scripts/stress/simulate-failures.mjs
     ;;
   *)
-    echo "用法: $0 [smoke|100|2000|failures]"
+    echo "用法: $0 [smoke|100|2000|seed-10k|10000|10000-full|failures]"
     exit 1
     ;;
 esac

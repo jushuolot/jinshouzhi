@@ -64,6 +64,42 @@
 
 ---
 
+## 万人真实数据压测（10k）
+
+### 数据构成（PocketBase 真实落库）
+
+| 指标 | 数量 |
+|------|------|
+| 独立账号（手机 13910000000–09999） | 10,000 |
+| 学生（60%，含 10% pending 待审） | 6,000 |
+| 老人 + 档案 | 2,000 |
+| 家属 + 绑定 | 2,000 |
+| 待接单订单 | ~400 |
+
+### 命令
+
+```bash
+./scripts/seed-demo.sh                    # 先写入服务项目
+npm run stress:seed-10k                   # 写入万人真实数据（~17min）
+npm run stress:10000                      # 万人并发读压测
+npm run stress:10000-full                 # 种子 + 冒烟 + 压测 一键
+
+# 校验落库
+curl "http://127.0.0.1:8090/api/nuanban/platform/load-test/stats?key=nuanban_load_seed"
+```
+
+报告：`dev-data/load-test/manifest-10k.json`、`report-10k.json`（本地生成，不入库）
+
+### 通过标准（实测参考）
+
+| 指标 | 万人 |
+|------|------|
+| 成功率 | ≥ 97% |
+| p95 延迟 | < 3s（SQLite 单节点） |
+| 种子校验 | loadTestUsers = 10000 |
+
+---
+
 ## 100 人 / 2000 人场景
 
 ### 假设
