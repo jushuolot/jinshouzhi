@@ -61,6 +61,10 @@ function baseProfileFieldsComplete(role: RoleKey, profile: ProfilePayload): bool
 }
 
 export function computeProfileComplete(role: RoleKey, profile: ProfilePayload): boolean {
+  if (role === 'elder') {
+    // 老人端不强制资料与支付方式，进入首页后可慢慢补
+    return true;
+  }
   if (role === 'student') {
     if (profile.profileComplete === true) return true;
     return baseProfileFieldsComplete(role, profile);
@@ -89,6 +93,9 @@ export async function needsProfileOnboarding(role: RoleKey): Promise<boolean> {
   const roleStore = useRoleStore();
   const userId = roleStore.user?.id;
   if (!userId) return false;
+
+  // 老人资料、支付方式均可延后，不拦截登录
+  if (role === 'elder') return false;
 
   if (role === 'student') {
     const st = roleStore.roles.find((r) => r.role === 'student');

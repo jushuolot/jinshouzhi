@@ -38,6 +38,7 @@ import { confirmOrderComplete, getOrder, type ElderOrderDetail } from '../../api
 import { fetchElderWallet } from '../../api/wallet';
 import { orderStatusLabel } from '../../utils/order-status';
 import { readRouteQuery } from '../../utils/route-query';
+import { ensureElderPaymentReady } from '../../utils/elder-payment-guard';
 import { pbErrorMessage } from '../../utils/request';
 
 const orderId = ref('');
@@ -112,6 +113,10 @@ async function confirmComplete() {
       : '同学已完成服务，确认后订单将完结。',
     success: async (res) => {
       if (!res.confirm) return;
+      if (needsPay && !useWallet) {
+        const ok = await ensureElderPaymentReady('确认服务并付款');
+        if (!ok) return;
+      }
       confirming.value = true;
       try {
         await confirmOrderComplete(orderId.value, useWallet ? 'wallet' : undefined);

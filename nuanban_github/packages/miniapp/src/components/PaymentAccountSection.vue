@@ -12,6 +12,10 @@
         <text v-else class="status-pending">待配置</text>
       </view>
 
+      <text v-if="deferrable && !account?.configured" class="defer-hint">
+        可先跳过；确认服务付款或储值卡充值时再配置即可。
+      </text>
+
       <template v-if="!account?.configured">
         <text class="field-label">商户号（演示）</text>
         <input
@@ -49,6 +53,8 @@ import { pbErrorMessage } from '../utils/request';
 
 const props = defineProps<{
   role: RoleKey;
+  /** 老人端：允许暂不配置，付款时再填 */
+  deferrable?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -60,8 +66,10 @@ const merchantNo = ref('');
 const accountName = ref('');
 const binding = ref(false);
 
+const deferrable = computed(() => props.deferrable === true);
+
 const sectionTitle = computed(() =>
-  props.role === 'student' ? '收款账户（扫呗预留）' : '付款/收款账户（扫呗预留）',
+  props.role === 'student' ? '收款账户（扫呗预留）' : '付款方式（扫呗预留）',
 );
 
 const providerDesc = computed(() =>
@@ -130,6 +138,13 @@ defineExpose({
 <style scoped>
 .section-wrap {
   margin-top: 8rpx;
+}
+.defer-hint {
+  display: block;
+  margin-bottom: 12rpx;
+  font-size: 24rpx;
+  color: var(--nb-text-muted, #888);
+  line-height: 1.5;
 }
 .section {
   display: block;

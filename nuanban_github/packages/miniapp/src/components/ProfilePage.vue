@@ -158,23 +158,28 @@ const detailSections = computed((): ProfileDetailSection[] => {
   }
   if (props.role === 'elder' && elderProfile.value) {
     const p = elderProfile.value;
+    const orgVal = (v?: string) => v?.trim() || '未填写（机构维护）';
+    const selfVal = (v?: string | number) => {
+      if (v === undefined || v === null || v === '') return '未填写';
+      return String(v);
+    };
     return [
       {
         title: '基本信息',
         rows: [
-          { label: '年龄', value: `${p.age} 岁` },
-          { label: '性别', value: p.gender },
-          { label: '所在区域', value: p.district },
-          { label: '居住地址', value: p.address },
-          { label: '所属机构', value: p.orgName },
-          { label: '居住情况', value: p.livingSituation },
+          { label: '年龄', value: p.age ? `${p.age} 岁` : '未填写' },
+          { label: '性别', value: selfVal(p.gender) },
+          { label: '居住地址', value: selfVal(p.address) },
+          { label: '所在区域', value: orgVal(p.district), readonly: true },
+          { label: '所属机构', value: orgVal(p.orgName), readonly: true },
+          { label: '居住情况', value: orgVal(p.livingSituation), readonly: true },
         ],
       },
       {
         title: '健康状况',
         rows: [
-          { label: '健康概况', value: p.healthStatus },
-          { label: '行动能力', value: p.mobility },
+          { label: '健康概况', value: orgVal(p.healthStatus), readonly: true },
+          { label: '行动能力', value: orgVal(p.mobility), readonly: true },
         ],
       },
       {
@@ -192,9 +197,9 @@ const detailSections = computed((): ProfileDetailSection[] => {
       {
         title: '紧急联系人',
         rows: [
-          { label: '姓名', value: p.emergencyContact.name },
-          { label: '关系', value: p.emergencyContact.relation },
-          { label: '电话', value: p.emergencyContact.phone },
+          { label: '姓名', value: selfVal(p.emergencyContact?.name) },
+          { label: '关系', value: selfVal(p.emergencyContact?.relation) },
+          { label: '电话', value: selfVal(p.emergencyContact?.phone) },
         ],
         note: p.notes,
       },

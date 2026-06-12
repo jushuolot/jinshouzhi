@@ -4,9 +4,9 @@
     <view v-if="section.tags?.length" class="tags">
       <text v-for="tag in section.tags" :key="tag" class="tag">{{ tag }}</text>
     </view>
-    <view v-for="row in section.rows" :key="row.label" class="row">
+    <view v-for="row in section.rows" :key="row.label + row.value" class="row">
       <text class="label">{{ row.label }}</text>
-      <text class="value">{{ row.value }}</text>
+      <text class="value" :class="{ muted: row.readonly }">{{ row.value }}</text>
     </view>
     <text v-if="section.note" class="note">{{ section.note }}</text>
   </view>
@@ -16,6 +16,8 @@
 export interface ProfileDetailRow {
   label: string;
   value: string;
+  /** 机构维护字段，只读展示 */
+  readonly?: boolean;
 }
 
 export interface ProfileDetailSection {
@@ -69,6 +71,9 @@ defineProps<{ sections: ProfileDetailSection[] }>();
   font-size: 26rpx;
   color: var(--nb-text, #3d2a1f);
   line-height: 1.5;
+}
+.value.muted {
+  color: var(--nb-text-muted, #999);
 }
 .note {
   display: block;

@@ -262,15 +262,7 @@ function familyProfileComplete() {
 }
 
 function elderProfileComplete() {
-  if (!elderProfileState.seeded) {
-    return !!(
-      elderProfileState.name.trim() &&
-      elderProfileState.district.trim() &&
-      elderProfileState.address.trim()
-    );
-  }
-  const base = getElderSelfProfile();
-  return !!(base.name.trim() && base.district.trim() && base.address.trim());
+  return true;
 }
 
 function resetRoleProfileState(role: RoleKey, displayName?: string) {
@@ -379,12 +371,15 @@ function elderSelfProfileDto() {
     gender: elderProfileState.seeded ? base!.gender : elderProfileState.gender,
     district: elderProfileState.seeded ? base!.district : elderProfileState.district,
     address: elderProfileState.seeded ? base!.address : elderProfileState.address,
-    orgName: base?.orgName || '暖伴示范养老院',
-    healthStatus: base?.healthStatus || '总体良好',
-    mobility: base?.mobility || '行动便利',
-    hobbies: base?.hobbies || ['聊天', '散步'],
-    servicePreferences: base?.servicePreferences || ['陪伴聊天'],
-    livingSituation: base?.livingSituation || '与子女同住',
+    orgName: elderProfileState.seeded ? base!.orgName || '' : '',
+    healthStatus: elderProfileState.seeded ? base!.healthStatus || '' : '',
+    mobility: elderProfileState.seeded ? base!.mobility || '' : '',
+    hobbies: elderProfileState.seeded && base!.hobbies?.length ? base!.hobbies : [],
+    servicePreferences:
+      elderProfileState.seeded && base!.servicePreferences?.length
+        ? base!.servicePreferences
+        : [],
+    livingSituation: elderProfileState.seeded ? base!.livingSituation || '' : '',
     emergencyContact: {
       name: elderProfileState.seeded
         ? base!.emergencyContact.name
@@ -396,8 +391,11 @@ function elderSelfProfileDto() {
         ? base!.emergencyContact.phone
         : elderProfileState.emergencyPhone,
     },
-    preferredVisitTimes: base?.preferredVisitTimes || ['工作日下午 14:00–17:00'],
-    notes: base?.notes || '请耐心沟通，营造温馨氛围。',
+    preferredVisitTimes:
+      elderProfileState.seeded && base!.preferredVisitTimes?.length
+        ? base!.preferredVisitTimes
+        : [],
+    notes: elderProfileState.seeded ? base!.notes || '' : '',
     profileComplete: elderProfileComplete(),
   };
   const url = getMockAvatarUrl(USERS.elder.id);
@@ -1519,11 +1517,10 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
   if (method === 'PATCH' && path === '/nuanban/elder/profile') {
     const roleErr = assertDemoActiveRole(options, path, 'elder');
     if (roleErr) return Promise.reject({ message: roleErr, statusCode: 403 });
-    if (data.name) elderProfileState.name = String(data.name);
+    if (data.name != null) elderProfileState.name = String(data.name);
     if (data.age != null) elderProfileState.age = Number(data.age);
     if (data.gender) elderProfileState.gender = String(data.gender);
-    if (data.district) elderProfileState.district = String(data.district);
-    if (data.address) elderProfileState.address = String(data.address);
+    if (data.address != null) elderProfileState.address = String(data.address);
     if (data.emergencyContactName) elderProfileState.emergencyName = String(data.emergencyContactName);
     if (data.emergencyContactRelation) {
       elderProfileState.emergencyRelation = String(data.emergencyContactRelation);

@@ -72,6 +72,7 @@ import {
 import { elderFontClass } from '../utils/elder-accessibility';
 import { isDemoMockEnabled } from '../utils/demo-mock';
 import { guardPackageRoute } from '../utils/nav-guard';
+import { ensureElderPaymentReady } from '../utils/elder-payment-guard';
 import { pbErrorMessage } from '../utils/request';
 import type { RoleKey } from '../config/tabs';
 
@@ -141,6 +142,10 @@ async function doTopup() {
   if (!cents || cents < 100) {
     uni.showToast({ title: '请输入至少 ¥1', icon: 'none' });
     return;
+  }
+  if (props.role === 'elder') {
+    const ok = await ensureElderPaymentReady('储值卡充值');
+    if (!ok) return;
   }
   topping.value = true;
   try {

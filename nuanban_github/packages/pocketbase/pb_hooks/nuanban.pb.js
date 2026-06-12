@@ -1068,31 +1068,33 @@ routerAdd("GET", "/api/nuanban/elder/profile", function (e) {
     } catch (_) {}
   }
   var avE = nb.userAvatarFields(auth, e);
-  const elderName = elder.getString("name") || "老人";
-  const elderDistrict = elder.getString("district") || "浦东新区";
-  const elderAddress = elder.getString("address") || "浦东新区***";
+  const elderName = elder.getString("name") || "";
+  const elderDistrict = elder.getString("district") || "";
+  const elderAddress = elder.getString("address") || "";
+  const hobbies = elder.get("hobbies");
+  const servicePrefs = elder.get("service_preferences");
   return e.json(200, {
     id: elder.id,
     name: elderName,
     avatarUrl: avE.avatarUrl,
-    profileComplete: !!(elderName && elderDistrict && elderAddress),
-    age: elder.getInt("age") || 78,
-    gender: elder.getString("gender") || "女",
+    profileComplete: true,
+    age: elder.getInt("age") || 0,
+    gender: elder.getString("gender") || "",
     district: elderDistrict,
     address: elderAddress,
-    orgName: orgName || "暖伴示范养老院",
-    healthStatus: elder.getString("health_status") || "总体良好",
-    mobility: elder.getString("mobility") || "行动便利",
-    hobbies: elder.get("hobbies") || ["聊天", "散步"],
-    servicePreferences: elder.get("service_preferences") || ["陪伴聊天"],
-    livingSituation: elder.getString("living_situation") || "与子女同住",
+    orgName: orgName || "",
+    healthStatus: elder.getString("health_status") || "",
+    mobility: elder.getString("mobility") || "",
+    hobbies: hobbies && hobbies.length ? hobbies : [],
+    servicePreferences: servicePrefs && servicePrefs.length ? servicePrefs : [],
+    livingSituation: elder.getString("living_situation") || "",
     emergencyContact: {
-      name: "家属",
-      relation: "女儿",
-      phone: "138****9999",
+      name: elder.getString("emergency_contact_name") || "",
+      relation: elder.getString("emergency_contact_relation") || "",
+      phone: elder.getString("emergency_contact_phone") || "",
     },
-    preferredVisitTimes: ["工作日下午 14:00–17:00", "周末上午 9:00–11:00"],
-    notes: elder.getString("notes") || "请耐心沟通，营造温馨氛围。",
+    preferredVisitTimes: elder.get("preferred_visit_times") || [],
+    notes: elder.getString("notes") || "",
   });
 });
 
@@ -1125,25 +1127,31 @@ routerAdd("PATCH", "/api/nuanban/elder/profile", function (e) {
     } catch (_) {}
   }
   if (!elder) return e.json(404, { message: "老人档案不存在" });
-  if (body.name) elder.set("name", String(body.name));
+  if (body.name != null) elder.set("name", String(body.name));
   if (body.age != null) elder.set("age", Number(body.age));
   if (body.gender) elder.set("gender", String(body.gender));
-  if (body.district) elder.set("district", String(body.district));
-  if (body.address) elder.set("address", String(body.address));
+  if (body.address != null) elder.set("address", String(body.address));
+  if (body.emergencyContactName != null) {
+    elder.set("emergency_contact_name", String(body.emergencyContactName));
+  }
+  if (body.emergencyContactRelation != null) {
+    elder.set("emergency_contact_relation", String(body.emergencyContactRelation));
+  }
+  if (body.emergencyContactPhone != null) {
+    elder.set("emergency_contact_phone", String(body.emergencyContactPhone));
+  }
   $app.save(elder);
   if (body.name) {
     auth.set("name", String(body.name));
     $app.save(auth);
   }
   const name = elder.getString("name") || "";
-  const district = elder.getString("district") || "";
   const address = elder.getString("address") || "";
   return e.json(200, {
     ok: true,
     name: name,
-    district: district,
     address: address,
-    profileComplete: !!(name && district && address),
+    profileComplete: true,
   });
 });
 
