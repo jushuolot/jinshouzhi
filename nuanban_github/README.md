@@ -16,7 +16,7 @@
 
 | 环境 | 角色 | 链接 |
 |------|------|------|
-| **GitHub Pages** | **测试备份**（与本地测试同配置） | https://jushuolot.github.io/jinshouzhi/nuanban/#/pages/common/login |
+| **GitHub Pages** | **测试备份**（浏览器 Mock，零安装） | https://jushuolot.github.io/jinshouzhi/nuanban/#/pages/common/login |
 | **阿里云** | **正式发布** | http://101.200.128.82（备案后 nuanban.cc） |
 
 - 环境一致性：**[docs/ENV_PARITY.md](docs/ENV_PARITY.md)**

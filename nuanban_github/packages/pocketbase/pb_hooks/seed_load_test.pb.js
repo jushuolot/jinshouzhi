@@ -73,6 +73,7 @@ routerAdd("POST", "/api/nuanban/seed-load-test", function (e) {
       if (extra.latitude != null) rec.set("latitude", extra.latitude);
       if (extra.longitude != null) rec.set("longitude", extra.longitude);
       if (extra.elder_profile) rec.set("elder_profile", extra.elder_profile);
+      if (extra.gender) rec.set("gender", extra.gender);
       $app.save(rec);
       return rec;
     }
@@ -121,6 +122,7 @@ routerAdd("POST", "/api/nuanban/seed-load-test", function (e) {
           status: stStatus,
           display_name: "压测学生" + idx,
           school: school.id,
+          gender: idx % 2 === 0 ? "女" : "男",
           latitude: lat,
           longitude: lng,
         });
@@ -128,8 +130,11 @@ routerAdd("POST", "/api/nuanban/seed-load-test", function (e) {
         var elderName = "压测老人" + idx;
         var eRows = $app.findRecordsByFilter("elders", "name = {:n}", "", 1, 0, { n: elderName });
         var elderRec;
+        var elderGender = idx % 2 === 0 ? "女" : "男";
         if (eRows.length > 0) {
           elderRec = eRows[0];
+          elderRec.set("gender", elderGender);
+          $app.save(elderRec);
         } else {
           var eCol = $app.findCollectionByNameOrId("elders");
           elderRec = new Record(eCol);
@@ -138,6 +143,7 @@ routerAdd("POST", "/api/nuanban/seed-load-test", function (e) {
           elderRec.set("latitude", lat);
           elderRec.set("longitude", lng);
           elderRec.set("enabled", true);
+          elderRec.set("gender", elderGender);
           $app.save(elderRec);
           stats.elders += 1;
         }

@@ -113,6 +113,7 @@ export async function fetchStudentProfile() {
 export async function updateStudentProfile(data: {
   displayName?: string;
   schoolName?: string;
+  gender?: string;
   bio?: string;
   major?: string;
   grade?: string;
@@ -318,6 +319,7 @@ export async function listServiceLogs() {
 
 export interface ElderRow extends PbRecord {
   name: string;
+  gender?: string;
   latitude?: number;
   longitude?: number;
   org?: string;

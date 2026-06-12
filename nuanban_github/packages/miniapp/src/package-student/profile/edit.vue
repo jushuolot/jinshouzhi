@@ -22,6 +22,11 @@
     <text class="section">学校</text>
     <SchoolSearchField v-model="schoolName" />
 
+    <text class="section">性别</text>
+    <picker :range="genders" :value="genderIdx" @change="onGenderPick">
+      <view class="picker nb-input">{{ genders[genderIdx] }}</view>
+    </picker>
+
     <text class="section">专业</text>
     <input class="input nb-input readonly" disabled placeholder="待平台确认" />
 
@@ -62,7 +67,9 @@ import { isKnownSchool } from '../../utils/known-schools';
 import { pbErrorMessage } from '../../utils/request';
 
 const grades = ['大一', '大二', '大三', '大四', '研一', '研二'];
+const genders = ['女', '男'];
 const displayName = ref('');
+const genderIdx = ref(0);
 const cartoonAvatarId = ref('');
 const verificationPhotoUrl = ref('');
 const schoolName = ref('');
@@ -90,6 +97,8 @@ onShow(async () => {
     schoolName.value = isKnownSchool(p.schoolName || '') ? p.schoolName : '';
     const gIdx = grades.indexOf(p.grade || '');
     gradeIdx.value = gIdx >= 0 ? gIdx : 2;
+    const genderVal = p.gender === '男' ? '男' : '女';
+    genderIdx.value = genders.indexOf(genderVal);
     bio.value = p.bio || '';
     serviceAreasText.value = (p.serviceAreas || []).join('、');
     availableHoursText.value = (p.availableHours || []).join('\n');
@@ -108,6 +117,10 @@ function onVerificationChange(url: string) {
 
 function onGradePick(e: { detail: { value: string } }) {
   gradeIdx.value = Number(e.detail.value);
+}
+
+function onGenderPick(e: { detail: { value: string } }) {
+  genderIdx.value = Number(e.detail.value);
 }
 
 function splitAreas(text: string) {
@@ -133,6 +146,7 @@ async function save() {
   try {
     await updateStudentProfile({
       schoolName: schoolName.value,
+      gender: genders[genderIdx.value],
       grade: grades[gradeIdx.value],
       bio: bio.value,
       serviceAreas: splitAreas(serviceAreasText.value),

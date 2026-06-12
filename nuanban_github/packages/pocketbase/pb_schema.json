@@ -228,6 +228,16 @@
         "max": 64
       },
       {
+        "id": "fld_el_gender",
+        "name": "gender",
+        "type": "select",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "maxSelect": 1,
+        "values": ["男", "女", "未填"]
+      },
+      {
         "id": "fld_el_phone",
         "name": "phone",
         "type": "text",
@@ -396,6 +406,16 @@
         "system": false,
         "hidden": false,
         "max": 64
+      },
+      {
+        "id": "fld_ur_gender",
+        "name": "gender",
+        "type": "select",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "maxSelect": 1,
+        "values": ["男", "女", "未填"]
       }
     ],
     "indexes": [],

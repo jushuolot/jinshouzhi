@@ -10,7 +10,7 @@
       v-for="item in list"
       :key="item.id"
       :name="item.name"
-      :subtitle="item.school"
+      :subtitle="caregiverSubtitle(item)"
       :tags="item.tags"
       :rating="item.rating"
       :distance="item.distance"
@@ -45,6 +45,11 @@ onMounted(async () => {
     loading.value = false;
   }
 });
+
+function caregiverSubtitle(item: CaregiverItem) {
+  const parts = [item.gender, item.school].filter(Boolean);
+  return parts.join(' · ');
+}
 
 function goDetail(item: CaregiverItem) {
   const id = item.id || item.userId || '';

@@ -4,22 +4,34 @@
 
 ---
 
+## 术语（勿混淆）
+
+| 词 | 含义 | 用在哪 |
+|----|------|--------|
+| **Mock** | 浏览器内 `demo-mock.ts`，无 PocketBase | **仅 GitHub Pages**（硬约束） |
+| **测试数据** | PocketBase 库内真实记录（`seed-demo`、万人 `seed-load-test`） | **本地 + 阿里云** |
+| **parity** | 本地与阿里云同逻辑：`VITE_DEMO_MOCK=false` + Docker PB | 日常开发默认 |
+
+本地 **不要** 开 `VITE_DEMO_MOCK=true`；`dev-test.sh` / `start-h5.sh` 会自动修正为 `false`。
+
+---
+
 ## 三环境对照
 
 | 维度 | 本地测试机 | GitHub Pages（测试备份） | 阿里云（正式发布） |
 |------|------------|--------------------------|-------------------|
 | **角色** | 开发 / 验收 | 零安装演示备份 | 对外生产 |
-| **H5 构建** | `npm run dev:h5` 或本地 build | Actions 自动 build | `deploy-public.sh` / `release-prod.sh` |
+| **H5 构建** | `./scripts/start-h5.sh` | Actions 自动 build | `deploy-public.sh` / `release-prod.sh` |
 | `VITE_RELEASE_CHANNEL` | `development` | `test` | `public` |
-| `VITE_DEMO_MOCK` | **`false`（推荐）** 或 `true` | **`true`（必须）** | **不设 / false** |
-| 登录用户 API | PocketBase（parity 模式） | 浏览器 Mock | PocketBase 同域 `/api` |
-| 游客浏览 | Mock | Mock | 无 Mock（需登录） |
+| `VITE_DEMO_MOCK` | **`false`（默认强制）** | **`true`（必须）** | **不设 / false** |
+| 登录用户 API | PocketBase 测试数据 | 浏览器 Mock | PocketBase 生产数据 |
+| 游客浏览 | Mock（未登录） | Mock | 无 Mock（需登录） |
 | 角标 | 开发版 | 测试版 | 发布版 |
 | 后端 | Docker PocketBase :8090 | **无**（静态托管） | Docker PB + Caddy |
-| 数据持久化 | `pb_data/` 卷 | localStorage | `pb_data/` 卷 |
+| 数据持久化 | `pb_data/` 卷（测试数据） | localStorage | `pb_data/` 卷 |
 | API 地址 | `/api` → 代理 8090 | 不发起真实 API（Mock 拦截） | `https://域名/api` |
 
-**推荐流程**：本地 parity 测通 → push main 更新 GitHub 备份 → `./scripts/release-prod.sh` 部署阿里云。
+**推荐流程**：`./scripts/dev-test.sh` → `./scripts/start-h5.sh` 本地 parity 测通 → push main 更新 GitHub 备份 → `./scripts/release-prod.sh` 部署阿里云。
 
 ---
 
@@ -130,9 +142,8 @@ NUANBAN_REMOTE_DIR=/opt/jinshouzhi/nuanban_github
 
 | 场景 | 命令 / 触发 | 关键 env |
 |------|-------------|----------|
-| 本地 dev | `npm run dev:h5` | `development`, `DEMO_MOCK=false` |
-| 本地 Mock dev | `.env` 设 `DEMO_MOCK=true` | 不启 PB 也可演示 |
-| GitHub Pages | push `main` → Actions | `test`, `DEMO_MOCK=true`, `VITE_BASE=/jinshouzhi/nuanban/` |
+| 本地 dev（默认） | `./scripts/dev-test.sh` + `./scripts/start-h5.sh` | `development`, `VITE_DEMO_MOCK=false` |
+| GitHub Pages | push `main` → Actions | `test`, `VITE_DEMO_MOCK=true`, `VITE_BASE=/jinshouzhi/nuanban/` |
 | 阿里云 staging | `deploy-staging.sh` | `public`, API=`http://IP/api` |
 | 阿里云 production | `deploy-public.sh` | `public`, API=`https://域名/api` |
 

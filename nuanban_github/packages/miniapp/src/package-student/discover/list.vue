@@ -45,7 +45,7 @@
           v-for="e in list"
           :key="e.id"
           :name="e.name"
-          :subtitle="e.orgName"
+          :subtitle="elderSubtitle(e)"
           :tags="e.tags"
           :distance="formatDistance(e.distanceKm)"
           cta-text="详情"
@@ -56,6 +56,17 @@
 
     <!-- 地图模式 -->
     <view v-else class="map-wrap">
+      <!-- #ifdef H5 -->
+      <OsmMap
+        class="discover-map"
+        :center-lat="userLat"
+        :center-lng="userLng"
+        :markers="osmMarkers"
+        height="55vh"
+        @markertap="onOsmMarkerTap"
+      />
+      <!-- #endif -->
+      <!-- #ifndef H5 -->
       <map
         class="discover-map"
         :latitude="userLat"
@@ -68,6 +79,7 @@
         @markertap="onMarkerTap"
         @callouttap="onCalloutTap"
       />
+      <!-- #endif -->
       <view class="map-toolbar">
         <text class="map-hint">{{ isDemoLocation ? '演示定位（上海）' : '已定位到当前位置' }}</text>
         <text class="relocate" @tap="reload">重新定位</text>
@@ -92,6 +104,9 @@ import { computed, ref } from 'vue';
 import RoleTabBar from '../../components/RoleTabBar.vue';
 import PersonCard from '../../components/PersonCard.vue';
 import ListCountBar from '../../components/ListCountBar.vue';
+// #ifdef H5
+import OsmMap from '../../components/OsmMap.vue';
+// #endif
 import { fetchStudentProfile, listNearbyElders, type ElderRow } from '../../api/student';
 import { getLocationWithFallback } from '../../utils/location';
 import { filterEldersBySchoolCoop, orgPartnersSchool } from '../../utils/school-coop';
@@ -101,9 +116,15 @@ import { pbErrorMessage } from '../../utils/request';
 type ElderListItem = ElderRow & {
   distanceKm: number;
   orgName: string;
+  gender?: string;
   tags?: string[];
   isCoop: boolean;
 };
+
+function elderSubtitle(e: ElderListItem) {
+  const parts = [e.gender, e.orgName].filter(Boolean);
+  return parts.join(' · ');
+}
 
 const DEMO = { lat: 31.2304, lng: 121.4737, label: '演示定位（上海）' };
 
@@ -173,6 +194,18 @@ const markers = computed(() => {
   });
   return items;
 });
+
+const osmMarkers = computed(() =>
+  list.value
+    .filter((e) => e.latitude && e.longitude)
+    .map((e, idx) => ({
+      id: idx + 1,
+      lat: e.latitude as number,
+      lng: e.longitude as number,
+      label: e.name,
+      kind: (e.isCoop ? 'coop' : 'other') as 'coop' | 'other',
+    })),
+);
 
 function formatDistance(km: number) {
   if (km < 1) return `${Math.round(km * 1000)}m`;
@@ -252,6 +285,13 @@ function onMarkerTap(e: { detail: { markerId: number } }) {
 
 function onCalloutTap(e: { detail: { markerId: number } }) {
   onMarkerTap(e);
+}
+
+function onOsmMarkerTap(markerId: number | string) {
+  const id = Number(markerId);
+  if (!id) return;
+  const elder = list.value[id - 1];
+  if (elder) openElder(elder);
 }
 </script>
 

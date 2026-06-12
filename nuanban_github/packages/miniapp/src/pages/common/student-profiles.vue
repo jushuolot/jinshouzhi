@@ -27,7 +27,7 @@
         <image :src="avatarUrl(s)" class="avatar" mode="aspectFill" />
         <view class="info">
           <text class="name">{{ s.displayName || s.nickname }}</text>
-          <text class="meta">{{ s.schoolName || '未填学校' }} · {{ statusLabel(s.status) }}</text>
+          <text class="meta">{{ s.schoolName || '未填学校' }} · {{ s.gender || '未填' }} · {{ statusLabel(s.status) }}</text>
           <text class="meta">{{ s.email }}</text>
           <text v-if="s.major" class="meta">{{ s.major }} · {{ s.grade || '-' }}</text>
         </view>
@@ -85,6 +85,7 @@ import {
 } from '../../api/platform';
 import { resolveCartoonAvatarUrl } from '../../utils/cartoon-avatars';
 import { requireOpsSession } from '../../utils/ops-mode';
+import { isDemoMockEnabled } from '../../utils/demo-mock';
 import { pbErrorMessage } from '../../utils/request';
 
 const list = ref<OpsStudentProfile[]>([]);
@@ -95,7 +96,7 @@ const loading = ref(false);
 const loadingMore = ref(false);
 const acting = ref('');
 const filter = ref<'all' | 'pending' | 'active'>('all');
-const isMockData = import.meta.env.VITE_DEMO_MOCK === 'true';
+const isMockData = isDemoMockEnabled();
 
 onLoad((q) => {
   const f = String(q?.filter || '');

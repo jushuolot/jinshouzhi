@@ -76,6 +76,7 @@ export interface OpsStudentProfile {
   major?: string;
   grade?: string;
   phone?: string;
+  gender?: string;
 }
 
 export interface OpsStudentListResult {

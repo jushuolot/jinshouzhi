@@ -65,8 +65,7 @@ import { ref } from 'vue';
 import { onShow } from '@dcloudio/uni-app';
 import OpsTabBar from '../../components/OpsTabBar.vue';
 import { seedDemoScenario } from '../../api/platform';
-import { isGuestBrowse } from '../../utils/guest-browse';
-import { resetDemoRuntimeState } from '../../utils/demo-mock';
+import { isDemoMockEnabled, resetDemoRuntimeState } from '../../utils/demo-mock';
 import {
   clearOpsSession,
   isOpsEntryHidden,
@@ -75,7 +74,8 @@ import {
 } from '../../utils/ops-mode';
 import { pbErrorMessage } from '../../utils/request';
 
-const demoMode = import.meta.env.DEV || isGuestBrowse();
+/** 仅 GitHub Pages / 显式 VITE_DEMO_MOCK / 游客：本地 parity 不显示浏览器 Mock 工具 */
+const demoMode = isDemoMockEnabled();
 const hiddenEntry = ref(isOpsEntryHidden());
 const seeding = ref(false);
 

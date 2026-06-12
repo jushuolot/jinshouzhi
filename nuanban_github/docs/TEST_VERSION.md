@@ -1,7 +1,7 @@
 # 暖伴勤工 · 测试版完整说明
 
-GitHub Pages 上的 **测试备份**：与本地测试机同配置（Mock），浏览器打开即可验收。  
-正式业务逻辑以 **阿里云 PocketBase** 为准；GitHub 因无服务端全走 Mock。见 [ENV_PARITY.md](./ENV_PARITY.md)。
+GitHub Pages 上的 **测试备份**：浏览器 **Mock**（`demo-mock.ts`，无 PocketBase 硬约束）。  
+**本地测试机**与 **阿里云** 使用 PocketBase **测试数据 / 生产数据**，`VITE_DEMO_MOCK=false`。勿混淆 Mock 与测试数据。见 [ENV_PARITY.md](./ENV_PARITY.md)。
 
 ---
 

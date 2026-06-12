@@ -12,7 +12,7 @@
 
 ## 固定约束
 
-1. **零成本演示栈**：GitHub Pages + `demo-mock.ts`；本地可选 PocketBase + `scripts/seed-demo.sh`
+1. **零成本演示栈**：GitHub Pages + `demo-mock.ts`；**本地默认** PocketBase 测试数据（`dev-test.sh` + `start-h5.sh`，`VITE_DEMO_MOCK=false`）
 2. **双端 API 对齐**：改接口时同时更新 `demo-mock.ts` 与 `packages/pocketbase/pb_hooks/nuanban.pb.js`
 3. **新页面必注册**：`packages/miniapp/src/pages.json` + `docs/MINIAPP_ROUTING.md`
 4. **最小 diff**：只改与当前 Phase 相关的文件，匹配现有风格

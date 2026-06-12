@@ -1,7 +1,7 @@
 <template>
   <view class="page nb-page">
     <text class="title">机构派单</text>
-    <text class="sub">将待接单指定给学生 · 演示 Mock</text>
+    <text class="sub">{{ subTitle }}</text>
     <ListCountBar :count="list.length" hint="pending_accept 全局池" />
     <view v-for="o in list" :key="o.id" class="card">
       <text class="svc">{{ o.serviceName }}</text>
@@ -24,7 +24,12 @@ import ListCountBar from '../../components/ListCountBar.vue';
 import OpsTabBar from '../../components/OpsTabBar.vue';
 import { dispatchOrder, listDispatchableOrders, type DispatchOrderItem } from '../../api/org';
 import { requireOpsSession } from '../../utils/ops-mode';
+import { isDemoMockEnabled } from '../../utils/demo-mock';
 import { pbErrorMessage } from '../../utils/request';
+
+const subTitle = isDemoMockEnabled()
+  ? '将待接单指定给学生 · 浏览器 Mock（GitHub Pages）'
+  : '将待接单指定给学生 · PocketBase 测试数据';
 
 const list = ref<DispatchOrderItem[]>([]);
 const loading = ref(false);

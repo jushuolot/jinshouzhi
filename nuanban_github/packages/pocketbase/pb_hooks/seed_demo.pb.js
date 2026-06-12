@@ -122,7 +122,7 @@ routerAdd("POST", "/api/nuanban/seed-demo", (e) => {
     return rec;
   }
 
-  function findOrCreateElder(orgId, name, lat, lng) {
+  function findOrCreateElder(orgId, name, lat, lng, gender) {
     const rows = $app.findRecordsByFilter(
       "elders",
       "name = {:n}",
@@ -137,6 +137,7 @@ routerAdd("POST", "/api/nuanban/seed-demo", (e) => {
       existing.set("latitude", lat);
       existing.set("longitude", lng);
       existing.set("enabled", true);
+      if (gender) existing.set("gender", gender);
       $app.save(existing);
       return existing;
     }
@@ -147,6 +148,7 @@ routerAdd("POST", "/api/nuanban/seed-demo", (e) => {
     rec.set("latitude", lat);
     rec.set("longitude", lng);
     rec.set("enabled", true);
+    if (gender) rec.set("gender", gender);
     $app.save(rec);
     stats.elders += 1;
     return rec;
@@ -262,24 +264,27 @@ routerAdd("POST", "/api/nuanban/seed-demo", (e) => {
   const uMulti = findOrCreateUserByEmail("multi1@test.nuanban.dev", "多角色");
 
   const org = findOrCreateOrg("暖伴示范养老院");
-  const elderZhang = findOrCreateElder(org.id, "张奶奶", 31.2304, 121.4737);
-  const elderLi = findOrCreateElder(org.id, "李爷爷", 31.235, 121.48);
+  const elderZhang = findOrCreateElder(org.id, "张奶奶", 31.2304, 121.4737, "女");
+  const elderLi = findOrCreateElder(org.id, "李爷爷", 31.235, 121.48, "男");
 
   findOrCreateRole(uStudent.id, "student", {
     school: school.id,
     display_name: "林同学",
+    gender: "女",
     latitude: 31.232,
     longitude: 121.475,
   });
   findOrCreateRole(uStudent2.id, "student", {
     school: schoolEast.id,
     display_name: "周同学",
+    gender: "男",
     latitude: 31.231,
     longitude: 121.474,
   });
   findOrCreateRole(uStudent3.id, "student", {
     school: school.id,
     display_name: "待审同学",
+    gender: "女",
     status: "pending",
   });
   findOrCreateRole(uFamily.id, "family", { display_name: "家属1" });
@@ -287,7 +292,11 @@ routerAdd("POST", "/api/nuanban/seed-demo", (e) => {
     display_name: "老人1",
     elder_profile: elderZhang.id,
   });
-  findOrCreateRole(uMulti.id, "student", { display_name: "多角色-学生", school: school.id });
+  findOrCreateRole(uMulti.id, "student", {
+    display_name: "多角色-学生",
+    school: school.id,
+    gender: "女",
+  });
   findOrCreateRole(uMulti.id, "family", { display_name: "多角色-家属" });
   findOrCreateRole(uMulti.id, "elder", {
     display_name: "多角色-老人",

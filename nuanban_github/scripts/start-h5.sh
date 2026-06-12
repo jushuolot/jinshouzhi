@@ -1,9 +1,12 @@
 #!/usr/bin/env bash
-# 暖伴勤工 H5 本地开发（端口 5174）
-# 用法：在 nuanban_github 目录执行 ./scripts/start-h5.sh
+# 暖伴勤工 H5 本地开发（端口 5174）· parity 模式（PocketBase 测试数据）
+# 用法：先 ./scripts/dev-test.sh，再 ./scripts/start-h5.sh
 set -eo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+# shellcheck source=lib/ensure-parity-env.sh
+. "$ROOT/scripts/lib/ensure-parity-env.sh"
+
 PORT=5174
 if [ -n "${NUANBAN_DEV_PORT:-}" ]; then
   PORT="$NUANBAN_DEV_PORT"
@@ -18,22 +21,16 @@ if [ -n "$pids" ]; then
   sleep 0.5
 fi
 
-if [ ! -f "$MINIAPP/.env" ]; then
-  cp "$MINIAPP/.env.example" "$MINIAPP/.env"
-  echo "    已创建 packages/miniapp/.env"
-fi
+echo "==> 检查前端 .env（parity · PocketBase 测试数据）"
+ensure_parity_env "$ROOT"
 
-if grep -q '^VITE_DEMO_MOCK=true' "$MINIAPP/.env" 2>/dev/null; then
-  echo "    模式: Mock（不依赖 PocketBase 响应）"
-elif grep -q '^VITE_DEMO_MOCK=false' "$MINIAPP/.env" 2>/dev/null; then
-  echo "    模式: parity（PocketBase，与阿里云一致）"
-else
-  echo "    提示: 建议 .env 设置 VITE_DEMO_MOCK=false，见 docs/ENV_PARITY.md"
-fi
+echo "    模式: parity（PocketBase 测试数据，与阿里云一致）"
+echo "    Mock 仅用于 GitHub Pages；本地请勿设 VITE_DEMO_MOCK=true"
 
 echo ""
 echo "==> 启动暖伴 H5 -> http://localhost:${PORT}/#/pages/common/login"
 echo "    勿用 /login（已废弃，访问会 301 跳转）"
+echo "    后端未启时请另开终端: ./scripts/dev-test.sh"
 echo ""
 
 cd "$MINIAPP"

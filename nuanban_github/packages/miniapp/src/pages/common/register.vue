@@ -29,6 +29,12 @@
       </view>
       <input v-model="wechatId" class="input nb-input" placeholder="微信号（平台联系用，不对外展示）" />
       <text class="field-hint">手机号已在登录时绑定；微信号仅运营审核与异常联系，不会给对方学生/家属</text>
+      <template v-if="role === 'student' || role === 'elder'">
+        <text class="section-label">性别</text>
+        <picker :range="genders" :value="genderIdx" @change="onGenderPick">
+          <view class="picker nb-input">{{ genders[genderIdx] }}</view>
+        </picker>
+      </template>
       <button class="btn-primary nb-btn-primary" :loading="loading" @tap="submit">确认身份</button>
       <text class="back" @tap="step = 'pick'">重新选择身份</text>
     </template>
@@ -46,8 +52,10 @@ import { navigateAfterAuth } from '../../utils/profile-onboarding';
 import { useRoleStore } from '../../store/role';
 import { pbErrorMessage } from '../../utils/request';
 
+const genders = ['女', '男'];
 const role = ref<RoleKey>('student');
 const wechatId = ref('');
+const genderIdx = ref(0);
 const loading = ref(false);
 const step = ref<'pick' | 'form'>('pick');
 const referralCode = ref('');
@@ -94,6 +102,10 @@ function pickRole(r: RoleKey) {
   step.value = 'form';
 }
 
+function onGenderPick(e: { detail: { value: string } }) {
+  genderIdx.value = Number(e.detail.value);
+}
+
 function goAuth() {
   uni.navigateTo({ url: '/pages/common/login?from=guest' });
 }
@@ -118,6 +130,7 @@ async function submit() {
       undefined,
       role.value === 'student' ? referralCode.value || undefined : undefined,
       wechatId.value.trim(),
+      role.value === 'student' || role.value === 'elder' ? genders[genderIdx.value] : undefined,
     );
     roleStore.setAuth({
       token: roleStore.token,
@@ -142,6 +155,18 @@ async function submit() {
 </script>
 
 <style scoped>
+.section-label {
+  display: block;
+  margin: 24rpx 0 12rpx;
+  font-size: 28rpx;
+  font-weight: 600;
+  color: var(--nb-text, #333);
+}
+.picker {
+  padding: 24rpx;
+  border-radius: var(--nb-radius-sm, 12rpx);
+  font-size: 28rpx;
+}
 .field-hint {
   display: block;
   margin: 8rpx 0 20rpx;

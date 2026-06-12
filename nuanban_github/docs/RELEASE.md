@@ -4,9 +4,9 @@
 
 | 环境 | 角色 | 地址 | 角标 | 数据 |
 |------|------|------|------|------|
-| **本地测试机** | 与正式一致验收 | `http://localhost:5174` | 开发版 | PocketBase（推荐 `VITE_DEMO_MOCK=false`） |
-| **GitHub Pages** | **测试备份** | https://jushuolot.github.io/jinshouzhi/nuanban/ | **测试版** | 全量 Mock（硬约束：无服务端） |
-| **阿里云** | **正式发布** | https://nuanban.cc（备案中可用 IP） | **发布版** | 真实 PocketBase |
+| **本地测试机** | 与正式一致验收 | `http://localhost:5174` | 开发版 | PocketBase **测试数据**（`VITE_DEMO_MOCK=false`） |
+| **GitHub Pages** | **测试备份** | https://jushuolot.github.io/jinshouzhi/nuanban/ | **测试版** | 浏览器 **Mock**（硬约束：无服务端） |
+| **阿里云** | **正式发布** | https://nuanban.cc（备案中可用 IP） | **发布版** | PocketBase 生产数据 |
 
 原则：**本地 parity 测通 → push 更新 GitHub 测试备份 → 阿里云正式发布**。  
 环境差异与硬约束见 **[ENV_PARITY.md](./ENV_PARITY.md)**。
@@ -30,7 +30,7 @@ VITE_DEMO_MOCK=false
 VITE_API_BASE_URL=/api
 ```
 
-纯 Mock（不启 PB）可将 `VITE_DEMO_MOCK=true`。
+本地脚本会自动将 `VITE_DEMO_MOCK` 设为 `false`；**不要**在本地手动开 Mock（易与测试数据混淆）。
 
 ### 2. 更新 GitHub 测试备份
 
@@ -63,8 +63,8 @@ git add … && git commit -m "feat: …"
 | 变量 | 本地 parity | GitHub 测试备份 | 阿里云发布 |
 |------|-------------|-----------------|------------|
 | `VITE_RELEASE_CHANNEL` | `development` | `test` | `public` |
-| `VITE_DEMO_MOCK` | `false`（推荐） | **`true`** | **不设** |
-| 登录用户 API | PocketBase | Mock | PocketBase |
+| `VITE_DEMO_MOCK` | `false`（脚本强制） | **`true`** | **不设** |
+| 登录用户 API | PocketBase 测试数据 | 浏览器 Mock | PocketBase |
 | 业务 hooks | `nuanban.pb.js` | `demo-mock.ts` 镜像 | `nuanban.pb.js` |
 
 ---
@@ -73,7 +73,9 @@ git add … && git commit -m "feat: …"
 
 | 脚本 | 用途 |
 |------|------|
-| `dev-test.sh` | 本地启动 PocketBase + seed |
+| `dev-test.sh` | 本地启动 PocketBase + 测试数据 seed |
+| `start-h5.sh` | 本地 H5 parity（强制 `VITE_DEMO_MOCK=false`） |
+| `start-h5-parity.sh` | 同 `start-h5.sh` |
 | `release-formal.sh` | 推 **GitHub 测试备份** |
 | `release-prod.sh` | 部署 **阿里云发布版** |
 | `release-status.sh` | 对比各环境 SHA |

@@ -96,7 +96,7 @@
       v-for="e in previewElders"
       :key="e.id"
       :name="e.name"
-      :subtitle="e.orgName"
+      :subtitle="[e.gender, e.orgName].filter(Boolean).join(' · ')"
       :tags="e.tags"
       :distance="formatDistance(e.distanceKm)"
       cta-text="查看"
@@ -142,6 +142,7 @@ interface ElderPreview {
   id: string;
   name: string;
   orgName: string;
+  gender?: string;
   distanceKm: number;
   tags?: string[];
 }
@@ -203,6 +204,7 @@ async function reload() {
       id: e.id,
       name: e.name,
       orgName: e.expand?.org?.name || '暖伴示范养老院',
+      gender: e.gender,
       distanceKm: e.distanceKm,
       tags: (e as { tags?: string[] }).tags,
     }));

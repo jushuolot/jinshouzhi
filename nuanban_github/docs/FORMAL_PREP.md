@@ -4,9 +4,9 @@
 
 | 环境 | 角色 | 角标 | 数据 |
 |------|------|------|------|
-| **本地** | 测试机 | 开发版 | PocketBase + 可全量 Mock（`VITE_DEMO_MOCK=true`） |
-| **GitHub Pages** | **正式制作** | 正式版 | 真实 API；**仅游客**走前端演示 Mock |
-| **阿里云** | **对外发布** | 发布版 | 真实 API；无 Mock |
+| **本地** | 测试机 | 开发版 | PocketBase **测试数据**（`VITE_DEMO_MOCK=false`） |
+| **GitHub Pages** | **测试备份** | 测试版 | 浏览器 **Mock**（硬约束）；游客 Mock |
+| **阿里云** | **对外发布** | 发布版 | PocketBase 生产数据；无 Mock |
 
 ---
 
@@ -91,20 +91,14 @@ VITE_API_BASE_URL=${NUANBAN_FORMAL_API_URL}
 ## 三、本地测试机（开发）
 
 ```bash
-# 1. 启动后端
+# 1. 启动后端 + 写入测试数据
 ./scripts/dev-test.sh
 
-# 2. 前端
-cd packages/miniapp
-cp .env.example .env
-# 确认：
-#   VITE_RELEASE_CHANNEL=development
-#   VITE_DEMO_MOCK=true
-#   VITE_API_BASE_URL=/api
-npm run dev:h5
+# 2. 前端（新开终端，自动 parity .env）
+./scripts/start-h5.sh
 ```
 
-本地可全量 Mock + 虚拟号 + Docker PB 联调。
+本地默认 **PocketBase 测试数据**，与阿里云同逻辑；浏览器 Mock 仅 GitHub Pages。
 
 ---
 
@@ -124,7 +118,8 @@ npm run dev:h5
 
 - `isGuestBrowse() === true` → 前端 Mock，不写真实库
 - 已登录用户（正式/发布）→ 一律 `request()` 走 PocketBase
-- 本地 `VITE_DEMO_MOCK=true` → 可全量 Mock 方便联调
+- 本地 `VITE_DEMO_MOCK=false`（`dev-test.sh` / `start-h5.sh` 强制）→ PocketBase 测试数据
+- GitHub Pages `VITE_DEMO_MOCK=true` → 浏览器 Mock（无服务端硬约束）
 
 ---
 
