@@ -2363,14 +2363,28 @@ routerAdd("POST", "/api/nuanban/platform/seed-scenario", function (e) {
 /** 平台运营看板：撮合漏斗与核心指标（演示） */
 routerAdd("GET", "/api/nuanban/platform/students", function (e) {
   var nb = require(__hooks + "/nuanban_lib.js");
+  var q = e.request.url.query();
+  var page = parseInt(q.get("page") || "1", 10);
+  var pageSize = parseInt(q.get("pageSize") || "50", 10);
+  if (isNaN(page) || page < 1) page = 1;
+  if (isNaN(pageSize) || pageSize < 1) pageSize = 50;
+  if (pageSize > 200) pageSize = 200;
+  var offset = (page - 1) * pageSize;
+  var statusFilter = String(q.get("status") || "").trim();
+  var filter = 'role = "student"';
+  if (statusFilter === "pending" || statusFilter === "active" || statusFilter === "rejected") {
+    filter += ' && status = "' + statusFilter + '"';
+  }
   var list = [];
+  var total = 0;
   try {
+    total = $app.findRecordsByFilter("user_roles", filter, "", 50000, 0).length;
     var roleRecords = $app.findRecordsByFilter(
       "user_roles",
-      'role = "student"',
+      filter,
       "",
-      100,
-      0
+      pageSize,
+      offset
     );
     for (var i = 0; i < roleRecords.length; i++) {
       var r = roleRecords[i];
@@ -2404,9 +2418,15 @@ routerAdd("GET", "/api/nuanban/platform/students", function (e) {
       });
     }
   } catch (err) {
-    return e.json(400, { message: String(err && err.message ? err.message : err), list: [] });
+    return e.json(400, { message: String(err && err.message ? err.message : err), list: [], total: 0 });
   }
-  return e.json(200, { list: list });
+  return e.json(200, {
+    list: list,
+    total: total,
+    page: page,
+    pageSize: pageSize,
+    hasMore: offset + list.length < total,
+  });
 });
 
 routerAdd("POST", "/api/nuanban/platform/students/:userId/status", function (e) {
@@ -2461,6 +2481,7 @@ routerAdd("GET", "/api/nuanban/platform/overview", function (e) {
   let elders = 0;
   let walletPaidCents = 0;
   let studentsPending = 0;
+  let studentsActiveCount = 0;
   let pendingConfirm = 0;
   let sosActive = 0;
   let pendingWithdrawals = 0;
@@ -2475,7 +2496,14 @@ routerAdd("GET", "/api/nuanban/platform/overview", function (e) {
       "user_roles",
       'role = "student" && status = "pending"',
       "",
-      200,
+      50000,
+      0
+    ).length;
+    studentsActiveCount = $app.findRecordsByFilter(
+      "user_roles",
+      'role = "student" && status = "active"',
+      "",
+      50000,
       0
     ).length;
     try {
@@ -2499,7 +2527,8 @@ routerAdd("GET", "/api/nuanban/platform/overview", function (e) {
     mission: "让陪伴有温度，让勤工有意义",
     updatedAt: new Date().toISOString(),
     eldersTotal: elders,
-    studentsActive: 8,
+    studentsActive: studentsActiveCount,
+    studentsTotal: studentsActiveCount + studentsPending,
     ordersPendingAccept: pending,
     ordersPendingPayment: pendingPay,
     ordersPendingConfirm: pendingConfirm,
@@ -2511,7 +2540,7 @@ routerAdd("GET", "/api/nuanban/platform/overview", function (e) {
     walletPaidTotalCents: walletPaidCents,
     walletPaidTotalYuan: (walletPaidCents / 100).toFixed(2),
     serviceLogCount: done,
-    caregiversNearby: 8,
+    caregiversNearby: studentsActiveCount,
     eldersNearby: elders,
     todayMatches: inSvc + Math.min(done, 12),
     matchSuccessRatePct: 94,

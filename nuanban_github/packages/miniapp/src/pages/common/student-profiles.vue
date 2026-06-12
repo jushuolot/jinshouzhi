@@ -1,7 +1,10 @@
 <template>
   <view class="page nb-page">
     <text class="title">学生资料审核</text>
-    <text class="sub">核验照 · 学校 · 通过后可接单</text>
+    <text class="sub">核验照 · 学校 · 通过后可接单 · 共 {{ totalCount }} 人</text>
+    <view v-if="isMockData" class="mock-hint">
+      <text>当前为演示 Mock（约 9 人）。万人压测数据在 PocketBase，请本地 VITE_DEMO_MOCK=false 联调查看。</text>
+    </view>
 
     <view class="filter-row">
       <view
@@ -63,12 +66,16 @@
       </view>
     </view>
 
+    <button v-if="hasMore" class="btn-more" :loading="loadingMore" @tap="loadMore">
+      加载更多（已显示 {{ list.length }} / {{ totalCount }}）
+    </button>
+
     <OpsTabBar current="/pages/common/student-profiles" />
   </view>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { onLoad, onShow } from '@dcloudio/uni-app';
 import OpsTabBar from '../../components/OpsTabBar.vue';
 import {
@@ -81,9 +88,14 @@ import { requireOpsSession } from '../../utils/ops-mode';
 import { pbErrorMessage } from '../../utils/request';
 
 const list = ref<OpsStudentProfile[]>([]);
+const totalCount = ref(0);
+const page = ref(1);
+const hasMore = ref(false);
 const loading = ref(false);
+const loadingMore = ref(false);
 const acting = ref('');
 const filter = ref<'all' | 'pending' | 'active'>('all');
+const isMockData = import.meta.env.VITE_DEMO_MOCK === 'true';
 
 onLoad((q) => {
   const f = String(q?.filter || '');
@@ -94,9 +106,9 @@ const filters = computed(() => {
   const pending = list.value.filter((s) => s.status === 'pending').length;
   const active = list.value.filter((s) => s.status === 'active').length;
   return [
-    { key: 'all' as const, label: '全部', count: list.value.length || 0 },
-    { key: 'pending' as const, label: '待审核', count: pending },
-    { key: 'active' as const, label: '已通过', count: active },
+    { key: 'all' as const, label: '全部', count: totalCount.value || list.value.length || 0 },
+    { key: 'pending' as const, label: '待审核', count: filter.value === 'pending' ? totalCount.value : pending },
+    { key: 'active' as const, label: '已通过', count: filter.value === 'active' ? totalCount.value : active },
   ];
 });
 
@@ -143,17 +155,49 @@ async function setStatus(userId: string, status: 'active' | 'rejected') {
   }
 }
 
+function statusParam(): 'pending' | 'active' | undefined {
+  if (filter.value === 'pending') return 'pending';
+  if (filter.value === 'active') return 'active';
+  return undefined;
+}
+
 async function reload() {
   loading.value = true;
+  page.value = 1;
   try {
-    list.value = await fetchOpsStudentProfiles();
+    const res = await fetchOpsStudentProfiles({ page: 1, pageSize: 50, status: statusParam() });
+    list.value = res.list;
+    totalCount.value = res.total;
+    hasMore.value = res.hasMore;
   } catch (e) {
     list.value = [];
+    totalCount.value = 0;
     uni.showToast({ title: pbErrorMessage(e), icon: 'none' });
   } finally {
     loading.value = false;
   }
 }
+
+async function loadMore() {
+  if (!hasMore.value || loadingMore.value) return;
+  loadingMore.value = true;
+  try {
+    const next = page.value + 1;
+    const res = await fetchOpsStudentProfiles({ page: next, pageSize: 50, status: statusParam() });
+    list.value = list.value.concat(res.list);
+    page.value = next;
+    totalCount.value = res.total;
+    hasMore.value = res.hasMore;
+  } catch (e) {
+    uni.showToast({ title: pbErrorMessage(e), icon: 'none' });
+  } finally {
+    loadingMore.value = false;
+  }
+}
+
+watch(filter, () => {
+  void reload();
+});
 
 onShow(() => {
   if (!requireOpsSession()) return;
@@ -174,9 +218,26 @@ onShow(() => {
 }
 .sub {
   display: block;
-  margin: 8rpx 0 20rpx;
+  margin: 8rpx 0 12rpx;
   font-size: 24rpx;
   color: var(--nb-text-muted, #888);
+}
+.mock-hint {
+  margin-bottom: 16rpx;
+  padding: 16rpx 20rpx;
+  border-radius: 12rpx;
+  background: #fff8e8;
+  border: 1rpx solid #f0dcc8;
+  font-size: 22rpx;
+  color: #8a5a20;
+  line-height: 1.5;
+}
+.btn-more {
+  margin: 24rpx 0;
+  background: var(--nb-surface, #fff);
+  color: var(--nb-primary, #c45c26);
+  font-size: 26rpx;
+  border: 1rpx solid #f0dcc8;
 }
 .filter-row {
   display: flex;

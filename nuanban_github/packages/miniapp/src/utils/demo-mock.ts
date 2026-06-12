@@ -2046,7 +2046,22 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
       grade: '大二',
       phone: '138****0003',
     });
-    return delay({ list } as T);
+    const statusQ = query.get('status') || '';
+    const filtered =
+      statusQ === 'pending' || statusQ === 'active' || statusQ === 'rejected'
+        ? list.filter((s) => s.status === statusQ)
+        : list;
+    const page = Math.max(1, parseInt(query.get('page') || '1', 10) || 1);
+    const pageSize = Math.min(200, Math.max(1, parseInt(query.get('pageSize') || '50', 10) || 50));
+    const offset = (page - 1) * pageSize;
+    const slice = filtered.slice(offset, offset + pageSize);
+    return delay({
+      list: slice,
+      total: filtered.length,
+      page,
+      pageSize,
+      hasMore: offset + slice.length < filtered.length,
+    } as T);
   }
 
   const studentStatusPost = path.match(/^\/nuanban\/platform\/students\/([^/]+)\/status$/);

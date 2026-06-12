@@ -78,12 +78,35 @@ export interface OpsStudentProfile {
   phone?: string;
 }
 
-export async function fetchOpsStudentProfiles() {
-  const res = await request<{ list: OpsStudentProfile[] }>({
-    url: '/nuanban/platform/students',
+export interface OpsStudentListResult {
+  list: OpsStudentProfile[];
+  total: number;
+  page: number;
+  pageSize: number;
+  hasMore: boolean;
+}
+
+export async function fetchOpsStudentProfiles(opts?: {
+  page?: number;
+  pageSize?: number;
+  status?: 'pending' | 'active' | 'rejected';
+}) {
+  const page = opts?.page ?? 1;
+  const pageSize = opts?.pageSize ?? 50;
+  const status = opts?.status;
+  let url = `/nuanban/platform/students?page=${page}&pageSize=${pageSize}`;
+  if (status) url += `&status=${status}`;
+  const res = await request<OpsStudentListResult>({
+    url,
     method: 'GET',
   });
-  return res.list ?? [];
+  return {
+    list: res.list ?? [],
+    total: res.total ?? res.list?.length ?? 0,
+    page: res.page ?? page,
+    pageSize: res.pageSize ?? pageSize,
+    hasMore: res.hasMore ?? false,
+  };
 }
 
 export async function updateOpsStudentStatus(userId: string, status: 'active' | 'rejected' | 'pending') {
