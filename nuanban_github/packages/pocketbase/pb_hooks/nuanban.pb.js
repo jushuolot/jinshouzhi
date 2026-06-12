@@ -843,8 +843,6 @@ routerAdd("GET", "/api/nuanban/student/profile", function (e) {
     if (!rc.ok) return e.json(rc.code, rc.body);
     const auth = e.auth;
     if (!auth) return e.json(401, { message: "需要登录" });
-    let schoolName = "";
-    let displayName = "";
     const roles = $app.findRecordsByFilter(
       "user_roles",
       'user = {:uid} && role = "student"',
@@ -853,49 +851,11 @@ routerAdd("GET", "/api/nuanban/student/profile", function (e) {
       0,
       { uid: auth.id }
     );
-    if (roles.length > 0) {
-      const r = roles[0];
-      displayName = nb.safeRecordString(r, "display_name", "");
-      const schoolId = nb.safeRecordString(r, "school", "");
-      if (schoolId) {
-        try {
-          const s = $app.findRecordById("school_dict", schoolId);
-          schoolName = nb.safeRecordString(s, "name", "");
-        } catch (_) {}
-      }
-      var cartoonAvatarId = nb.safeRecordString(r, "cartoon_avatar_id", "");
-      var verificationPhotoUrl = nb.roleFileUrlForClient(r, "verification_photo", e);
-    } else {
-      var cartoonAvatarId = "";
-      var verificationPhotoUrl = "";
+    if (roles.length === 0) {
+      return e.json(404, { message: "学生角色不存在" });
     }
-    var av = nb.userAvatarFields(auth, e);
-    const profileComplete = !!(displayName && schoolName);
-    return e.json(200, {
-      nickname: nb.safeRecordString(auth, "name", displayName || "学生"),
-      email: nb.safeRecordString(auth, "email", ""),
-      schoolName: schoolName,
-      displayName: displayName,
-      profileComplete: profileComplete,
-      cartoonAvatarId: cartoonAvatarId,
-      avatarUrl: av.avatarUrl,
-      verificationPhotoUrl: verificationPhotoUrl,
-      gender: roles.length > 0 ? nb.safeRecordString(roles[0], "gender", "未填") : "未填",
-      major: "护理学",
-      grade: "大三",
-      age: 21,
-      phone: "138****1234",
-      bio: "热心公益的在校女生，擅长陪伴聊天与康复协助。",
-      serviceAreas: ["浦东新区", "黄浦区"],
-      availableHours: ["周一至周五 14:00–18:00", "周六 9:00–12:00"],
-      certifications: ["急救员证", "养老护理员初级"],
-      languages: ["普通话", "上海话"],
-      personalityTags: ["耐心细致", "开朗活泼"],
-      serviceTypes: ["陪伴聊天", "读报陪聊", "康复协助"],
-      completedOrderThemes: ["聊天陪伴 ×12", "康复协助 ×5"],
-      rating: 4.9,
-      orderCount: 35,
-    });
+    const dto = nb.studentProfileDtoFromRole(roles[0], auth, e);
+    return e.json(200, dto);
   } catch (err) {
     return e.json(400, { message: String(err && err.message ? err.message : err) });
   }
@@ -947,24 +907,29 @@ routerAdd("PATCH", "/api/nuanban/student/profile", function (e) {
   if (body.gender) {
     roleRec.set("gender", String(body.gender));
   }
+  if (body.major != null) {
+    roleRec.set("major", String(body.major || "").trim());
+  }
+  if (body.grade != null) {
+    roleRec.set("grade", String(body.grade || "").trim());
+  }
+  if (body.bio != null) {
+    roleRec.set("bio", String(body.bio || "").trim());
+  }
+  if (body.serviceAreas != null) {
+    nb.writeJsonStringArray(roleRec, "service_areas", body.serviceAreas);
+  }
+  if (body.availableHours != null) {
+    nb.writeJsonStringArray(roleRec, "available_hours", body.availableHours);
+  }
   $app.save(roleRec);
   if (body.displayName) {
     auth.set("name", displayName);
     $app.save(auth);
   }
-  return e.json(200, {
-    ok: true,
-    displayName: displayName,
-    schoolName: schoolName,
-    profileComplete: !!(displayName && schoolName),
-    cartoonAvatarId: roleRec.getString("cartoon_avatar_id") || "",
-    verificationPhotoUrl: nb.roleFileUrlForClient(roleRec, "verification_photo", e),
-    bio: body.bio || "热心公益的在校女生，擅长陪伴聊天与康复协助。",
-    major: body.major || "护理学",
-    grade: body.grade || "大三",
-    availableHours: body.availableHours || ["周一至周五 14:00–18:00", "周六 9:00–12:00"],
-    serviceAreas: body.serviceAreas || ["浦东新区", "黄浦区"],
-  });
+  var dto = nb.studentProfileDtoFromRole(roleRec, auth, e);
+  dto.ok = true;
+  return e.json(200, dto);
 });
 
 routerAdd("POST", "/api/nuanban/student/verification-photo", function (e) {

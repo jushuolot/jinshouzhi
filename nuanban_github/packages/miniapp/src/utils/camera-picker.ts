@@ -75,8 +75,22 @@ function pickCameraViaNativeInput(
 }
 
 export async function pickCameraImage(): Promise<CameraPickResult> {
-  if (canUseFaceCapture()) {
-    return requestFaceCapture();
+  if (isH5()) {
+    if (isIOSDevice()) {
+      return pickCameraViaNativeInput('user');
+    }
+    if (canUseFaceCapture()) {
+      try {
+        return await requestFaceCapture();
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : '';
+        if (msg && !/cancel|取消/i.test(msg)) {
+          return pickCameraViaNativeInput('user');
+        }
+        throw err;
+      }
+    }
+    return pickCameraViaNativeInput('user');
   }
 
   const pick = await new Promise<UniApp.ChooseImageSuccessCallbackResult>((resolve, reject) => {

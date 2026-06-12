@@ -914,6 +914,52 @@ function opsStudentRowFromRole(r, e) {
   };
 }
 
+function readJsonStringArray(rec, field) {
+  var raw = safeRecordString(rec, field, "");
+  if (!raw) return [];
+  try {
+    var parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (_) {
+    return [];
+  }
+}
+
+function writeJsonStringArray(rec, field, arr) {
+  try {
+    rec.set(field, JSON.stringify(arr || []));
+  } catch (_) {}
+}
+
+function studentProfileDtoFromRole(roleRec, auth, e) {
+  var schoolName = "";
+  var schoolId = safeRecordString(roleRec, "school", "");
+  if (schoolId) {
+    try {
+      var s = $app.findRecordById("school_dict", schoolId);
+      schoolName = safeRecordString(s, "name", "");
+    } catch (_) {}
+  }
+  var displayName = safeRecordString(roleRec, "display_name", "");
+  var av = userAvatarFields(auth, e);
+  return {
+    nickname: safeRecordString(auth, "name", displayName || "学生"),
+    email: safeRecordString(auth, "email", ""),
+    schoolName: schoolName,
+    displayName: displayName,
+    profileComplete: !!(displayName && schoolName),
+    cartoonAvatarId: safeRecordString(roleRec, "cartoon_avatar_id", ""),
+    avatarUrl: av.avatarUrl,
+    verificationPhotoUrl: roleFileUrlForClient(roleRec, "verification_photo", e),
+    gender: safeRecordString(roleRec, "gender", "未填") || "未填",
+    major: safeRecordString(roleRec, "major", ""),
+    grade: safeRecordString(roleRec, "grade", ""),
+    bio: safeRecordString(roleRec, "bio", ""),
+    serviceAreas: readJsonStringArray(roleRec, "service_areas"),
+    availableHours: readJsonStringArray(roleRec, "available_hours"),
+  };
+}
+
 function opsStudentMatchesKeyword(row, keyword) {
   var q = String(keyword || "").toLowerCase().trim();
   if (!q) return true;
@@ -949,5 +995,6 @@ module.exports = {
   readOrderTimeline, appendOrderTimeline, backfillOrderTimeline,
   orderChatThreadOpen, orderChatCanAccess, orderChatAlias,
   orderMessagesDto, orderMessageToDto, orderMessagePushText, orderMessagePushVoice,
-  isFormalAuthMode, opsPhoneFromEmail, opsStudentRowFromRole, opsStudentMatchesKeyword
+  isFormalAuthMode, opsPhoneFromEmail, opsStudentRowFromRole, opsStudentMatchesKeyword,
+  readJsonStringArray, writeJsonStringArray, studentProfileDtoFromRole
 };

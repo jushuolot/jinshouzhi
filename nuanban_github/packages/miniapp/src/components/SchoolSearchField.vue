@@ -14,7 +14,8 @@
         :key="name"
         class="option"
         :class="{ active: name === modelValue }"
-        @tap="select(name)"
+        @mousedown.prevent="select(name)"
+        @touchstart.prevent="select(name)"
       >
         <text>{{ name }}</text>
       </view>

@@ -2,6 +2,7 @@
 import { onLaunch } from '@dcloudio/uni-app';
 import './styles/theme.css';
 // #ifdef H5
+import FaceCaptureModal from './components/FaceCaptureModal.vue';
 import { initDevicePreview } from './utils/device-preview';
 // #endif
 
@@ -12,6 +13,12 @@ onLaunch(() => {
   // #endif
 });
 </script>
+
+<template>
+  <!-- #ifdef H5 -->
+  <FaceCaptureModal />
+  <!-- #endif -->
+</template>
 
 <style>
 /* 全局主题见 styles/theme.css */

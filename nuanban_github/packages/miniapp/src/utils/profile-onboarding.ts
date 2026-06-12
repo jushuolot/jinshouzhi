@@ -52,7 +52,7 @@ type ProfilePayload = {
 function baseProfileFieldsComplete(role: RoleKey, profile: ProfilePayload): boolean {
   if (profile.profileComplete === false) return false;
   if (role === 'student') {
-    return isKnownSchool(profile.schoolName || '');
+    return !!(profile.displayName?.trim() && isKnownSchool(profile.schoolName || ''));
   }
   if (role === 'family') {
     return !!(profile.nickname?.trim() && profile.contactPhone?.trim() && profile.district?.trim());

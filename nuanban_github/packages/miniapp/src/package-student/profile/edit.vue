@@ -17,7 +17,12 @@
     </view>
 
     <text class="section">显示名称</text>
-    <input class="input nb-input readonly" disabled placeholder="" value="" />
+    <input
+      v-model="displayName"
+      class="input nb-input"
+      placeholder="如：林同学"
+      maxlength="20"
+    />
 
     <text class="section">学校</text>
     <SchoolSearchField v-model="schoolName" />
@@ -28,7 +33,7 @@
     </picker>
 
     <text class="section">专业</text>
-    <input class="input nb-input readonly" disabled placeholder="待平台确认" />
+    <input v-model="major" class="input nb-input" placeholder="如：护理学、社会学" maxlength="32" />
 
     <text class="section">年级</text>
     <picker :range="grades" :value="gradeIdx" @change="onGradePick">
@@ -39,7 +44,11 @@
     <textarea v-model="bio" class="textarea nb-input" placeholder="介绍你的服务特长与公益经历" />
 
     <text class="section">服务区域</text>
-    <input v-model="serviceAreasText" class="input nb-input" placeholder="多个区域用顿号分隔，如：浦东新区、黄浦区" />
+    <input
+      v-model="serviceAreasText"
+      class="input nb-input"
+      placeholder="多个区域用顿号分隔，如：浦东新区、黄浦区"
+    />
 
     <text class="section">可服务时间</text>
     <textarea
@@ -69,6 +78,7 @@ import { pbErrorMessage } from '../../utils/request';
 const grades = ['大一', '大二', '大三', '大四', '研一', '研二'];
 const genders = ['女', '男'];
 const displayName = ref('');
+const major = ref('');
 const genderIdx = ref(0);
 const cartoonAvatarId = ref('');
 const verificationPhotoUrl = ref('');
@@ -79,6 +89,7 @@ const serviceAreasText = ref('');
 const availableHoursText = ref('');
 const loading = ref(false);
 const onboarding = ref(false);
+const roleStore = useRoleStore();
 
 onLoad((query) => {
   onboarding.value = query?.onboarding === '1';
@@ -91,8 +102,9 @@ function goBack() {
 onShow(async () => {
   try {
     const p = await fetchStudentProfile();
-    displayName.value = p.displayName || p.nickname;
-    cartoonAvatarId.value = p.cartoonAvatarId || defaultCartoonAvatarId(p.displayName || p.nickname);
+    displayName.value = p.displayName || p.nickname || roleStore.user?.nickname || '';
+    major.value = p.major || '';
+    cartoonAvatarId.value = p.cartoonAvatarId || defaultCartoonAvatarId(displayName.value);
     verificationPhotoUrl.value = p.verificationPhotoUrl || '';
     schoolName.value = isKnownSchool(p.schoolName || '') ? p.schoolName : '';
     const gIdx = grades.indexOf(p.grade || '');
@@ -103,7 +115,7 @@ onShow(async () => {
     serviceAreasText.value = (p.serviceAreas || []).join('、');
     availableHoursText.value = (p.availableHours || []).join('\n');
   } catch {
-    /* ignore */
+    displayName.value = roleStore.user?.nickname || '';
   }
 });
 
@@ -138,6 +150,11 @@ function splitHours(text: string) {
 }
 
 async function save() {
+  const name = displayName.value.trim();
+  if (!name) {
+    uni.showToast({ title: '请填写显示名称', icon: 'none' });
+    return;
+  }
   if (!isKnownSchool(schoolName.value)) {
     uni.showToast({ title: '请从列表中选择有效学校', icon: 'none' });
     return;
@@ -145,15 +162,17 @@ async function save() {
   loading.value = true;
   try {
     await updateStudentProfile({
+      displayName: name,
       schoolName: schoolName.value,
       gender: genders[genderIdx.value],
+      major: major.value.trim(),
       grade: grades[gradeIdx.value],
       bio: bio.value,
       serviceAreas: splitAreas(serviceAreasText.value),
       availableHours: splitHours(availableHoursText.value),
       cartoonAvatarId: cartoonAvatarId.value,
     });
-    useRoleStore().setUserAvatar(resolveCartoonAvatarUrl(cartoonAvatarId.value));
+    roleStore.setUserAvatar(resolveCartoonAvatarUrl(cartoonAvatarId.value));
     uni.showToast({ title: '已保存', icon: 'success' });
     if (onboarding.value) {
       setTimeout(() => finishProfileOnboarding('student'), 500);
@@ -205,10 +224,6 @@ async function save() {
   font-size: 28rpx;
   width: 100%;
   box-sizing: border-box;
-}
-.input.readonly {
-  color: var(--nb-text-muted, #bbb);
-  background: #fafafa;
 }
 .textarea {
   min-height: 160rpx;

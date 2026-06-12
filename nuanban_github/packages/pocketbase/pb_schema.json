@@ -538,6 +538,51 @@
         "hidden": false,
         "maxSelect": 1,
         "values": ["男", "女", "未填"]
+      },
+      {
+        "id": "fld_ur_major",
+        "name": "major",
+        "type": "text",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "max": 64
+      },
+      {
+        "id": "fld_ur_grade",
+        "name": "grade",
+        "type": "text",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "max": 32
+      },
+      {
+        "id": "fld_ur_bio",
+        "name": "bio",
+        "type": "text",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "max": 500
+      },
+      {
+        "id": "fld_ur_service_areas",
+        "name": "service_areas",
+        "type": "text",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "max": 1000
+      },
+      {
+        "id": "fld_ur_available_hours",
+        "name": "available_hours",
+        "type": "text",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "max": 1000
       }
     ],
     "indexes": [],
