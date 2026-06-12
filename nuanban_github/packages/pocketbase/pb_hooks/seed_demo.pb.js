@@ -141,6 +141,12 @@ routerAdd("POST", "/api/nuanban/seed-demo", (e) => {
       rec.set("health_status", "血压需关注");
       rec.set("mobility", "需搀扶");
       rec.set("living_situation", "机构养老");
+      rec.set("hobbies", ["听戏", "下象棋"]);
+      rec.set("service_preferences", ["康复协助", "陪诊"]);
+      rec.set("preferred_visit_times", ["周末上午 9:00–11:00"]);
+      rec.set("emergency_contact_name", "李先生");
+      rec.set("emergency_contact_relation", "儿子");
+      rec.set("emergency_contact_phone", "139****8888");
     }
   }
 

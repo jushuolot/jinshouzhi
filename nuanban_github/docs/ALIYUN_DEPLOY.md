@@ -190,7 +190,7 @@ cp config/demo.env.example config/demo.env
 
 | 方式 | 说明 |
 |------|------|
-| 手机号 | `13800000001`–`06`，验证码可空（演示 hooks） |
+| 手机号 | `13800000001`–`06`，验证码填 **`000000`**（演示 hooks） |
 | 开发登录 | 需先 `seed-demo.sh`；密码见 `packages/pocketbase/SEED.md` |
 
 演示手机号对照见 [DEMO_LINK.md](./DEMO_LINK.md)。
