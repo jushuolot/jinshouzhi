@@ -91,12 +91,15 @@ export async function fetchOpsStudentProfiles(opts?: {
   page?: number;
   pageSize?: number;
   status?: 'pending' | 'active' | 'rejected';
+  q?: string;
 }) {
   const page = opts?.page ?? 1;
   const pageSize = opts?.pageSize ?? 50;
   const status = opts?.status;
+  const q = opts?.q?.trim();
   let url = `/nuanban/platform/students?page=${page}&pageSize=${pageSize}`;
   if (status) url += `&status=${status}`;
+  if (q) url += `&q=${encodeURIComponent(q)}`;
   const res = await request<OpsStudentListResult>({
     url,
     method: 'GET',

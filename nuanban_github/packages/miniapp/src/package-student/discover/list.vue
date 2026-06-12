@@ -24,6 +24,8 @@
       <switch :checked="schoolCoopOnly" color="#c45c26" @change="onCoopToggle" />
     </view>
 
+    <ListSearchBar v-if="mode === 'list'" v-model="searchKeyword" placeholder="搜索老人姓名、机构…" />
+
     <view v-if="loading" class="state">加载中…</view>
 
     <!-- 列表模式 -->
@@ -32,17 +34,17 @@
         <text>加载失败（点此重试）</text>
         <text class="mono">{{ errorMsg }}</text>
       </view>
-      <view v-else-if="!list.length" class="empty">
-        <text>暂无附近老人</text>
-        <text class="empty-hint">请先执行 ./scripts/seed-demo.sh</text>
+      <view v-else-if="!displayList.length" class="empty">
+        <text>{{ searchKeyword ? '无匹配老人' : '暂无附近老人' }}</text>
+        <text v-if="!searchKeyword" class="empty-hint">请先执行 ./scripts/seed-demo.sh</text>
       </view>
       <scroll-view v-else scroll-y class="discover-scroll">
         <ListCountBar
-          :count="list.length"
+          :count="displayList.length"
           :hint="schoolCoopOnly ? '仅合作机构 · 可滚动' : '全部附近 · 可滚动'"
         />
         <PersonCard
-          v-for="e in list"
+          v-for="e in displayList"
           :key="e.id"
           :name="e.name"
           :subtitle="elderSubtitle(e)"
@@ -104,6 +106,8 @@ import { computed, ref } from 'vue';
 import RoleTabBar from '../../components/RoleTabBar.vue';
 import PersonCard from '../../components/PersonCard.vue';
 import ListCountBar from '../../components/ListCountBar.vue';
+import ListSearchBar from '../../components/ListSearchBar.vue';
+import { matchListKeyword } from '../../utils/list-search';
 // #ifdef H5
 import OsmMap from '../../components/OsmMap.vue';
 // #endif
@@ -130,7 +134,14 @@ const DEMO = { lat: 31.2304, lng: 121.4737, label: '演示定位（上海）' };
 
 const mode = ref<'list' | 'map'>('list');
 const list = ref<ElderListItem[]>([]);
+const searchKeyword = ref('');
 const loading = ref(false);
+
+const displayList = computed(() =>
+  list.value.filter((e) =>
+    matchListKeyword(searchKeyword.value, [e.name, e.orgName, e.gender, ...(e.tags || []), e.id]),
+  ),
+);
 const errorMsg = ref('');
 const userLat = ref(DEMO.lat);
 const userLng = ref(DEMO.lng);

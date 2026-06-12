@@ -2,8 +2,9 @@
   <view class="page nb-page">
     <text class="title">机构派单</text>
     <text class="sub">{{ subTitle }}</text>
-    <ListCountBar :count="list.length" hint="pending_accept 全局池" />
-    <view v-for="o in list" :key="o.id" class="card">
+    <ListSearchBar v-model="searchKeyword" placeholder="搜索老人、服务、订单号…" />
+    <ListCountBar :count="shown.length" hint="pending_accept 全局池" />
+    <view v-for="o in shown" :key="o.id" class="card">
       <text class="svc">{{ o.serviceName }}</text>
       <text v-if="o.requiresOutdoorApproval" class="outdoor-tag">外出陪同</text>
       <text class="meta">{{ o.elderName }} · ¥{{ ((o.amountCents || 0) / 100).toFixed(0) }}</text>
@@ -11,16 +12,20 @@
         派给林同学
       </button>
     </view>
-    <view v-if="!loading && !list.length" class="empty">暂无待派单</view>
+    <view v-if="!loading && !shown.length" class="empty">
+      {{ searchKeyword ? '无匹配订单' : '暂无待派单' }}
+    </view>
 
     <OpsTabBar current="/pages/common/org-dispatch" />
   </view>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { onShow } from '@dcloudio/uni-app';
 import ListCountBar from '../../components/ListCountBar.vue';
+import ListSearchBar from '../../components/ListSearchBar.vue';
+import { matchListKeyword } from '../../utils/list-search';
 import OpsTabBar from '../../components/OpsTabBar.vue';
 import { dispatchOrder, listDispatchableOrders, type DispatchOrderItem } from '../../api/org';
 import { requireOpsSession } from '../../utils/ops-mode';
@@ -32,8 +37,15 @@ const subTitle = isDemoMockEnabled()
   : '将待接单指定给学生 · PocketBase 测试数据';
 
 const list = ref<DispatchOrderItem[]>([]);
+const searchKeyword = ref('');
 const loading = ref(false);
 const dispatching = ref('');
+
+const shown = computed(() =>
+  list.value.filter((o) =>
+    matchListKeyword(searchKeyword.value, [o.id, o.elderName, o.serviceName, o.amountCents]),
+  ),
+);
 
 async function reload() {
   loading.value = true;

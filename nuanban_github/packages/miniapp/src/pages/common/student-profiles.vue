@@ -6,6 +6,8 @@
       <text>当前为演示 Mock（约 9 人）。万人压测数据在 PocketBase，请本地 VITE_DEMO_MOCK=false 联调查看。</text>
     </view>
 
+    <ListSearchBar v-model="searchKeyword" placeholder="搜索姓名、手机号、邮箱、学校、用户ID…" />
+
     <view class="filter-row">
       <view
         v-for="f in filters"
@@ -20,9 +22,11 @@
     </view>
 
     <view v-if="loading" class="state">加载中…</view>
-    <view v-else-if="!filteredList.length" class="state">暂无{{ filterLabel }}学生</view>
+    <view v-else-if="!list.length" class="state">
+      {{ searchKeyword ? `未找到「${searchKeyword}」相关学生` : `暂无${filterLabel}学生` }}
+    </view>
 
-    <view v-for="s in filteredList" :key="s.userId" class="card">
+    <view v-for="s in list" :key="s.userId" class="card">
       <view class="card-head">
         <image :src="avatarUrl(s)" class="avatar" mode="aspectFill" />
         <view class="info">
@@ -77,6 +81,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { onLoad, onShow } from '@dcloudio/uni-app';
+import ListSearchBar from '../../components/ListSearchBar.vue';
 import OpsTabBar from '../../components/OpsTabBar.vue';
 import {
   fetchOpsStudentProfiles,
@@ -96,7 +101,9 @@ const loading = ref(false);
 const loadingMore = ref(false);
 const acting = ref('');
 const filter = ref<'all' | 'pending' | 'active'>('all');
+const searchKeyword = ref('');
 const isMockData = isDemoMockEnabled();
+let searchTimer: ReturnType<typeof setTimeout> | null = null;
 
 onLoad((q) => {
   const f = String(q?.filter || '');
@@ -111,11 +118,6 @@ const filters = computed(() => {
     { key: 'pending' as const, label: '待审核', count: filter.value === 'pending' ? totalCount.value : pending },
     { key: 'active' as const, label: '已通过', count: filter.value === 'active' ? totalCount.value : active },
   ];
-});
-
-const filteredList = computed(() => {
-  if (filter.value === 'all') return list.value;
-  return list.value.filter((s) => s.status === filter.value);
 });
 
 const filterLabel = computed(() => {
@@ -166,7 +168,12 @@ async function reload() {
   loading.value = true;
   page.value = 1;
   try {
-    const res = await fetchOpsStudentProfiles({ page: 1, pageSize: 50, status: statusParam() });
+    const res = await fetchOpsStudentProfiles({
+      page: 1,
+      pageSize: 50,
+      status: statusParam(),
+      q: searchKeyword.value.trim() || undefined,
+    });
     list.value = res.list;
     totalCount.value = res.total;
     hasMore.value = res.hasMore;
@@ -184,7 +191,12 @@ async function loadMore() {
   loadingMore.value = true;
   try {
     const next = page.value + 1;
-    const res = await fetchOpsStudentProfiles({ page: next, pageSize: 50, status: statusParam() });
+    const res = await fetchOpsStudentProfiles({
+      page: next,
+      pageSize: 50,
+      status: statusParam(),
+      q: searchKeyword.value.trim() || undefined,
+    });
     list.value = list.value.concat(res.list);
     page.value = next;
     totalCount.value = res.total;
@@ -198,6 +210,13 @@ async function loadMore() {
 
 watch(filter, () => {
   void reload();
+});
+
+watch(searchKeyword, () => {
+  if (searchTimer) clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => {
+    void reload();
+  }, 320);
 });
 
 onShow(() => {

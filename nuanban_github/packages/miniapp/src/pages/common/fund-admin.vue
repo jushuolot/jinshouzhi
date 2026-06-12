@@ -39,6 +39,13 @@
       </view>
     </view>
 
+    <ListSearchBar
+      v-model="searchKeyword"
+      :placeholder="
+        tab === 'withdrawal' ? '搜索学生、渠道、金额…' : '搜索用户、订单号、备注…'
+      "
+    />
+
     <view v-if="loading" class="empty">加载中…</view>
 
     <!-- 储值记录 -->
@@ -164,7 +171,9 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
+import ListSearchBar from '../../components/ListSearchBar.vue';
 import OpsTabBar from '../../components/OpsTabBar.vue';
+import { matchListKeyword } from '../../utils/list-search';
 import { onShow } from '@dcloudio/uni-app';
 import {
   approveFundWithdrawal,
@@ -219,27 +228,43 @@ const paymentFilter = ref<FilterKey>('all');
 const withdrawalFilter = ref<FilterKey>('all');
 const reconciling = ref('');
 const acting = ref('');
+const searchKeyword = ref('');
+
+function applyFundSearch<T extends Record<string, unknown>>(rows: T[], fields: (row: T) => unknown[]) {
+  const q = searchKeyword.value;
+  if (!q.trim()) return rows;
+  return rows.filter((row) => matchListKeyword(q, fields(row)));
+}
 
 const filteredTopups = computed(() => {
-  if (topupFilter.value === 'pending') return topups.value.filter((t) => !t.reconciled);
-  if (topupFilter.value === 'done') return topups.value.filter((t) => t.reconciled);
-  return topups.value;
+  let rows = topups.value;
+  if (topupFilter.value === 'pending') rows = rows.filter((t) => !t.reconciled);
+  if (topupFilter.value === 'done') rows = rows.filter((t) => t.reconciled);
+  return applyFundSearch(rows, (t) => [t.userName, t.role, t.label, t.id, t.amountCents]);
 });
 
 const filteredPayments = computed(() => {
-  if (paymentFilter.value === 'pending') return payments.value.filter((p) => !p.reconciled);
-  if (paymentFilter.value === 'done') return payments.value.filter((p) => p.reconciled);
-  return payments.value;
+  let rows = payments.value;
+  if (paymentFilter.value === 'pending') rows = rows.filter((p) => !p.reconciled);
+  if (paymentFilter.value === 'done') rows = rows.filter((p) => p.reconciled);
+  return applyFundSearch(rows, (p) => [p.userName, p.role, p.label, p.orderId, p.id, p.amountCents]);
 });
 
 const filteredWithdrawals = computed(() => {
+  let rows = withdrawals.value;
   if (withdrawalFilter.value === 'pending') {
-    return withdrawals.value.filter((w) => w.status === 'pending');
+    rows = rows.filter((w) => w.status === 'pending');
+  } else if (withdrawalFilter.value === 'done') {
+    rows = rows.filter((w) => w.status === 'completed');
   }
-  if (withdrawalFilter.value === 'done') {
-    return withdrawals.value.filter((w) => w.status === 'completed');
-  }
-  return withdrawals.value;
+  return applyFundSearch(rows, (w) => [
+    w.studentName,
+    w.channelLabel,
+    w.id,
+    w.amountCents,
+    w.status,
+    w.rejectReason,
+  ]);
 });
 
 function formatTime(iso: string) {

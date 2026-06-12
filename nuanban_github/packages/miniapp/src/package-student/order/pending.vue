@@ -9,15 +9,17 @@
       </view>
     </view>
 
+    <ListSearchBar v-model="searchKeyword" placeholder="搜索老人、服务、订单号…" />
+
     <view v-if="loading" class="state">加载中…</view>
-    <view v-else-if="!list.length" class="empty">
+    <view v-else-if="!shown.length" class="empty">
       <text class="empty-icon">📭</text>
-      <text>暂无待接单</text>
+      <text>{{ searchKeyword ? '无匹配订单' : '暂无待接单' }}</text>
       <text class="empty-hint">有新订单时会出现在这里</text>
     </view>
     <scroll-view v-else scroll-y class="order-scroll">
-      <ListCountBar :count="list.length" hint="富数据演示 · 可滚动压测" />
-      <view v-for="o in list" :key="o.id" class="order-card" @tap="open(o.id)">
+      <ListCountBar :count="shown.length" hint="可搜索 · 可滚动" />
+      <view v-for="o in shown" :key="o.id" class="order-card" @tap="open(o.id)">
         <view class="order-head">
           <text class="svc-name">{{ o.serviceName || '陪护服务' }}</text>
           <text class="price">¥{{ ((o.amountCents || 0) / 100).toFixed(0) }}</text>
@@ -47,15 +49,30 @@
 
 <script setup lang="ts">
 import { onShow } from '@dcloudio/uni-app';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import RoleTabBar from '../../components/RoleTabBar.vue';
 import ListCountBar from '../../components/ListCountBar.vue';
+import ListSearchBar from '../../components/ListSearchBar.vue';
+import { matchListKeyword } from '../../utils/list-search';
 import { listPendingOrders, type PendingOrder } from '../../api/student';
 import { guardPackageRoute } from '../../utils/nav-guard';
 import { pbErrorMessage } from '../../utils/request';
 
 const list = ref<PendingOrder[]>([]);
+const searchKeyword = ref('');
 const loading = ref(false);
+
+const shown = computed(() =>
+  list.value.filter((o) =>
+    matchListKeyword(searchKeyword.value, [
+      o.id,
+      o.elderName,
+      o.serviceName,
+      o.amountCents,
+      o.scheduledAt,
+    ]),
+  ),
+);
 
 function formatTime(iso?: string) {
   if (!iso) return '待定';

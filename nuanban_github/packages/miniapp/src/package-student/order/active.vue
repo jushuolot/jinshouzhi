@@ -1,11 +1,14 @@
 <template>
   <view class="page">
     <text class="tip">待服务 / 服务中的订单</text>
+    <ListSearchBar v-model="searchKeyword" placeholder="搜索老人、服务、订单号…" />
     <view v-if="loading" class="state">加载中…</view>
-    <view v-else-if="!list.length" class="empty">暂无进行中订单</view>
+    <view v-else-if="!shown.length" class="empty">
+      {{ searchKeyword ? '无匹配订单' : '暂无进行中订单' }}
+    </view>
     <scroll-view v-else scroll-y class="order-scroll">
-      <ListCountBar :count="list.length" hint="服务中 · 可滚动" />
-      <view v-for="o in list" :key="o.id" class="card" @tap="open(o.id)">
+      <ListCountBar :count="shown.length" hint="服务中 · 可搜索" />
+      <view v-for="o in shown" :key="o.id" class="card" @tap="open(o.id)">
         <view class="card-head">
           <text class="svc">{{ o.serviceName || '陪护服务' }}</text>
           <text class="status-tag" :class="o.status">{{ statusLabel(o.status) }}</text>
@@ -29,7 +32,20 @@ import { orderStatusLabel } from '../../utils/order-status';
 import { pbErrorMessage } from '../../utils/request';
 
 const list = ref<PendingOrder[]>([]);
+const searchKeyword = ref('');
 const loading = ref(false);
+
+const shown = computed(() =>
+  list.value.filter((o) =>
+    matchListKeyword(searchKeyword.value, [
+      o.id,
+      o.elderName,
+      o.serviceName,
+      o.status,
+      o.amountCents,
+    ]),
+  ),
+);
 
 function statusLabel(s: string) {
   return orderStatusLabel(s);

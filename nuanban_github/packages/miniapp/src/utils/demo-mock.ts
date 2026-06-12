@@ -2295,10 +2295,29 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
       gender: '女',
     });
     const statusQ = query.get('status') || '';
-    const filtered =
+    let filtered =
       statusQ === 'pending' || statusQ === 'active' || statusQ === 'rejected'
         ? list.filter((s) => s.status === statusQ)
         : list;
+    const kw = (query.get('q') || '').trim().toLowerCase();
+    if (kw) {
+      filtered = filtered.filter((s) => {
+        const hay = [
+          s.displayName,
+          s.nickname,
+          s.email,
+          s.schoolName,
+          s.phone,
+          s.userId,
+          s.gender,
+          s.major,
+          s.grade,
+        ]
+          .join(' ')
+          .toLowerCase();
+        return hay.includes(kw);
+      });
+    }
     const page = Math.max(1, parseInt(query.get('page') || '1', 10) || 1);
     const pageSize = Math.min(200, Math.max(1, parseInt(query.get('pageSize') || '50', 10) || 50));
     const offset = (page - 1) * pageSize;

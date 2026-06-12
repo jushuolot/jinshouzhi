@@ -2456,7 +2456,7 @@ routerAdd("POST", "/api/nuanban/platform/seed-scenario", function (e) {
   });
 });
 
-/** 平台运营看板：撮合漏斗与核心指标（演示） */
+/** 平台运营：学生资料列表（支持分页与关键词搜索） */
 routerAdd("GET", "/api/nuanban/platform/students", function (e) {
   var nb = require(__hooks + "/nuanban_lib.js");
   var q = e.request.url.query();
@@ -2467,6 +2467,7 @@ routerAdd("GET", "/api/nuanban/platform/students", function (e) {
   if (pageSize > 200) pageSize = 200;
   var offset = (page - 1) * pageSize;
   var statusFilter = String(q.get("status") || "").trim();
+  var keyword = String(q.get("q") || "").trim();
   var filter = 'role = "student"';
   if (statusFilter === "pending" || statusFilter === "active" || statusFilter === "rejected") {
     filter += ' && status = "' + statusFilter + '"';
@@ -2474,45 +2475,27 @@ routerAdd("GET", "/api/nuanban/platform/students", function (e) {
   var list = [];
   var total = 0;
   try {
-    total = $app.findRecordsByFilter("user_roles", filter, "", 50000, 0).length;
-    var roleRecords = $app.findRecordsByFilter(
-      "user_roles",
-      filter,
-      "",
-      pageSize,
-      offset
-    );
-    for (var i = 0; i < roleRecords.length; i++) {
-      var r = roleRecords[i];
-      var uid = r.getString("user");
-      var user = null;
-      try {
-        user = $app.findRecordById("users", uid);
-      } catch (_) {}
-      var schoolName = "";
-      var schoolId = nb.safeRecordString(r, "school", "");
-      if (schoolId) {
-        try {
-          var s = $app.findRecordById("school_dict", schoolId);
-          schoolName = nb.safeRecordString(s, "name", "");
-        } catch (_) {}
+    if (keyword) {
+      var allRecords = $app.findRecordsByFilter("user_roles", filter, "-id", 10000, 0);
+      var matched = [];
+      for (var mi = 0; mi < allRecords.length; mi++) {
+        var mrow = nb.opsStudentRowFromRole(allRecords[mi], e);
+        if (nb.opsStudentMatchesKeyword(mrow, keyword)) matched.push(mrow);
       }
-      var displayName = nb.safeRecordString(r, "display_name", "");
-      list.push({
-        userId: uid,
-        displayName: displayName || (user ? user.getString("name") : "学生"),
-        nickname: user ? user.getString("name") : displayName,
-        email: user ? user.getString("email") : "",
-        schoolName: schoolName,
-        status: nb.safeRecordString(r, "status", "active"),
-        cartoonAvatarId: nb.safeRecordString(r, "cartoon_avatar_id", ""),
-        avatarUrl: user ? nb.userAvatarUrlForClient(user, e) : "",
-        verificationPhotoUrl: nb.roleFileUrlForClient(r, "verification_photo", e),
-        gender: nb.safeRecordString(r, "gender", "未填"),
-        major: "护理学",
-        grade: "大三",
-        phone: "138****1234",
-      });
+      total = matched.length;
+      list = matched.slice(offset, offset + pageSize);
+    } else {
+      total = $app.findRecordsByFilter("user_roles", filter, "-id", 50000, 0).length;
+      var roleRecords = $app.findRecordsByFilter(
+        "user_roles",
+        filter,
+        "-id",
+        pageSize,
+        offset
+      );
+      for (var i = 0; i < roleRecords.length; i++) {
+        list.push(nb.opsStudentRowFromRole(roleRecords[i], e));
+      }
     }
   } catch (err) {
     return e.json(400, { message: String(err && err.message ? err.message : err), list: [], total: 0 });
@@ -2523,6 +2506,7 @@ routerAdd("GET", "/api/nuanban/platform/students", function (e) {
     page: page,
     pageSize: pageSize,
     hasMore: offset + list.length < total,
+    q: keyword || undefined,
   });
 });
 

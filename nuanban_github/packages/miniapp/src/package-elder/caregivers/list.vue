@@ -4,10 +4,11 @@
       <text class="title">找陪护</text>
       <text class="subtitle">按距离推荐附近大学生志愿者</text>
     </view>
+    <ListSearchBar v-model="searchKeyword" placeholder="搜索同学姓名、学校…" />
     <view v-if="loading" class="state">加载中…</view>
-    <ListCountBar v-if="!loading && list.length" :count="list.length" hint="6 位同学 · 列表演示" />
+    <ListCountBar v-if="!loading && shown.length" :count="shown.length" hint="附近同学 · 可搜索" />
     <PersonCard
-      v-for="item in list"
+      v-for="item in shown"
       :key="item.id"
       :name="item.name"
       :subtitle="caregiverSubtitle(item)"
@@ -18,19 +19,36 @@
       cta-text="预约"
       @tap="goDetail(item)"
     />
-    <view v-if="!loading && !list.length" class="empty">暂无附近陪护，请稍后再试</view>
+    <view v-if="!loading && !shown.length" class="empty">
+      {{ searchKeyword ? '无匹配同学' : '暂无附近陪护，请稍后再试' }}
+    </view>
   </view>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { computed, ref, onMounted } from 'vue';
 import PersonCard from '../../components/PersonCard.vue';
 import ListCountBar from '../../components/ListCountBar.vue';
+import ListSearchBar from '../../components/ListSearchBar.vue';
 import { getNearbyCaregivers, type CaregiverItem } from '../../api/elder';
+import { matchListKeyword } from '../../utils/list-search';
 import { getLocationWithFallback } from '../../utils/location';
 
 const list = ref<CaregiverItem[]>([]);
+const searchKeyword = ref('');
 const loading = ref(true);
+
+const shown = computed(() =>
+  list.value.filter((item) =>
+    matchListKeyword(searchKeyword.value, [
+      item.name,
+      item.school,
+      item.gender,
+      item.distance,
+      ...(item.tags || []),
+    ]),
+  ),
+);
 
 onMounted(async () => {
   try {

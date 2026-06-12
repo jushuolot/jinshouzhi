@@ -876,6 +876,64 @@ function isFormalAuthMode() {
   return false;
 }
 
+function opsPhoneFromEmail(email) {
+  var m = String(email || "").match(/^m(\d{11})@/);
+  return m ? m[1] : "";
+}
+
+function opsStudentRowFromRole(r, e) {
+  var uid = r.getString("user");
+  var user = null;
+  try {
+    user = $app.findRecordById("users", uid);
+  } catch (_) {}
+  var schoolName = "";
+  var schoolId = safeRecordString(r, "school", "");
+  if (schoolId) {
+    try {
+      var s = $app.findRecordById("school_dict", schoolId);
+      schoolName = safeRecordString(s, "name", "");
+    } catch (_) {}
+  }
+  var displayName = safeRecordString(r, "display_name", "");
+  var email = user ? user.getString("email") : "";
+  return {
+    userId: uid,
+    displayName: displayName || (user ? user.getString("name") : "学生"),
+    nickname: user ? user.getString("name") : displayName,
+    email: email,
+    schoolName: schoolName,
+    status: safeRecordString(r, "status", "active"),
+    cartoonAvatarId: safeRecordString(r, "cartoon_avatar_id", ""),
+    avatarUrl: user ? userAvatarUrlForClient(user, e) : "",
+    verificationPhotoUrl: roleFileUrlForClient(r, "verification_photo", e),
+    gender: safeRecordString(r, "gender", "未填"),
+    major: safeRecordString(r, "major", "") || "护理学",
+    grade: safeRecordString(r, "grade", "") || "大三",
+    phone: opsPhoneFromEmail(email),
+  };
+}
+
+function opsStudentMatchesKeyword(row, keyword) {
+  var q = String(keyword || "").toLowerCase().trim();
+  if (!q) return true;
+  var hay = [
+    row.displayName,
+    row.nickname,
+    row.email,
+    row.schoolName,
+    row.phone,
+    row.userId,
+    row.gender,
+    row.major,
+    row.grade,
+    row.status,
+  ]
+    .join(" ")
+    .toLowerCase();
+  return hay.indexOf(q) >= 0;
+}
+
 module.exports = {
   KNOWN_SCHOOLS, isKnownSchool, findOrCreateSchoolByName,
   elderNameById, safeRecordString, safeRecordInt, safeRecordBool, safeRecordFloat,
@@ -891,5 +949,5 @@ module.exports = {
   readOrderTimeline, appendOrderTimeline, backfillOrderTimeline,
   orderChatThreadOpen, orderChatCanAccess, orderChatAlias,
   orderMessagesDto, orderMessageToDto, orderMessagePushText, orderMessagePushVoice,
-  isFormalAuthMode
+  isFormalAuthMode, opsPhoneFromEmail, opsStudentRowFromRole, opsStudentMatchesKeyword
 };

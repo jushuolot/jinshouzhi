@@ -1,11 +1,14 @@
 <template>
   <view class="page elder-mode" :class="fontClass">
     <text class="tip">我的服务订单</text>
+    <ListSearchBar v-model="searchKeyword" placeholder="搜索服务、订单号…" />
     <view v-if="loading" class="empty">加载中…</view>
-    <view v-else-if="!orders.length" class="empty">暂无订单</view>
+    <view v-else-if="!shown.length" class="empty">
+      {{ searchKeyword ? '无匹配订单' : '暂无订单' }}
+    </view>
     <scroll-view v-else scroll-y class="order-scroll">
-      <ListCountBar :count="orders.length" hint="我的服务 · 可滚动" />
-      <view v-for="o in orders" :key="o.id" class="card" @tap="goDetail(o.id)">
+      <ListCountBar :count="shown.length" hint="我的服务 · 可搜索" />
+      <view v-for="o in shown" :key="o.id" class="card" @tap="goDetail(o.id)">
         <view class="head">
           <text class="svc">{{ serviceName(o) }}</text>
           <text class="status">{{ statusLabel(o.status) }}</text>
@@ -22,6 +25,8 @@ import { computed, ref } from 'vue';
 import { onShow } from '@dcloudio/uni-app';
 import RoleTabBar from '../../components/RoleTabBar.vue';
 import ListCountBar from '../../components/ListCountBar.vue';
+import ListSearchBar from '../../components/ListSearchBar.vue';
+import { matchListKeyword } from '../../utils/list-search';
 import { listOrdersForElder, resolveElderIdForApi, type OrderRow } from '../../api/elder';
 import { guardPackageRoute } from '../../utils/nav-guard';
 import { elderFontClass } from '../../utils/elder-accessibility';
@@ -31,8 +36,21 @@ import { pbErrorMessage } from '../../utils/request';
 const orders = ref<
   (OrderRow & { expand?: { service_item?: { name: string } } })[]
 >([]);
+const searchKeyword = ref('');
 const loading = ref(false);
 const fontClass = computed(() => elderFontClass());
+
+const shown = computed(() =>
+  orders.value.filter((o) =>
+    matchListKeyword(searchKeyword.value, [
+      o.id,
+      o.status,
+      serviceName(o),
+      o.amount_cents,
+      o.scheduled_at,
+    ]),
+  ),
+);
 
 function serviceName(o: (typeof orders.value)[0]) {
   return o.expand?.service_item?.name || '陪护服务';

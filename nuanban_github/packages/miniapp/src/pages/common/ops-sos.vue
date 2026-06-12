@@ -3,13 +3,15 @@
     <text class="title">SOS 求助中心</text>
     <text class="sub">老人一键求助 · 跟进家属/同学确认</text>
 
+    <ListSearchBar v-model="searchKeyword" placeholder="搜索老人、求助内容…" />
+
     <view v-if="loading" class="state">加载中…</view>
-    <view v-else-if="!list.length" class="state nb-card">
+    <view v-else-if="!shown.length" class="state nb-card">
       <text class="empty-icon">✓</text>
-      <text>当前无活跃 SOS</text>
+      <text>{{ searchKeyword ? '无匹配 SOS' : '当前无活跃 SOS' }}</text>
     </view>
 
-    <view v-for="a in list" :key="a.id" class="alert-card">
+    <view v-for="a in shown" :key="a.id" class="alert-card">
       <view class="alert-head">
         <text class="alert-icon">🆘</text>
         <view class="alert-main">
@@ -26,15 +28,24 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { onShow } from '@dcloudio/uni-app';
+import ListSearchBar from '../../components/ListSearchBar.vue';
 import { fetchOpsSosActive, type OpsSosAlert } from '../../api/platform';
+import { matchListKeyword } from '../../utils/list-search';
 import { formatRelativeTime } from '../../utils/format-time';
 import { requireOpsSession } from '../../utils/ops-mode';
 import { pbErrorMessage } from '../../utils/request';
 
 const list = ref<OpsSosAlert[]>([]);
+const searchKeyword = ref('');
 const loading = ref(false);
+
+const shown = computed(() =>
+  list.value.filter((a) =>
+    matchListKeyword(searchKeyword.value, [a.elderName, a.message, a.id, a.elderId, a.status]),
+  ),
+);
 
 function formatTime(iso: string) {
   return formatRelativeTime(iso);

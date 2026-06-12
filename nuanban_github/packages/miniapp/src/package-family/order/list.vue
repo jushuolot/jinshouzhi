@@ -6,11 +6,15 @@
       <view class="seg-item" :class="{ active: tab === 'all' }" @tap="tab = 'all'">全部</view>
     </view>
 
+    <ListSearchBar v-model="searchKeyword" placeholder="搜索服务、老人、订单号…" />
+
     <view v-if="loading" class="state">加载中…</view>
-    <view v-else-if="!shown.length" class="empty">暂无订单</view>
+    <view v-else-if="!filtered.length" class="empty">
+      {{ searchKeyword ? '无匹配订单' : '暂无订单' }}
+    </view>
     <scroll-view v-else scroll-y class="order-scroll">
       <ListCountBar
-        :count="shown.length"
+        :count="filtered.length"
         :hint="
           tab === 'pay'
             ? '待支付 · 可滚动'
@@ -19,7 +23,7 @@
               : '全部订单 · 可滚动压测'
         "
       />
-      <view v-for="o in shown" :key="o.id" class="card" @tap="onTap(o)">
+      <view v-for="o in filtered" :key="o.id" class="card" @tap="onTap(o)">
         <view class="head">
           <text class="svc">{{ o.expand?.service_item?.name || '陪护服务' }}</text>
           <view class="badges">
@@ -43,6 +47,8 @@ import { computed, ref } from 'vue';
 import { onShow } from '@dcloudio/uni-app';
 import RoleTabBar from '../../components/RoleTabBar.vue';
 import ListCountBar from '../../components/ListCountBar.vue';
+import ListSearchBar from '../../components/ListSearchBar.vue';
+import { matchListKeyword } from '../../utils/list-search';
 import { listBoundElders, listPendingConfirmOrders, listPendingPaymentOrders } from '../../api/family';
 import { pbList, type PbRecord } from '../../api/pb';
 import { useRoleStore } from '../../store/role';
@@ -62,6 +68,7 @@ type OrderItem = PbRecord & {
 };
 
 const tab = ref<'pay' | 'confirm' | 'all'>('pay');
+const searchKeyword = ref('');
 const payList = ref<OrderItem[]>([]);
 const confirmList = ref<OrderItem[]>([]);
 const allList = ref<OrderItem[]>([]);
@@ -73,6 +80,18 @@ const shown = computed(() => {
   if (tab.value === 'confirm') return confirmList.value;
   return allList.value;
 });
+
+const filtered = computed(() =>
+  shown.value.filter((o) =>
+    matchListKeyword(searchKeyword.value, [
+      o.id,
+      o.status,
+      o.expand?.elder?.name,
+      o.expand?.service_item?.name,
+      o.amount_cents,
+    ]),
+  ),
+);
 
 function statusLabel(s: string) {
   return orderStatusLabel(s);
