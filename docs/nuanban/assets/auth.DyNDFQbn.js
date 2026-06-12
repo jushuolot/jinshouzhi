@@ -1,0 +1,1 @@
+import{r as e}from"./request.BLKkAn8p.js";async function a(a,r){return e({url:"/nuanban/phone-login",method:"POST",data:{phone:a,code:r}})}async function r(a,r,n,t,o){return(await e({url:"/nuanban/auth/register",method:"POST",data:{role:a,displayName:r,...n?{referralCode:n}:{},...t?{wechatId:t}:{},...o?{gender:o}:{}}})).roles}export{a as l,r};
