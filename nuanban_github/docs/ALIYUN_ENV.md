@@ -115,7 +115,7 @@ cd /opt/jinshouzhi/nuanban_github && ./scripts/sync-all.sh
 | 能力 | 测试版 | 正式版 |
 |------|--------|--------|
 | 虚拟手机登录入口 | 显示（`isVirtualPhoneLoginEnabled`） | 不显示（非 DEV、非 Mock） |
-| 演示号验证码 | 可留空 | 可留空（hooks `phone-login`） |
+| 演示号验证码 | **`000000`** | **`000000`** 或运营发件箱 |
 | 微信登录 | Mock `demo` code | 需真实小程序 `uni.login` |
 | `dev-login` | 本地 dev | 服务器上不应对外暴露给客人 |
 

@@ -221,11 +221,37 @@
         "id": "fld_el_name",
         "name": "name",
         "type": "text",
-        "required": true,
+        "required": false,
         "presentable": true,
         "system": false,
         "hidden": false,
         "max": 64
+      },
+      {
+        "id": "fld_el_age",
+        "name": "age",
+        "type": "number",
+        "required": false,
+        "system": false,
+        "hidden": false
+      },
+      {
+        "id": "fld_el_district",
+        "name": "district",
+        "type": "text",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "max": 64
+      },
+      {
+        "id": "fld_el_address",
+        "name": "address",
+        "type": "text",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "max": 256
       },
       {
         "id": "fld_el_gender",
@@ -269,6 +295,102 @@
         "required": false,
         "system": false,
         "hidden": false
+      },
+      {
+        "id": "fld_el_health",
+        "name": "health_status",
+        "type": "text",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "max": 128
+      },
+      {
+        "id": "fld_el_mobility",
+        "name": "mobility",
+        "type": "text",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "max": 64
+      },
+      {
+        "id": "fld_el_living",
+        "name": "living_situation",
+        "type": "text",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "max": 128
+      },
+      {
+        "id": "fld_el_hobbies",
+        "name": "hobbies",
+        "type": "json",
+        "required": false,
+        "system": false,
+        "hidden": false
+      },
+      {
+        "id": "fld_el_svc_pref",
+        "name": "service_preferences",
+        "type": "json",
+        "required": false,
+        "system": false,
+        "hidden": false
+      },
+      {
+        "id": "fld_el_visit_times",
+        "name": "preferred_visit_times",
+        "type": "json",
+        "required": false,
+        "system": false,
+        "hidden": false
+      },
+      {
+        "id": "fld_el_notes",
+        "name": "notes",
+        "type": "text",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "max": 512
+      },
+      {
+        "id": "fld_el_intro",
+        "name": "intro",
+        "type": "text",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "max": 512
+      },
+      {
+        "id": "fld_el_ec_name",
+        "name": "emergency_contact_name",
+        "type": "text",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "max": 64
+      },
+      {
+        "id": "fld_el_ec_rel",
+        "name": "emergency_contact_relation",
+        "type": "text",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "max": 32
+      },
+      {
+        "id": "fld_el_ec_phone",
+        "name": "emergency_contact_phone",
+        "type": "text",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "max": 20
       }
     ],
     "indexes": [],

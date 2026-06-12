@@ -261,7 +261,7 @@ cd /opt/jinshouzhi/nuanban_github
 ./scripts/aliyun-fix-data.sh
 ```
 
-成功后用手机号 `13800000001`（验证码留空）登录：`http://101.200.128.82/#/pages/common/login`
+成功后用手机号 `13800000001`、验证码 **`000000`** 登录：`http://101.200.128.82/#/pages/common/login`
 
 ### 日常同步：一条命令（不用分三处手动跑）
 

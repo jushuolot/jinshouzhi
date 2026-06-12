@@ -122,6 +122,28 @@ routerAdd("POST", "/api/nuanban/seed-demo", (e) => {
     return rec;
   }
 
+  function applyElderDemoFields(rec, elderName) {
+    if (elderName === "张奶奶") {
+      rec.set("age", 78);
+      rec.set("district", "浦东新区");
+      rec.set("health_status", "总体良好");
+      rec.set("mobility", "行动便利");
+      rec.set("living_situation", "与子女同住");
+      rec.set("hobbies", ["聊天", "散步"]);
+      rec.set("service_preferences", ["陪伴聊天"]);
+      rec.set("preferred_visit_times", ["工作日下午 14:00–17:00"]);
+      rec.set("emergency_contact_name", "家属");
+      rec.set("emergency_contact_relation", "女儿");
+      rec.set("emergency_contact_phone", "138****9999");
+    } else if (elderName === "李爷爷") {
+      rec.set("age", 82);
+      rec.set("district", "浦东新区");
+      rec.set("health_status", "血压需关注");
+      rec.set("mobility", "需搀扶");
+      rec.set("living_situation", "机构养老");
+    }
+  }
+
   function findOrCreateElder(orgId, name, lat, lng, gender) {
     const rows = $app.findRecordsByFilter(
       "elders",
@@ -138,6 +160,7 @@ routerAdd("POST", "/api/nuanban/seed-demo", (e) => {
       existing.set("longitude", lng);
       existing.set("enabled", true);
       if (gender) existing.set("gender", gender);
+      applyElderDemoFields(existing, name);
       $app.save(existing);
       return existing;
     }
@@ -149,6 +172,7 @@ routerAdd("POST", "/api/nuanban/seed-demo", (e) => {
     rec.set("longitude", lng);
     rec.set("enabled", true);
     if (gender) rec.set("gender", gender);
+    applyElderDemoFields(rec, name);
     $app.save(rec);
     stats.elders += 1;
     return rec;

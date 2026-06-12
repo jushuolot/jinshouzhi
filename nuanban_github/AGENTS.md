@@ -52,7 +52,7 @@ git pull --rebase origin main && git push origin main
 
 ## 演示账号
 
-手机号登录（验证码可留空）；配置见 `demo-rich-data.ts` → `DEMO_TEST_PHONES`，与 `pb_hooks` `phoneToEmail` 对齐。
+手机号登录（先完成安全图画验证 → 获取验证码；演示号可用 **`000000`**）；见 `docs/SMS_CAPTCHA.md` 与 `demo-rich-data.ts`。
 
 | 手机号 | 邮箱 | 角色 | 用途 |
 |--------|------|------|------|

@@ -1003,28 +1003,31 @@ routerAdd("GET", "/api/nuanban/student/elders/{id}/profile", function (e) {
       orgName = o.getString("name");
     } catch (_) {}
   }
+  var hobbiesS = elder.get("hobbies");
+  var svcPrefsS = elder.get("service_preferences");
+  var visitTimesS = elder.get("preferred_visit_times");
   return e.json(200, {
     id: elder.id,
-    name: elder.getString("name") || "老人",
-    age: elder.getInt("age") || 78,
-    gender: elder.getString("gender") || "女",
-    district: elder.getString("district") || "浦东新区",
-    address: elder.getString("address") || "浦东新区***",
-    orgName: orgName || "暖伴示范养老院",
-    tags: elder.get("tags") || ["行动便利"],
+    name: elder.getString("name") || "",
+    age: elder.getInt("age") || 0,
+    gender: elder.getString("gender") || "",
+    district: elder.getString("district") || "",
+    address: elder.getString("address") || "",
+    orgName: orgName || "",
+    tags: elder.get("tags") || [],
     intro: elder.getString("intro") || "",
-    healthStatus: elder.getString("health_status") || "总体良好",
-    mobility: elder.getString("mobility") || "行动便利",
-    hobbies: elder.get("hobbies") || ["聊天", "散步"],
-    servicePreferences: elder.get("service_preferences") || ["陪伴聊天"],
-    livingSituation: elder.getString("living_situation") || "与子女同住",
+    healthStatus: elder.getString("health_status") || "",
+    mobility: elder.getString("mobility") || "",
+    hobbies: hobbiesS && hobbiesS.length ? hobbiesS : [],
+    servicePreferences: svcPrefsS && svcPrefsS.length ? svcPrefsS : [],
+    livingSituation: elder.getString("living_situation") || "",
     emergencyContact: {
-      name: "家属",
-      relation: "女儿",
-      phone: "138****9999",
+      name: elder.getString("emergency_contact_name") || "",
+      relation: elder.getString("emergency_contact_relation") || "",
+      phone: elder.getString("emergency_contact_phone") || "",
     },
-    preferredVisitTimes: ["工作日下午 14:00–17:00", "周末上午 9:00–11:00"],
-    notes: elder.getString("notes") || "请耐心沟通，营造温馨氛围。",
+    preferredVisitTimes: visitTimesS && visitTimesS.length ? visitTimesS : [],
+    notes: elder.getString("notes") || "",
   });
 });
 
