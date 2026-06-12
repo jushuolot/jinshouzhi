@@ -1,7 +1,7 @@
 <template>
   <view class="page nb-page">
     <text class="title">更多</text>
-    <text class="sub">配置 · 验收工具 · 运营设置</text>
+    <text class="sub">平台配置 · 演示工具 · 运营设置</text>
 
     <view class="section-title">平台配置</view>
     <view class="link-card nb-card" @tap="goSchoolCoop">
@@ -13,7 +13,8 @@
       <text class="chevron">›</text>
     </view>
 
-    <view class="section-title muted">验收工具</view>
+    <view class="section-title muted">演示与验收</view>
+    <text class="section-hint">投资人 / QA 用，日常运营可忽略</text>
     <view class="link-card nb-card dim" @tap="goScenario">
       <text class="link-icon">🧭</text>
       <view class="link-main">
@@ -22,27 +23,11 @@
       </view>
       <text class="chevron">›</text>
     </view>
-    <view class="link-card nb-card dim" @tap="goTour">
-      <text class="link-icon">🎬</text>
-      <view class="link-main">
-        <text class="link-title">动画演示</text>
-        <text class="link-desc">22 秒看懂三种撮合路径</text>
-      </view>
-      <text class="chevron">›</text>
-    </view>
     <view class="link-card nb-card dim" @tap="goShare">
       <text class="link-icon">🔗</text>
       <view class="link-main">
         <text class="link-title">分享演示链接</text>
         <text class="link-desc">复制给验收人 · 零安装</text>
-      </view>
-      <text class="chevron">›</text>
-    </view>
-    <view class="link-card nb-card dim" @tap="goModuleMap">
-      <text class="link-icon">🗺️</text>
-      <view class="link-main">
-        <text class="link-title">产品模块地图</text>
-        <text class="link-desc">三端分包 · 便捷直达</text>
       </view>
       <text class="chevron">›</text>
     </view>
@@ -124,14 +109,6 @@ function goSchoolCoop() {
   uni.navigateTo({ url: '/pages/common/school-coop' });
 }
 
-function goModuleMap() {
-  uni.navigateTo({ url: '/pages/common/module-map' });
-}
-
-function goTour() {
-  uni.navigateTo({ url: '/pages/common/demo-tour' });
-}
-
 function goShare() {
   uni.navigateTo({ url: '/pages/common/share-demo' });
 }
@@ -193,6 +170,12 @@ function confirmReset() {
 .section-title.muted {
   color: var(--nb-text-secondary);
   font-size: 26rpx;
+}
+.section-hint {
+  display: block;
+  margin: -8rpx 0 16rpx;
+  font-size: 22rpx;
+  color: var(--nb-text-muted);
 }
 .link-card {
   display: flex;

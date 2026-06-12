@@ -6,6 +6,20 @@ routerAdd("GET", "/api/nuanban/ping", function (e) {
   return e.json(200, { ok: true, hooks: true, hasToString: typeof toString });
 });
 
+routerAdd("GET", "/api/nuanban/debug/stress", function (e) {
+  var q = e.request.url.query();
+  var fail = q.get("fail") || "";
+  if (fail === "500" || fail === "503") {
+    return e.json(parseInt(fail, 10), { message: "stress injected failure" });
+  }
+  var delayMs = parseInt(q.get("delay") || "0", 10);
+  if (delayMs > 0 && delayMs <= 10000) {
+    var until = Date.now() + delayMs;
+    while (Date.now() < until) {}
+  }
+  return e.json(200, { ok: true, delayMs: delayMs });
+});
+
 routerAdd("POST", "/api/nuanban/body", function (e) {
   var nb = require(__hooks + "/nuanban_lib.js");
   const raw = toString(e.request.body);
@@ -2395,6 +2409,49 @@ routerAdd("GET", "/api/nuanban/platform/students", function (e) {
   return e.json(200, { list: list });
 });
 
+routerAdd("POST", "/api/nuanban/platform/students/:userId/status", function (e) {
+  var nb = require(__hooks + "/nuanban_lib.js");
+  var uid = e.request.pathValue("userId");
+  var raw = toString(e.request.body);
+  var body = raw ? JSON.parse(raw) : {};
+  var status = String(body.status || "").trim();
+  if (status !== "active" && status !== "rejected" && status !== "pending") {
+    return e.json(400, { message: "status 须为 active / rejected / pending" });
+  }
+  var roles = $app.findRecordsByFilter(
+    "user_roles",
+    'user = {:uid} && role = "student"',
+    "",
+    5,
+    0,
+    { uid: uid }
+  );
+  if (roles.length === 0) {
+    return e.json(404, { message: "学生角色不存在" });
+  }
+  roles[0].set("status", status);
+  $app.save(roles[0]);
+  return e.json(200, { ok: true, userId: uid, status: status });
+});
+
+routerAdd("GET", "/api/nuanban/platform/sos/active", function (e) {
+  var nb = require(__hooks + "/nuanban_lib.js");
+  var list = [];
+  try {
+    var records = $app.findRecordsByFilter(
+      "sos_alerts",
+      'status = "active"',
+      "-created",
+      30,
+      0
+    );
+    for (var i = 0; i < records.length; i++) {
+      list.push(nb.sosToDto(records[i]));
+    }
+  } catch (_) {}
+  return e.json(200, { list: list });
+});
+
 routerAdd("GET", "/api/nuanban/platform/overview", function (e) {
   var nb = require(__hooks + "/nuanban_lib.js");
   let pending = 0;
@@ -2403,12 +2460,36 @@ routerAdd("GET", "/api/nuanban/platform/overview", function (e) {
   let done = 0;
   let elders = 0;
   let walletPaidCents = 0;
+  let studentsPending = 0;
+  let pendingConfirm = 0;
+  let sosActive = 0;
+  let pendingWithdrawals = 0;
   try {
     pending = $app.findRecordsByFilter("orders", 'status = "pending_accept"', "", 200, 0).length;
     pendingPay = $app.findRecordsByFilter("orders", 'status = "pending_payment"', "", 200, 0).length;
     inSvc = $app.findRecordsByFilter("orders", 'status = "in_service"', "", 200, 0).length;
     done = $app.findRecordsByFilter("orders", 'status = "completed"', "", 200, 0).length;
+    pendingConfirm = $app.findRecordsByFilter("orders", 'status = "pending_confirm"', "", 200, 0).length;
     elders = $app.findRecordsByFilter("elders", "enabled = true", "", 200, 0).length;
+    studentsPending = $app.findRecordsByFilter(
+      "user_roles",
+      'role = "student" && status = "pending"',
+      "",
+      200,
+      0
+    ).length;
+    try {
+      sosActive = $app.findRecordsByFilter("sos_alerts", 'status = "active"', "", 50, 0).length;
+    } catch (_) {}
+    try {
+      pendingWithdrawals = $app.findRecordsByFilter(
+        "withdrawals",
+        'status = "pending"',
+        "",
+        200,
+        0
+      ).length;
+    } catch (_) {}
     var paidOrders = $app.findRecordsByFilter("orders", 'payment_status = "paid"', "", 500, 0);
     for (var pi = 0; pi < paidOrders.length; pi++) {
       walletPaidCents += paidOrders[pi].getInt("amount_cents") || 0;
@@ -2421,8 +2502,12 @@ routerAdd("GET", "/api/nuanban/platform/overview", function (e) {
     studentsActive: 8,
     ordersPendingAccept: pending,
     ordersPendingPayment: pendingPay,
+    ordersPendingConfirm: pendingConfirm,
     ordersInService: inSvc,
     ordersCompleted: done,
+    studentsPendingCount: studentsPending,
+    sosActiveCount: sosActive,
+    pendingWithdrawalCount: pendingWithdrawals,
     walletPaidTotalCents: walletPaidCents,
     walletPaidTotalYuan: (walletPaidCents / 100).toFixed(2),
     serviceLogCount: done,

@@ -1,12 +1,25 @@
 <template>
   <view class="page nb-page">
-    <text class="title">学生资料管理</text>
-    <text class="sub">查看卡通头像与实名核验照 · 审核参考</text>
+    <text class="title">学生资料审核</text>
+    <text class="sub">核验照 · 学校 · 通过后可接单</text>
+
+    <view class="filter-row">
+      <view
+        v-for="f in filters"
+        :key="f.key"
+        class="filter-chip"
+        :class="{ active: filter === f.key }"
+        @tap="filter = f.key"
+      >
+        {{ f.label }}
+        <text v-if="f.count" class="chip-badge">{{ f.count }}</text>
+      </view>
+    </view>
 
     <view v-if="loading" class="state">加载中…</view>
-    <view v-else-if="!list.length" class="state">暂无学生资料</view>
+    <view v-else-if="!filteredList.length" class="state">暂无{{ filterLabel }}学生</view>
 
-    <view v-for="s in list" :key="s.userId" class="card">
+    <view v-for="s in filteredList" :key="s.userId" class="card">
       <view class="card-head">
         <image :src="avatarUrl(s)" class="avatar" mode="aspectFill" />
         <view class="info">
@@ -15,6 +28,7 @@
           <text class="meta">{{ s.email }}</text>
           <text v-if="s.major" class="meta">{{ s.major }} · {{ s.grade || '-' }}</text>
         </view>
+        <text class="status-tag" :class="'st-' + s.status">{{ statusLabel(s.status) }}</text>
       </view>
 
       <view class="verify-block">
@@ -28,6 +42,25 @@
         />
         <view v-else class="verify-empty">未上传</view>
       </view>
+
+      <view v-if="s.status === 'pending'" class="actions">
+        <button
+          class="btn-approve"
+          size="mini"
+          :loading="acting === s.userId + '-ok'"
+          @tap="setStatus(s.userId, 'active')"
+        >
+          通过
+        </button>
+        <button
+          class="btn-reject"
+          size="mini"
+          :loading="acting === s.userId + '-no'"
+          @tap="setStatus(s.userId, 'rejected')"
+        >
+          拒绝
+        </button>
+      </view>
     </view>
 
     <OpsTabBar current="/pages/common/student-profiles" />
@@ -35,16 +68,48 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import { onShow } from '@dcloudio/uni-app';
+import { computed, ref } from 'vue';
+import { onLoad, onShow } from '@dcloudio/uni-app';
 import OpsTabBar from '../../components/OpsTabBar.vue';
-import { fetchOpsStudentProfiles, type OpsStudentProfile } from '../../api/platform';
+import {
+  fetchOpsStudentProfiles,
+  updateOpsStudentStatus,
+  type OpsStudentProfile,
+} from '../../api/platform';
 import { resolveCartoonAvatarUrl } from '../../utils/cartoon-avatars';
 import { requireOpsSession } from '../../utils/ops-mode';
 import { pbErrorMessage } from '../../utils/request';
 
 const list = ref<OpsStudentProfile[]>([]);
 const loading = ref(false);
+const acting = ref('');
+const filter = ref<'all' | 'pending' | 'active'>('all');
+
+onLoad((q) => {
+  const f = String(q?.filter || '');
+  if (f === 'pending' || f === 'active') filter.value = f;
+});
+
+const filters = computed(() => {
+  const pending = list.value.filter((s) => s.status === 'pending').length;
+  const active = list.value.filter((s) => s.status === 'active').length;
+  return [
+    { key: 'all' as const, label: '全部', count: list.value.length || 0 },
+    { key: 'pending' as const, label: '待审核', count: pending },
+    { key: 'active' as const, label: '已通过', count: active },
+  ];
+});
+
+const filteredList = computed(() => {
+  if (filter.value === 'all') return list.value;
+  return list.value.filter((s) => s.status === filter.value);
+});
+
+const filterLabel = computed(() => {
+  if (filter.value === 'pending') return '待审核';
+  if (filter.value === 'active') return '已通过';
+  return '';
+});
 
 function avatarUrl(s: OpsStudentProfile) {
   if (s.avatarUrl) return s.avatarUrl;
@@ -63,6 +128,19 @@ function statusLabel(status: string) {
 
 function preview(url: string) {
   uni.previewImage({ urls: [url], current: url });
+}
+
+async function setStatus(userId: string, status: 'active' | 'rejected') {
+  acting.value = `${userId}-${status === 'active' ? 'ok' : 'no'}`;
+  try {
+    await updateOpsStudentStatus(userId, status);
+    uni.showToast({ title: status === 'active' ? '已通过' : '已拒绝', icon: 'success' });
+    await reload();
+  } catch (e) {
+    uni.showToast({ title: pbErrorMessage(e), icon: 'none' });
+  } finally {
+    acting.value = '';
+  }
 }
 
 async function reload() {
@@ -96,9 +174,33 @@ onShow(() => {
 }
 .sub {
   display: block;
-  margin: 8rpx 0 24rpx;
+  margin: 8rpx 0 20rpx;
   font-size: 24rpx;
   color: var(--nb-text-muted, #888);
+}
+.filter-row {
+  display: flex;
+  gap: 12rpx;
+  margin-bottom: 20rpx;
+  flex-wrap: wrap;
+}
+.filter-chip {
+  padding: 10rpx 20rpx;
+  border-radius: 999rpx;
+  font-size: 24rpx;
+  background: var(--nb-surface, #fff);
+  border: 1rpx solid var(--nb-border, #eee);
+  color: var(--nb-text-secondary, #666);
+}
+.filter-chip.active {
+  background: #fff3e8;
+  border-color: #f0dcc8;
+  color: var(--nb-primary, #c45c26);
+  font-weight: 600;
+}
+.chip-badge {
+  margin-left: 6rpx;
+  font-size: 20rpx;
 }
 .state {
   text-align: center;
@@ -116,14 +218,13 @@ onShow(() => {
   display: flex;
   align-items: flex-start;
   margin-bottom: 20rpx;
+  gap: 12rpx;
 }
 .avatar {
   width: 96rpx;
   height: 96rpx;
   border-radius: 50%;
-  margin-right: 20rpx;
   flex-shrink: 0;
-  background: var(--nb-primary-soft, #fff5ef);
 }
 .info {
   flex: 1;
@@ -131,40 +232,71 @@ onShow(() => {
 }
 .name {
   display: block;
-  font-size: 32rpx;
+  font-size: 30rpx;
   font-weight: 600;
 }
 .meta {
   display: block;
-  margin-top: 6rpx;
-  font-size: 24rpx;
+  margin-top: 4rpx;
+  font-size: 22rpx;
   color: var(--nb-text-muted, #888);
 }
+.status-tag {
+  font-size: 20rpx;
+  padding: 4rpx 12rpx;
+  border-radius: 8rpx;
+  flex-shrink: 0;
+}
+.st-pending {
+  background: #fff8e6;
+  color: #8a6d3b;
+}
+.st-active {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+.st-rejected {
+  background: #ffebee;
+  color: #c62828;
+}
 .verify-block {
-  border-top: 1rpx solid #f0f0f0;
-  padding-top: 16rpx;
+  margin-top: 8rpx;
 }
 .verify-label {
   display: block;
-  font-size: 26rpx;
-  font-weight: 600;
-  margin-bottom: 12rpx;
+  font-size: 22rpx;
+  color: var(--nb-text-muted, #888);
+  margin-bottom: 8rpx;
 }
 .verify-photo {
   width: 100%;
-  height: 360rpx;
+  height: 280rpx;
   border-radius: var(--nb-radius-sm, 12rpx);
-  background: #fafafa;
+  background: #f0f0f0;
 }
 .verify-empty {
-  height: 160rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  height: 120rpx;
+  line-height: 120rpx;
+  text-align: center;
   background: #fafafa;
   border-radius: var(--nb-radius-sm, 12rpx);
-  color: var(--nb-text-muted, #bbb);
-  font-size: 26rpx;
-  border: 2rpx dashed #eee;
+  font-size: 24rpx;
+  color: #bbb;
+}
+.actions {
+  display: flex;
+  gap: 16rpx;
+  margin-top: 16rpx;
+}
+.btn-approve {
+  flex: 1;
+  background: var(--nb-primary, #c45c26);
+  color: #fff;
+}
+.btn-reject {
+  flex: 1;
+  background: #fff;
+  color: #c62828;
+  border: 1rpx solid #f0c8c8;
 }
 </style>

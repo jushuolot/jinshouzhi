@@ -17,8 +17,12 @@ export interface PlatformOverview {
   studentsActive: number;
   ordersPendingAccept: number;
   ordersPendingPayment?: number;
+  ordersPendingConfirm?: number;
   ordersInService: number;
   ordersCompleted: number;
+  studentsPendingCount?: number;
+  sosActiveCount?: number;
+  pendingWithdrawalCount?: number;
   walletPaidTotalCents?: number;
   walletPaidTotalYuan?: string;
   serviceLogCount?: number;
@@ -77,6 +81,31 @@ export interface OpsStudentProfile {
 export async function fetchOpsStudentProfiles() {
   const res = await request<{ list: OpsStudentProfile[] }>({
     url: '/nuanban/platform/students',
+    method: 'GET',
+  });
+  return res.list ?? [];
+}
+
+export async function updateOpsStudentStatus(userId: string, status: 'active' | 'rejected' | 'pending') {
+  return request<{ ok: boolean; userId: string; status: string }>({
+    url: `/nuanban/platform/students/${userId}/status`,
+    method: 'POST',
+    data: { status },
+  });
+}
+
+export interface OpsSosAlert {
+  id: string;
+  elderId: string;
+  elderName?: string;
+  message: string;
+  status: string;
+  createdAt: string;
+}
+
+export async function fetchOpsSosActive() {
+  const res = await request<{ list: OpsSosAlert[] }>({
+    url: '/nuanban/platform/sos/active',
     method: 'GET',
   });
   return res.list ?? [];

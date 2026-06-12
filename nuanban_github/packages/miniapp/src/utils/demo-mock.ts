@@ -69,6 +69,9 @@ import {
 /** GitHub Pages 公网演示：纯前端 Mock，无需 PocketBase / Render */
 const MOCK_TOKEN = 'demo-mock-token';
 
+/** 运营台学生审核状态覆盖（Mock） */
+const mockStudentStatusOverrides: Record<string, string> = {};
+
 const USERS = DEMO_USERS;
 const ORG = DEMO_ORG_MAIN;
 const ELDERS = buildRichElders();
@@ -2021,7 +2024,7 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
             ? DEMO_USERS.student.email
             : `${c.userId}@test.nuanban.dev`,
         schoolName: c.school,
-        status: 'active',
+        status: mockStudentStatusOverrides[c.userId] || 'active',
         cartoonAvatarId: cartoonId,
         avatarUrl: resolveCartoonAvatarUrl(cartoonId),
         verificationPhotoUrl: getMockVerificationPhotoUrl(c.userId) || undefined,
@@ -2030,14 +2033,65 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
         phone: profile.phone,
       };
     });
+    list.push({
+      userId: DEMO_USERS.studentPending.id,
+      displayName: DEMO_USERS.studentPending.nickname,
+      nickname: DEMO_USERS.studentPending.nickname,
+      email: DEMO_USERS.studentPending.email,
+      schoolName: '示范大学',
+      status: mockStudentStatusOverrides[DEMO_USERS.studentPending.id] || 'pending',
+      cartoonAvatarId: defaultCartoonAvatarId(DEMO_USERS.studentPending.nickname),
+      avatarUrl: resolveCartoonAvatarUrl(defaultCartoonAvatarId(DEMO_USERS.studentPending.nickname)),
+      major: '社会学',
+      grade: '大二',
+      phone: '138****0003',
+    });
     return delay({ list } as T);
+  }
+
+  const studentStatusPost = path.match(/^\/nuanban\/platform\/students\/([^/]+)\/status$/);
+  if (method === 'POST' && studentStatusPost) {
+    const uid = studentStatusPost[1];
+    const status = String(data.status || '');
+    if (!['active', 'rejected', 'pending'].includes(status)) {
+      return Promise.reject({ message: 'status 须为 active / rejected / pending', statusCode: 400 });
+    }
+    mockStudentStatusOverrides[uid] = status;
+    return delay({ ok: true, userId: uid, status } as T);
+  }
+
+  if (method === 'GET' && path === '/nuanban/platform/sos/active') {
+    const list = state.sosAlerts.filter((a) => a.status === 'active').map(sosDto);
+    return delay({ list } as T);
+  }
+
+  if (method === 'GET' && path === '/nuanban/debug/stress') {
+    const fail = String((options as { query?: Record<string, string> })?.query?.fail || '');
+    if (fail === '500' || fail === '503') {
+      return Promise.reject({ message: 'stress injected failure', statusCode: parseInt(fail, 10) });
+    }
+    const delayMs = parseInt(String((options as { query?: Record<string, string> })?.query?.delay || '0'), 10);
+    if (delayMs > 0) {
+      return new Promise((resolve) => setTimeout(() => resolve({ ok: true, delayMs } as T), Math.min(delayMs, 3000)));
+    }
+    return delay({ ok: true, delayMs: 0 } as T);
   }
 
   if (method === 'GET' && path === '/nuanban/platform/overview') {
     const pending = state.orders.filter((o) => o.status === 'pending_accept').length;
     const pendingPay = state.orders.filter((o) => o.status === 'pending_payment').length;
+    const pendingConfirm = state.orders.filter((o) => o.status === 'pending_confirm').length;
     const inSvc = state.orders.filter((o) => o.status === 'in_service').length;
     const done = state.orders.filter((o) => o.status === 'completed').length;
+    const sosActive = state.sosAlerts.filter((a) => a.status === 'active').length;
+    let studentsPendingCount = 0;
+    if ((mockStudentStatusOverrides[DEMO_USERS.studentPending.id] || 'pending') === 'pending') {
+      studentsPendingCount += 1;
+    }
+    for (const c of buildRichCaregivers()) {
+      if (mockStudentStatusOverrides[c.userId] === 'pending') studentsPendingCount += 1;
+    }
+    const pendingWd = getAdminFundOverview().pendingWithdrawalCount;
     const walletPaidCents = state.orders
       .filter((o) => o.payment_status === 'paid')
       .reduce((s, o) => s + o.amount_cents, 0);
@@ -2048,8 +2102,12 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
       studentsActive: CAREGIVERS.length,
       ordersPendingAccept: pending,
       ordersPendingPayment: pendingPay,
+      ordersPendingConfirm: pendingConfirm,
       ordersInService: inSvc,
       ordersCompleted: done,
+      studentsPendingCount: studentsPendingCount,
+      sosActiveCount: sosActive,
+      pendingWithdrawalCount: pendingWd,
       walletPaidTotalCents: walletPaidCents,
       walletPaidTotalYuan: (walletPaidCents / 100).toFixed(2),
       serviceLogCount: state.serviceLogs.length,

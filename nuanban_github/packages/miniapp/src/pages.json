@@ -33,6 +33,7 @@
     { "path": "pages/common/ops-gate", "style": { "navigationBarTitleText": "运营台" } },
     { "path": "pages/common/ops-home", "style": { "navigationBarTitleText": "运营台" } },
     { "path": "pages/common/ops-more", "style": { "navigationBarTitleText": "更多" } },
+    { "path": "pages/common/ops-sos", "style": { "navigationBarTitleText": "SOS" } },
     { "path": "pages/common/admin-hub", "style": { "navigationBarTitleText": "运营台" } },
     { "path": "pages/common/fund-admin", "style": { "navigationBarTitleText": "资金" } },
     { "path": "pages/common/student-profiles", "style": { "navigationBarTitleText": "学生" } },

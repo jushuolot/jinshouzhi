@@ -110,6 +110,31 @@ const todoItems = computed(() => {
     count: number | string;
     go: () => void;
   }> = [];
+
+  const studentsPending = overview.value?.studentsPendingCount ?? 0;
+  if (studentsPending > 0) {
+    items.push({
+      key: 'students',
+      icon: '🎓',
+      title: '学生资料审核',
+      desc: '核验照与学校信息 · 通过后可接单',
+      count: studentsPending,
+      go: () => uni.redirectTo({ url: '/pages/common/student-profiles?filter=pending' }),
+    });
+  }
+
+  const sos = overview.value?.sosActiveCount ?? 0;
+  if (sos > 0) {
+    items.push({
+      key: 'sos',
+      icon: '🆘',
+      title: 'SOS 求助',
+      desc: '老人一键求助 · 需跟进确认',
+      count: sos,
+      go: () => uni.navigateTo({ url: '/pages/common/ops-sos' }),
+    });
+  }
+
   const pending = overview.value?.ordersPendingAccept ?? pendingCount.value;
   if (pending > 0) {
     items.push({
@@ -121,6 +146,19 @@ const todoItems = computed(() => {
       go: () => uni.redirectTo({ url: '/pages/common/org-dispatch' }),
     });
   }
+
+  const confirm = overview.value?.ordersPendingConfirm ?? 0;
+  if (confirm > 0) {
+    items.push({
+      key: 'confirm',
+      icon: '✅',
+      title: '待确认完成',
+      desc: '服务已结束 · 等待家属/老人确认',
+      count: confirm,
+      go: () => uni.redirectTo({ url: '/pages/common/fund-admin' }),
+    });
+  }
+
   const pay = overview.value?.ordersPendingPayment ?? 0;
   if (pay > 0) {
     items.push({
@@ -132,13 +170,14 @@ const todoItems = computed(() => {
       go: () => uni.redirectTo({ url: '/pages/common/fund-admin' }),
     });
   }
-  const wd = pendingWithdrawals.value;
+
+  const wd = pendingWithdrawals.value || overview.value?.pendingWithdrawalCount || 0;
   if (wd > 0) {
     items.push({
       key: 'withdraw',
       icon: '💰',
       title: '提现审批',
-      desc: '学生提现待审核',
+      desc: '学生提现待审核（演示不打款）',
       count: wd,
       go: () => uni.redirectTo({ url: '/pages/common/fund-admin' }),
     });

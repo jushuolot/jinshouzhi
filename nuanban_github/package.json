@@ -12,7 +12,10 @@
     "miniapp:build:h5": "npm run build:h5 -w packages/miniapp",
     "miniapp:build:weixin": "npm run build:mp-weixin -w packages/miniapp",
     "pb:up": "docker compose up -d pocketbase",
-    "pb:logs": "docker compose logs -f pocketbase"
+    "pb:logs": "docker compose logs -f pocketbase",
+    "stress:smoke": "./scripts/run-stress.sh smoke",
+    "stress:100": "./scripts/run-stress.sh 100",
+    "stress:2000": "./scripts/run-stress.sh 2000"
   },
   "engines": {
     "node": ">=18"
