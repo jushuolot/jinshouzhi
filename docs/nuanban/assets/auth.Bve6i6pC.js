@@ -1,0 +1,1 @@
+import{r as a}from"./request.DMeRbteA.js";async function e(e,r){return a({url:"/nuanban/phone-login",method:"POST",data:{phone:e,...r?{code:r}:{}}})}async function r(e,r,n,t){return(await a({url:"/nuanban/auth/register",method:"POST",data:{role:e,displayName:r,...n?{referralCode:n}:{},...t?{wechatId:t}:{}}})).roles}export{e as l,r};
