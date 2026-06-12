@@ -1,1 +1,0 @@
-import{h as s,A as a,H as r,b as e,D as o,n as t}from"./index-CWvLxgvS.js";import{r as p,O as m}from"./ops-mode.CylWRyqf.js";import{_ as n}from"./_plugin-vue_export-helper.BCo6x5W8.js";const d=n(s({__name:"admin-hub",setup:s=>(a(()=>{p()&&r({url:m})}),(s,a)=>{const r=t;return o(),e(r,{class:"redirect"})})}),[["__scopeId","data-v-34000290"]]);export{d as default};
