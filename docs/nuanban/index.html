@@ -6,6 +6,14 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>暖伴勤工</title>
+    <script>
+      (function () {
+        var p = location.pathname.replace(/\/$/, '');
+        if (p === '/login' || p.endsWith('/login')) {
+          location.replace(location.origin + '/#/pages/common/login');
+        }
+      })();
+    </script>
     <script type="module" crossorigin src="/jinshouzhi/nuanban/assets/index-hugGI1vs.js"></script>
     <link rel="stylesheet" crossorigin href="/jinshouzhi/nuanban/assets/index-CpIk694-.css">
   </head>
