@@ -1,1 +1,59 @@
-{"date": "", "items": []}
+{
+  "date": "2026-06-12",
+  "items": [
+    {
+      "code": "000725",
+      "name": "京东方Ａ",
+      "tag": "预测未中·复盘",
+      "score": null,
+      "pct": null,
+      "one_line": "轻量分析失败：未获取到行情：000725",
+      "verdict": "待查"
+    },
+    {
+      "code": "000988",
+      "name": "华工科技",
+      "tag": "预测未中·复盘",
+      "score": null,
+      "pct": null,
+      "one_line": "轻量分析失败：未获取到行情：000988",
+      "verdict": "待查"
+    },
+    {
+      "code": "301563",
+      "name": "云汉芯城",
+      "tag": "预测未中·复盘",
+      "score": null,
+      "pct": null,
+      "one_line": "轻量分析失败：未获取到行情：301563",
+      "verdict": "待查"
+    },
+    {
+      "code": "600498",
+      "name": "烽火通信",
+      "tag": "预测未中·复盘",
+      "score": null,
+      "pct": null,
+      "one_line": "轻量分析失败：未获取到行情：600498",
+      "verdict": "待查"
+    },
+    {
+      "code": "000657",
+      "name": "中钨高新",
+      "tag": "预测未中·复盘",
+      "score": null,
+      "pct": null,
+      "one_line": "轻量分析失败：未获取到行情：000657",
+      "verdict": "待查"
+    },
+    {
+      "code": "600176",
+      "name": "中国巨石",
+      "tag": "预测未中·复盘",
+      "score": null,
+      "pct": null,
+      "one_line": "轻量分析失败：未获取到行情：600176",
+      "verdict": "待查"
+    }
+  ]
+}
