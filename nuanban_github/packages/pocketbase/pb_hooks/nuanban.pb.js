@@ -999,7 +999,7 @@ routerAdd("GET", "/api/nuanban/student/elders/{id}/profile", function (e) {
   const orgId = elder.getString("org");
   if (orgId) {
     try {
-      const o = $app.findRecordById("orgs", orgId);
+      const o = $app.findRecordById("organizations", orgId);
       orgName = o.getString("name");
     } catch (_) {}
   }
@@ -1066,7 +1066,7 @@ routerAdd("GET", "/api/nuanban/elder/profile", function (e) {
   const orgId = elder.getString("org");
   if (orgId) {
     try {
-      const o = $app.findRecordById("orgs", orgId);
+      const o = $app.findRecordById("organizations", orgId);
       orgName = o.getString("name");
     } catch (_) {}
   }
