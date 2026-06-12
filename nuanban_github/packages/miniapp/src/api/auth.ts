@@ -15,11 +15,11 @@ export interface LoginResult {
   activeRole?: RoleKey;
 }
 
-export async function loginWithPhone(phone: string, code?: string): Promise<LoginResult> {
+export async function loginWithPhone(phone: string, code: string): Promise<LoginResult> {
   return request<LoginResult>({
     url: '/nuanban/phone-login',
     method: 'POST',
-    data: { phone, ...(code ? { code } : {}) },
+    data: { phone, code },
   });
 }
 

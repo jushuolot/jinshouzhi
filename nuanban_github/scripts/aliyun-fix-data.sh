@@ -46,4 +46,4 @@ fi
 echo ""
 echo "完成。请强刷浏览器 (Ctrl+Shift+R):"
 echo "  http://${STAGING_IP:-你的IP}/#/pages/common/login"
-echo "测试: 13800000001 验证码留空"
+echo "测试: 13800000001 验证码 000000（或先获取验证码）"

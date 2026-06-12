@@ -56,7 +56,7 @@ git pull --rebase origin main && git push origin main
 
 | 手机号 | 邮箱 | 角色 | 用途 |
 |--------|------|------|------|
-| `13800000001` | `student1@test.nuanban.dev` | 学生 | 示范大学、默认主流程（接单/收入/推荐） |
+| `13800000001` | `student1@test.nuanban.dev` | 学生 | 示范大学、默认主流程；验证码 **`000000`** |
 | `13800000002` | `student2@test.nuanban.dev` | 学生 | 城东师范学院、学校合作筛选 |
 | `13800000003` | `student3@test.nuanban.dev` | 学生 | 审核中页、无法接单 |
 | `13800000004` | `family1@test.nuanban.dev` | 家属 | 代付、外出、服务包、SOS |

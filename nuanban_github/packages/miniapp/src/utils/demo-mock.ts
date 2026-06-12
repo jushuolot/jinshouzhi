@@ -1070,6 +1070,15 @@ const mockOrderTimelines: Record<
   string,
   Array<{ key: string; at: string; detail: string; actor?: string }>
 > = {};
+const DEMO_SMS_MASTER = '000000';
+const mockSmsOtp: Record<string, string> = {};
+const mockCaptchaChallenges: Record<
+  string,
+  { correctIds: string; used: boolean }
+> = {};
+const mockCaptchaTokens = new Set<string>();
+const mockSmsOutbox: Array<{ phone: string; code: string; sentAt: string; channel: string }> = [];
+
 const mockOrderMessages: Record<
   string,
   Array<{
@@ -1078,13 +1087,41 @@ const mockOrderMessages: Record<
     senderUser: string;
     senderRole: string;
     senderAlias: string;
+    type?: 'text' | 'voice';
     body: string;
+    audioBase64?: string;
+    mimeType?: string;
+    durationSec?: number;
     createdAt: string;
   }>
 > = {};
 
 function mockChatOpen(status: string) {
   return ['pending_accept', 'pending_service', 'in_service', 'pending_confirm'].includes(status);
+}
+
+function mockOrderMessageDto(
+  m: (typeof mockOrderMessages)[string][number],
+  viewerId: string,
+) {
+  const dto: Record<string, unknown> = {
+    id: m.id,
+    orderId: m.orderId,
+    senderRole: m.senderRole,
+    senderAlias: m.senderAlias,
+    type: m.type || 'text',
+    body: m.body,
+    createdAt: m.createdAt,
+    mine: m.senderUser === viewerId,
+  };
+  if (m.type === 'voice') {
+    dto.durationSec = m.durationSec || 1;
+    if (m.audioBase64) {
+      dto.audioUrl = `data:${m.mimeType || 'audio/mpeg'};base64,${m.audioBase64}`;
+    }
+    dto.body = `[语音 ${dto.durationSec}秒]`;
+  }
+  return dto;
 }
 
 function mockAppendTimeline(orderId: string, key: string, detail: string, actor = 'system') {
@@ -1257,15 +1294,95 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
     return delay(loginByEmail(email) as T);
   }
 
+  if (method === 'GET' && path === '/nuanban/captcha/challenge') {
+    const topics = [
+      { label: '动物', pool: ['🐱', '🐶', '🐰', '🐻', '🦁', '🐼'] },
+      { label: '水果', pool: ['🍎', '🍌', '🍇', '🍉', '🍓', '🍑'] },
+    ];
+    const topic = topics[Math.floor(Math.random() * topics.length)];
+    const correct = topic.pool.slice(0, 3);
+    const wrong = topics.find((t) => t.label !== topic.label)!.pool.slice(0, 6);
+    const tiles = [...correct, ...wrong]
+      .sort(() => Math.random() - 0.5)
+      .map((emoji, i) => ({ id: `t${i}`, emoji }));
+    const correctIds = tiles
+      .filter((t) => correct.includes(t.emoji))
+      .map((t) => t.id)
+      .sort()
+      .join(',');
+    const challengeId = `cap_mock_${Date.now()}`;
+    mockCaptchaChallenges[challengeId] = { correctIds, used: false };
+    return delay({
+      challengeId,
+      prompt: `请点选所有【${topic.label}】图案`,
+      tiles,
+      expiresIn: 300,
+    } as T);
+  }
+
+  if (method === 'POST' && path === '/nuanban/captcha/verify') {
+    const challengeId = String((data as { challengeId?: string }).challengeId || '');
+    const selected = ((data as { selectedIds?: string[] }).selectedIds || []).slice().sort().join(',');
+    const ch = mockCaptchaChallenges[challengeId];
+    if (!ch || ch.used) {
+      return Promise.reject({ message: '安全验证已过期，请刷新', statusCode: 400 });
+    }
+    if (selected !== ch.correctIds) {
+      return Promise.reject({ message: '点选不正确，请重试', statusCode: 400 });
+    }
+    ch.used = true;
+    const token = `cpt_mock_${Date.now()}`;
+    mockCaptchaTokens.add(token);
+    return delay({ ok: true, captchaToken: token, expiresIn: 300 } as T);
+  }
+
+  if (method === 'POST' && path === '/nuanban/sms/send') {
+    const phone = normalizePhone(String((data as { phone?: string }).phone || ''));
+    const captchaToken = String((data as { captchaToken?: string }).captchaToken || '');
+    if (!mockCaptchaTokens.has(captchaToken)) {
+      return Promise.reject({ message: '请先完成安全验证', statusCode: 400 });
+    }
+    mockCaptchaTokens.delete(captchaToken);
+    const code = String(100000 + Math.floor(Math.random() * 900000)).slice(-6);
+    mockSmsOtp[phone] = code;
+    mockSmsOutbox.unshift({
+      phone,
+      code,
+      sentAt: new Date().toISOString(),
+      channel: 'self-hosted-mock',
+    });
+    return delay({
+      ok: true,
+      message: '验证码已通过平台自建通道发出',
+      expiresIn: 300,
+      devCode: code,
+      devHint: 'Mock 环境已返回验证码',
+    } as T);
+  }
+
+  if (method === 'GET' && path === '/nuanban/platform/sms-outbox') {
+    const key = String((options as { query?: Record<string, string> })?.query?.key || '');
+    if (key !== 'nuanban2026') {
+      return Promise.reject({ message: '无权查看', statusCode: 403 });
+    }
+    return delay({ list: mockSmsOutbox.slice(0, 30) } as T);
+  }
+
   if (method === 'POST' && path === '/nuanban/phone-login') {
     const phone = normalizePhone(String(data.phone || ''));
     if (phone.length !== 11) {
       return Promise.reject({ message: '请输入 11 位手机号', statusCode: 400 });
     }
-    const code = data.code != null ? String(data.code) : '';
-    if (code && code.length < 4) {
-      return Promise.reject({ message: '验证码无效', statusCode: 400 });
+    const code = String(data.code != null ? data.code : '').trim();
+    if (code.length !== 6) {
+      return Promise.reject({ message: '请输入 6 位短信验证码', statusCode: 400 });
     }
+    const otpOk =
+      (isPresetDemoPhone(phone) && code === DEMO_SMS_MASTER) || mockSmsOtp[phone] === code;
+    if (!otpOk) {
+      return Promise.reject({ message: '验证码错误或已过期，请重新获取', statusCode: 400 });
+    }
+    delete mockSmsOtp[phone];
     if (isPresetDemoPhone(phone)) {
       try {
         uni.setStorageSync(DEMO_LOGIN_PHONE_KEY, phone);
@@ -2219,10 +2336,7 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
     const oid = orderMsgGet[1];
     const order = state.orders.find((o) => o.id === oid);
     if (!order) return Promise.reject({ message: '订单不存在' });
-    const list = (mockOrderMessages[oid] || []).map((m) => ({
-      ...m,
-      mine: m.senderUser === currentChatSender().userId,
-    }));
+    const list = (mockOrderMessages[oid] || []).map((m) => mockOrderMessageDto(m, currentChatSender().userId));
     return delay({ list, threadOpen: mockChatOpen(order.status) } as T);
   }
   if (method === 'POST' && orderMsgGet) {
@@ -2232,21 +2346,46 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
     if (!mockChatOpen(order.status)) {
       return Promise.reject({ message: '本单沟通通道已关闭' });
     }
-    const body = String(data.body || '').trim();
-    if (!body) return Promise.reject({ message: '消息不能为空' });
     const sender = currentChatSender();
-    const msg = {
-      id: `msg_${oid}_${Date.now()}`,
-      orderId: oid,
-      senderUser: sender.userId,
-      senderRole: sender.role,
-      senderAlias: sender.alias,
-      body,
-      createdAt: new Date().toISOString(),
-    };
+    const msgType = String((data as { type?: string }).type || 'text');
+    let msg;
+    if (msgType === 'voice') {
+      const audioBase64 = String((data as { audioBase64?: string }).audioBase64 || '').trim();
+      const durationSec = Math.max(1, Math.min(60, Number((data as { durationSec?: number }).durationSec) || 1));
+      if (!audioBase64) return Promise.reject({ message: '语音数据不能为空' });
+      if (audioBase64.length > 400000) {
+        return Promise.reject({ message: '语音过大，请缩短录音后重试' });
+      }
+      msg = {
+        id: `msg_${oid}_${Date.now()}`,
+        orderId: oid,
+        senderUser: sender.userId,
+        senderRole: sender.role,
+        senderAlias: sender.alias,
+        type: 'voice' as const,
+        body: '',
+        audioBase64,
+        mimeType: String((data as { mimeType?: string }).mimeType || 'audio/mpeg'),
+        durationSec,
+        createdAt: new Date().toISOString(),
+      };
+    } else {
+      const body = String((data as { body?: string }).body || '').trim();
+      if (!body) return Promise.reject({ message: '消息不能为空' });
+      msg = {
+        id: `msg_${oid}_${Date.now()}`,
+        orderId: oid,
+        senderUser: sender.userId,
+        senderRole: sender.role,
+        senderAlias: sender.alias,
+        type: 'text' as const,
+        body,
+        createdAt: new Date().toISOString(),
+      };
+    }
     if (!mockOrderMessages[oid]) mockOrderMessages[oid] = [];
     mockOrderMessages[oid].push(msg);
-    return delay({ ok: true, message: { ...msg, mine: true } } as T);
+    return delay({ ok: true, message: mockOrderMessageDto(msg, sender.userId) } as T);
   }
 
   if (method === 'GET' && path === '/nuanban/debug/stress') {

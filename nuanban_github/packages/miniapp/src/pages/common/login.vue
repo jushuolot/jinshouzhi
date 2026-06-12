@@ -68,6 +68,9 @@
       </view>
 
       <text v-if="loginHint" class="hint">{{ loginHint }}</text>
+      <text class="hint sms-hint">获取验证码前需完成安全验证；演示号可用 {{ demoMasterCode }}</text>
+
+      <CaptchaPicker :visible="captchaVisible" @verified="onCaptchaVerified" @cancel="captchaVisible = false" />
 
       <view class="footer">
         <text class="foot-link" @tap="goDemoTour">动画演示</text>
@@ -91,7 +94,9 @@ import { isUserManualAccepted, markRegistrationConsent } from '../../utils/user-
 import { useRoleStore } from '../../store/role';
 import { pbErrorMessage } from '../../utils/request';
 import AgreementRow from '../../components/AgreementRow.vue';
+import CaptchaPicker from '../../components/CaptchaPicker.vue';
 import OpsSessionBar from '../../components/OpsSessionBar.vue';
+import { sendSelfHostedSms } from '../../api/captcha-sms';
 import { openOpsMode } from '../../utils/ops-mode';
 
 const loading = ref(false);
@@ -101,6 +106,8 @@ const codeCooldown = ref(0);
 const agreed = ref(isUserManualAccepted());
 const fromTour = ref(false);
 const fromGuest = ref(false);
+const captchaVisible = ref(false);
+const demoMasterCode = '000000';
 let cooldownTimer: ReturnType<typeof setInterval> | null = null;
 
 const roleStore = useRoleStore();
@@ -129,7 +136,7 @@ const codeBtnText = computed(() =>
 );
 
 const canSubmit = computed(
-  () => phone.value.length === 11 && !loading.value && agreed.value,
+  () => phone.value.length === 11 && smsCode.value.length === 6 && !loading.value && agreed.value,
 );
 
 const loginHint = computed(() => {
@@ -157,13 +164,7 @@ function onCodeInput(e: { detail: { value: string } }) {
   smsCode.value = e.detail.value.replace(/\D/g, '').slice(0, 6);
 }
 
-function sendCode() {
-  if (phone.value.length !== 11) {
-    uni.showToast({ title: '请输入 11 位手机号', icon: 'none' });
-    return;
-  }
-  if (codeCooldown.value > 0) return;
-  uni.showToast({ title: '验证码已发送', icon: 'none' });
+function startCooldown() {
   codeCooldown.value = 60;
   cooldownTimer = setInterval(() => {
     codeCooldown.value -= 1;
@@ -172,6 +173,35 @@ function sendCode() {
       cooldownTimer = null;
     }
   }, 1000);
+}
+
+function sendCode() {
+  if (phone.value.length !== 11) {
+    uni.showToast({ title: '请输入 11 位手机号', icon: 'none' });
+    return;
+  }
+  if (codeCooldown.value > 0) return;
+  captchaVisible.value = true;
+}
+
+async function onCaptchaVerified(token: string) {
+  captchaVisible.value = false;
+  try {
+    const res = await sendSelfHostedSms(phone.value, token);
+    if (res.devCode) {
+      smsCode.value = res.devCode;
+      uni.showModal({
+        title: '开发环境验证码',
+        content: `验证码：${res.devCode}\n（已自动填入，生产环境请查运营发件箱）`,
+        showCancel: false,
+      });
+    } else {
+      uni.showToast({ title: res.message || '验证码已发出', icon: 'none' });
+    }
+    startCooldown();
+  } catch (e) {
+    uni.showToast({ title: pbErrorMessage(e), icon: 'none' });
+  }
 }
 
 function ensureAgreed(): boolean {
@@ -216,11 +246,14 @@ async function onPhoneLogin() {
     uni.showToast({ title: '请输入 11 位手机号', icon: 'none' });
     return;
   }
+  if (smsCode.value.length !== 6) {
+    uni.showToast({ title: '请输入 6 位验证码', icon: 'none' });
+    return;
+  }
   if (!canSubmit.value || loading.value) return;
   loading.value = true;
   try {
-    const code = smsCode.value || undefined;
-    const res = await loginWithPhone(phone.value, code);
+    const res = await loginWithPhone(phone.value, smsCode.value);
     afterLogin(res);
   } catch (e) {
     uni.showToast({ title: pbErrorMessage(e), icon: 'none' });
@@ -388,6 +421,10 @@ function goGuest() {
   color: #aaa;
   text-align: center;
   line-height: 1.5;
+}
+.sms-hint {
+  margin-top: 12rpx;
+  font-size: 22rpx;
 }
 .footer {
   margin-top: auto;

@@ -34,14 +34,18 @@
 
 | 外卖常见做法 | 暖伴替代（零成本） |
 |--------------|-------------------|
-| 虚拟号转接通话 | **订单内文字密聊**（PocketBase/Mock 存消息） |
+| 虚拟号转接通话 | **订单内文字 + 语音密聊**（PocketBase/Mock 存消息） |
 | 双方见虚拟号 | 双方只见 **代号**：`陪护同学·林` / `家属·联系人` |
 | 订单结束销毁号码 | 订单进入 `completed` 后 **自动关闭**密聊入口 |
 
 ### API
 
 - `GET /api/nuanban/orders/{id}/messages` — 拉取消息
-- `POST /api/nuanban/orders/{id}/messages` — 发送（仅服务进行中窗口）
+- `POST /api/nuanban/orders/{id}/messages` — 发送文字或语音（仅服务进行中窗口）
+  - 文字：`{ "type": "text", "body": "…" }`
+  - 语音：`{ "type": "voice", "audioBase64": "…", "durationSec": 12, "mimeType": "audio/mpeg" }`（最长 60 秒）
+
+订单密聊页提供 **按住说话**，方便老人端；语音以 base64 存入内存通道（零成本，重启 PB 后清空，与文字消息一致）。
 
 ### 开放窗口
 

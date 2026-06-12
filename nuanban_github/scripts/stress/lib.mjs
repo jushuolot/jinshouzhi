@@ -37,7 +37,7 @@ export async function phoneLogin(phone, roleHint) {
   const res = await fetch(`${getApiBase()}/nuanban/phone-login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ phone, code: '' }),
+    body: JSON.stringify({ phone, code: '000000' }),
     signal: AbortSignal.timeout(15000),
   });
   const json = await res.json().catch(() => ({}));

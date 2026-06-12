@@ -299,32 +299,69 @@ function orderMessagesList(orderId) {
   return ORDER_MESSAGES_MEM[orderId];
 }
 
+function orderMessageToDto(orderId, m, viewerId) {
+  var dto = {
+    id: m.id,
+    orderId: orderId,
+    senderRole: m.senderRole,
+    senderAlias: m.senderAlias,
+    type: m.type || "text",
+    body: m.body || "",
+    createdAt: m.createdAt,
+    mine: m.senderUser === viewerId,
+  };
+  if (m.type === "voice") {
+    dto.durationSec = m.durationSec || 1;
+    if (m.audioBase64) {
+      var mime = m.mimeType || "audio/mpeg";
+      dto.audioUrl = "data:" + mime + ";base64," + m.audioBase64;
+    }
+    dto.body = "[语音 " + dto.durationSec + "秒]";
+  }
+  return dto;
+}
+
 function orderMessagesDto(orderId, viewerId) {
   var list = orderMessagesList(orderId);
   var out = [];
   for (var i = 0; i < list.length; i++) {
-    var m = list[i];
-    out.push({
-      id: m.id,
-      orderId: orderId,
-      senderRole: m.senderRole,
-      senderAlias: m.senderAlias,
-      body: m.body,
-      createdAt: m.createdAt,
-      mine: m.senderUser === viewerId,
-    });
+    out.push(orderMessageToDto(orderId, list[i], viewerId));
   }
   return out;
 }
 
-function orderMessagePush(orderId, senderUser, senderRole, body) {
+function orderMessagePushText(orderId, senderUser, senderRole, body) {
   var list = orderMessagesList(orderId);
   var msg = {
     id: "msg_" + orderId + "_" + (list.length + 1),
     senderUser: senderUser,
     senderRole: senderRole,
     senderAlias: orderChatAlias(senderUser, senderRole),
+    type: "text",
     body: String(body || "").slice(0, 500),
+    createdAt: new Date().toISOString(),
+  };
+  list.push(msg);
+  return msg;
+}
+
+function orderMessagePushVoice(orderId, senderUser, senderRole, audioBase64, durationSec, mimeType) {
+  var list = orderMessagesList(orderId);
+  var sec = Math.max(1, Math.min(60, parseInt(String(durationSec), 10) || 1));
+  var b64 = String(audioBase64 || "");
+  if (b64.length > 400000) {
+    throw new Error("语音过大，请缩短录音后重试");
+  }
+  var msg = {
+    id: "msg_" + orderId + "_" + (list.length + 1),
+    senderUser: senderUser,
+    senderRole: senderRole,
+    senderAlias: orderChatAlias(senderUser, senderRole),
+    type: "voice",
+    body: "",
+    audioBase64: b64,
+    mimeType: mimeType || "audio/mpeg",
+    durationSec: sec,
     createdAt: new Date().toISOString(),
   };
   list.push(msg);
@@ -830,5 +867,5 @@ module.exports = {
   roleFileUrlForClient, studentRoleRecord,
   readOrderTimeline, appendOrderTimeline, backfillOrderTimeline,
   orderChatThreadOpen, orderChatCanAccess, orderChatAlias,
-  orderMessagesDto, orderMessagePush
+  orderMessagesDto, orderMessageToDto, orderMessagePushText, orderMessagePushVoice
 };

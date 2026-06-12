@@ -130,18 +130,61 @@ routerAdd("POST", "/api/nuanban/dev-login", function (e) {
   });
 });
 
-/** 手机号登录（演示）：验证码可选，按演示号映射 seed 邮箱 */
+/** 安全验证 · 图画点选 */
+routerAdd("GET", "/api/nuanban/captcha/challenge", function (e) {
+  var csms = require(__hooks + "/nuanban_captcha_sms.js");
+  return e.json(200, csms.captchaCreateChallenge());
+});
+
+routerAdd("POST", "/api/nuanban/captcha/verify", function (e) {
+  var csms = require(__hooks + "/nuanban_captcha_sms.js");
+  var raw = toString(e.request.body);
+  var body = raw ? JSON.parse(raw) : {};
+  var selected = body.selectedIds || [];
+  var result = csms.captchaVerifyChallenge(String(body.challengeId || ""), selected);
+  if (!result.ok) return e.json(400, result);
+  return e.json(200, result);
+});
+
+/** 自建短信验证码（服务器生成，无第三方平台） */
+routerAdd("POST", "/api/nuanban/sms/send", function (e) {
+  var csms = require(__hooks + "/nuanban_captcha_sms.js");
+  var raw = toString(e.request.body);
+  var body = raw ? JSON.parse(raw) : {};
+  var result = csms.smsSendCode(
+    String(body.phone || ""),
+    String(body.captchaToken || ""),
+    e
+  );
+  if (!result.ok) return e.json(400, result);
+  return e.json(200, result);
+});
+
+routerAdd("GET", "/api/nuanban/platform/sms-outbox", function (e) {
+  var csms = require(__hooks + "/nuanban_captcha_sms.js");
+  var q = e.request.url.query();
+  if (q.get("key") !== "nuanban2026") {
+    return e.json(403, { message: "无权查看" });
+  }
+  return e.json(200, { list: csms.smsOutboxList() });
+});
+
+/** 手机号登录：须通过自建短信验证码（演示号可用 000000） */
 routerAdd("POST", "/api/nuanban/phone-login", function (e) {
   var nb = require(__hooks + "/nuanban_lib.js");
+  var csms = require(__hooks + "/nuanban_captcha_sms.js");
   const raw = toString(e.request.body);
   const body = raw ? JSON.parse(raw) : {};
   const phone = String(body.phone || "").replace(/\D/g, "");
   if (phone.length !== 11) {
     return e.json(400, { message: "请输入 11 位手机号" });
   }
-  const code = body.code != null ? String(body.code) : "";
-  if (code && code.length < 4) {
-    return e.json(400, { message: "验证码无效" });
+  const code = body.code != null ? String(body.code).trim() : "";
+  if (!code || code.length !== 6) {
+    return e.json(400, { message: "请输入 6 位短信验证码" });
+  }
+  if (!csms.smsVerifyCode(phone, code)) {
+    return e.json(400, { message: "验证码错误或已过期，请重新获取" });
   }
 
   // 与 miniapp demo-rich-data.ts DEMO_TEST_PHONES 对齐
@@ -2655,20 +2698,32 @@ routerAdd("POST", "/api/nuanban/orders/{id}/messages", function (e) {
   }
   var raw = toString(e.request.body);
   var body = raw ? JSON.parse(raw) : {};
-  var text = String(body.body || "").trim();
-  if (!text) return e.json(400, { message: "消息不能为空" });
-  var msg = nb.orderMessagePush(orderId, e.auth.id, roleHdr, text);
-  return e.json(200, {
-    ok: true,
-    message: {
-      id: msg.id,
-      orderId: orderId,
-      senderRole: msg.senderRole,
-      senderAlias: msg.senderAlias,
-      body: msg.body,
-      createdAt: msg.createdAt,
-      mine: true,
-    },
-  });
+  var msgType = String(body.type || "text");
+  var msg;
+  try {
+    if (msgType === "voice") {
+      var audioB64 = String(body.audioBase64 || "").trim();
+      if (!audioB64) return e.json(400, { message: "语音数据不能为空" });
+      var dur = parseInt(String(body.durationSec || "0"), 10);
+      if (!dur || dur < 1) return e.json(400, { message: "语音时长无效" });
+      msg = nb.orderMessagePushVoice(
+        orderId,
+        e.auth.id,
+        roleHdr,
+        audioB64,
+        dur,
+        String(body.mimeType || "audio/mpeg")
+      );
+    } else {
+      var text = String(body.body || "").trim();
+      if (!text) return e.json(400, { message: "消息不能为空" });
+      msg = nb.orderMessagePushText(orderId, e.auth.id, roleHdr, text);
+    }
+  } catch (err) {
+    return e.json(400, { message: String(err.message || err) });
+  }
+  var dto = nb.orderMessageToDto(orderId, msg, e.auth.id);
+  dto.mine = true;
+  return e.json(200, { ok: true, message: dto });
 });
 

@@ -44,6 +44,16 @@
       </view>
     </template>
 
+    <view class="section-title">安全与验证</view>
+    <view class="link-card nb-card" @tap="goSmsOutbox">
+      <text class="link-icon">📨</text>
+      <view class="link-main">
+        <text class="link-title">短信发件箱</text>
+        <text class="link-desc">自建验证码记录 · 备案期人工核对</text>
+      </view>
+      <text class="chevron">›</text>
+    </view>
+
     <view class="section-title">运营设置</view>
     <view class="settings nb-card">
       <view class="setting-row">
@@ -107,6 +117,10 @@ function logoutOps() {
 
 function goSchoolCoop() {
   uni.navigateTo({ url: '/pages/common/school-coop' });
+}
+
+function goSmsOutbox() {
+  uni.navigateTo({ url: '/pages/common/ops-sms' });
 }
 
 function goShare() {

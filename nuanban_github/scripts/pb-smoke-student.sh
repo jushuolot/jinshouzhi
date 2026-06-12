@@ -7,7 +7,7 @@ API="${BASE%/}/api"
 
 TOKEN="$(curl -sf -X POST "$API/nuanban/phone-login" \
   -H "Content-Type: application/json" \
-  -d '{"phone":"13800000001","code":""}' \
+  -d '{"phone":"13800000001","code":"000000"}' \
   | node -e "let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{try{console.log(JSON.parse(d).token||'')}catch{console.log('')}})")"
 
 if [[ -z "$TOKEN" ]]; then
