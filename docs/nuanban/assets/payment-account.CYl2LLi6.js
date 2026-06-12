@@ -1,1 +1,0 @@
-import{r as n}from"./request.e7QfZ1su.js";async function a(a){return n({url:`/nuanban/${a}/payment-account`,method:"GET"})}async function t(a,t){return n({url:`/nuanban/${a}/payment-account`,method:"POST",data:t})}export{t as b,a as f};
