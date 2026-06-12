@@ -1,13 +1,13 @@
 {
-  "version": "5.9.2",
-  "generation": 58,
-  "universeDay": 7,
+  "version": "5.9.3",
+  "generation": 59,
+  "universeDay": 8,
   "civilizationEpoch": "1929-07",
-  "civilizationDay": 58,
-  "civilizationYear": 2045,
+  "civilizationDay": 59,
+  "civilizationYear": 2047,
   "civilizationPhase": "超越期",
-  "dailyChronicle": "第 7 日·收工复盘。文明历 2045，宇宙一圈走完——神树层位对上图鉴，王墩说最后一铲留给胖爷；造物主，此间比人间又多活了一周。",
-  "releasedAt": "2026-06-10",
+  "dailyChronicle": "第 8 日·下新坑。文明历 2047，此宇宙比人间再快两年：新坑晨雾里露出反刻符号，杨雪把无人机测线叠到层位图上，王墩边啃冷馒头边说今天第一铲归活人。",
+  "releasedAt": "2026-06-12",
   "autoTune": {
     "enabled": true,
     "windowSize": 8,
@@ -15,9 +15,9 @@
     "targetWinRate": 0.52
   },
   "patchNotes": [
-    "Gen.58 · 宇宙第7日 · 收工复盘 · 文明历 2045",
-    "神树章超越期叙事；周复盘寻金渠道",
-    "超越期驻场收益略增"
+    "Gen.59 · 宇宙第8日 · 下新坑 · 文明历 2047",
+    "青铜门启/地图/发现语刷新为新坑晨雾与二〇四七层位",
+    "新增新坑资料校勘网络结算渠道，仍只入账不扣款"
   ],
   "virtualAccount": {
     "module": "virtual-account.js",

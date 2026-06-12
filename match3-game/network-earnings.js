@@ -22,6 +22,7 @@
     publicCommonsMirror: { amount: 0.016, phases: ["超越期"] },
     beyondPhaseTick: { amount: 0.0014, sessionCap: 0.01, phases: ["超越期"] },
     weeklyRecap: { amount: 0.02, phases: ["超越期", "复兴期"] },
+    newPitSurvey: { amount: 0.024, phases: ["超越期"], universeDayMod: 1 },
     bounty: {
       label: "任务赏金(演示)",
       endpoint: "https://api.coingecko.com/api/v3/ping",
@@ -123,6 +124,7 @@
     lastPublicCommonsMirror: "",
     beyondSessionTickTotal: 0,
     lastWeeklyRecap: "",
+    lastNewPitSurvey: "",
   };
 
   var tickTimer = null;
@@ -147,6 +149,7 @@
       state.beyondSessionTickTotal =
         typeof data.beyondSessionTickTotal === "number" ? data.beyondSessionTickTotal : 0;
       state.lastWeeklyRecap = data.lastWeeklyRecap || "";
+      state.lastNewPitSurvey = data.lastNewPitSurvey || "";
     } catch (e) {
       // ignore
     }
@@ -161,6 +164,10 @@
           sessionTickTotal: state.sessionTickTotal,
           lastRelicBounty: state.lastRelicBounty,
           lastCivilizationArchive: state.lastCivilizationArchive,
+          lastPublicCommonsMirror: state.lastPublicCommonsMirror,
+          beyondSessionTickTotal: state.beyondSessionTickTotal,
+          lastWeeklyRecap: state.lastWeeklyRecap,
+          lastNewPitSurvey: state.lastNewPitSurvey,
           updatedAt: Date.now(),
         })
       );
@@ -174,10 +181,22 @@
     return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate();
   }
 
+  function getEvolutionState() {
+    return typeof window !== "undefined" && window.MATCH3_EVOLUTION ? window.MATCH3_EVOLUTION : {};
+  }
+
   function registerChannel(id, def) {
     if (!id || !def || !def.source || !def.label) return false;
     registry[id] = Object.assign({ id: id }, def);
     return true;
+  }
+
+  function registerNightlyChannels() {
+    registerChannel("new_pit_survey", {
+      label: "新坑资料校勘",
+      source: "network_settlement",
+      description: "宇宙周一新坑资料被公开校勘时的外部结算入账",
+    });
   }
 
   function listChannels() {
@@ -382,7 +401,7 @@
   }
 
   function tryWeeklyRecap() {
-    var evo = typeof window !== "undefined" && window.MATCH3_EVOLUTION ? window.MATCH3_EVOLUTION : {};
+    var evo = getEvolutionState();
     var uday = evo.universeDay || 0;
     if (uday % 7 !== 0) return 0;
     var key = todayKey() + "-w" + uday;
@@ -404,6 +423,32 @@
       window.showSystemToast("📋 宇宙第" + uday + "日收工复盘 · 入账", 3600);
     }
     return credited;
+  }
+
+  function tryNewPitSurvey() {
+    var cfg = CONFIG.newPitSurvey;
+    var evo = getEvolutionState();
+    var uday = evo.universeDay || 0;
+    if (!cfg || !uday || uday % 7 !== cfg.universeDayMod) return 0;
+    var key = todayKey() + "-d" + uday;
+    if (state.lastNewPitSurvey === key) return 0;
+    var clock =
+      typeof window !== "undefined" && window.MATCH3_CIVILIZATION_CLOCK
+        ? window.MATCH3_CIVILIZATION_CLOCK
+        : null;
+    var phase = clock ? clock.getPhase() : evo.civilizationPhase || "";
+    if (cfg.phases.indexOf(phase) < 0) return 0;
+    state.lastNewPitSurvey = key;
+    saveState();
+    return creditChannel("new_pit_survey", {
+      amount: cfg.amount,
+      meta: {
+        kind: "new_pit_survey",
+        universeDay: uday,
+        phase: phase,
+        year: clock ? clock.getCivilizationDate().civilizationYear : evo.civilizationYear,
+      },
+    });
   }
 
   function tryPublicCommonsMirror() {
@@ -455,6 +500,7 @@
     tryDailyPassiveYield();
     tryRelicBounty();
     tryCivilizationArchive();
+    tryNewPitSurvey();
     tryPublicCommonsMirror();
     tryWeeklyRecap();
     tryAffiliateReferral();
@@ -469,6 +515,8 @@
   function getConfig() {
     return Object.assign({}, CONFIG);
   }
+
+  registerNightlyChannels();
 
   window.MATCH3_NETWORK_EARNINGS = {
     CONFIG: CONFIG,
