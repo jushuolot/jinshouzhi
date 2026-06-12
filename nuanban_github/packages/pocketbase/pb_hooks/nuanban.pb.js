@@ -314,6 +314,7 @@ routerAdd("POST", "/api/nuanban/auth/register", function (e) {
   rec.set("role", role);
   rec.set("status", role === "student" ? "pending" : "active");
   if (body.displayName) rec.set("display_name", body.displayName);
+  if (body.wechatId) rec.set("wechat_id", String(body.wechatId).trim().slice(0, 64));
   $app.save(rec);
   const roleRecords2 = $app.findRecordsByFilter(
     "user_roles",
@@ -496,6 +497,12 @@ routerAdd("POST", "/api/nuanban/elder/orders", function (e) {
   order.set("created_by", auth.id);
   if (body.studentId) order.set("student_user", body.studentId);
   if (body.scheduledAt) order.set("scheduled_at", body.scheduledAt);
+  nb.appendOrderTimeline(order, "created", "预约已提交", "elder");
+  if (status === "pending_payment") {
+    nb.appendOrderTimeline(order, "pending_payment", "等待家属/老人支付", "system");
+  } else {
+    nb.appendOrderTimeline(order, "pending_accept", "等待同学接单", "system");
+  }
   $app.save(order);
 
   if (needsOutdoor && status !== "pending_payment") {
@@ -549,6 +556,7 @@ routerAdd("POST", "/api/nuanban/student/order-requests/{id}/accept", function (e
   order.set("student_user", auth.id);
   if (needsOutdoor) {
     order.set("status", "outdoor_pending");
+    nb.appendOrderTimeline(order, "outdoor_pending", "同学已接单，等待家属审批外出", "student");
     $app.save(order);
     const existing = $app.findRecordsByFilter(
       "outdoor_approvals",
@@ -567,6 +575,7 @@ routerAdd("POST", "/api/nuanban/student/order-requests/{id}/accept", function (e
     }
   } else {
     order.set("status", "pending_service");
+    nb.appendOrderTimeline(order, "pending_service", "同学已接单，请按时到场", "student");
     $app.save(order);
     const schCol = $app.findCollectionByNameOrId("schedules");
     const sch = new Record(schCol);
@@ -1650,6 +1659,7 @@ routerAdd("POST", "/api/nuanban/student/orders/{id}/start", function (e) {
     return e.json(400, { message: "当前状态不可开始服务" });
   }
   order.set("status", "in_service");
+  nb.appendOrderTimeline(order, "in_service", "同学已开始服务", "student");
   $app.save(order);
   const schs = $app.findRecordsByFilter(
     "schedules",
@@ -1681,6 +1691,7 @@ routerAdd("POST", "/api/nuanban/student/orders/{id}/complete", function (e) {
     return e.json(400, { message: "当前状态不可完成" });
   }
   order.set("status", "pending_confirm");
+  nb.appendOrderTimeline(order, "pending_confirm", "服务已结束，等待家属/老人确认", "student");
   $app.save(order);
   nb.completeOrderSchedule(orderId, "pending_confirm");
   return e.json(200, { ok: true, status: "pending_confirm" });
@@ -1961,6 +1972,7 @@ routerAdd("POST", "/api/nuanban/student/orders/{id}/checkin", function (e) {
     } catch (_) {}
   }
   order.set("status", "in_service");
+  nb.appendOrderTimeline(order, "in_service", "已到场签到，开始服务", "student");
   $app.save(order);
   const schs = $app.findRecordsByFilter(
     "schedules",
@@ -2573,6 +2585,62 @@ routerAdd("GET", "/api/nuanban/platform/overview", function (e) {
     coreCompletionPct: 88,
     auditStatus: "PASS",
     demoUrl: nb.h5AppBaseUrl(e) + "/#/pages/common/login",
+  });
+});
+
+routerAdd("GET", "/api/nuanban/orders/{id}/messages", function (e) {
+  var nb = require(__hooks + "/nuanban_lib.js");
+  if (!e.auth) return e.json(401, { message: "需要登录" });
+  var roleHdr = e.request.header.get("X-Active-Role") || "";
+  var orderId = e.request.pathValue("id");
+  var order;
+  try {
+    order = $app.findRecordById("orders", orderId);
+  } catch (_) {
+    return e.json(404, { message: "订单不存在" });
+  }
+  if (!nb.orderChatCanAccess(e.auth.id, roleHdr, order)) {
+    return e.json(403, { message: "无权查看该订单沟通" });
+  }
+  return e.json(200, {
+    list: nb.orderMessagesDto(orderId, e.auth.id),
+    threadOpen: nb.orderChatThreadOpen(order.getString("status")),
+  });
+});
+
+routerAdd("POST", "/api/nuanban/orders/{id}/messages", function (e) {
+  var nb = require(__hooks + "/nuanban_lib.js");
+  if (!e.auth) return e.json(401, { message: "需要登录" });
+  var roleHdr = e.request.header.get("X-Active-Role") || "";
+  var orderId = e.request.pathValue("id");
+  var order;
+  try {
+    order = $app.findRecordById("orders", orderId);
+  } catch (_) {
+    return e.json(404, { message: "订单不存在" });
+  }
+  if (!nb.orderChatCanAccess(e.auth.id, roleHdr, order)) {
+    return e.json(403, { message: "无权发送消息" });
+  }
+  if (!nb.orderChatThreadOpen(order.getString("status"))) {
+    return e.json(400, { message: "本单沟通通道已关闭" });
+  }
+  var raw = toString(e.request.body);
+  var body = raw ? JSON.parse(raw) : {};
+  var text = String(body.body || "").trim();
+  if (!text) return e.json(400, { message: "消息不能为空" });
+  var msg = nb.orderMessagePush(orderId, e.auth.id, roleHdr, text);
+  return e.json(200, {
+    ok: true,
+    message: {
+      id: msg.id,
+      orderId: orderId,
+      senderRole: msg.senderRole,
+      senderAlias: msg.senderAlias,
+      body: msg.body,
+      createdAt: msg.createdAt,
+      mine: true,
+    },
   });
 });
 

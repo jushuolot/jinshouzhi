@@ -387,6 +387,15 @@
         "maxSelect": 1,
         "maxSize": 5242880,
         "mimeTypes": ["image/jpeg", "image/png", "image/webp"]
+      },
+      {
+        "id": "fld_ur_wechat",
+        "name": "wechat_id",
+        "type": "text",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "max": 64
       }
     ],
     "indexes": [],
@@ -639,6 +648,14 @@
         "id": "fld_ord_paid_at",
         "name": "paid_at",
         "type": "date",
+        "required": false,
+        "system": false,
+        "hidden": false
+      },
+      {
+        "id": "fld_ord_timeline",
+        "name": "status_timeline",
+        "type": "json",
         "required": false,
         "system": false,
         "hidden": false

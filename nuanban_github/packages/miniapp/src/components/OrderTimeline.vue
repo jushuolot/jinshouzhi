@@ -1,103 +1,146 @@
 <template>
   <view v-if="isCancelled" class="cancelled-banner">订单已取消</view>
-  <view class="timeline" :class="{ cancelled: isCancelled }">
+
+  <view class="tracker">
     <view
-      v-for="(step, idx) in steps"
-      :key="step.key"
-      class="step"
-      :class="{
-        done: idx < currentIndex,
-        active: idx === currentIndex,
-        future: idx > currentIndex,
-      }"
+      v-for="(row, idx) in rows"
+      :key="row.key"
+      class="track-row"
+      :class="{ reached: row.reached, active: row.active, future: !row.reached }"
     >
-      <view class="dot-wrap">
-        <view class="dot" />
-        <view v-if="idx < steps.length - 1" class="line" />
+      <view class="track-rail">
+        <view class="track-dot" />
+        <view v-if="idx < rows.length - 1" class="track-line" />
       </view>
-      <text class="label">{{ step.label }}</text>
+      <view class="track-body">
+        <view class="track-head">
+          <text class="track-title">{{ row.label }}</text>
+          <text v-if="row.at" class="track-time">{{ formatTime(row.at) }}</text>
+        </view>
+        <text v-if="row.detail && row.reached" class="track-detail">{{ row.detail }}</text>
+        <text v-else-if="!row.reached" class="track-pending">待进行</text>
+      </view>
     </view>
   </view>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue';
+import {
+  formatTimelineTime,
+  mergeTimelineForDisplay,
+  type OrderTimelineEvent,
+} from '../utils/order-timeline';
 import { orderTimelineIndex, orderTimelineSteps } from '../utils/order-status';
 
 const props = defineProps<{
   status: string;
   requiresOutdoor?: boolean;
+  timeline?: OrderTimelineEvent[];
 }>();
 
 const steps = computed(() => orderTimelineSteps(props.requiresOutdoor));
 const isCancelled = computed(() => props.status === 'cancelled');
-const currentIndex = computed(() =>
-  isCancelled.value ? -1 : orderTimelineIndex(props.status, props.requiresOutdoor),
-);
+
+const rows = computed(() => {
+  const keys = steps.value.map((s) => s.key);
+  const events = props.timeline ?? [];
+  if (isCancelled.value) {
+    return mergeTimelineForDisplay(keys, events, 'cancelled').map((r) => ({
+      ...r,
+      reached: !!r.at || events.some((e) => e.key === r.key),
+    }));
+  }
+  const idx = orderTimelineIndex(props.status, props.requiresOutdoor);
+  const currentKey = keys[idx] ?? props.status;
+  return mergeTimelineForDisplay(keys, events, currentKey);
+});
+
+function formatTime(iso: string) {
+  return formatTimelineTime(iso);
+}
 </script>
 
 <style scoped>
-.timeline {
-  display: flex;
-  justify-content: space-between;
-  padding: 24rpx 8rpx 8rpx;
+.tracker {
+  padding: 8rpx 0 16rpx;
 }
-.step {
-  flex: 1;
+.track-row {
+  display: flex;
+  gap: 16rpx;
+  min-height: 72rpx;
+}
+.track-rail {
+  width: 32rpx;
   display: flex;
   flex-direction: column;
   align-items: center;
-  min-width: 0;
+  flex-shrink: 0;
 }
-.dot-wrap {
-  position: relative;
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 32rpx;
-}
-.dot {
+.track-dot {
   width: 20rpx;
   height: 20rpx;
   border-radius: 50%;
   background: var(--nb-border, #ddd);
+  margin-top: 6rpx;
   z-index: 1;
 }
-.line {
-  position: absolute;
-  left: 50%;
-  right: -50%;
-  top: 50%;
-  height: 4rpx;
+.track-line {
+  flex: 1;
+  width: 4rpx;
+  min-height: 24rpx;
   background: var(--nb-border-light, #eee);
-  transform: translateY(-50%);
-  z-index: 0;
+  margin: 4rpx 0;
 }
-.step.done .dot {
+.track-row.reached .track-dot {
   background: var(--nb-primary, #c45c26);
 }
-.step.done .line {
-  background: var(--nb-border-dashed, #f0c9b0);
+.track-row.reached .track-line {
+  background: #f0c9b0;
 }
-.step.active .dot {
-  background: var(--nb-primary, #c45c26);
+.track-row.active .track-dot {
   box-shadow: 0 0 0 6rpx rgba(196, 92, 38, 0.2);
 }
-.label {
-  margin-top: 12rpx;
-  font-size: 20rpx;
-  color: var(--nb-text-muted, #999);
-  text-align: center;
-  white-space: nowrap;
+.track-body {
+  flex: 1;
+  padding-bottom: 20rpx;
+  min-width: 0;
 }
-.step.active .label,
-.step.done .label {
+.track-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12rpx;
+}
+.track-title {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: var(--nb-text, #333);
+}
+.track-row.future .track-title {
+  color: var(--nb-text-muted, #bbb);
+  font-weight: 400;
+}
+.track-row.reached .track-title {
   color: var(--nb-primary, #c45c26);
-  font-weight: 500;
 }
-.timeline.cancelled {
-  opacity: 0.45;
+.track-time {
+  font-size: 22rpx;
+  color: var(--nb-text-muted, #999);
+  flex-shrink: 0;
+}
+.track-detail {
+  display: block;
+  margin-top: 6rpx;
+  font-size: 24rpx;
+  color: var(--nb-text-secondary, #666);
+  line-height: 1.45;
+}
+.track-pending {
+  display: block;
+  margin-top: 6rpx;
+  font-size: 22rpx;
+  color: #ccc;
 }
 .cancelled-banner {
   text-align: center;

@@ -27,7 +27,8 @@
       <view v-if="referralCode && role === 'student'" class="ref-tip">
         已绑定推荐码 {{ referralCode }} · 注册成功推荐人得奖励
       </view>
-      <input v-model="displayName" class="input nb-input" placeholder="显示名称（可选）" />
+      <input v-model="wechatId" class="input nb-input" placeholder="微信号（平台联系用，不对外展示）" />
+      <text class="field-hint">手机号已在登录时绑定；微信号仅运营审核与异常联系，不会给对方学生/家属</text>
       <button class="btn-primary nb-btn-primary" :loading="loading" @tap="submit">确认身份</button>
       <text class="back" @tap="step = 'pick'">重新选择身份</text>
     </template>
@@ -46,7 +47,7 @@ import { useRoleStore } from '../../store/role';
 import { pbErrorMessage } from '../../utils/request';
 
 const role = ref<RoleKey>('student');
-const displayName = ref('');
+const wechatId = ref('');
 const loading = ref(false);
 const step = ref<'pick' | 'form'>('pick');
 const referralCode = ref('');
@@ -106,12 +107,17 @@ function goLogin() {
 }
 
 async function submit() {
+  if (!wechatId.value.trim()) {
+    uni.showToast({ title: '请填写微信号', icon: 'none' });
+    return;
+  }
   loading.value = true;
   try {
     const roles = await registerRole(
       role.value,
-      displayName.value || undefined,
+      undefined,
       role.value === 'student' ? referralCode.value || undefined : undefined,
+      wechatId.value.trim(),
     );
     roleStore.setAuth({
       token: roleStore.token,
@@ -136,6 +142,13 @@ async function submit() {
 </script>
 
 <style scoped>
+.field-hint {
+  display: block;
+  margin: 8rpx 0 20rpx;
+  font-size: 22rpx;
+  color: var(--nb-text-muted, #888);
+  line-height: 1.45;
+}
 .step-title {
   display: block;
   font-size: 36rpx;

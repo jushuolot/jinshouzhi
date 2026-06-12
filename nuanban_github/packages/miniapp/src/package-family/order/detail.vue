@@ -2,7 +2,11 @@
   <view class="page">
     <view v-if="order" class="card">
       <text class="status">{{ statusLabel(order.status) }}</text>
-      <OrderTimeline :status="order.status" :requires-outdoor="requiresOutdoor" />
+      <OrderTimeline
+        :status="order.status"
+        :requires-outdoor="requiresOutdoor"
+        :timeline="order.timeline"
+      />
       <text class="svc">{{ serviceName }}</text>
       <view class="row">
         <text class="label">老人</text>
@@ -27,6 +31,7 @@
     </view>
     <view v-else class="empty">加载中或订单不存在</view>
 
+    <button v-if="order?.chatOpen" class="btn-outline" @tap="goChat">联系对方（订单密聊）</button>
     <button v-if="order?.status === 'pending_payment'" class="btn" @tap="goPay">去支付</button>
     <button
       v-if="order?.status === 'pending_confirm'"
@@ -49,6 +54,7 @@ import OrderTimeline from '../../components/OrderTimeline.vue';
 import { confirmOrderComplete, getFamilyOrder } from '../../api/family';
 import { fetchFamilyWallet } from '../../api/wallet';
 import { orderStatusLabel } from '../../utils/order-status';
+import type { OrderTimelineEvent } from '../../utils/order-timeline';
 import { pbErrorMessage } from '../../utils/request';
 
 interface FamilyOrderDetail {
@@ -61,6 +67,8 @@ interface FamilyOrderDetail {
   serviceName?: string;
   studentName?: string;
   requiresOutdoorApproval?: boolean;
+  timeline?: OrderTimelineEvent[];
+  chatOpen?: boolean;
 }
 
 const orderId = ref('');
@@ -113,6 +121,10 @@ onLoad((q) => {
 });
 
 onShow(load);
+
+function goChat() {
+  uni.navigateTo({ url: `/pages/common/order-chat?orderId=${orderId.value}` });
+}
 
 function goPay() {
   uni.navigateTo({ url: `/package-family/order/pay?id=${orderId.value}` });

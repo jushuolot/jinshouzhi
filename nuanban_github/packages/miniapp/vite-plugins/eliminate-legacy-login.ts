@@ -1,3 +1,4 @@
+import type { Connect } from 'vite';
 import type { Plugin } from 'vite';
 
 const LEGACY_LOGIN = /^\/login\/?$/;
@@ -8,11 +9,7 @@ function loginHashUrl(reqUrl: string | undefined): string {
   return `${base}/#/pages/common/login`;
 }
 
-function redirectLegacyLogin(
-  req: { url?: string; method?: string },
-  res: { writeHead: (code: number, headers: Record<string, string>) => void; end: () => void },
-  next: () => void,
-) {
+function redirectLegacyLogin(req: Connect.IncomingMessage, res: Connect.ServerResponse, next: Connect.NextFunction) {
   if ((req.method || 'GET').toUpperCase() !== 'GET') {
     next();
     return;
@@ -32,10 +29,14 @@ export function eliminateLegacyLoginPlugin(): Plugin {
   return {
     name: 'eliminate-legacy-login',
     configureServer(server) {
-      server.middlewares.use(redirectLegacyLogin);
+      return () => {
+        server.middlewares.use(redirectLegacyLogin);
+      };
     },
     configurePreviewServer(server) {
-      server.middlewares.use(redirectLegacyLogin);
+      return () => {
+        server.middlewares.use(redirectLegacyLogin);
+      };
     },
   };
 }

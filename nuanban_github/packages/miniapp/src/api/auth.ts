@@ -75,11 +75,17 @@ export async function registerRole(
   role: RoleKey,
   displayName?: string,
   referralCode?: string,
+  wechatId?: string,
 ): Promise<AuthRole[]> {
   const res = await request<{ roles: AuthRole[] }>({
     url: '/nuanban/auth/register',
     method: 'POST',
-    data: { role, displayName, ...(referralCode ? { referralCode } : {}) },
+    data: {
+      role,
+      displayName,
+      ...(referralCode ? { referralCode } : {}),
+      ...(wechatId ? { wechatId } : {}),
+    },
   });
   return res.roles;
 }

@@ -39,6 +39,7 @@
     { "path": "pages/common/student-profiles", "style": { "navigationBarTitleText": "学生" } },
     { "path": "pages/common/school-coop", "style": { "navigationBarTitleText": "学校合作" } },
     { "path": "pages/common/student-pending", "style": { "navigationBarTitleText": "审核中" } },
+    { "path": "pages/common/order-chat", "style": { "navigationBarTitleText": "订单密聊" } },
     {
       "path": "pages/common/demo-tour",
       "style": {

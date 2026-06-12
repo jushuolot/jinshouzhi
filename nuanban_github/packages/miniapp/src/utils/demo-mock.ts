@@ -1033,6 +1033,42 @@ function orderRecord(o: MockOrder) {
   };
 }
 
+const mockOrderTimelines: Record<
+  string,
+  Array<{ key: string; at: string; detail: string; actor?: string }>
+> = {};
+const mockOrderMessages: Record<
+  string,
+  Array<{
+    id: string;
+    orderId: string;
+    senderUser: string;
+    senderRole: string;
+    senderAlias: string;
+    body: string;
+    createdAt: string;
+  }>
+> = {};
+
+function mockChatOpen(status: string) {
+  return ['pending_accept', 'pending_service', 'in_service', 'pending_confirm'].includes(status);
+}
+
+function mockAppendTimeline(orderId: string, key: string, detail: string, actor = 'system') {
+  if (!mockOrderTimelines[orderId]) mockOrderTimelines[orderId] = [];
+  mockOrderTimelines[orderId].push({
+    key,
+    at: new Date().toISOString(),
+    detail,
+    actor,
+  });
+}
+
+function mockTimelineFor(order: MockOrder) {
+  if (mockOrderTimelines[order.id]?.length) return mockOrderTimelines[order.id];
+  return [{ key: 'created', at: order.scheduled_at, detail: '订单已创建', actor: 'system' }];
+}
+
 function pendingOrderDto(o: MockOrder) {
   const elder = elderById(o.elder);
   const svc = serviceById(o.service_item);
@@ -1049,6 +1085,8 @@ function pendingOrderDto(o: MockOrder) {
     distanceKm: elder ? 1.2 : undefined,
     orgName: elder ? orgNameById(elder.org) : ORG.name,
     elderIntro: elder?.intro,
+    timeline: mockTimelineFor(o),
+    chatOpen: mockChatOpen(o.status),
   };
 }
 
@@ -1434,6 +1472,7 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
     const order = state.orders.find((o) => o.id === studentOrderStart[1]);
     if (order && order.status === 'pending_service') {
       order.status = 'in_service';
+      mockAppendTimeline(order.id, 'in_service', '同学已开始服务', 'student');
       const dto = pendingOrderDto(order);
       recordActivity('checkin', '开始服务', `${dto.elderName} · ${dto.serviceName}`, {
         role: 'student',
@@ -1450,6 +1489,7 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
       return Promise.reject({ message: '当前状态不可签到' });
     }
     order.status = 'in_service';
+    mockAppendTimeline(order.id, 'in_service', '已到场签到，开始服务', 'student');
     const dto = pendingOrderDto(order);
     recordActivity('checkin', '到场签到', `${dto.elderName} · ${dto.serviceName}`, {
       role: 'student',
@@ -1464,6 +1504,7 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
     if (order && order.status === 'in_service') {
       order.status = 'pending_confirm';
       order.student_user = order.student_user || currentStudentUserId();
+      mockAppendTimeline(order.id, 'pending_confirm', '服务已结束，等待确认', 'student');
       const dto = pendingOrderDto(order);
       recordActivity('order_completed', '服务完成待确认', `${dto.elderName} · ${dto.serviceName}`, {
         role: 'student',
@@ -1568,6 +1609,10 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
         }
       } else {
         order.status = 'pending_service';
+        mockAppendTimeline(order.id, 'pending_service', '同学已接单，请按时到场', 'student');
+      }
+      if (svc.requires_outdoor_approval) {
+        mockAppendTimeline(order.id, 'outdoor_pending', '等待家属审批外出', 'student');
       }
       const dto = pendingOrderDto(order);
       recordActivity(
@@ -1727,6 +1772,8 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
       serviceName: dto.serviceName,
       studentName: caregiverNameByUserId(order.student_user),
       requiresOutdoorApproval: dto.requiresOutdoorApproval,
+      timeline: dto.timeline,
+      chatOpen: dto.chatOpen,
     } as T);
   }
   if (method === 'POST' && path.match(/\/nuanban\/family\/orders\/[^/]+\/pay/)) {
@@ -2078,6 +2125,40 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
   if (method === 'GET' && path === '/nuanban/platform/sos/active') {
     const list = state.sosAlerts.filter((a) => a.status === 'active').map(sosDto);
     return delay({ list } as T);
+  }
+
+  const orderMsgGet = path.match(/^\/nuanban\/orders\/([^/]+)\/messages$/);
+  if (method === 'GET' && orderMsgGet) {
+    const oid = orderMsgGet[1];
+    const order = state.orders.find((o) => o.id === oid);
+    if (!order) return Promise.reject({ message: '订单不存在' });
+    const list = (mockOrderMessages[oid] || []).map((m) => ({
+      ...m,
+      mine: m.senderUser === currentStudentUserId(),
+    }));
+    return delay({ list, threadOpen: mockChatOpen(order.status) } as T);
+  }
+  if (method === 'POST' && orderMsgGet) {
+    const oid = orderMsgGet[1];
+    const order = state.orders.find((o) => o.id === oid);
+    if (!order) return Promise.reject({ message: '订单不存在' });
+    if (!mockChatOpen(order.status)) {
+      return Promise.reject({ message: '本单沟通通道已关闭' });
+    }
+    const body = String(data.body || '').trim();
+    if (!body) return Promise.reject({ message: '消息不能为空' });
+    const msg = {
+      id: `msg_${oid}_${Date.now()}`,
+      orderId: oid,
+      senderUser: currentStudentUserId(),
+      senderRole: 'student',
+      senderAlias: '陪护同学·我',
+      body,
+      createdAt: new Date().toISOString(),
+    };
+    if (!mockOrderMessages[oid]) mockOrderMessages[oid] = [];
+    mockOrderMessages[oid].push(msg);
+    return delay({ ok: true, message: { ...msg, mine: true } } as T);
   }
 
   if (method === 'GET' && path === '/nuanban/debug/stress') {

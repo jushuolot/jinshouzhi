@@ -101,6 +101,72 @@ function serviceInfoById(id) {
   }
 }
 
+var ORDER_TIMELINE_MEM = {};
+var ORDER_MESSAGES_MEM = {};
+
+function readOrderTimeline(order) {
+  var list = null;
+  try {
+    var raw = order.get("status_timeline");
+    if (raw) {
+      if (typeof raw === "string") list = JSON.parse(raw);
+      else if (Array.isArray(raw)) list = raw;
+    }
+  } catch (_) {}
+  if ((!list || !list.length) && ORDER_TIMELINE_MEM[order.id]) {
+    list = ORDER_TIMELINE_MEM[order.id];
+  }
+  if (list && list.length) return list;
+  return backfillOrderTimeline(order);
+}
+
+function backfillOrderTimeline(order) {
+  var status = safeRecordString(order, "status", "");
+  var created = safeRecordString(order, "created", new Date().toISOString());
+  var chain = ["pending_payment", "pending_accept", "pending_service", "in_service", "pending_confirm", "completed"];
+  var idx = chain.indexOf(status);
+  if (status === "outdoor_pending") idx = 1;
+  var events = [{ key: "created", at: created, detail: "订单已创建", actor: "system" }];
+  var labels = {
+    pending_payment: "等待支付",
+    pending_accept: "等待同学接单",
+    outdoor_pending: "外出陪同待家属审批",
+    pending_service: "同学已接单，等待到场",
+    in_service: "服务进行中",
+    pending_confirm: "服务已结束，等待确认",
+    completed: "订单已完成",
+  };
+  for (var i = 0; i <= idx && i < chain.length; i++) {
+    var k = chain[i];
+    if (status === "outdoor_pending" && k === "pending_accept") continue;
+    events.push({ key: k, at: created, detail: labels[k] || k, actor: "system" });
+  }
+  if (status === "outdoor_pending") {
+    events.push({ key: "outdoor_pending", at: created, detail: labels.outdoor_pending, actor: "system" });
+  }
+  return events;
+}
+
+function saveOrderTimeline(order, list) {
+  try {
+    order.set("status_timeline", list);
+  } catch (_) {
+    ORDER_TIMELINE_MEM[order.id] = list;
+  }
+}
+
+function appendOrderTimeline(order, key, detail, actor) {
+  var list = readOrderTimeline(order);
+  list.push({
+    key: key,
+    at: new Date().toISOString(),
+    detail: detail || "",
+    actor: actor || "system",
+  });
+  saveOrderTimeline(order, list);
+  return list;
+}
+
 function orderToStudentDto(o) {
   const svc = serviceInfoById(safeRecordString(o, "service_item", ""));
   return {
@@ -113,6 +179,8 @@ function orderToStudentDto(o) {
     scheduledAt: safeRecordString(o, "scheduled_at", ""),
     status: safeRecordString(o, "status", ""),
     requiresOutdoorApproval: svc.requiresOutdoor,
+    timeline: readOrderTimeline(o),
+    chatOpen: orderChatThreadOpen(safeRecordString(o, "status", "")),
   };
 }
 
@@ -160,7 +228,83 @@ function orderToFamilyDto(order) {
     serviceName: svc.name,
     studentName: studentName,
     requiresOutdoorApproval: svc.requiresOutdoor,
+    timeline: readOrderTimeline(order),
+    chatOpen: orderChatThreadOpen(order.getString("status")),
   };
+}
+
+function orderChatThreadOpen(status) {
+  return (
+    status === "pending_accept" ||
+    status === "pending_service" ||
+    status === "in_service" ||
+    status === "pending_confirm"
+  );
+}
+
+function orderChatAlias(userId, role) {
+  if (role === "student") {
+    var sr = $app.findRecordsByFilter(
+      "user_roles",
+      'user = {:u} && role = "student"',
+      "",
+      1,
+      0,
+      { u: userId }
+    );
+    var dn = sr.length ? safeRecordString(sr[0], "display_name", "同学") : "同学";
+    return "陪护同学·" + (dn.charAt(0) || "同");
+  }
+  if (role === "family") return "家属·联系人";
+  if (role === "elder") return "老人·本人";
+  return "用户";
+}
+
+function orderChatCanAccess(userId, role, order) {
+  if (role === "student" && order.getString("student_user") === userId) return true;
+  if (role === "elder") {
+    var eid = elderProfileIdForUser(userId);
+    return eid && order.getString("elder") === eid;
+  }
+  if (role === "family" && familyCanAccessOrder(userId, order)) return true;
+  return false;
+}
+
+function orderMessagesList(orderId) {
+  if (!ORDER_MESSAGES_MEM[orderId]) ORDER_MESSAGES_MEM[orderId] = [];
+  return ORDER_MESSAGES_MEM[orderId];
+}
+
+function orderMessagesDto(orderId, viewerId) {
+  var list = orderMessagesList(orderId);
+  var out = [];
+  for (var i = 0; i < list.length; i++) {
+    var m = list[i];
+    out.push({
+      id: m.id,
+      orderId: orderId,
+      senderRole: m.senderRole,
+      senderAlias: m.senderAlias,
+      body: m.body,
+      createdAt: m.createdAt,
+      mine: m.senderUser === viewerId,
+    });
+  }
+  return out;
+}
+
+function orderMessagePush(orderId, senderUser, senderRole, body) {
+  var list = orderMessagesList(orderId);
+  var msg = {
+    id: "msg_" + orderId + "_" + (list.length + 1),
+    senderUser: senderUser,
+    senderRole: senderRole,
+    senderAlias: orderChatAlias(senderUser, senderRole),
+    body: String(body || "").slice(0, 500),
+    createdAt: new Date().toISOString(),
+  };
+  list.push(msg);
+  return msg;
 }
 
 function elderProfileIdForUser(userId) {
@@ -215,7 +359,9 @@ function finalizeOrderAfterConfirm(order) {
   if (order.getString("payment_status") === "unpaid") {
     order.set("payment_status", "paid");
     order.set("paid_at", new Date().toISOString());
+    appendOrderTimeline(order, "pending_payment", "家属/老人已付款", "family");
   }
+  appendOrderTimeline(order, "completed", "已确认完成，收入将计入结算", "family");
   order.set("status", "completed");
   $app.save(order);
   completeOrderSchedule(order.id, "completed");
@@ -657,5 +803,8 @@ module.exports = {
   adminFundsReconcileMap, adminFundOverview, adminFundCollectWallet, adminFundWithdrawalsList,
   adminApproveWithdrawal, adminRejectWithdrawal, adminMarkReconciled,
   requestBearerToken, requestOrigin, h5AppBaseUrl, userAvatarUrlForClient, userAvatarFields,
-  roleFileUrlForClient, studentRoleRecord
+  roleFileUrlForClient, studentRoleRecord,
+  readOrderTimeline, appendOrderTimeline, backfillOrderTimeline,
+  orderChatThreadOpen, orderChatCanAccess, orderChatAlias,
+  orderMessagesDto, orderMessagePush
 };

@@ -7,7 +7,11 @@
       </view>
 
       <view class="card">
-        <OrderTimeline :status="order.status" :requires-outdoor="order.requiresOutdoorApproval" />
+        <OrderTimeline
+          :status="order.status"
+          :requires-outdoor="order.requiresOutdoorApproval"
+          :timeline="order.timeline"
+        />
       </view>
 
       <view class="card info">
@@ -52,6 +56,14 @@
       <button v-if="order.status === 'in_service'" class="btn-ok" :loading="loading" @tap="complete">
         完成服务
       </button>
+      <button
+        v-if="order.chatOpen"
+        class="btn-chat"
+        @tap="goChat"
+      >
+        联系对方（订单密聊 · 不暴露手机号）
+      </button>
+
       <view v-if="order.status === 'pending_confirm'" class="wait-hint">
         服务已结束，等待家属或老人确认并付款后计入收入
       </view>
@@ -109,6 +121,11 @@ onLoad((q) => {
 });
 
 onShow(loadOrder);
+
+function goChat() {
+  if (!id.value) return;
+  uni.navigateTo({ url: `/pages/common/order-chat?orderId=${id.value}` });
+}
 
 async function accept() {
   if (!id.value) return;
@@ -206,6 +223,14 @@ async function complete() {
   color: #fff;
   border-radius: 12rpx;
   margin-bottom: 20rpx;
+}
+.btn-chat {
+  margin-bottom: 16rpx;
+  background: #fff;
+  color: var(--nb-primary, #c45c26);
+  border: 2rpx solid #f0dcc8;
+  border-radius: 12rpx;
+  font-size: 28rpx;
 }
 .btn-no {
   background: #fff;

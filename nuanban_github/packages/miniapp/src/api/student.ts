@@ -1,5 +1,6 @@
 import { request } from '../utils/request';
 import { pbList, type PbRecord } from './pb';
+import type { OrderTimelineEvent } from '../utils/order-timeline';
 
 export interface PendingOrder {
   id: string;
@@ -17,6 +18,8 @@ export interface PendingOrder {
 export interface StudentOrderDetail extends PendingOrder {
   elderIntro?: string;
   orgName?: string;
+  timeline?: OrderTimelineEvent[];
+  chatOpen?: boolean;
 }
 
 export interface IncomeRecord {
