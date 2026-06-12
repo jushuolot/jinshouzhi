@@ -49,6 +49,9 @@
             {{ codeBtnText }}
           </text>
         </view>
+        <text v-if="isDemoPhone" class="demo-fill" @tap="fillDemoCode">
+          演示号免短信：点此处填入 {{ demoMasterCode }}
+        </text>
 
         <AgreementRow
           :model-value="agreed"
@@ -134,6 +137,13 @@ onUnmounted(() => {
 const codeBtnText = computed(() =>
   codeCooldown.value > 0 ? `${codeCooldown.value}s` : '获取验证码',
 );
+
+const isDemoPhone = computed(() => /^1380000000[1-6]$/.test(phone.value));
+
+function fillDemoCode() {
+  smsCode.value = demoMasterCode;
+  uni.showToast({ title: '已填入演示验证码', icon: 'none' });
+}
 
 const canSubmit = computed(
   () => phone.value.length === 11 && smsCode.value.length === 6 && !loading.value && agreed.value,
@@ -425,6 +435,13 @@ function goGuest() {
 .sms-hint {
   margin-top: 12rpx;
   font-size: 22rpx;
+}
+.demo-fill {
+  display: block;
+  margin-top: 12rpx;
+  font-size: 24rpx;
+  color: #c45c26;
+  text-align: center;
 }
 .footer {
   margin-top: auto;

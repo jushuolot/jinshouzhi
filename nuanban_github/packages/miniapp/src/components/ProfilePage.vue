@@ -77,7 +77,7 @@ const elderProfile = ref<ElderSelfProfile | null>(null);
 const walletBalanceYuan = ref('0.00');
 
 const roleLabel = computed(() => {
-  const map: Record<RoleKey, string> = { student: '家属', family: '家属', elder: '老人' };
+  const map: Record<RoleKey, string> = { student: '学生', family: '家属', elder: '老人' };
   if (props.role === 'student') return '学生';
   return map[props.role];
 });
@@ -184,15 +184,23 @@ const detailSections = computed((): ProfileDetailSection[] => {
       },
       {
         title: '兴趣爱好',
-        tags: p.hobbies,
+        tags: p.hobbies?.length ? p.hobbies : undefined,
+        rows: p.hobbies?.length ? undefined : [{ label: '', value: '未填写' }],
       },
       {
         title: '服务偏好',
-        tags: p.servicePreferences,
-        rows: p.preferredVisitTimes.map((t, i) => ({
-          label: i === 0 ? '期望时段' : '',
-          value: t,
-        })),
+        tags: p.servicePreferences?.length ? p.servicePreferences : undefined,
+        rows: [
+          ...(p.servicePreferences?.length
+            ? []
+            : [{ label: '偏好', value: '未填写' }]),
+          ...(p.preferredVisitTimes?.length
+            ? p.preferredVisitTimes.map((t, i) => ({
+                label: i === 0 ? '期望时段' : '',
+                value: t,
+              }))
+            : [{ label: '期望时段', value: '未填写' }]),
+        ],
       },
       {
         title: '紧急联系人',
