@@ -6,15 +6,16 @@
   "use strict";
 
   var DEFAULT = {
-    version: "5.7.0",
-    generation: 50,
-    universeDay: 3,
+    version: "5.9.3",
+    generation: 59,
+    universeDay: 8,
     civilizationEpoch: "1929-07",
-    civilizationDay: 50,
-    civilizationYear: 2029,
-    civilizationPhase: "复兴期",
+    civilizationDay: 59,
+    civilizationYear: 2047,
+    civilizationPhase: "超越期",
     autoTune: { enabled: true, windowSize: 8, maxMoveAdjust: 3, targetWinRate: 0.52 },
-    patchNotes: ["Gen.50 文明时钟", "复兴期 2029 · 险情日台词"],
+    dailyChronicle: "第 8 日·下新坑。文明历 2047，新坑探针先响。",
+    patchNotes: ["Gen.59 文明时钟", "超越期 2047 · 下新坑台词"],
   };
 
   window.MATCH3_EVOLUTION = DEFAULT;
