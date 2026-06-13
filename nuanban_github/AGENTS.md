@@ -12,7 +12,7 @@
 
 ## 固定约束
 
-1. **三环境**：本地 **正式版**（PocketBase）→ GitHub **发布版**（Pages Mock）→ 阿里云 **发布稳定版**（PocketBase 生产）
+1. **三环境**：本地 **正式版**（PocketBase）→ GitHub **发布版**（真实 API，与阿里云同库）→ 阿里云 **发布稳定版**（PocketBase 生产）
 2. **双端 API 对齐**：改接口时同时更新 `demo-mock.ts` 与 `packages/pocketbase/pb_hooks/nuanban.pb.js`
 3. **新页面必注册**：`packages/miniapp/src/pages.json` + `docs/MINIAPP_ROUTING.md`
 4. **最小 diff**：只改与当前 Phase 相关的文件，匹配现有风格
@@ -62,7 +62,7 @@ node scripts/test-student-audit-flow.mjs # 20/20 注册/审核
 
 ## 演示账号
 
-手机号登录（**本地正式版**：九宫格验证 → 运营 **更多 → 短信发件箱** 取 6 位码；**无** `000000`）。GitHub **测试版** Mock 仍可用 `000000`。见 `docs/SMS_CAPTCHA.md` 与 `demo-rich-data.ts`。
+手机号登录（**本地 / GitHub 发布版 / 阿里云**：九宫格验证 → 运营 **更多 → 短信发件箱** 取 6 位码；**无** `000000`）。仅显式 Mock（`VITE_DEMO_MOCK=true`）或游客浏览可用 `000000`。见 `docs/SMS_CAPTCHA.md` 与 `demo-rich-data.ts`。
 
 | 手机号 | 邮箱 | 角色 | 用途 |
 |--------|------|------|------|
@@ -75,7 +75,7 @@ node scripts/test-student-audit-flow.mjs # 20/20 注册/审核
 
 运营台：登录页 **连点左上角「暖」** → 口令 `nuanban2026`（或 `暖伴2026`）→ 六 Tab 运营台（含 **机构** 老人档案）。
 
-**发布**：GitHub Pages = 测试备份（Mock），`release-test.sh`；阿里云 = 正式版，`release-prod.sh`。见 [ENV_PARITY.md](./docs/ENV_PARITY.md) · [RELEASE.md](./docs/RELEASE.md)。
+**发布**：GitHub Pages = **发布版**（真实 API，`release-formal.sh`）；阿里云 = **发布稳定版**，`release-prod.sh`。见 [ENV_PARITY.md](./docs/ENV_PARITY.md) · [RELEASE.md](./docs/RELEASE.md)。
 
 ## 产品核心（勿偏离）
 

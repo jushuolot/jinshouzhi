@@ -131,6 +131,10 @@ const formalAuth = isFormalAuthMode();
 onLoad((query) => {
   fromTour.value = query?.from === 'tour';
   fromGuest.value = query?.from === 'guest';
+  if (query?.switch === '1' || query?.logout === '1') {
+    roleStore.logout();
+    return;
+  }
   agreed.value = isUserManualAccepted();
   if (roleStore.isLoggedIn) {
     void redirectLoggedIn();

@@ -6,16 +6,16 @@
 
 ## 环境对照
 
-| 项 | 本地测试机 | GitHub（正式制作） | 阿里云（对外发布） |
-|----|------------|-------------------|-------------------|
+| 项 | 本地测试机 | GitHub（发布版） | 阿里云（发布稳定版） |
+|----|------------|------------------|---------------------|
 | 地址 | `localhost:5174` | `jushuolot.github.io/.../nuanban` | `nuanban.cc` / IP |
-| 角标 | 开发版 | **正式版** | **发布版** |
-| `VITE_RELEASE_CHANNEL` | `development` | `formal` | `public` |
-| Mock | 可全量（`VITE_DEMO_MOCK`） | **仅游客** | 无 |
+| 角标 | 正式版 | **发布版** | **发布稳定版** |
+| `VITE_RELEASE_CHANNEL` | `formal` / `development` | `release` | `stable` / `public` |
+| Mock | 游客 / 显式 env | **仅游客** | 无 |
 | 发布命令 | `dev-test.sh` | `release-formal.sh` | `release-prod.sh` |
 | 服务器路径 | — | `/opt/jinshouzhi/nuanban_github` |
 
-原则：**先 GitHub 测试版验收，再显式 `release-prod.sh` 发阿里云**。本地 `git push` **不会**自动部署正式版。
+原则：**先 GitHub 发布版验收，再显式 `release-prod.sh` 发阿里云**。本地 `git push` **不会**自动部署阿里云 H5（仅更新 Pages 静态包）。
 
 ---
 
@@ -36,7 +36,7 @@ Caddy 在同一域名下提供 H5 与 API，**避免 H5 跨域**：
 
 | 场景 | 构建时 `VITE_API_BASE_URL` | 运行时实际请求 |
 |------|---------------------------|----------------|
-| GitHub Pages | `/api` | Mock，不走网络 |
+| GitHub Pages | `NUANBAN_FORMAL_API_URL`（默认 `http://101.200.128.82/api`） | 远程 PocketBase（HTTPS 页可能 mixed-content 拦截 HTTP） |
 | 阿里云 IP 备案期 | `http://101.200.128.82/api` | 同 IP `/api` |
 | 阿里云 HTTPS | `https://nuanban.cc/api` | 同域 `/api` |
 | 本地 dev | `/api` | Vite 代理 → `localhost:8090` |
@@ -93,8 +93,8 @@ cd /opt/jinshouzhi/nuanban_github && ./scripts/sync-all.sh
 
 ### 1. Mock 与正式版分流
 
-- `isDemoMockEnabled()`：`VITE_DEMO_MOCK=true` **或** 运行在 `*.github.io/.../nuanban`
-- 阿里云 IP/域名 **不会** 自动启用 Mock；必须走 `request()` → PocketBase
+- `isDemoMockEnabled()`：`VITE_DEMO_MOCK=true` **或** `isGuestBrowse()`（游客）
+- GitHub Pages **不再**因 `*.github.io` 自动 Mock；登录用户走 `request()` → 远程 PocketBase
 - 改 API 时 **同时** 更新 `demo-mock.ts` 与 `pb_hooks/nuanban.pb.js`（见 `AGENTS.md`）
 
 ### 2. localStorage 仅测试版
@@ -147,7 +147,7 @@ cd /opt/jinshouzhi/nuanban_github && ./scripts/sync-all.sh
 
 | 现象 | 原因 | 处理 |
 |------|------|------|
-| 正式版仍像 Mock / 数据不对 | 打开了 `github.io` 或浏览器缓存旧包 | 确认 URL 为 IP/域名且见「正式版」角标；强刷 |
+| 正式版仍像 Mock / 数据不对 | 游客浏览模式或浏览器缓存旧包 | 登录后确认见「发布版」角标；强刷；检查 Network 是否请求远程 API |
 | API 连到 `localhost:8090` | 构建未用 production 变量或 `resolveApiBase` 未生效 | 服务器执行 `aliyun-fix-data.sh` |
 | 登录「用户不存在」 | 未 seed / 集合未导入 | `./scripts/aliyun-fix-data.sh` |
 | `git pull` 超时 | 国内访问 GitHub 不稳定 | `./scripts/git-pull-cn.sh` |

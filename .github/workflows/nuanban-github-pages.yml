@@ -30,8 +30,7 @@ jobs:
         env:
           VITE_BASE: /${{ vars.GITHUB_REPO || 'jinshouzhi' }}/nuanban/
           VITE_RELEASE_CHANNEL: release
-          VITE_DEMO_MOCK: 'true'
-          VITE_API_BASE_URL: /api
+          VITE_API_BASE_URL: ${{ vars.NUANBAN_FORMAL_API_URL || 'http://101.200.128.82/api' }}
         run: |
           npm install
           npm run build:h5

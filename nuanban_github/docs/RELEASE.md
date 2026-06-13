@@ -5,7 +5,7 @@
 | 环境 | 角色 | 地址 | 角标 | 数据 |
 |------|------|------|------|------|
 | **本地** | 最新产品验证 | `http://localhost:5174` | **正式版** | PocketBase 测试数据 + 正式登录流 |
-| **GitHub Pages** | **发布版** | https://jushuolot.github.io/jinshouzhi/nuanban/ | **发布版** | Pages Mock（无服务端） |
+| **GitHub Pages** | **发布版** | https://jushuolot.github.io/jinshouzhi/nuanban/ | **发布版** | 真实 API（与阿里云同库） |
 | **阿里云** | **发布稳定版** | http://101.200.128.82（备案后 nuanban.cc） | **发布稳定版** | PocketBase 生产数据 |
 
 原则：**本地正式版测通 → GitHub 发布版 → 阿里云发布稳定版**。  
@@ -31,8 +31,8 @@ git add … && git commit -m "feat: …"
 ./scripts/release-formal.sh   # push main → Actions 构建 Pages
 ```
 
-- Actions：`VITE_RELEASE_CHANNEL=release`，`VITE_DEMO_MOCK=true`
-- 验收角标：**发布版**
+- Actions：`VITE_RELEASE_CHANNEL=release`，`VITE_API_BASE_URL=${NUANBAN_FORMAL_API_URL}`（不设 `VITE_DEMO_MOCK`）
+- 验收角标：**发布版**；登录走真实 API，游客仍 Mock
 
 ### 3. 发布阿里云稳定版
 
@@ -56,7 +56,8 @@ git add … && git commit -m "feat: …"
 | 变量 | 本地 | GitHub 发布版 | 阿里云稳定版 |
 |------|------|---------------|--------------|
 | `VITE_RELEASE_CHANNEL` | `formal` | `release` | `stable` |
-| `VITE_DEMO_MOCK` | `false` | `true` | 不设 |
+| `VITE_DEMO_MOCK` | `false` | 不设 | 不设 |
+| `VITE_API_BASE_URL` | `/api`（代理） | `NUANBAN_FORMAL_API_URL` | 同域 `/api` |
 | 角标 | 正式版 | 发布版 | 发布稳定版 |
 
 ---

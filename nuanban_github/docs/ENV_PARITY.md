@@ -1,6 +1,6 @@
 # 暖伴勤工 · 环境一致性与硬约束
 
-> **原则**：测试系统与正式系统（阿里云）业务逻辑一致；GitHub Pages 作为测试备份，配置与本地测试机相同。仅因平台硬约束无法实现的差异，才允许跳过。
+> **原则**：测试系统与正式系统（阿里云）业务逻辑一致；GitHub Pages 作为**发布版**前端，与阿里云共用同一 PocketBase API（schema 经 `pb-init` 导入对齐，非 pb_data 文件同步）。仅因平台硬约束无法实现的差异，才允许跳过。
 
 ---
 
@@ -8,8 +8,8 @@
 
 | 词 | 含义 | 用在哪 |
 |----|------|--------|
-| **Mock** | 浏览器内 `demo-mock.ts`，无 PocketBase | **仅 GitHub Pages**（硬约束） |
-| **测试数据** | PocketBase 库内真实记录（`seed-demo`、万人 `seed-load-test`） | **本地 + 阿里云** |
+| **Mock** | 浏览器内 `demo-mock.ts`，无 PocketBase | **游客浏览**、显式 `VITE_DEMO_MOCK=true` |
+| **测试数据** | PocketBase 库内真实记录（`seed-demo`、万人 `seed-load-test`） | **本地 + GitHub 发布版 + 阿里云** |
 | **parity** | 本地与阿里云同逻辑：`VITE_DEMO_MOCK=false` + Docker PB | 日常开发默认 |
 
 本地 **不要** 开 `VITE_DEMO_MOCK=true`；`dev-test.sh` / `start-h5.sh` 会自动修正为 `false`。
@@ -18,20 +18,22 @@
 
 ## 三环境对照
 
-| 维度 | 本地测试机 | GitHub Pages（测试备份） | 阿里云（正式发布） |
-|------|------------|--------------------------|-------------------|
-| **角色** | 开发 / 验收 | 零安装演示备份 | 对外生产 |
+| 维度 | 本地测试机 | GitHub Pages（发布版） | 阿里云（发布稳定版） |
+|------|------------|------------------------|----------------------|
+| **角色** | 开发 / 验收 | 零安装发布前端 | 对外生产 |
 | **H5 构建** | `./scripts/start-h5.sh` | Actions 自动 build | `deploy-public.sh` / `release-prod.sh` |
-| `VITE_RELEASE_CHANNEL` | `development` | `test` | `public` |
-| `VITE_DEMO_MOCK` | **`false`（默认强制）** | **`true`（必须）** | **不设 / false** |
-| 登录用户 API | PocketBase 测试数据 | 浏览器 Mock | PocketBase 生产数据 |
+| `VITE_RELEASE_CHANNEL` | `formal` / `development` | `release` | `stable` / `public` |
+| `VITE_DEMO_MOCK` | **`false`（默认强制）** | **不设** | **不设 / false** |
+| 登录用户 API | PocketBase 测试数据 | **阿里云同库 API** | PocketBase 生产数据 |
 | 游客浏览 | Mock（未登录） | Mock | 无 Mock（需登录） |
-| 角标 | 开发版 | 测试版 | 发布版 |
-| 后端 | Docker PocketBase :8090 | **无**（静态托管） | Docker PB + Caddy |
-| 数据持久化 | `pb_data/` 卷（测试数据） | localStorage | `pb_data/` 卷 |
-| API 地址 | `/api` → 代理 8090 | 不发起真实 API（Mock 拦截） | `https://域名/api` |
+| 角标 | 正式版 | 发布版 | 发布稳定版 |
+| 后端 | Docker PocketBase :8090 | 远程 PocketBase（同阿里云） | Docker PB + Caddy |
+| 数据持久化 | `pb_data/` 卷（测试数据） | 服务端（与阿里云同库） | `pb_data/` 卷 |
+| API 地址 | `/api` → 代理 8090 | `NUANBAN_FORMAL_API_URL`（默认 `http://101.200.128.82/api`） | `https://域名/api` 或 IP |
 
-**推荐流程**：`./scripts/dev-test.sh` → `./scripts/start-h5.sh` 本地 parity 测通 → push main 更新 GitHub 备份 → `./scripts/release-prod.sh` 部署阿里云。
+**HTTPS  mixed-content**：GitHub Pages 为 HTTPS，若 API 仍为 HTTP IP，浏览器可能拦截请求。备案后请将 `NUANBAN_FORMAL_API_URL` 设为 `https://nuanban.cc/api`。PocketBase 已 `--origins=*`，CORS 对 `*.github.io` 无额外限制。
+
+**推荐流程**：`./scripts/dev-test.sh` → `./scripts/start-h5.sh` 本地 parity 测通 → push main 更新 GitHub 发布版 → `./scripts/release-prod.sh` 部署阿里云。
 
 ---
 
@@ -63,7 +65,7 @@
 
 | 约束 | 影响 | 测试/ GitHub 处理 | 阿里云后续 |
 |------|------|-------------------|------------|
-| **无服务端** | GitHub 不能跑 PocketBase | 全量 Mock + localStorage | ECS + Docker PB |
+| **静态托管** | GitHub 不能跑 PocketBase | H5 静态 + 远程 API；游客仍 Mock | ECS + Docker PB |
 | **短信验证** | 自建（图画验证+服务器 OTP） | 同左；演示号 `000000` | 可换真实 SMS，接口不变 |
 | **无真实微信支付** | 不能调起商户 API | 1.5s 模拟 / 储值卡扣款 | 扫呗 / 微信商户（见 PAYMENT.md） |
 | **无真实提现打款** | 不能企业付款到零钱 | 演示状态机（pending/completed） | 扫呗分账 / 银行接口 |
@@ -80,9 +82,9 @@
 ### 前端（`packages/miniapp/.env`）
 
 ```env
-VITE_API_BASE_URL=/api          # 本地 dev 代理；阿里云 build 为 https://域名/api
-VITE_RELEASE_CHANNEL=development # 本地 | test | public
-VITE_DEMO_MOCK=false            # 本地 parity；GitHub Actions 注入 true
+VITE_API_BASE_URL=/api          # 本地 dev 代理；GitHub/阿里云 build 为远程或同域 API
+VITE_RELEASE_CHANNEL=development # 本地 formal | release | stable/public
+VITE_DEMO_MOCK=false            # 本地 parity；GitHub Actions 不设（仅游客 Mock）
 ```
 
 `request.ts` 的 `resolveApiBase()` 会在非 localhost 环境自动把 `/api` 解析为 `当前域名/api`，**阿里云无需写死 IP**。
@@ -143,7 +145,7 @@ NUANBAN_REMOTE_DIR=/opt/jinshouzhi/nuanban_github
 | 场景 | 命令 / 触发 | 关键 env |
 |------|-------------|----------|
 | 本地 dev（默认） | `./scripts/dev-test.sh` + `./scripts/start-h5.sh` | `development`, `VITE_DEMO_MOCK=false` |
-| GitHub Pages | push `main` → Actions | `test`, `VITE_DEMO_MOCK=true`, `VITE_BASE=/jinshouzhi/nuanban/` |
+| GitHub Pages | push `main` → Actions | `release`, API=`NUANBAN_FORMAL_API_URL` |
 | 阿里云 staging | `deploy-staging.sh` | `public`, API=`http://IP/api` |
 | 阿里云 production | `deploy-public.sh` | `public`, API=`https://域名/api` |
 

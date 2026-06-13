@@ -83,6 +83,15 @@ else
 fi
 
 section "4/4 阿里云公网 API（${PUBLIC_API:-未配置}）"
+if [[ -f config/github.env ]]; then
+  # shellcheck disable=SC1091
+  source config/github.env
+fi
+FORMAL_API="${NUANBAN_FORMAL_API_URL:-http://101.200.128.82/api}"
+echo "  GitHub Pages 发布版 API（Actions 注入）: ${FORMAL_API}"
+if [[ "$FORMAL_API" == http://* ]]; then
+  echo "  ⚠ GitHub Pages 为 HTTPS，HTTP API 可能被浏览器 mixed-content 拦截；备案后改用 https://nuanban.cc/api"
+fi
 if [[ -n "$PUBLIC_API" ]]; then
   if curl -sf "${PUBLIC_API%/}/api/health" >/dev/null 2>&1; then
     if NUANBAN_API="$PUBLIC_API" ./scripts/pb-smoke-student.sh; then

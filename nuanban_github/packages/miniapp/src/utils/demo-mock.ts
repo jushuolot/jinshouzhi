@@ -41,6 +41,7 @@ import {
   getMockCartoonAvatarId,
   getMockVerificationPhotoUrl,
   setMockCartoonAvatarId,
+  setMockVerificationPhotoUrl,
 } from './mock-verification-storage';
 import { defaultCartoonAvatarId, resolveCartoonAvatarUrl } from './cartoon-avatars';
 import { isKnownSchool, KNOWN_SCHOOLS } from './known-schools';
@@ -500,6 +501,10 @@ function studentRoleStatus(): string {
 }
 
 function studentProfileDto() {
+  const user = currentDemoUser();
+  if (PRESET_DEMO_STUDENT_EMAILS.has(user.email.toLowerCase())) {
+    seedPresetStudentAuditProfile(user.id);
+  }
   const dto = getStudentFullProfile(studentProfileState);
   const userId = currentDemoUser().id;
   const cartoonId =
@@ -1108,6 +1113,34 @@ const mockContactPhoneByUser: Record<string, string> = {};
 const mockCustomCartoonByUser: Record<string, string> = {};
 const mockWechatByUser: Record<string, string> = {};
 
+/** 公网演示预设学生：补齐审核资料，登录后直达首页而非注册页 */
+function seedPresetStudentAuditProfile(userId: string, phone?: string) {
+  const digits = normalizePhone(String(phone || uni.getStorageSync(DEMO_LOGIN_PHONE_KEY) || ''));
+  if (digits.length === 11) mockContactPhoneByUser[userId] = digits;
+  const cartoonId = getMockCartoonAvatarId(userId) || defaultCartoonAvatarId('林同学');
+  if (!getMockCartoonAvatarId(userId)) setMockCartoonAvatarId(userId, cartoonId);
+  if (!getMockVerificationPhotoUrl(userId)) {
+    const placeholder = resolveCartoonAvatarUrl(cartoonId) || '/static/logo.png';
+    setMockVerificationPhotoUrl(userId, placeholder);
+  }
+  if (!studentProfileState.serviceAreaPolygons.length) {
+    studentProfileState.serviceAreaPolygons = [
+      {
+        id: 'demo-p1',
+        label: '浦东新区',
+        ring: [
+          { lat: 31.22, lng: 121.52 },
+          { lat: 31.24, lng: 121.56 },
+          { lat: 31.2, lng: 121.58 },
+        ],
+      },
+    ];
+  }
+  if (!studentProfileState.serviceHours.length) {
+    studentProfileState.serviceHours = ['周一至周五 14:00–18:00', '周六 09:00–12:00'];
+  }
+}
+
 function currentActiveRole(): RoleKey | undefined {
   syncMockRolesFromStorage();
   const roles = mockRegisterRoles.length ? [...mockRegisterRoles] : readStoredRoles();
@@ -1203,6 +1236,9 @@ function loginByEmail(email: string, pickRole?: RoleKey) {
     },
   ];
   seedDemoPaymentAccounts(email, user.id);
+  if (role === 'student' && studentStatus === 'active' && PRESET_DEMO_STUDENT_EMAILS.has(em)) {
+    seedPresetStudentAuditProfile(user.id);
+  }
   return {
     token: MOCK_TOKEN,
     user: { id: user.id, nickname: user.nickname, email: user.email },
@@ -1568,15 +1604,12 @@ export function resetDemoRuntimeState() {
 }
 
 /**
- * 演示 Mock：游客、显式 VITE_DEMO_MOCK、GitHub Pages 测试备份。
- * 阿里云 / 本地 parity 模式（VITE_DEMO_MOCK=false）走真实 PocketBase API。
+ * 演示 Mock：游客浏览、显式 VITE_DEMO_MOCK=true。
+ * GitHub Pages 发布版 / 本地 parity / 阿里云均走真实 PocketBase API（登录用户）。
  */
 export function isDemoMockEnabled(): boolean {
   if (isGuestBrowse()) return true;
   if (import.meta.env.VITE_DEMO_MOCK === 'true') return true;
-  if (typeof window !== 'undefined' && window.location.hostname.endsWith('.github.io')) {
-    return true;
-  }
   return false;
 }
 

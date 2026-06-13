@@ -49,7 +49,10 @@ function backendDownHint(): string {
     const onGithubPages = hostname.endsWith('.github.io');
     const onDevHost = hostname === 'localhost' || hostname === '127.0.0.1';
     if (onGithubPages) {
-      return '网络或服务暂不可用，请稍后重试，或点底部「游客账号」先体验';
+      if (isDemoMockEnabled()) {
+        return '网络或服务暂不可用，请稍后重试，或点底部「游客账号」先体验';
+      }
+      return '无法连接远程 API，请检查网络；HTTPS 页面访问 HTTP API 可能被浏览器拦截（mixed-content），或需确认 CORS 已放行 github.io';
     }
     if (!onDevHost) {
       return '无法连接服务器，请检查网络后重试';

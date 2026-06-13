@@ -5,7 +5,7 @@
 | 环境 | 角色 | 角标 | 数据 |
 |------|------|------|------|
 | **本地** | **最新产品验证** | **正式版** | PocketBase 测试数据 + `NUANBAN_FORMAL_AUTH=true` |
-| **GitHub Pages** | **发布版** | **发布版** | Pages Mock（`VITE_RELEASE_CHANNEL=release`） |
+| **GitHub Pages** | **发布版** | **发布版** | 真实 API（`VITE_RELEASE_CHANNEL=release`，与阿里云同库） |
 | **阿里云** | **发布稳定版** | **发布稳定版** | PocketBase 生产数据（`VITE_RELEASE_CHANNEL=stable`） |
 
 ---
@@ -81,10 +81,12 @@ GITHUB_REPO=jinshouzhi
 构建变量（已在 workflow 中）：
 
 ```text
-VITE_RELEASE_CHANNEL=formal
-VITE_API_BASE_URL=${NUANBAN_FORMAL_API_URL}
+VITE_RELEASE_CHANNEL=release
+VITE_API_BASE_URL=${NUANBAN_FORMAL_API_URL}   # 默认 http://101.200.128.82/api
 # 不设置 VITE_DEMO_MOCK — 登录走真实 API，游客走前端 Mock
 ```
+
+> **HTTPS**：GitHub Pages 为 HTTPS；API 为 HTTP 时浏览器可能 mixed-content 拦截。备案后将 `NUANBAN_FORMAL_API_URL` 改为 `https://nuanban.cc/api`。
 
 ---
 
@@ -98,7 +100,7 @@ VITE_API_BASE_URL=${NUANBAN_FORMAL_API_URL}
 ./scripts/start-h5.sh
 ```
 
-本地默认 **PocketBase 测试数据**，与阿里云同逻辑；浏览器 Mock 仅 GitHub Pages。
+本地默认 **PocketBase 测试数据**，与阿里云同逻辑；浏览器 Mock 仅**游客浏览**或显式 `VITE_DEMO_MOCK=true`。
 
 ---
 
@@ -119,7 +121,7 @@ VITE_API_BASE_URL=${NUANBAN_FORMAL_API_URL}
 - `isGuestBrowse() === true` → 前端 Mock，不写真实库
 - 已登录用户（正式/发布）→ 一律 `request()` 走 PocketBase
 - 本地 `VITE_DEMO_MOCK=false`（`dev-test.sh` / `start-h5.sh` 强制）→ PocketBase 测试数据
-- GitHub Pages `VITE_DEMO_MOCK=true` → 浏览器 Mock（无服务端硬约束）
+- GitHub Pages 不设 `VITE_DEMO_MOCK` → 登录用户走远程 PocketBase；游客仍 Mock
 
 ---
 
