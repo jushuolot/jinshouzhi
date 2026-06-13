@@ -1271,20 +1271,6 @@ body {
   font-size: 0.92rem;
 }
 
-.admin-withdraw {
-  margin-bottom: 1rem;
-}
-
-.admin-withdraw-actions {
-  display: flex;
-  gap: 0.5rem;
-  margin-top: 0.65rem;
-}
-
-.admin-withdraw-actions .btn {
-  flex: 1;
-}
-
 .admin-msg {
   min-height: 1.2rem;
   margin: 0.55rem 0 0;
@@ -1321,22 +1307,6 @@ body {
 .admin-credit-empty {
   color: var(--text-muted, #8a7a62);
   font-style: italic;
-}
-
-.admin-withdraw-list {
-  margin: 0;
-  padding-left: 1rem;
-  max-height: 9rem;
-  overflow: auto;
-  color: var(--muted);
-  font-size: 0.8rem;
-  line-height: 1.55;
-}
-
-.admin-withdraw-empty {
-  list-style: none;
-  margin-left: -1rem;
-  color: rgba(255, 255, 255, 0.45);
 }
 
 .title {

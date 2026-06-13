@@ -1,5 +1,5 @@
 /**
- * 古蜀秘档 · 虚拟账户（只记入账，禁止扣款）
+ * 古蜀秘档 · 虚拟账户（只记入账，余额只增不减）
  *
  * 允许：广告展示/点击、联盟结算、网络奖励等外部来源记入余额。
  * 禁止：任何扣减用户真实或虚拟货币（含提取、内购扣费、消费）。
@@ -78,9 +78,9 @@
         migrateFromLegacy();
         return;
       }
-      state.balance = typeof data.balance === "number" ? roundMoney(data.balance) : 0;
+      state.balance = typeof data.balance === "number" ? Math.max(0, roundMoney(data.balance)) : 0;
       state.sessionCredits =
-        typeof data.sessionCredits === "number" ? roundMoney(data.sessionCredits) : 0;
+        typeof data.sessionCredits === "number" ? Math.max(0, roundMoney(data.sessionCredits)) : 0;
       state.bySlot = data.bySlot && typeof data.bySlot === "object" ? data.bySlot : {};
       state.credits = Array.isArray(data.credits) ? data.credits : [];
       state.migratedFromLegacy = !!data.migratedFromLegacy;
@@ -124,8 +124,8 @@
       return 0;
     }
     var amount = roundMoney(opts.amount);
-    state.balance = roundMoney(state.balance + amount);
-    state.sessionCredits = roundMoney(state.sessionCredits + amount);
+    state.balance = Math.max(state.balance, roundMoney(state.balance + amount));
+    state.sessionCredits = Math.max(state.sessionCredits, roundMoney(state.sessionCredits + amount));
     var slotKey = opts.slot || "";
     if (slotKey) {
       var slot = ensureSlot(slotKey);
@@ -146,18 +146,6 @@
     }
     save();
     return amount;
-  }
-
-  function debit() {
-    return {
-      ok: false,
-      error: "POLICY_VIOLATION: 禁止扣减用户真实或虚拟货币",
-    };
-  }
-
-  function resetSession() {
-    state.sessionCredits = 0;
-    save();
   }
 
   function getBySource() {
@@ -211,7 +199,6 @@
     load: load,
     save: save,
     credit: credit,
-    debit: debit,
     getBalance: function () {
       return Math.max(0, state.balance);
     },
@@ -226,7 +213,6 @@
     getCreditHistory: function () {
       return state.credits.slice();
     },
-    resetSession: resetSession,
     exportSnapshot: exportSnapshot,
   };
 

@@ -3690,7 +3690,6 @@
 
   function resetCampaign() {
     soundRestart();
-    if (virtualAccount) virtualAccount.resetSession();
     if (adminPanelModalEl && !adminPanelModalEl.hidden) updateAdminPanel();
     maxUnlockedLevel = 0;
     saveProgress();

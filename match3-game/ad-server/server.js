@@ -3,7 +3,7 @@
  *
  * 启动：node server.js
  * 默认：http://localhost:3920
- *   POST /settle  — 游戏每次展示/点击会 POST JSON（仅入账事件，无 withdraw）
+ *   POST /settle  — 游戏每次展示/点击会 POST JSON（仅正向入账事件）
  *   GET  /stats   — 查看累计笔数与金额
  *   GET  /log     — 最近 50 条原始记录
  */
@@ -14,6 +14,17 @@ const path = require("path");
 
 const PORT = Number(process.env.PORT) || 3920;
 const LOG_FILE = path.join(__dirname, "settlements.jsonl");
+const ALLOWED_CREDIT_TYPES = new Set([
+  "impression",
+  "click",
+  "affiliate",
+  "reward",
+  "network_settlement",
+  "sponsor_visit",
+  "passive_yield",
+  "bounty",
+  "faucet_demo",
+]);
 
 function readLines() {
   if (!fs.existsSync(LOG_FILE)) return [];
@@ -101,14 +112,18 @@ const server = http.createServer(function (req, res) {
         sendJson(res, 400, { ok: false, error: "invalid json" });
         return;
       }
-      if (payload.type === "withdraw") {
-        sendJson(res, 403, {
+      const amount = Number(payload.amount) || 0;
+      if (!ALLOWED_CREDIT_TYPES.has(payload.type) || !(amount > 0)) {
+        sendJson(res, 400, {
           ok: false,
-          error: "withdraw forbidden by virtual account policy",
+          error: "only positive credit settlement events are accepted",
         });
         return;
       }
-      const record = Object.assign({ receivedAt: new Date().toISOString() }, payload);
+      const record = Object.assign({}, payload, {
+        amount: amount,
+        receivedAt: new Date().toISOString(),
+      });
       appendRecord(record);
       console.log(
         "[settle]",
