@@ -1,0 +1,1 @@
+function n(n){var i,l;const o=null==(i=null==n?void 0:n.displayName)?void 0:i.trim();if(o)return o;const r=null==(l=null==n?void 0:n.nickname)?void 0:l.trim();return r&&"学生"!==r?r:"同学"}export{n as s};

@@ -1,0 +1,1 @@
+function t(t){var e,r;if("string"==typeof t)return t;const l=t;if(null!=(null==(e=l.detail)?void 0:e.value))return String(l.detail.value);if(null!=(null==(r=l.target)?void 0:r.value))return String(l.target.value);const n=t;return(null==n?void 0:n.target)&&"value"in n.target?String(n.target.value):""}export{t as u};
