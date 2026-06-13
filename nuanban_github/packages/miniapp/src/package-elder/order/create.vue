@@ -1,5 +1,5 @@
 <template>
-  <view class="page elder-mode">
+  <view class="page nb-page elder-mode">
     <view class="header">
       <text class="title">预约服务</text>
       <text class="sub">选择服务 SKU，明码标价</text>
@@ -14,7 +14,7 @@
         <view
           v-for="item in group.items"
           :key="item.id"
-          class="card"
+          class="card nb-card"
           :class="{ selected: selectedId === item.id }"
           @tap="selectedId = item.id"
         >
@@ -26,10 +26,15 @@
           <text class="check">{{ selectedId === item.id ? '✓' : '' }}</text>
         </view>
       </view>
-      <view v-if="!groups.length" class="state">暂无可预约服务</view>
+      <view v-if="!groups.length" class="empty nb-card">
+        <text class="empty-icon">🛎️</text>
+        <text class="empty-title">暂无可预约服务</text>
+        <text class="empty-desc">运营请在「机构 → 服务目录」上架 SKU 并启用</text>
+        <text class="empty-hint">本地正式版可运行 seed-demo 注入默认服务项</text>
+      </view>
     </scroll-view>
 
-    <button class="btn-primary" :loading="loading" :disabled="!selectedId" @tap="submit">
+    <button class="btn-primary nb-btn-primary" :loading="loading" :disabled="!selectedId" @tap="submit">
       提交预约
     </button>
   </view>
@@ -124,19 +129,19 @@ async function submit() {
 
 <style scoped>
 .header {
-  padding: 32rpx 32rpx 16rpx;
+  padding: 8rpx 8rpx 16rpx;
 }
 .title {
   display: block;
   font-size: 36rpx;
   font-weight: 600;
-  color: #333;
+  color: var(--nb-text);
 }
 .sub {
   display: block;
   margin-top: 8rpx;
   font-size: 26rpx;
-  color: #888;
+  color: var(--nb-text-muted);
 }
 .student-hint {
   display: block;
@@ -146,7 +151,7 @@ async function submit() {
 }
 .list {
   max-height: calc(100vh - 280rpx);
-  padding: 0 24rpx 24rpx;
+  padding: 0 8rpx 24rpx;
 }
 .group {
   margin-bottom: 24rpx;
@@ -155,7 +160,7 @@ async function submit() {
   display: block;
   font-size: 28rpx;
   font-weight: 600;
-  color: #c45c26;
+  color: var(--nb-primary);
   margin: 16rpx 8rpx 12rpx;
 }
 .card {
@@ -163,14 +168,11 @@ async function submit() {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 16rpx;
-  padding: 24rpx;
-  background: #fff;
-  border-radius: 16rpx;
   border: 2rpx solid transparent;
 }
 .card.selected {
-  border-color: #c45c26;
-  background: #fff8f3;
+  border-color: var(--nb-primary);
+  background: var(--nb-primary-soft);
 }
 .card-main {
   flex: 1;
@@ -178,37 +180,63 @@ async function submit() {
 .name {
   display: block;
   font-size: 30rpx;
-  color: #333;
+  color: var(--nb-text);
 }
 .meta {
   display: block;
   margin-top: 8rpx;
   font-size: 26rpx;
-  color: #666;
+  color: var(--nb-text-secondary);
 }
 .tag {
   display: inline-block;
   margin-top: 8rpx;
   padding: 4rpx 12rpx;
   font-size: 22rpx;
-  color: #c45c26;
-  background: #ffe8d9;
+  color: var(--nb-primary);
+  background: var(--nb-primary-soft);
   border-radius: 8rpx;
 }
 .check {
   font-size: 36rpx;
-  color: #c45c26;
+  color: var(--nb-primary);
   margin-left: 16rpx;
 }
 .state {
   padding: 48rpx;
   text-align: center;
-  color: #888;
+  color: var(--nb-text-muted);
+}
+.empty {
+  text-align: center;
+  padding: 48rpx 32rpx;
+}
+.empty-icon {
+  display: block;
+  font-size: 48rpx;
+  margin-bottom: 12rpx;
+}
+.empty-title {
+  display: block;
+  font-size: 30rpx;
+  font-weight: 600;
+  color: var(--nb-text);
+}
+.empty-desc {
+  display: block;
+  margin-top: 12rpx;
+  font-size: 26rpx;
+  color: var(--nb-text-secondary);
+  line-height: 1.5;
+}
+.empty-hint {
+  display: block;
+  margin-top: 12rpx;
+  font-size: 22rpx;
+  color: var(--nb-text-muted);
 }
 .btn-primary {
-  margin: 24rpx 32rpx 48rpx;
-  background: #c45c26;
-  color: #fff;
+  margin: 24rpx 8rpx 48rpx;
 }
 .btn-primary[disabled] {
   opacity: 0.5;

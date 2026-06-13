@@ -40,7 +40,7 @@
       <text class="wd-arrow">›</text>
     </view>
 
-    <view class="stats-card">
+    <view class="stats-card nb-stats-card">
       <view class="stat-item" @tap="goPending">
         <text class="stat-num accent">{{ pendingCount }}</text>
         <text class="stat-label">待接单</text>
@@ -57,7 +57,7 @@
       </view>
     </view>
 
-    <view class="section-title">快捷入口</view>
+    <view class="section-title nb-section-title">快捷入口</view>
     <view class="quick-grid">
       <view class="quick-item" @tap="goPending">
         <text class="quick-icon">📋</text>
@@ -91,7 +91,7 @@
       </view>
     </view>
 
-    <view v-if="previewElders.length" class="section-title">附近老人预览</view>
+    <view v-if="previewElders.length" class="section-title nb-section-title">附近老人预览</view>
     <PersonCard
       v-for="e in previewElders"
       :key="e.id"
@@ -337,12 +337,7 @@ function openElder(e: ElderPreview) {
   border-radius: 24rpx;
 }
 .stats-card {
-  display: flex;
-  background: var(--nb-surface);
-  border-radius: var(--nb-radius-md);
-  padding: 32rpx 0;
   margin-bottom: 32rpx;
-  box-shadow: var(--nb-shadow-soft);
 }
 .stat-item {
   flex: 1;
@@ -370,9 +365,6 @@ function openElder(e: ElderPreview) {
   color: var(--nb-text-muted);
 }
 .section-title {
-  font-size: 28rpx;
-  font-weight: 600;
-  color: var(--nb-text);
   margin-bottom: 16rpx;
 }
 .referral-banner {

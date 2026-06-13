@@ -339,7 +339,7 @@ onShow(() => {
 }
 .chevron {
   font-size: 32rpx;
-  color: #ccc;
+  color: var(--nb-text-placeholder);
 }
 .empty-activity {
   padding: 32rpx 24rpx;
@@ -373,19 +373,19 @@ onShow(() => {
   display: block;
   margin-top: 4rpx;
   font-size: 22rpx;
-  color: #666;
+  color: var(--nb-text-secondary);
 }
 .act-time {
   display: block;
   margin-top: 4rpx;
   font-size: 20rpx;
-  color: #aaa;
+  color: var(--nb-text-placeholder);
 }
 .ts {
   display: block;
   margin-top: 16rpx;
   text-align: center;
   font-size: 22rpx;
-  color: #bbb;
+  color: var(--nb-text-muted);
 }
 </style>

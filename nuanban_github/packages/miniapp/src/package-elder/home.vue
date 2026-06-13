@@ -6,7 +6,7 @@
       <text class="sub">{{ orgName }}</text>
     </view>
 
-    <view class="stats-card">
+    <view class="stats-card nb-stats-card">
       <view class="stat-item" @tap="goOrders">
         <text class="stat-num">{{ stats?.orderCount ?? 0 }}</text>
         <text class="stat-label">我的订单</text>
@@ -23,7 +23,7 @@
       </view>
     </view>
 
-    <view class="section-title">最近服务</view>
+    <view class="section-title nb-section-title">最近服务</view>
     <view v-if="recentOrders.length" class="order-preview">
       <view
         v-for="o in recentOrders"
@@ -44,7 +44,7 @@
       <text class="empty-cta">找附近大学生陪护 ›</text>
     </view>
 
-    <view class="section-title">快捷服务</view>
+    <view class="section-title nb-section-title">快捷服务</view>
     <view class="wallet-card" @tap="goWallet">
       <view class="wallet-left">
         <text class="wallet-icon">💰</text>
@@ -233,12 +233,7 @@ async function sos() {
   color: var(--nb-text-muted);
 }
 .stats-card {
-  display: flex;
-  background: var(--nb-surface);
-  border-radius: var(--nb-radius-md);
-  padding: 32rpx 0;
   margin-bottom: 32rpx;
-  box-shadow: var(--nb-shadow-soft);
 }
 .stat-item {
   flex: 1;
@@ -266,10 +261,7 @@ async function sos() {
   color: var(--nb-text-muted);
 }
 .section-title {
-  font-size: 28rpx;
-  font-weight: 600;
   margin-bottom: 16rpx;
-  color: var(--nb-text);
 }
 .wallet-card {
   display: flex;

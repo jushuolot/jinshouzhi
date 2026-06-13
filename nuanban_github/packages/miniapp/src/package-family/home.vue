@@ -6,7 +6,7 @@
       <text class="sub">代付 · 外出审批 · 绑定老人</text>
     </view>
 
-    <view class="stats-card">
+    <view class="stats-card nb-stats-card">
       <view class="stat-item">
         <text class="stat-num">{{ stats?.boundElderCount ?? 0 }}</text>
         <text class="stat-label">绑定老人</text>
@@ -23,7 +23,7 @@
       </view>
     </view>
 
-    <view class="section-title">绑定老人</view>
+    <view class="section-title nb-section-title">绑定老人</view>
     <view v-for="b in bindings" :key="b.id" class="elder-card">
       <view class="elder-avatar">{{ elderName(b).slice(0, 1) }}</view>
       <view class="elder-info">
@@ -31,10 +31,14 @@
         <text class="elder-rel">{{ relationLabel(b) }}</text>
       </view>
     </view>
-    <view v-if="!bindings.length && !loading" class="empty-hint">暂无绑定老人，请点击上方绑定</view>
+    <view v-if="!bindings.length && !loading" class="empty-bind nb-card">
+      <text class="empty-icon">👵</text>
+      <text class="empty-text">暂未绑定老人</text>
+      <text class="empty-desc">绑定后可代付、审批外出与查看服务记录</text>
+    </view>
     <view class="bind-link" @tap="goBind">+ 绑定更多老人</view>
 
-    <view class="section-title">待办事项</view>
+    <view class="section-title nb-section-title">待办事项</view>
     <view class="todo-card highlight" @tap="goWallet">
       <view class="todo-left">
         <text class="todo-icon">💰</text>
@@ -363,12 +367,7 @@ async function goSos() {
   color: var(--nb-text-muted);
 }
 .stats-card {
-  display: flex;
-  background: var(--nb-surface);
-  border-radius: var(--nb-radius-md);
-  padding: 32rpx 0;
   margin-bottom: 32rpx;
-  box-shadow: var(--nb-shadow-soft);
 }
 .stat-item {
   flex: 1;
@@ -396,10 +395,29 @@ async function goSos() {
   color: var(--nb-text-muted);
 }
 .section-title {
+  margin-bottom: 16rpx;
+}
+.empty-bind {
+  text-align: center;
+  padding: 32rpx 24rpx;
+  margin-bottom: 12rpx;
+}
+.empty-icon {
+  display: block;
+  font-size: 44rpx;
+  margin-bottom: 8rpx;
+}
+.empty-text {
+  display: block;
   font-size: 28rpx;
   font-weight: 600;
-  margin-bottom: 16rpx;
   color: var(--nb-text);
+}
+.empty-desc {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 24rpx;
+  color: var(--nb-text-muted);
 }
 .elder-card {
   display: flex;
@@ -431,11 +449,6 @@ async function goSos() {
   margin-top: 4rpx;
   font-size: 24rpx;
   color: var(--nb-text-muted);
-}
-.empty-hint {
-  font-size: 24rpx;
-  color: var(--nb-text-placeholder);
-  margin-bottom: 24rpx;
 }
 .bind-link {
   text-align: center;
