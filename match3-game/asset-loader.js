@@ -57,7 +57,6 @@
     "codex.js",
     "artifact-photos.js",
     "artifact-gallery.js",
-    "artifacts-3d.js",
   ];
 
   var THREE_SCRIPTS = [
@@ -65,6 +64,7 @@
     "three-engine.js",
     "world-3d.js",
     "expedition-3d.js",
+    "artifacts-3d.js",
   ];
 
   var cinemaReady = null;

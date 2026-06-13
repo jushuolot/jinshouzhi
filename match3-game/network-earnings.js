@@ -22,6 +22,7 @@
     publicCommonsMirror: { amount: 0.016, phases: ["超越期"] },
     beyondPhaseTick: { amount: 0.0014, sessionCap: 0.01, phases: ["超越期"] },
     weeklyRecap: { amount: 0.02, phases: ["超越期", "复兴期"] },
+    newPitArchive: { amount: 0.024, universeDayModulo: 1, phases: ["超越期"] },
     bounty: {
       label: "任务赏金(演示)",
       endpoint: "https://api.coingecko.com/api/v3/ping",
@@ -108,7 +109,13 @@
       id: "weekly_recap",
       label: "周复盘赏金",
       source: "network_settlement",
-      description: "宇宙第七日收工复盘入账",
+      description: "宇宙周日收工复盘入账",
+    },
+    new_pit_archive: {
+      id: "new_pit_archive",
+      label: "新坑资料包",
+      source: "network_settlement",
+      description: "宇宙周一新坑资料同步归档入账",
     },
   };
 
@@ -123,6 +130,7 @@
     lastPublicCommonsMirror: "",
     beyondSessionTickTotal: 0,
     lastWeeklyRecap: "",
+    lastNewPitArchive: "",
   };
 
   var tickTimer = null;
@@ -147,6 +155,7 @@
       state.beyondSessionTickTotal =
         typeof data.beyondSessionTickTotal === "number" ? data.beyondSessionTickTotal : 0;
       state.lastWeeklyRecap = data.lastWeeklyRecap || "";
+      state.lastNewPitArchive = data.lastNewPitArchive || "";
     } catch (e) {
       // ignore
     }
@@ -161,6 +170,10 @@
           sessionTickTotal: state.sessionTickTotal,
           lastRelicBounty: state.lastRelicBounty,
           lastCivilizationArchive: state.lastCivilizationArchive,
+          lastPublicCommonsMirror: state.lastPublicCommonsMirror,
+          beyondSessionTickTotal: state.beyondSessionTickTotal,
+          lastWeeklyRecap: state.lastWeeklyRecap,
+          lastNewPitArchive: state.lastNewPitArchive,
           updatedAt: Date.now(),
         })
       );
@@ -429,6 +442,39 @@
     return credited;
   }
 
+  function tryNewPitArchive() {
+    var evo = typeof window !== "undefined" && window.MATCH3_EVOLUTION ? window.MATCH3_EVOLUTION : {};
+    var uday = evo.universeDay || 0;
+    var cfg = CONFIG.newPitArchive;
+    if (!cfg || uday % 7 !== cfg.universeDayModulo) return 0;
+    var clock =
+      typeof window !== "undefined" && window.MATCH3_CIVILIZATION_CLOCK
+        ? window.MATCH3_CIVILIZATION_CLOCK
+        : null;
+    if (!clock) return 0;
+    var civ = clock.getCivilizationDate();
+    var phase = civ.civilizationPhase;
+    if (cfg.phases.indexOf(phase) < 0) return 0;
+    var key = todayKey() + "-u" + uday + "-g" + (evo.generation || civ.civilizationDay);
+    if (state.lastNewPitArchive === key) return 0;
+    state.lastNewPitArchive = key;
+    saveState();
+    var credited = creditChannel("new_pit_archive", {
+      amount: cfg.amount,
+      meta: {
+        kind: "new_pit_archive",
+        universeDay: uday,
+        generation: evo.generation || civ.civilizationDay,
+        year: civ.civilizationYear,
+        phase: phase,
+      },
+    });
+    if (credited > 0 && typeof window.showSystemToast === "function") {
+      window.showSystemToast("🧾 新坑资料包归档 · 文明历 " + civ.civilizationYear, 3400);
+    }
+    return credited;
+  }
+
   function startPeriodicTick() {
     if (tickTimer) return;
     var ms = CONFIG.passiveYield.tickMs;
@@ -457,6 +503,7 @@
     tryCivilizationArchive();
     tryPublicCommonsMirror();
     tryWeeklyRecap();
+    tryNewPitArchive();
     tryAffiliateReferral();
     startPeriodicTick();
     deferNetworkProbes();
