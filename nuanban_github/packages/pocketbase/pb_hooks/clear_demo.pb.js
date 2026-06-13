@@ -47,6 +47,10 @@ routerAdd("POST", "/api/nuanban/clear-demo", function (e) {
 
   try {
     var collections = [
+      "wallet_transactions",
+      "wallet_accounts",
+      "withdrawals",
+      "payment_accounts",
       "outdoor_approvals",
       "settlements",
       "schedules",

@@ -1130,6 +1130,23 @@
         "hidden": false,
         "maxSelect": 1,
         "values": ["pending", "processing", "paid", "failed"]
+      },
+      {
+        "id": "fld_set_period",
+        "name": "period",
+        "type": "text",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "max": 16
+      },
+      {
+        "id": "fld_set_paid_at",
+        "name": "paid_at",
+        "type": "date",
+        "required": false,
+        "system": false,
+        "hidden": false
       }
     ],
     "indexes": [],
@@ -1327,6 +1344,275 @@
         "hidden": false,
         "maxSelect": 1,
         "values": ["active", "acknowledged"]
+      }
+    ],
+    "indexes": [],
+    "options": {}
+  },
+  {
+    "id": "pbc_nuanban_wallet_accounts",
+    "name": "wallet_accounts",
+    "type": "base",
+    "system": false,
+    "listRule": "@request.auth.id != ''",
+    "viewRule": "@request.auth.id != ''",
+    "createRule": null,
+    "updateRule": null,
+    "deleteRule": null,
+    "fields": [
+      {
+        "id": "fld_wa_user",
+        "name": "user",
+        "type": "relation",
+        "required": true,
+        "system": false,
+        "hidden": false,
+        "collectionId": "_pb_users_auth_",
+        "cascadeDelete": true,
+        "minSelect": 1,
+        "maxSelect": 1
+      },
+      {
+        "id": "fld_wa_balance",
+        "name": "balance_cents",
+        "type": "number",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "onlyInt": true,
+        "min": 0
+      }
+    ],
+    "indexes": [],
+    "options": {}
+  },
+  {
+    "id": "pbc_nuanban_wallet_transactions",
+    "name": "wallet_transactions",
+    "type": "base",
+    "system": false,
+    "listRule": "@request.auth.id != ''",
+    "viewRule": "@request.auth.id != ''",
+    "createRule": null,
+    "updateRule": null,
+    "deleteRule": null,
+    "fields": [
+      {
+        "id": "fld_wt_account",
+        "name": "wallet_account",
+        "type": "relation",
+        "required": true,
+        "system": false,
+        "hidden": false,
+        "collectionId": "pbc_nuanban_wallet_accounts",
+        "cascadeDelete": true,
+        "minSelect": 1,
+        "maxSelect": 1
+      },
+      {
+        "id": "fld_wt_type",
+        "name": "type",
+        "type": "select",
+        "required": true,
+        "system": false,
+        "hidden": false,
+        "maxSelect": 1,
+        "values": ["topup", "pay"]
+      },
+      {
+        "id": "fld_wt_amount",
+        "name": "amount_cents",
+        "type": "number",
+        "required": true,
+        "system": false,
+        "hidden": false,
+        "onlyInt": true,
+        "min": 0
+      },
+      {
+        "id": "fld_wt_label",
+        "name": "label",
+        "type": "text",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "max": 256
+      },
+      {
+        "id": "fld_wt_order",
+        "name": "order",
+        "type": "relation",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "collectionId": "pbc_nuanban_orders",
+        "cascadeDelete": false,
+        "minSelect": 0,
+        "maxSelect": 1
+      },
+      {
+        "id": "fld_wt_reconciled",
+        "name": "reconciled",
+        "type": "bool",
+        "required": false,
+        "system": false,
+        "hidden": false
+      }
+    ],
+    "indexes": [],
+    "options": {}
+  },
+  {
+    "id": "pbc_nuanban_payment_accounts",
+    "name": "payment_accounts",
+    "type": "base",
+    "system": false,
+    "listRule": "@request.auth.id = user",
+    "viewRule": "@request.auth.id = user",
+    "createRule": "@request.auth.id != ''",
+    "updateRule": "@request.auth.id = user",
+    "deleteRule": null,
+    "fields": [
+      {
+        "id": "fld_pa_user",
+        "name": "user",
+        "type": "relation",
+        "required": true,
+        "system": false,
+        "hidden": false,
+        "collectionId": "_pb_users_auth_",
+        "cascadeDelete": true,
+        "minSelect": 1,
+        "maxSelect": 1
+      },
+      {
+        "id": "fld_pa_role",
+        "name": "role",
+        "type": "select",
+        "required": true,
+        "system": false,
+        "hidden": false,
+        "maxSelect": 1,
+        "values": ["student", "family", "elder"]
+      },
+      {
+        "id": "fld_pa_provider",
+        "name": "provider",
+        "type": "text",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "max": 32
+      },
+      {
+        "id": "fld_pa_merchant",
+        "name": "merchant_no",
+        "type": "text",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "max": 64
+      },
+      {
+        "id": "fld_pa_name",
+        "name": "account_name",
+        "type": "text",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "max": 128
+      },
+      {
+        "id": "fld_pa_label",
+        "name": "account_label",
+        "type": "text",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "max": 128
+      }
+    ],
+    "indexes": [],
+    "options": {}
+  },
+  {
+    "id": "pbc_nuanban_withdrawals",
+    "name": "withdrawals",
+    "type": "base",
+    "system": false,
+    "listRule": "@request.auth.id != ''",
+    "viewRule": "@request.auth.id != ''",
+    "createRule": null,
+    "updateRule": null,
+    "deleteRule": null,
+    "fields": [
+      {
+        "id": "fld_wd_student",
+        "name": "student_user",
+        "type": "relation",
+        "required": true,
+        "system": false,
+        "hidden": false,
+        "collectionId": "_pb_users_auth_",
+        "cascadeDelete": false,
+        "minSelect": 1,
+        "maxSelect": 1
+      },
+      {
+        "id": "fld_wd_amount",
+        "name": "amount_cents",
+        "type": "number",
+        "required": true,
+        "system": false,
+        "hidden": false,
+        "onlyInt": true,
+        "min": 0
+      },
+      {
+        "id": "fld_wd_channel",
+        "name": "channel",
+        "type": "select",
+        "required": true,
+        "system": false,
+        "hidden": false,
+        "maxSelect": 1,
+        "values": ["wechat", "bank"]
+      },
+      {
+        "id": "fld_wd_channel_label",
+        "name": "channel_label",
+        "type": "text",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "max": 128
+      },
+      {
+        "id": "fld_wd_status",
+        "name": "status",
+        "type": "select",
+        "required": true,
+        "system": false,
+        "hidden": false,
+        "maxSelect": 1,
+        "values": ["pending", "completed", "rejected"]
+      },
+      {
+        "id": "fld_wd_reject",
+        "name": "reject_reason",
+        "type": "text",
+        "required": false,
+        "system": false,
+        "hidden": false,
+        "max": 256
+      },
+      {
+        "id": "fld_wd_completed",
+        "name": "completed_at",
+        "type": "date",
+        "required": false,
+        "system": false,
+        "hidden": false
       }
     ],
     "indexes": [],

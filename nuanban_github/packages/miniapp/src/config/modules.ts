@@ -43,10 +43,10 @@ export const MODULE_GROUPS: ModuleGroup[] = [
     color: '#2e7d6e',
     entries: [
       { id: 'family-home', title: '家属中心', desc: '待办 · 动态 · 绑定', icon: '🏡', path: '/package-family/home', account: '已注册手机号' },
-      { id: 'family-pay', title: '待支付', desc: '储值卡 / 微信演示', icon: '💳', path: '/package-family/order/list', highlight: true },
+      { id: 'family-pay', title: '待支付', desc: '储值卡 / 微信支付', icon: '💳', path: '/package-family/order/list', highlight: true },
       { id: 'family-outdoor', title: '外出审批', desc: '陪同散步 / 就医确认', icon: '🚶', path: '/package-family/outdoor/approve' },
       { id: 'family-logs', title: '服务记录', desc: '绑定老人归档', icon: '📝', path: '/package-family/service/log' },
-      { id: 'family-package', title: '服务包', desc: '3 档机构套餐', icon: '📦', path: '/package-family/package/buy' },
+      { id: 'family-package', title: '服务包', desc: '机构套餐购买', icon: '📦', path: '/package-family/package/buy' },
       { id: 'family-wallet', title: '储值卡', desc: '代付余额管理', icon: '💰', path: '/package-family/wallet/index' },
     ],
   },
@@ -57,7 +57,7 @@ export const MODULE_GROUPS: ModuleGroup[] = [
     color: '#5c6bc0',
     entries: [
       { id: 'student-home', title: '学生首页', desc: '待接 · 收入 · 提现', icon: '🎓', path: '/package-student/home', account: '已注册手机号' },
-      { id: 'student-pending', title: '待接单', desc: '富数据池 · 一键接单', icon: '📋', path: '/package-student/order/pending', highlight: true },
+      { id: 'student-pending', title: '待接单', desc: '待接单池 · 一键接单', icon: '📋', path: '/package-student/order/pending', highlight: true },
       { id: 'student-active', title: '服务中', desc: '签到 · 完成服务', icon: '🧑‍⚕️', path: '/package-student/order/active' },
       { id: 'student-discover', title: '附近老人', desc: '地图 / 列表发现', icon: '📍', path: '/package-student/discover/list' },
       { id: 'student-income', title: '收入明细', desc: '结算与月报', icon: '💰', path: '/package-student/income' },
@@ -66,8 +66,8 @@ export const MODULE_GROUPS: ModuleGroup[] = [
   },
   {
     id: 'platform',
-    title: '运营与演示',
-    subtitle: '零安装验收 · KPI',
+    title: '运营管理',
+    subtitle: '撮合 KPI · 派单 · 档案',
     color: '#6d4c9a',
     entries: [
       { id: 'guide', title: '深度验收向导', desc: '9 步闭环 · 进度保存', icon: '🧭', path: '/pages/common/scenario-guide', highlight: true },

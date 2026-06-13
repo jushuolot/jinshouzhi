@@ -65,8 +65,9 @@ onShow(() => {
 });
 
 const status = computed(() => getSecurityStatus());
+const isDemoMock = computed(() => status.value.isDemoMock);
 
-const features = [
+const features = computed(() => [
   {
     icon: '🔐',
     title: '传输加密',
@@ -80,7 +81,9 @@ const features = [
   {
     icon: '💳',
     title: '支付安全',
-    desc: '金额以服务端订单为准；储值卡扣款二次确认；演示不产生真实扣款。',
+    desc: isDemoMock.value
+      ? '金额以服务端订单为准；储值卡扣款二次确认；演示不产生真实扣款。'
+      : '金额以服务端订单为准；储值卡扣款与支付均需二次确认。',
   },
   {
     icon: '📦',
@@ -97,7 +100,7 @@ const features = [
     title: '会话保护',
     desc: '401 自动登出；退出登录清除本地令牌与角色缓存。',
   },
-];
+]);
 
 function goAgreement() {
   uni.navigateTo({ url: '/pages/common/agreement' });

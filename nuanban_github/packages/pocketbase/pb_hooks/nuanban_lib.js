@@ -1061,20 +1061,121 @@ function finalizeOrderAfterConfirm(order) {
   order.set("status", "completed");
   $app.save(order);
   completeOrderSchedule(order.id, "completed");
+  createSettlementForCompletedOrder(order);
 }
 
-/** 演示储值卡（进程内，按 userId 隔离；用 function 属性避免 hooks 路由作用域问题） */
+function hasCollection(name) {
+  try {
+    $app.findCollectionByNameOrId(name);
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+
+function settlementDto(rec) {
+  var status = safeRecordString(rec, "status", "pending");
+  var period = safeRecordString(rec, "period", "");
+  if (!period) {
+    var created = rec.getString("created") || "";
+    if (created.length >= 7) period = created.substring(0, 7);
+  }
+  var paidAt = safeRecordString(rec, "paid_at", "");
+  if (!paidAt && status === "paid") paidAt = rec.getString("updated") || rec.getString("created") || "";
+  return {
+    id: rec.id,
+    period: period,
+    amountCents: safeRecordInt(rec, "amount_cents", 0),
+    status: status === "paid" ? "paid" : "pending",
+    paidAt: status === "paid" ? paidAt || undefined : undefined,
+  };
+}
+
+function createSettlementForCompletedOrder(order) {
+  if (!hasCollection("settlements")) return;
+  var studentUserId = order.getString("student_user");
+  if (!studentUserId) return;
+  var existing = $app.findRecordsByFilter(
+    "settlements",
+    "order = {:oid}",
+    "",
+    1,
+    0,
+    { oid: order.id }
+  );
+  if (existing.length > 0) return;
+  var amount = order.getInt("amount_cents") || 0;
+  if (amount <= 0) return;
+  var now = new Date();
+  var month = now.getMonth() + 1;
+  var period = now.getFullYear() + "-" + (month < 10 ? "0" + month : "" + month);
+  var col = $app.findCollectionByNameOrId("settlements");
+  var rec = new Record(col);
+  rec.set("order", order.id);
+  rec.set("student_user", studentUserId);
+  rec.set("amount_cents", amount);
+  rec.set("status", "paid");
+  rec.set("period", period);
+  rec.set("paid_at", now.toISOString());
+  $app.save(rec);
+}
+
+/** 储值卡：优先落库 wallet_accounts / wallet_transactions，无集合时回退进程内 */
 function walletDemoStoreMap() {
   if (!walletDemoStoreMap._data) walletDemoStoreMap._data = {};
   return walletDemoStoreMap._data;
 }
 
-function walletEnsureUser(userId) {
-  const store = walletDemoStoreMap();
-  if (!store[userId]) {
-    store[userId] = { balanceCents: 0, transactions: [] };
-  }
+function walletEnsureUserMemory(userId) {
+  var store = walletDemoStoreMap();
+  if (!store[userId]) store[userId] = { balanceCents: 0, transactions: [] };
   return store[userId];
+}
+
+function walletAccountRecord(userId) {
+  var rows = $app.findRecordsByFilter(
+    "wallet_accounts",
+    "user = {:uid}",
+    "",
+    1,
+    0,
+    { uid: userId }
+  );
+  if (rows.length > 0) return rows[0];
+  var col = $app.findCollectionByNameOrId("wallet_accounts");
+  var rec = new Record(col);
+  rec.set("user", userId);
+  rec.set("balance_cents", 0);
+  $app.save(rec);
+  return rec;
+}
+
+function walletTransactionClientDto(rec) {
+  return {
+    id: rec.id,
+    type: safeRecordString(rec, "type", ""),
+    amountCents: safeRecordInt(rec, "amount_cents", 0),
+    label: safeRecordString(rec, "label", ""),
+    createdAt: rec.getString("created"),
+    orderId: safeRecordString(rec, "order", "") || undefined,
+  };
+}
+
+function walletAppendTransaction(accountRec, type, amountCents, label, orderId) {
+  var col = $app.findCollectionByNameOrId("wallet_transactions");
+  var tx = new Record(col);
+  tx.set("wallet_account", accountRec.id);
+  tx.set("type", type);
+  tx.set("amount_cents", amountCents);
+  tx.set("label", label);
+  if (orderId) tx.set("order", orderId);
+  tx.set("reconciled", false);
+  $app.save(tx);
+}
+
+function walletEnsureUser(userId) {
+  if (!hasCollection("wallet_accounts")) return walletEnsureUserMemory(userId);
+  return walletAccountRecord(userId);
 }
 
 function walletOverviewDto(owner) {
@@ -1086,22 +1187,53 @@ function walletOverviewDto(owner) {
   };
 }
 
+function walletOverviewForUser(userId) {
+  if (!hasCollection("wallet_accounts")) {
+    return walletOverviewDto(walletEnsureUserMemory(userId));
+  }
+  var acc = walletAccountRecord(userId);
+  var balance = safeRecordInt(acc, "balance_cents", 0);
+  var rows = $app.findRecordsByFilter(
+    "wallet_transactions",
+    "wallet_account = {:id}",
+    "-created",
+    10,
+    0,
+    { id: acc.id }
+  );
+  var transactions = [];
+  for (var i = 0; i < rows.length; i++) transactions.push(walletTransactionClientDto(rows[i]));
+  return {
+    balanceCents: balance,
+    balanceYuan: (balance / 100).toFixed(2),
+    transactions: transactions,
+  };
+}
+
 function walletTopup(userId, amountCents) {
   if (!amountCents || amountCents < 100) {
     return { ok: false, message: "充值金额至少 ¥1.00" };
   }
-  var owner = walletEnsureUser(userId);
-  owner.balanceCents = (owner.balanceCents || 0) + amountCents;
-  owner.transactions = owner.transactions || [];
-  owner.transactions.unshift({
-    id: "wt-topup-" + Date.now(),
-    type: "topup",
-    amountCents: amountCents,
-    label: "储值卡充值",
-    createdAt: new Date().toISOString(),
-  });
-  if (owner.transactions.length > 50) owner.transactions.length = 50;
-  return { ok: true, overview: walletOverviewDto(owner) };
+  if (!hasCollection("wallet_accounts")) {
+    var mem = walletEnsureUserMemory(userId);
+    mem.balanceCents = (mem.balanceCents || 0) + amountCents;
+    mem.transactions = mem.transactions || [];
+    mem.transactions.unshift({
+      id: "wt-topup-" + Date.now(),
+      type: "topup",
+      amountCents: amountCents,
+      label: "储值卡充值",
+      createdAt: new Date().toISOString(),
+    });
+    if (mem.transactions.length > 50) mem.transactions.length = 50;
+    return { ok: true, overview: walletOverviewDto(mem) };
+  }
+  var acc = walletAccountRecord(userId);
+  var bal = safeRecordInt(acc, "balance_cents", 0) + amountCents;
+  acc.set("balance_cents", bal);
+  $app.save(acc);
+  walletAppendTransaction(acc, "topup", amountCents, "储值卡充值", null);
+  return { ok: true, overview: walletOverviewForUser(userId) };
 }
 
 function walletPayLabel(order) {
@@ -1114,22 +1246,33 @@ function walletDeductForOrder(userId, order) {
   if (!amountCents || amountCents <= 0) {
     return { ok: false, message: "订单金额无效" };
   }
-  var owner = walletEnsureUser(userId);
-  if ((owner.balanceCents || 0) < amountCents) {
+  if (!hasCollection("wallet_accounts")) {
+    var owner = walletEnsureUserMemory(userId);
+    if ((owner.balanceCents || 0) < amountCents) {
+      return { ok: false, message: "储值余额不足，请先充值" };
+    }
+    owner.balanceCents -= amountCents;
+    owner.transactions = owner.transactions || [];
+    owner.transactions.unshift({
+      id: "wt-pay-" + Date.now(),
+      type: "pay",
+      amountCents: amountCents,
+      label: walletPayLabel(order),
+      createdAt: new Date().toISOString(),
+      orderId: order.id,
+    });
+    if (owner.transactions.length > 50) owner.transactions.length = 50;
+    return { ok: true, overview: walletOverviewDto(owner) };
+  }
+  var acc = walletAccountRecord(userId);
+  var bal = safeRecordInt(acc, "balance_cents", 0);
+  if (bal < amountCents) {
     return { ok: false, message: "储值余额不足，请先充值" };
   }
-  owner.balanceCents -= amountCents;
-  owner.transactions = owner.transactions || [];
-  owner.transactions.unshift({
-    id: "wt-pay-" + Date.now(),
-    type: "pay",
-    amountCents: amountCents,
-    label: walletPayLabel(order),
-    createdAt: new Date().toISOString(),
-    orderId: order.id,
-  });
-  if (owner.transactions.length > 50) owner.transactions.length = 50;
-  return { ok: true, overview: walletOverviewDto(owner) };
+  acc.set("balance_cents", bal - amountCents);
+  $app.save(acc);
+  walletAppendTransaction(acc, "pay", amountCents, walletPayLabel(order), order.id);
+  return { ok: true, overview: walletOverviewForUser(userId) };
 }
 
 function walletPayOrderRecord(userId, order) {
@@ -1193,6 +1336,182 @@ function studentWithdrawalsMap() {
   return studentWithdrawalsMap._data;
 }
 
+var paymentAccountMemoryStore = paymentAccountMemoryStore || {};
+
+function paymentAccountMemoryKey(uid, role) {
+  return uid + ":" + role;
+}
+
+function paymentAccountDtoFromRec(rec) {
+  return {
+    provider: safeRecordString(rec, "provider", "saobei"),
+    configured: true,
+    merchantNo: safeRecordString(rec, "merchant_no", ""),
+    accountName: safeRecordString(rec, "account_name", ""),
+    accountLabel: safeRecordString(rec, "account_label", ""),
+  };
+}
+
+function paymentAccountGetOrEmpty(userId, role) {
+  if (hasCollection("payment_accounts")) {
+    var rows = $app.findRecordsByFilter(
+      "payment_accounts",
+      "user = {:uid} && role = {:role}",
+      "",
+      1,
+      0,
+      { uid: userId, role: role }
+    );
+    if (rows.length > 0) return paymentAccountDtoFromRec(rows[0]);
+  }
+  var st = paymentAccountMemoryStore[paymentAccountMemoryKey(userId, role)];
+  if (st && st.configured) return st;
+  return { provider: "saobei", configured: false };
+}
+
+function paymentAccountUpsert(userId, role, merchantNo, accountName) {
+  var tail = String(merchantNo || "").slice(-4);
+  var label = tail ? "扫呗 · ****" + tail : "扫呗收款账户";
+  var dto = {
+    provider: "saobei",
+    configured: true,
+    merchantNo: merchantNo,
+    accountName: accountName,
+    accountLabel: label,
+  };
+  if (hasCollection("payment_accounts")) {
+    var rows = $app.findRecordsByFilter(
+      "payment_accounts",
+      "user = {:uid} && role = {:role}",
+      "",
+      1,
+      0,
+      { uid: userId, role: role }
+    );
+    var rec;
+    if (rows.length > 0) {
+      rec = rows[0];
+    } else {
+      var col = $app.findCollectionByNameOrId("payment_accounts");
+      rec = new Record(col);
+      rec.set("user", userId);
+      rec.set("role", role);
+    }
+    rec.set("provider", "saobei");
+    rec.set("merchant_no", merchantNo);
+    rec.set("account_name", accountName);
+    rec.set("account_label", label);
+    $app.save(rec);
+    return dto;
+  }
+  paymentAccountMemoryStore[paymentAccountMemoryKey(userId, role)] = dto;
+  return dto;
+}
+
+function seedPaymentAccountDemoForUser(auth, role) {
+  if (isFormalAuthMode()) return;
+  var em = safeRecordString(auth, "email", "").toLowerCase();
+  if (em.indexOf("student3") >= 0) return;
+  var roles = [];
+  if (em.indexOf("multi") >= 0) roles = ["student", "family", "elder"];
+  else {
+    if (em.indexOf("student") >= 0) roles.push("student");
+    if (em.indexOf("family") >= 0) roles.push("family");
+    if (em.indexOf("elder") >= 0) roles.push("elder");
+  }
+  if (roles.indexOf(role) < 0) return;
+  paymentAccountUpsert(auth.id, role, "80291234", "演示账户");
+}
+
+function withdrawalChannelLabel(channel, payAcct) {
+  if (payAcct && payAcct.configured) {
+    if (channel === "wechat") {
+      return payAcct.accountLabel ? "微信 · " + payAcct.accountLabel : "微信零钱";
+    }
+    return payAcct.accountName ? "银行卡 · " + payAcct.accountName : "银行卡";
+  }
+  return channel === "wechat" ? "微信零钱" : "银行卡";
+}
+
+function withdrawalClientDto(rec) {
+  return {
+    id: rec.id,
+    amountCents: safeRecordInt(rec, "amount_cents", 0),
+    channel: safeRecordString(rec, "channel", "wechat"),
+    channelLabel: safeRecordString(rec, "channel_label", ""),
+    status: safeRecordString(rec, "status", "pending"),
+    createdAt: rec.getString("created"),
+    completedAt: safeRecordString(rec, "completed_at", "") || undefined,
+    rejectReason: safeRecordString(rec, "reject_reason", "") || undefined,
+  };
+}
+
+function withdrawalMemoryDto(item) {
+  return {
+    id: item.id,
+    amountCents: item.amountCents,
+    channel: item.channel,
+    channelLabel: item.channelLabel,
+    status: item.status,
+    createdAt: item.createdAt,
+    completedAt: item.completedAt,
+    rejectReason: item.rejectReason,
+  };
+}
+
+function withdrawalAdminDto(recOrItem, userId) {
+  var uid = userId;
+  if (recOrItem && recOrItem.getString) {
+    uid = safeRecordString(recOrItem, "student_user", "");
+    return {
+      id: recOrItem.id,
+      userId: uid,
+      studentName: adminUserDisplayName(uid),
+      amountCents: safeRecordInt(recOrItem, "amount_cents", 0),
+      channel: safeRecordString(recOrItem, "channel", ""),
+      channelLabel: safeRecordString(recOrItem, "channel_label", ""),
+      status: safeRecordString(recOrItem, "status", ""),
+      createdAt: recOrItem.getString("created"),
+      completedAt: safeRecordString(recOrItem, "completed_at", "") || undefined,
+      rejectReason: safeRecordString(recOrItem, "reject_reason", "") || undefined,
+    };
+  }
+  var w = recOrItem;
+  return {
+    id: w.id,
+    userId: uid,
+    studentName: adminUserDisplayName(uid),
+    amountCents: w.amountCents,
+    channel: w.channel,
+    channelLabel: w.channelLabel,
+    status: w.status,
+    createdAt: w.createdAt,
+    completedAt: w.completedAt,
+    rejectReason: w.rejectReason,
+  };
+}
+
+function listWithdrawalsForStudent(userId) {
+  if (!hasCollection("withdrawals")) {
+    var store = studentWithdrawalsMap();
+    var list = store[userId] || [];
+    var out = [];
+    for (var i = 0; i < list.length; i++) out.push(withdrawalMemoryDto(list[i]));
+    return out;
+  }
+  var rows = $app.findRecordsByFilter(
+    "withdrawals",
+    "student_user = {:uid}",
+    "-created",
+    50,
+    0,
+    { uid: userId }
+  );
+  var dtos = [];
+  for (var j = 0; j < rows.length; j++) dtos.push(withdrawalClientDto(rows[j]));
+  return dtos;
+}
+
 var PRESET_DEMO_STUDENT_EMAILS = {};
 
 function isPresetDemoStudentEmail(email) {
@@ -1204,7 +1523,18 @@ function demoStudentSettlements() {
 }
 
 function studentSettlementsForUser(userId) {
-  return [];
+  if (!hasCollection("settlements")) return [];
+  var rows = $app.findRecordsByFilter(
+    "settlements",
+    "student_user = {:uid}",
+    "-created",
+    100,
+    0,
+    { uid: userId }
+  );
+  var out = [];
+  for (var i = 0; i < rows.length; i++) out.push(settlementDto(rows[i]));
+  return out;
 }
 
 function studentWithdrawalBalances(settlements, withdrawals) {
@@ -1396,20 +1726,54 @@ function familyProfileDtoFromRole(roleRec, auth, e) {
 }
 
 function studentWithdrawalOverview(uid) {
-  var store = studentWithdrawalsMap();
   var settlements = studentSettlementsForUser(uid);
-  if (!store[uid]) store[uid] = [];
-  var withdrawals = store[uid];
+  var withdrawals = listWithdrawalsForStudent(uid);
   var bal = studentWithdrawalBalances(settlements, withdrawals);
+  var payAcct = paymentAccountGetOrEmpty(uid, "student");
   return {
     availableCents: bal.availableCents,
     availableYuan: (bal.availableCents / 100).toFixed(2),
     frozenCents: bal.frozenCents,
     frozenYuan: (bal.frozenCents / 100).toFixed(2),
-    boundWechat: "",
-    boundBank: "",
+    boundWechat: payAcct.configured ? payAcct.accountLabel || "" : "",
+    boundBank: payAcct.configured ? payAcct.accountName || "" : "",
     withdrawals: withdrawals.slice(0, 20),
   };
+}
+
+function persistStudentWithdrawal(userId, amountCents, channel, payAcct) {
+  var overview = studentWithdrawalOverview(userId);
+  if (amountCents > overview.availableCents) {
+    return { ok: false, message: "可提现余额不足" };
+  }
+  var channelLabel = withdrawalChannelLabel(channel, payAcct);
+  var instant = channel === "wechat";
+  var now = new Date().toISOString();
+  var status = instant ? "completed" : "pending";
+  if (!hasCollection("withdrawals")) {
+    var wdStore = studentWithdrawalsMap();
+    if (!wdStore[userId]) wdStore[userId] = [];
+    wdStore[userId].unshift({
+      id: "wd-" + Date.now(),
+      amountCents: amountCents,
+      channel: channel,
+      channelLabel: channelLabel,
+      status: status,
+      createdAt: now,
+      completedAt: instant ? now : undefined,
+    });
+    return { ok: true, overview: studentWithdrawalOverview(userId) };
+  }
+  var col = $app.findCollectionByNameOrId("withdrawals");
+  var rec = new Record(col);
+  rec.set("student_user", userId);
+  rec.set("amount_cents", amountCents);
+  rec.set("channel", channel);
+  rec.set("channel_label", channelLabel);
+  rec.set("status", status);
+  if (instant) rec.set("completed_at", now);
+  $app.save(rec);
+  return { ok: true, overview: studentWithdrawalOverview(userId) };
 }
 
 function adminFundsReconcileMap() {
@@ -1427,45 +1791,87 @@ function adminUserDisplayName(userId) {
 }
 
 function adminFundCollectWallet() {
-  var store = walletDemoStoreMap();
-  var topups = [];
-  var payments = [];
-  var reconcile = adminFundsReconcileMap();
-  for (var uid in store) {
-    if (!store.hasOwnProperty(uid)) continue;
-    var owner = store[uid];
-    var txs = owner.transactions || [];
-    var userName = adminUserDisplayName(uid);
-    for (var i = 0; i < txs.length; i++) {
-      var tx = txs[i];
-      var base = {
-        id: tx.id,
-        userId: uid,
-        userName: userName,
-        amountCents: tx.amountCents,
-        label: tx.label,
-        createdAt: tx.createdAt,
-        reconciled: !!reconcile[tx.id],
-      };
-      if (tx.type === "topup") {
-        base.role = "family";
-        topups.push(base);
-      } else if (tx.type === "pay") {
-        base.role = "family";
-        base.orderId = tx.orderId;
-        payments.push(base);
+  if (!hasCollection("wallet_transactions")) {
+    var store = walletDemoStoreMap();
+    var topups = [];
+    var payments = [];
+    var reconcile = adminFundsReconcileMap();
+    for (var uid in store) {
+      if (!store.hasOwnProperty(uid)) continue;
+      var owner = store[uid];
+      var txs = owner.transactions || [];
+      var userName = adminUserDisplayName(uid);
+      for (var i = 0; i < txs.length; i++) {
+        var tx = txs[i];
+        var base = {
+          id: tx.id,
+          userId: uid,
+          userName: userName,
+          amountCents: tx.amountCents,
+          label: tx.label,
+          createdAt: tx.createdAt,
+          reconciled: !!reconcile[tx.id],
+        };
+        if (tx.type === "topup") {
+          base.role = "family";
+          topups.push(base);
+        } else if (tx.type === "pay") {
+          base.role = "family";
+          base.orderId = tx.orderId;
+          payments.push(base);
+        }
       }
     }
+    return { topups: topups, payments: payments };
   }
-  return { topups: topups, payments: payments };
+  var rows = $app.findRecordsByFilter("wallet_transactions", "id != ''", "-created", 500, 0);
+  var topupsDb = [];
+  var paymentsDb = [];
+  for (var ri = 0; ri < rows.length; ri++) {
+    var row = rows[ri];
+    var accId = safeRecordString(row, "wallet_account", "");
+    var userId = "";
+    if (accId) {
+      try {
+        var acc = $app.findRecordById("wallet_accounts", accId);
+        userId = safeRecordString(acc, "user", "");
+      } catch (_) {}
+    }
+    var baseDb = {
+      id: row.id,
+      userId: userId,
+      userName: adminUserDisplayName(userId),
+      amountCents: safeRecordInt(row, "amount_cents", 0),
+      label: safeRecordString(row, "label", ""),
+      createdAt: row.getString("created"),
+      reconciled: safeRecordBool(row, "reconciled", false),
+    };
+    var txType = safeRecordString(row, "type", "");
+    if (txType === "topup") {
+      baseDb.role = "family";
+      topupsDb.push(baseDb);
+    } else if (txType === "pay") {
+      baseDb.role = "family";
+      baseDb.orderId = safeRecordString(row, "order", "");
+      paymentsDb.push(baseDb);
+    }
+  }
+  return { topups: topupsDb, payments: paymentsDb };
 }
 
 function adminFundOverview() {
-  var store = walletDemoStoreMap();
   var totalBalanceCents = 0;
-  for (var uid in store) {
-    if (!store.hasOwnProperty(uid)) continue;
-    totalBalanceCents += store[uid].balanceCents || 0;
+  if (hasCollection("wallet_accounts")) {
+    var accs = $app.findRecordsByFilter("wallet_accounts", "id != ''", "", 5000, 0);
+    for (var ai = 0; ai < accs.length; ai++) {
+      totalBalanceCents += safeRecordInt(accs[ai], "balance_cents", 0);
+    }
+  } else {
+    var store = walletDemoStoreMap();
+    for (var uid in store) {
+      if (!store.hasOwnProperty(uid)) continue;
+      totalBalanceCents += store[uid].balanceCents || 0;
+    }
   }
   var collected = adminFundCollectWallet();
   var topupTotalCents = 0;
@@ -1476,16 +1882,30 @@ function adminFundOverview() {
   for (var pi = 0; pi < collected.payments.length; pi++) {
     paymentTotalCents += collected.payments[pi].amountCents;
   }
-  var wdStore = studentWithdrawalsMap();
   var pendingCount = 0;
   var pendingCents = 0;
-  for (var suid in wdStore) {
-    if (!wdStore.hasOwnProperty(suid)) continue;
-    var list = wdStore[suid];
-    for (var wi = 0; wi < list.length; wi++) {
-      if (list[wi].status === "pending") {
-        pendingCount += 1;
-        pendingCents += list[wi].amountCents;
+  if (hasCollection("withdrawals")) {
+    var wdRows = $app.findRecordsByFilter(
+      "withdrawals",
+      'status = "pending"',
+      "",
+      500,
+      0
+    );
+    pendingCount = wdRows.length;
+    for (var wi = 0; wi < wdRows.length; wi++) {
+      pendingCents += safeRecordInt(wdRows[wi], "amount_cents", 0);
+    }
+  } else {
+    var wdStore = studentWithdrawalsMap();
+    for (var suid in wdStore) {
+      if (!wdStore.hasOwnProperty(suid)) continue;
+      var list = wdStore[suid];
+      for (var wj = 0; wj < list.length; wj++) {
+        if (list[wj].status === "pending") {
+          pendingCount += 1;
+          pendingCents += list[wj].amountCents;
+        }
       }
     }
   }
@@ -1512,86 +1932,90 @@ function adminFundOverview() {
 }
 
 function adminFundWithdrawalsList() {
-  var wdStore = studentWithdrawalsMap();
-  var out = [];
-  for (var uid in wdStore) {
-    if (!wdStore.hasOwnProperty(uid)) continue;
-    var list = wdStore[uid];
-    var name = adminUserDisplayName(uid);
-    for (var i = 0; i < list.length; i++) {
-      var w = list[i];
-      out.push({
-        id: w.id,
-        userId: uid,
-        studentName: name,
-        amountCents: w.amountCents,
-        channel: w.channel,
-        channelLabel: w.channelLabel,
-        status: w.status,
-        createdAt: w.createdAt,
-        completedAt: w.completedAt,
-        rejectReason: w.rejectReason,
-      });
+  if (!hasCollection("withdrawals")) {
+    var wdStore = studentWithdrawalsMap();
+    var outMem = [];
+    for (var uid in wdStore) {
+      if (!wdStore.hasOwnProperty(uid)) continue;
+      var list = wdStore[uid];
+      for (var i = 0; i < list.length; i++) {
+        outMem.push(withdrawalAdminDto(list[i], uid));
+      }
     }
+    outMem.sort(function (a, b) {
+      return b.createdAt.localeCompare(a.createdAt);
+    });
+    return outMem;
   }
-  out.sort(function (a, b) {
-    return b.createdAt.localeCompare(a.createdAt);
-  });
-  return out;
+  var rows = $app.findRecordsByFilter("withdrawals", "id != ''", "-created", 500, 0);
+  var outDb = [];
+  for (var j = 0; j < rows.length; j++) outDb.push(withdrawalAdminDto(rows[j]));
+  return outDb;
 }
 
 function adminFindWithdrawal(withdrawalId) {
-  var wdStore = studentWithdrawalsMap();
-  for (var uid in wdStore) {
-    if (!wdStore.hasOwnProperty(uid)) continue;
-    var list = wdStore[uid];
-    for (var i = 0; i < list.length; i++) {
-      if (list[i].id === withdrawalId) return { uid: uid, idx: i, list: list };
+  if (!hasCollection("withdrawals")) {
+    var wdStore = studentWithdrawalsMap();
+    for (var uid in wdStore) {
+      if (!wdStore.hasOwnProperty(uid)) continue;
+      var list = wdStore[uid];
+      for (var i = 0; i < list.length; i++) {
+        if (list[i].id === withdrawalId) return { uid: uid, idx: i, list: list };
+      }
     }
+    return null;
   }
-  return null;
+  try {
+    var rec = $app.findRecordById("withdrawals", withdrawalId);
+    return { rec: rec };
+  } catch (_) {
+    return null;
+  }
 }
 
 function adminApproveWithdrawal(withdrawalId) {
   var found = adminFindWithdrawal(withdrawalId);
-  if (!found || found.list[found.idx].status !== "pending") return null;
-  var now = new Date().toISOString();
+  if (!found) return null;
+  if (found.rec) {
+    if (safeRecordString(found.rec, "status", "") !== "pending") return null;
+    var now = new Date().toISOString();
+    found.rec.set("status", "completed");
+    found.rec.set("completed_at", now);
+    $app.save(found.rec);
+    return withdrawalAdminDto(found.rec);
+  }
+  if (found.list[found.idx].status !== "pending") return null;
+  var nowMem = new Date().toISOString();
   found.list[found.idx].status = "completed";
-  found.list[found.idx].completedAt = now;
-  var w = found.list[found.idx];
-  return {
-    id: w.id,
-    userId: found.uid,
-    studentName: adminUserDisplayName(found.uid),
-    amountCents: w.amountCents,
-    channel: w.channel,
-    channelLabel: w.channelLabel,
-    status: w.status,
-    createdAt: w.createdAt,
-    completedAt: w.completedAt,
-  };
+  found.list[found.idx].completedAt = nowMem;
+  return withdrawalAdminDto(found.list[found.idx], found.uid);
 }
 
 function adminRejectWithdrawal(withdrawalId, reason) {
   var found = adminFindWithdrawal(withdrawalId);
-  if (!found || found.list[found.idx].status !== "pending") return null;
+  if (!found) return null;
+  if (found.rec) {
+    if (safeRecordString(found.rec, "status", "") !== "pending") return null;
+    found.rec.set("status", "rejected");
+    found.rec.set("reject_reason", reason || "运营驳回");
+    $app.save(found.rec);
+    return withdrawalAdminDto(found.rec);
+  }
+  if (found.list[found.idx].status !== "pending") return null;
   found.list[found.idx].status = "rejected";
   found.list[found.idx].rejectReason = reason || "运营驳回";
-  var w = found.list[found.idx];
-  return {
-    id: w.id,
-    userId: found.uid,
-    studentName: adminUserDisplayName(found.uid),
-    amountCents: w.amountCents,
-    channel: w.channel,
-    channelLabel: w.channelLabel,
-    status: w.status,
-    createdAt: w.createdAt,
-    rejectReason: w.rejectReason,
-  };
+  return withdrawalAdminDto(found.list[found.idx], found.uid);
 }
 
 function adminMarkReconciled(recordId) {
+  if (hasCollection("wallet_transactions")) {
+    try {
+      var tx = $app.findRecordById("wallet_transactions", recordId);
+      tx.set("reconciled", true);
+      $app.save(tx);
+      return { ok: true };
+    } catch (_) {}
+  }
   var reconcile = adminFundsReconcileMap();
   reconcile[recordId] = true;
   return { ok: true };
@@ -2013,6 +2437,10 @@ function deleteAllInCollection(name) {
 function wipeAllCollections() {
   var stats = {};
   var collections = [
+    "wallet_transactions",
+    "wallet_accounts",
+    "withdrawals",
+    "payment_accounts",
     "outdoor_approvals",
     "settlements",
     "schedules",
@@ -2208,8 +2636,10 @@ module.exports = {
   serviceInfoById, orderToStudentDto, serviceLogSummaryFromOrder, serviceLogDtoFromOrder,
   platformActivityFromOrders, sosToDto, haversineM, orderToFamilyDto, orderToElderDto,
   elderProfileIdForUser, familyCanAccessOrder, completeOrderSchedule, finalizeOrderAfterConfirm,
-  walletDemoStoreMap, walletEnsureUser, walletOverviewDto, walletTopup, walletPayLabel,
+  walletDemoStoreMap, walletEnsureUser, walletOverviewDto, walletOverviewForUser, walletTopup, walletPayLabel,
   walletDeductForOrder, walletPayOrderRecord, userHasRole, assertActiveRoleHeader,
+  paymentAccountGetOrEmpty, paymentAccountUpsert, seedPaymentAccountDemoForUser, withdrawalChannelLabel,
+  persistStudentWithdrawal,
   studentWithdrawalsMap, isPresetDemoStudentEmail, demoStudentSettlements, studentSettlementsForUser,
   studentWithdrawalBalances, studentWithdrawalOverview,
   adminFundsReconcileMap, adminFundOverview, adminFundCollectWallet, adminFundWithdrawalsList,

@@ -1386,7 +1386,7 @@ routerAdd("GET", "/api/nuanban/family/wallet", function (e) {
   const rc = nb.assertActiveRoleHeader(e, "family");
   if (!rc.ok) return e.json(rc.code, rc.body);
   if (!e.auth) return e.json(401, { message: "需要登录" });
-  return e.json(200, nb.walletOverviewDto(nb.walletEnsureUser(e.auth.id)));
+  return e.json(200, nb.walletOverviewForUser(e.auth.id));
 });
 
 routerAdd("POST", "/api/nuanban/family/wallet/topup", function (e) {
@@ -1428,7 +1428,7 @@ routerAdd("GET", "/api/nuanban/elder/wallet", function (e) {
   const rc = nb.assertActiveRoleHeader(e, "elder");
   if (!rc.ok) return e.json(rc.code, rc.body);
   if (!e.auth) return e.json(401, { message: "需要登录" });
-  return e.json(200, nb.walletOverviewDto(nb.walletEnsureUser(e.auth.id)));
+  return e.json(200, nb.walletOverviewForUser(e.auth.id));
 });
 
 routerAdd("POST", "/api/nuanban/elder/wallet/topup", function (e) {
@@ -1467,56 +1467,14 @@ routerAdd("POST", "/api/nuanban/elder/wallet/pay-order", function (e) {
   return e.json(200, { ok: true, status: result.status, overview: result.overview });
 });
 
-var paymentAccountDemoStore = paymentAccountDemoStore || {};
-
-function paymentAccountDemoKey(uid, role) {
-  return uid + ":" + role;
-}
-
-function paymentAccountDemoDto(uid, role) {
-  var st = paymentAccountDemoStore[paymentAccountDemoKey(uid, role)];
-  if (!st || !st.configured) {
-    return { provider: "saobei", configured: false };
-  }
-  var tail = String(st.merchantNo || "").slice(-4) || "8029";
-  return {
-    provider: "saobei",
-    configured: true,
-    merchantNo: st.merchantNo,
-    accountName: st.accountName,
-    accountLabel: st.accountLabel || "扫呗 · ****" + tail,
-  };
-}
-
-function seedPaymentAccountDemoForUser(auth, role) {
-  var nb = require(__hooks + "/nuanban_lib.js");
-  if (nb.isFormalAuthMode()) return;
-  var em = nb.safeRecordString(auth, "email", "").toLowerCase();
-  if (em.indexOf("student3") >= 0) return;
-  var roles = [];
-  if (em.indexOf("multi") >= 0) roles = ["student", "family", "elder"];
-  else {
-    if (em.indexOf("student") >= 0) roles.push("student");
-    if (em.indexOf("family") >= 0) roles.push("family");
-    if (em.indexOf("elder") >= 0) roles.push("elder");
-  }
-  if (roles.indexOf(role) < 0) return;
-  paymentAccountDemoStore[paymentAccountDemoKey(auth.id, role)] = {
-    configured: true,
-    merchantNo: "80291234",
-    accountName: "演示账户",
-    accountLabel: "扫呗 · ****1234",
-  };
-}
-
 function registerPaymentAccountRoutes(role) {
   routerAdd("GET", "/api/nuanban/" + role + "/payment-account", function (e) {
     var nb = require(__hooks + "/nuanban_lib.js");
     const rc = nb.assertActiveRoleHeader(e, role);
     if (!rc.ok) return e.json(rc.code, rc.body);
     if (!e.auth) return e.json(401, { message: "需要登录" });
-    seedPaymentAccountDemoForUser(e.auth, role);
-    return e.json(200, paymentAccountDemoDto(e.auth.id, role));
+    nb.seedPaymentAccountDemoForUser(e.auth, role);
+    return e.json(200, nb.paymentAccountGetOrEmpty(e.auth.id, role));
   });
   routerAdd("POST", "/api/nuanban/" + role + "/payment-account", function (e) {
     var nb = require(__hooks + "/nuanban_lib.js");
@@ -1530,14 +1488,7 @@ function registerPaymentAccountRoutes(role) {
     if (!merchantNo || !accountName) {
       return e.json(400, { message: "请填写商户号与账户名称" });
     }
-    var tail = merchantNo.slice(-4);
-    paymentAccountDemoStore[paymentAccountDemoKey(e.auth.id, role)] = {
-      configured: true,
-      merchantNo: merchantNo,
-      accountName: accountName,
-      accountLabel: "扫呗 · ****" + tail,
-    };
-    return e.json(200, paymentAccountDemoDto(e.auth.id, role));
+    return e.json(200, nb.paymentAccountUpsert(e.auth.id, role, merchantNo, accountName));
   });
 }
 
@@ -2184,29 +2135,14 @@ routerAdd("POST", "/api/nuanban/student/withdrawal", function (e) {
   const amountCents = parseInt(body.amountCents, 10) || 0;
   const channel = body.channel === "bank" ? "bank" : "wechat";
   if (amountCents < 1000) return e.json(400, { message: "提现金额至少 ¥10.00" });
-  seedPaymentAccountDemoForUser(auth, "student");
-  const payAcct = paymentAccountDemoDto(auth.id, "student");
+  nb.seedPaymentAccountDemoForUser(auth, "student");
+  const payAcct = nb.paymentAccountGetOrEmpty(auth.id, "student");
   if (!payAcct.configured) {
     return e.json(400, { message: "请先绑定收款账户" });
   }
-  const overview = nb.studentWithdrawalOverview(auth.id);
-  if (amountCents > overview.availableCents) {
-    return e.json(400, { message: "可提现余额不足" });
-  }
-  const wdStore = nb.studentWithdrawalsMap();
-  if (!wdStore[auth.id]) wdStore[auth.id] = [];
-  const now = new Date().toISOString();
-  const instant = channel === "wechat";
-  wdStore[auth.id].unshift({
-    id: "wd-" + Date.now(),
-    amountCents: amountCents,
-    channel: channel,
-    channelLabel: channel === "wechat" ? "微信零钱 · 尾号 8826" : "建设银行 · 尾号 6688",
-    status: instant ? "completed" : "pending",
-    createdAt: now,
-    completedAt: instant ? now : undefined,
-  });
-  return e.json(200, nb.studentWithdrawalOverview(auth.id));
+  const result = nb.persistStudentWithdrawal(auth.id, amountCents, channel, payAcct);
+  if (!result.ok) return e.json(400, { message: result.message || "提现失败" });
+  return e.json(200, result.overview);
 });
 
 routerAdd("GET", "/api/nuanban/platform/funds/overview", function (e) {
