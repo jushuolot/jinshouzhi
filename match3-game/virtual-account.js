@@ -54,7 +54,7 @@
       if (!raw) return false;
       var data = JSON.parse(raw);
       if (!data || typeof data.total !== "number") return false;
-      state.balance = roundMoney(data.total);
+      state.balance = Math.max(0, roundMoney(data.total));
       state.bySlot =
         data.bySlot && typeof data.bySlot === "object" ? data.bySlot : {};
       state.migratedFromLegacy = true;
