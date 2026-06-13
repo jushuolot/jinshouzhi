@@ -1,0 +1,9 @@
+{
+  "name": "match3-ad-server",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Local demo server for match3 ad settlement webhook",
+  "scripts": {
+    "start": "node server.js"
+  }
+}

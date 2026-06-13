@@ -1,0 +1,26 @@
+---
+description: 暖伴勤工自主迭代 — 零成本 demo、双端 API、发货闭环
+globs: nuanban_github/**
+alwaysApply: false
+---
+
+# 暖伴勤工 Agent 规则
+
+开始改 `nuanban_github` 前阅读 `AGENTS.md` 与 `docs/AGENT_EVOLUTION.md`。
+
+## 必做
+
+1. API 变更：同时改 `packages/miniapp/src/utils/demo-mock.ts` 与 `packages/pocketbase/pb_hooks/nuanban.pb.js`
+2. 新页面：注册 `packages/miniapp/src/pages.json`，更新 `docs/MINIAPP_ROUTING.md`
+3. 结束前：运行 `./scripts/agent-ship.sh`；用户要求自动完善时必须 commit + `git pull --rebase` + push（git 根在 `nuanban_github` 上一级）
+4. 记录：`docs/NIGHT_LOG.md` 与 `docs/ROADMAP.md` 各一行
+
+## 禁止
+
+- 真实微信支付/商户接入（用 mock 演示）
+- 只改代码不 push（子任务也算）
+- 破坏零成本栈（GitHub Pages + demo-mock）
+
+## 演示栈
+
+公网 `*.github.io` + `/nuanban` 走 `isDemoMockEnabled()`；本地用 `scripts/dev-test.sh`。

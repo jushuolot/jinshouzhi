@@ -1,0 +1,239 @@
+{
+  "prev_date": "2026-06-12",
+  "curr_date": "2026-06-13",
+  "compared": 155,
+  "avg_pct_delta": 0.0,
+  "movers": [
+    {
+      "code": "600549",
+      "name": "厦门钨业",
+      "prev_pct": -3.92,
+      "curr_pct": -3.92,
+      "delta_pct": 0.0
+    },
+    {
+      "code": "688388",
+      "name": "嘉元科技",
+      "prev_pct": 10.97,
+      "curr_pct": 10.97,
+      "delta_pct": 0.0
+    },
+    {
+      "code": "688012",
+      "name": "中微公司",
+      "prev_pct": 0.26,
+      "curr_pct": 0.26,
+      "delta_pct": 0.0
+    },
+    {
+      "code": "301630",
+      "name": "同宇新材",
+      "prev_pct": -8.29,
+      "curr_pct": -8.29,
+      "delta_pct": 0.0
+    },
+    {
+      "code": "688788",
+      "name": "科思科技",
+      "prev_pct": 17.71,
+      "curr_pct": 17.71,
+      "delta_pct": 0.0
+    },
+    {
+      "code": "000063",
+      "name": "中兴通讯",
+      "prev_pct": -3.86,
+      "curr_pct": -3.86,
+      "delta_pct": 0.0
+    },
+    {
+      "code": "002119",
+      "name": "康强电子",
+      "prev_pct": 2.44,
+      "curr_pct": 2.44,
+      "delta_pct": 0.0
+    },
+    {
+      "code": "300502",
+      "name": "新易盛",
+      "prev_pct": -3.71,
+      "curr_pct": -3.71,
+      "delta_pct": 0.0
+    },
+    {
+      "code": "300136",
+      "name": "信维通信",
+      "prev_pct": -2.44,
+      "curr_pct": -2.44,
+      "delta_pct": 0.0
+    },
+    {
+      "code": "920088",
+      "name": "科力股份",
+      "prev_pct": 2.0,
+      "curr_pct": 2.0,
+      "delta_pct": 0.0
+    },
+    {
+      "code": "002613",
+      "name": "北玻股份",
+      "prev_pct": -9.56,
+      "curr_pct": -9.56,
+      "delta_pct": 0.0
+    },
+    {
+      "code": "301666",
+      "name": "大普微",
+      "prev_pct": -9.73,
+      "curr_pct": -9.73,
+      "delta_pct": 0.0
+    },
+    {
+      "code": "688318",
+      "name": "财富趋势",
+      "prev_pct": 10.84,
+      "curr_pct": 10.84,
+      "delta_pct": 0.0
+    },
+    {
+      "code": "002297",
+      "name": "博云新材",
+      "prev_pct": 4.91,
+      "curr_pct": 4.91,
+      "delta_pct": 0.0
+    },
+    {
+      "code": "600498",
+      "name": "烽火通信",
+      "prev_pct": 3.51,
+      "curr_pct": 3.51,
+      "delta_pct": 0.0
+    }
+  ],
+  "pick_checks": [
+    {
+      "code": "000725",
+      "name": "京东方Ａ",
+      "signal": "买入",
+      "delta_pct": 0.0,
+      "hit": false
+    },
+    {
+      "code": "000988",
+      "name": "华工科技",
+      "signal": "买入",
+      "delta_pct": 0.0,
+      "hit": false
+    },
+    {
+      "code": "002463",
+      "name": "沪电股份",
+      "signal": "观望",
+      "delta_pct": 0.0,
+      "hit": false
+    },
+    {
+      "code": "301563",
+      "name": "云汉芯城",
+      "signal": "观望",
+      "delta_pct": 0.0,
+      "hit": false
+    },
+    {
+      "code": "600498",
+      "name": "烽火通信",
+      "signal": "买入",
+      "delta_pct": 0.0,
+      "hit": false
+    },
+    {
+      "code": "000657",
+      "name": "中钨高新",
+      "signal": "买入",
+      "delta_pct": 0.0,
+      "hit": false
+    },
+    {
+      "code": "600176",
+      "name": "中国巨石",
+      "signal": "买入",
+      "delta_pct": 0.0,
+      "hit": false
+    },
+    {
+      "code": "600487",
+      "name": "亨通光电",
+      "signal": "买入",
+      "delta_pct": 0.0,
+      "hit": false
+    },
+    {
+      "code": "000657",
+      "name": "中钨高新",
+      "signal": "观望",
+      "delta_pct": 0.0,
+      "hit": false
+    },
+    {
+      "code": "000725",
+      "name": "京东方Ａ",
+      "signal": "观望",
+      "delta_pct": 0.0,
+      "hit": false
+    },
+    {
+      "code": "002463",
+      "name": "沪电股份",
+      "signal": "观望",
+      "delta_pct": 0.0,
+      "hit": false
+    },
+    {
+      "code": "600176",
+      "name": "中国巨石",
+      "signal": "买入",
+      "delta_pct": 0.0,
+      "hit": false
+    },
+    {
+      "code": "600498",
+      "name": "烽火通信",
+      "signal": "买入",
+      "delta_pct": 0.0,
+      "hit": false
+    },
+    {
+      "code": "000657",
+      "name": "中钨高新",
+      "signal": "观望",
+      "delta_pct": 0.0,
+      "hit": false
+    },
+    {
+      "code": "002463",
+      "name": "沪电股份",
+      "signal": "观望",
+      "delta_pct": 0.0,
+      "hit": false
+    },
+    {
+      "code": "600176",
+      "name": "中国巨石",
+      "signal": "买入",
+      "delta_pct": 0.0,
+      "hit": false
+    },
+    {
+      "code": "600498",
+      "name": "烽火通信",
+      "signal": "买入",
+      "delta_pct": 0.0,
+      "hit": false
+    }
+  ],
+  "conclusions": [
+    "快照对比 155 只，均涨跌变化 +0.00%。",
+    "昨日推荐 17 只，快照验证 0 只方向正确。",
+    "最大异动 厦门钨业 600549 Δ+0.0%。"
+  ]
+}

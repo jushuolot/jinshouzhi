@@ -1,0 +1,38 @@
+# 备案期间临时用：HTTP + 服务器公网 IP（无 HTTPS、无域名）
+# 由 deploy-staging.sh 使用，备案通过后请改 deploy-public.sh
+
+:80 {
+	handle /api/* {
+		reverse_proxy pocketbase:8090
+	}
+
+	handle /_/* {
+		reverse_proxy pocketbase:8090
+	}
+
+	handle /game/* {
+		uri strip_prefix /game
+		root * /srv/match3-game
+		try_files {path} /index.html
+		file_server
+	}
+
+	handle /game {
+		redir /game/ permanent
+	}
+
+	handle /login {
+		redir /#/pages/common/login permanent
+	}
+	handle /login/* {
+		redir /#/pages/common/login permanent
+	}
+
+	handle {
+		root * /srv/h5
+		@html path /index.html
+		header @html Cache-Control "no-cache, must-revalidate"
+		try_files {path} /index.html
+		file_server
+	}
+}

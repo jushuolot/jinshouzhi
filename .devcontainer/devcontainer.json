@@ -1,0 +1,17 @@
+{
+  "name": "暖伴勤工",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:20",
+  "forwardPorts": [5174, 8090],
+  "portsAttributes": {
+    "5174": {
+      "label": "暖伴-H5",
+      "onAutoForward": "openBrowser"
+    },
+    "8090": {
+      "label": "暖伴-PocketBase",
+      "onAutoForward": "notify"
+    }
+  },
+  "postCreateCommand": "cd nuanban_github/packages/miniapp && npm install",
+  "postAttachCommand": "printf '\\n✅ Codespaces 环境已就绪\\n   终端 1: cd nuanban_github && ./scripts/dev-test.sh\\n   终端 2: cd nuanban_github && ./scripts/start-h5.sh\\n   浏览器: http://localhost:5174/#/pages/common/launch\\n\\n'"
+}

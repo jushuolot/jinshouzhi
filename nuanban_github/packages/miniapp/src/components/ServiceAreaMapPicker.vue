@@ -1,0 +1,307 @@
+<template>
+  <view class="area-map">
+    <text class="hint">在地图上点击描点围成服务区域，可添加多个区域（至少3点完成一个区域）</text>
+    <view v-if="!disabled" class="toolbar">
+      <button class="tool-btn" size="mini" @tap="undoPoint">撤销上一点</button>
+      <button class="tool-btn" size="mini" @tap="finishPolygon">完成当前区域</button>
+      <button class="tool-btn" size="mini" @tap="startNewPolygon">新增区域</button>
+    </view>
+    <view class="map-wrap" @tap="onMapTap">
+      <view v-if="!ready" class="loading">地图加载中…</view>
+      <view v-else class="stage" :style="{ width: stageW + 'px', height: stageH + 'px' }">
+        <view class="tiles">
+          <image
+            v-for="tile in tiles"
+            :key="tile.key"
+            class="tile"
+            :src="tile.url"
+            :style="{ left: tile.x + 'px', top: tile.y + 'px' }"
+            mode="scaleToFill"
+          />
+        </view>
+        <svg
+          class="overlay"
+          :width="stageW"
+          :height="stageH"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <polygon
+            v-for="poly in finishedPolygons"
+            :key="poly.id"
+            :points="polyPoints(poly.ring)"
+            fill="rgba(196,92,38,0.25)"
+            stroke="#c45c26"
+            stroke-width="2"
+          />
+          <polyline
+            v-if="draftRing.length"
+            :points="polyPoints(draftRing)"
+            fill="none"
+            stroke="#2e7d32"
+            stroke-width="2"
+            stroke-dasharray="6 4"
+          />
+          <circle
+            v-for="(pt, idx) in allVisiblePoints"
+            :key="'pt-' + idx"
+            :cx="pointPx(pt).x"
+            :cy="pointPx(pt).y"
+            r="5"
+            fill="#c45c26"
+            stroke="#fff"
+            stroke-width="1.5"
+          />
+        </svg>
+        <text class="attr">{{ OSM_ATTRIBUTION }}</text>
+      </view>
+    </view>
+    <view v-if="modelValue.polygons.length" class="summary">
+      <text v-for="(p, i) in modelValue.polygons" :key="p.id" class="poly-tag">
+        {{ p.label || `区域${i + 1}` }}（{{ p.ring.length }}点）
+      </text>
+    </view>
+    <text v-else-if="!disabled" class="warn">请至少完成一个服务区域</text>
+  </view>
+</template>
+
+<script setup lang="ts">
+import { computed, onMounted, ref, watch } from 'vue';
+import {
+  OSM_ATTRIBUTION,
+  pixelToLatLng,
+  markerPixel,
+  visibleOsmTiles,
+} from '../utils/geo-map';
+import {
+  emptyServiceAreaGeo,
+  type ServiceAreaGeo,
+  type ServiceAreaPolygon,
+  type GeoPoint,
+} from '../utils/service-area-geo';
+
+const props = withDefaults(
+  defineProps<{
+    modelValue: ServiceAreaGeo;
+    disabled?: boolean;
+    centerLat?: number;
+    centerLng?: number;
+  }>(),
+  {
+    disabled: false,
+    centerLat: 31.2304,
+    centerLng: 121.4737,
+  },
+);
+
+const emit = defineEmits<{ 'update:modelValue': [value: ServiceAreaGeo] }>();
+
+const ready = ref(false);
+const stageW = ref(320);
+const stageH = ref(280);
+const viewCenterLat = ref(props.centerLat);
+const viewCenterLng = ref(props.centerLng);
+const viewZoom = ref(13);
+const draftRing = ref<GeoPoint[]>([]);
+
+const finishedPolygons = computed(() => props.modelValue.polygons);
+const allVisiblePoints = computed(() => [
+  ...finishedPolygons.value.flatMap((p) => p.ring),
+  ...draftRing.value,
+]);
+
+const tiles = computed(() =>
+  visibleOsmTiles(viewCenterLat.value, viewCenterLng.value, viewZoom.value, stageW.value, stageH.value),
+);
+
+function pointPx(pt: GeoPoint) {
+  return markerPixel(
+    pt.lat,
+    pt.lng,
+    viewCenterLat.value,
+    viewCenterLng.value,
+    viewZoom.value,
+    stageW.value,
+    stageH.value,
+  );
+}
+
+function polyPoints(ring: GeoPoint[]) {
+  return ring.map((pt) => {
+    const { x, y } = pointPx(pt);
+    return `${x},${y}`;
+  }).join(' ');
+}
+
+function measure() {
+  uni
+    .createSelectorQuery()
+    .select('.map-wrap')
+    .boundingClientRect((rect) => {
+      if (!rect || Array.isArray(rect) || !rect.width) return;
+      stageW.value = Math.round(rect.width);
+      stageH.value = Math.max(Math.round(rect.height), 260);
+      ready.value = true;
+    })
+    .exec();
+}
+
+onMounted(() => {
+  measure();
+});
+
+watch(
+  () => props.modelValue,
+  () => {
+    draftRing.value = [];
+  },
+  { deep: true },
+);
+
+function onMapTap(e: { detail?: { x?: number; y?: number }; touches?: { x: number; y: number }[] }) {
+  if (props.disabled || !ready.value) return;
+  const touch = e.touches?.[0];
+  const x = touch?.x ?? e.detail?.x;
+  const y = touch?.y ?? e.detail?.y;
+  if (x == null || y == null) return;
+  uni
+    .createSelectorQuery()
+    .select('.stage')
+    .boundingClientRect((rect) => {
+      if (!rect || Array.isArray(rect)) return;
+      const localX = x - rect.left;
+      const localY = y - rect.top;
+      const { lat, lng } = pixelToLatLng(
+        localX,
+        localY,
+        viewCenterLat.value,
+        viewCenterLng.value,
+        viewZoom.value,
+        stageW.value,
+        stageH.value,
+      );
+      draftRing.value = [...draftRing.value, { lat, lng }];
+    })
+    .exec();
+}
+
+function undoPoint() {
+  if (props.disabled || !draftRing.value.length) return;
+  draftRing.value = draftRing.value.slice(0, -1);
+}
+
+function finishPolygon() {
+  if (props.disabled || draftRing.value.length < 3) {
+    uni.showToast({ title: '至少描 3 个点', icon: 'none' });
+    return;
+  }
+  const poly: ServiceAreaPolygon = {
+    id: `poly-${Date.now()}`,
+    label: `区域${props.modelValue.polygons.length + 1}`,
+    ring: [...draftRing.value],
+  };
+  emit('update:modelValue', {
+    polygons: [...props.modelValue.polygons, poly],
+  });
+  draftRing.value = [];
+}
+
+function startNewPolygon() {
+  draftRing.value = [];
+}
+
+watch(
+  () => [props.centerLat, props.centerLng],
+  () => {
+    viewCenterLat.value = props.centerLat;
+    viewCenterLng.value = props.centerLng;
+  },
+);
+</script>
+
+<style scoped>
+.hint {
+  display: block;
+  margin-bottom: 12rpx;
+  font-size: 22rpx;
+  color: var(--nb-text-muted, #888);
+  line-height: 1.45;
+}
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8rpx;
+  margin-bottom: 12rpx;
+}
+.tool-btn {
+  margin: 0;
+  background: #fff;
+  color: var(--nb-primary, #c45c26);
+  border: 2rpx solid var(--nb-primary, #c45c26);
+}
+.map-wrap {
+  position: relative;
+  width: 100%;
+  height: 280px;
+  background: #e8ecef;
+  border-radius: 12rpx;
+  overflow: hidden;
+}
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #888;
+  font-size: 26rpx;
+}
+.stage {
+  position: relative;
+  overflow: hidden;
+}
+.tiles {
+  position: absolute;
+  inset: 0;
+}
+.tile {
+  position: absolute;
+  width: 256px;
+  height: 256px;
+  pointer-events: none;
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+.attr {
+  position: absolute;
+  right: 8rpx;
+  bottom: 6rpx;
+  z-index: 3;
+  font-size: 18rpx;
+  color: rgba(0, 0, 0, 0.55);
+  background: rgba(255, 255, 255, 0.75);
+  padding: 2rpx 6rpx;
+  border-radius: 4rpx;
+}
+.summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8rpx;
+  margin-top: 12rpx;
+}
+.poly-tag {
+  font-size: 22rpx;
+  color: var(--nb-primary, #c45c26);
+  background: var(--nb-primary-soft, #fff5ef);
+  padding: 6rpx 12rpx;
+  border-radius: 8rpx;
+}
+.warn {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 22rpx;
+  color: #c45c26;
+}
+</style>

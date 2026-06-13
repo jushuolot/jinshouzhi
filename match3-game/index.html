@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="description" content="古蜀秘档 - 三星堆考古消消乐，五章百关，文物闯关" />
+  <title>古蜀秘档 · 三星堆消消</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="boot-splash.css" />
+  <link rel="preload" href="game.js" as="script" />
+  <link rel="preload" href="assets/portraits/hutan.jpg" as="image" />
+</head>
+<body class="world-1 stars-mode glam-mode">
+  <div id="boot-splash" class="boot-splash" role="status" aria-live="polite">
+    <div class="boot-logo" aria-hidden="true">🎭🏺🦅</div>
+    <h1>古蜀秘档</h1>
+    <p id="boot-status" class="boot-status">系统加载中…</p>
+    <div class="boot-bar"><div id="boot-bar-fill" class="boot-bar-fill"></div></div>
+    <p class="boot-ver">Gen.58 · 文明历 2045 · 超越期</p>
+    <p class="boot-tip">第7日收工复盘 · 神树层位对齐</p>
+  </div>
+  <div id="confetti-layer" aria-hidden="true"></div>
+  <div id="mega-combo" class="mega-combo" hidden aria-live="polite"></div>
+
+  <div class="wrap">
+    <!-- 首页 -->
+    <section id="screen-home" class="screen screen-home">
+      <div class="home-logo" aria-hidden="true">🎭🏺🦅</div>
+      <h1 id="game-title" class="title">古蜀秘档</h1>
+      <p class="home-tagline">鬼吹灯式探墓 · 三维地图 · 探点闯关 · 五级大墓</p>
+      <p class="home-squad-tag">摸金天团 · 文明历 2045 · 王墩：「第七日收工，神树最后一铲归胖爷。」</p>
+      <div class="home-team" aria-label="考古小队">
+        <span class="team-pill lead-star">🧭 胡探</span>
+        <span class="team-pill">💪 王墩</span>
+        <span class="team-pill">🔬 杨雪</span>
+        <span class="team-pill">💰 金牙刘</span>
+        <span class="team-pill">📚 陈礼</span>
+      </div>
+      <p id="evolution-badge" class="evolution-badge" aria-live="polite"></p>
+      <div id="daily-challenge" class="daily-challenge" hidden></div>
+      <div id="home-chapter-block" class="home-chapter-block">
+        <p id="home-chapter-label" class="home-chapter-label">第一章 · 青铜门启</p>
+        <div class="home-chapter-track" role="progressbar" aria-valuemin="0" aria-valuemax="20">
+          <div id="home-chapter-fill" class="home-chapter-fill"></div>
+        </div>
+        <p id="home-codex-hint" class="home-codex-hint">图鉴收录 0/6</p>
+      </div>
+      <div class="home-stats">
+        <div class="home-stat">
+          <strong id="home-total-stars">0</strong>
+          总星数
+        </div>
+        <div class="home-stat">
+          <strong id="home-max-level">1</strong>
+          最高关卡
+        </div>
+        <div class="home-stat">
+          <strong id="home-streak">0</strong>
+          连续天数
+        </div>
+      </div>
+      <p class="home-sponsor-note">免费游玩 · 由赞助内容支持开发维护</p>
+      <div class="home-actions">
+        <button type="button" id="home-continue" class="btn btn-hero">继续探方</button>
+        <button type="button" id="home-map" class="btn btn-secondary">蜀地地图 · 完整剧情</button>
+        <button type="button" id="home-codex" class="btn btn-secondary">文物图鉴</button>
+      </div>
+    </section>
+
+    <!-- 叙事地图：总览 → 策划 → 集合 → 探关 -->
+    <section id="screen-map" class="screen screen-map" hidden>
+      <div class="map-head">
+        <button type="button" id="map-back-home" class="btn btn-secondary btn-back">← 首页</button>
+        <h2 id="map-head-title" class="map-title">蜀地总览</h2>
+        <div class="map-head-actions">
+          <span id="map-star-total" class="chip">★ 0</span>
+        </div>
+      </div>
+
+      <div id="map-phase-steps" class="map-phase-steps" hidden>
+        <span class="map-step" data-step="world">① 蜀地</span>
+        <span class="map-step" data-step="briefing">② 策划</span>
+        <span class="map-step" data-step="assembly">③ 集合</span>
+        <span class="map-step" data-step="route">④ 探关</span>
+      </div>
+
+      <!-- ① 蜀地总览 -->
+      <div id="map-phase-world" class="map-phase">
+        <p id="world-map-intro" class="world-map-intro"></p>
+        <div class="ancient-map-legend" style="margin:0 0 0.5rem">
+          <span><i class="leg-dot leg-tomb"></i>点击神墓进入探方</span>
+          <span>◎ 当前章节高亮</span>
+          <span>🔒 通关上一章解锁</span>
+        </div>
+        <div id="world-3d-mount" class="world-3d-mount ancient-map-stack" aria-label="蜀地堪舆总览图"></div>
+        <p class="world-map-intro">堪舆图上择墓而入 · 策划 → 集合 → 探点闯关 · 直至大墓</p>
+      </div>
+
+      <!-- ② 策划 -->
+      <div id="map-phase-briefing" class="map-phase" hidden>
+        <div class="vn-screen cinema-mode">
+          <div id="vn-briefing-cinema" class="cinema-mount" aria-label="人物立绘演绎"></div>
+          <div class="vn-bg briefing" aria-hidden="true"></div>
+          <div class="vn-dialogue-box">
+            <p id="vn-briefing-title" class="vn-phase-title">作战策划</p>
+            <div id="vn-briefing-speaker" class="vn-speaker"></div>
+            <p id="vn-briefing-text" class="vn-text"></p>
+            <div class="vn-actions">
+              <button type="button" id="vn-briefing-skip" class="vn-skip">跳过剧情</button>
+              <button type="button" id="vn-briefing-next" class="vn-next" accesskey="c">继续</button>
+            </div>
+            <p class="vn-kbd-hint">空格 / 回车 继续 · Esc 跳过</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ③ 集合 -->
+      <div id="map-phase-assembly" class="map-phase" hidden>
+        <div class="vn-screen cinema-mode">
+          <div id="vn-assembly-cinema" class="cinema-mount" aria-label="小队立绘集合"></div>
+          <div class="vn-bg assembly" aria-hidden="true"></div>
+          <div class="vn-dialogue-box">
+            <p id="vn-assembly-title" class="vn-phase-title">小队集合</p>
+            <div id="vn-assembly-speaker" class="vn-speaker"></div>
+            <p id="vn-assembly-text" class="vn-text"></p>
+            <div class="vn-actions">
+              <button type="button" id="vn-assembly-skip" class="vn-skip">跳过剧情</button>
+              <button type="button" id="vn-assembly-next" class="vn-next" accesskey="c">继续</button>
+            </div>
+            <p class="vn-kbd-hint">空格 / 回车 继续 · Esc 跳过</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ④ 探方路线 -->
+      <div id="map-phase-route" class="map-phase" hidden>
+        <div id="tomb-tier-banner" class="tomb-tier-banner"></div>
+        <div class="route-header">
+          <h3 id="route-chapter-title" class="route-chapter-title"></h3>
+          <p id="route-chapter-blurb" class="route-chapter-blurb"></p>
+        </div>
+        <div id="expedition-3d-mount" class="expedition-3d-mount ancient-map-stack" aria-label="探方路线堪舆图"></div>
+        <p class="discovery-hint" style="margin-top:0.5rem">点击卷轴探点 · 发现线索后完成层位消除方可深入 · ⚱ 为终极大墓</p>
+        <div id="route-node-list" class="route-node-list" hidden aria-hidden="true"></div>
+        <button type="button" id="map-replay-story" class="btn btn-secondary" style="margin-top:0.5rem;width:100%">📖 重看策划与集合</button>
+        <button type="button" id="map-back-world" class="btn btn-secondary" style="margin-top:0.35rem;width:100%">← 返回蜀地总览</button>
+      </div>
+    </section>
+
+    <!-- 游戏主界面 -->
+    <section id="screen-play" class="screen screen-play" hidden>
+      <div class="play-topbar">
+        <button type="button" id="play-back-map" class="btn btn-secondary btn-back">← 地图</button>
+      </div>
+
+      <header class="header header-compact">
+        <p id="world-banner" class="world-banner"><span id="world-icon">🚪</span> <strong id="world-name">青铜门启</strong></p>
+      </header>
+
+      <div class="game-shell">
+        <div class="level-bar">
+          <div class="level-badge">
+            <span class="level-badge-label">关卡</span>
+            <strong id="level-num" class="level-badge-num">1</strong>
+          </div>
+          <div id="live-stars" class="live-stars" aria-label="本关实时星级">
+            <span class="star" data-star="1">★</span>
+            <span class="star" data-star="2">★</span>
+            <span class="star" data-star="3">★</span>
+          </div>
+          <div class="moves-pill">
+            <span class="moves-pill-label">步数</span>
+            <strong id="moves" class="moves-pill-value">0</strong>
+          </div>
+        </div>
+
+        <div class="progress-block">
+          <div class="progress-meta">
+            <span class="progress-label">目标进度</span>
+            <span id="progress-text" class="progress-text">0 / 100</span>
+          </div>
+          <div class="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100">
+            <div id="score-progress" class="progress-fill"></div>
+          </div>
+        </div>
+
+        <div class="score-row">
+          <div class="score-chip">
+            <span>得分</span>
+            <strong id="score" class="hud-value">0</strong>
+          </div>
+          <div class="score-chip score-chip-muted">
+            <span>目标</span>
+            <strong id="target-score" class="hud-value">0</strong>
+          </div>
+          <div class="score-chip score-chip-muted">
+            <span>总关</span>
+            <strong id="level" class="hud-value">1/100</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="board-wrap">
+        <div id="tomb-torch" class="tomb-torch" aria-hidden="true"></div>
+        <div id="combo-banner" class="combo-banner" hidden aria-live="polite"></div>
+        <div id="fx-layer" class="fx-layer" aria-hidden="true"></div>
+        <div id="board" class="board" role="grid" aria-label="游戏棋盘"></div>
+      </div>
+
+      <div class="booster-bar" aria-label="道具栏">
+        <button type="button" id="booster-hammer" class="booster-btn" title="清理一格封土/文物">
+          <span class="booster-icon">⛏</span>
+          <span class="booster-count" id="hammer-count">3</span>
+        </button>
+        <button type="button" id="booster-shuffle" class="booster-btn" title="扰层后重整棋盘">
+          <span class="booster-icon">🔀</span>
+          <span class="booster-count" id="shuffle-count">2</span>
+        </button>
+        <button type="button" id="booster-hint" class="booster-btn" title="提示一步">
+          <span class="booster-icon">💡</span>
+          <span class="booster-count">∞</span>
+        </button>
+      </div>
+
+      <div class="audio-bar" aria-label="音频控制">
+        <button type="button" id="music-toggle" class="chip" aria-pressed="false">音乐：关</button>
+        <button type="button" id="rules-open" class="chip chip-secondary">规则</button>
+      </div>
+
+      <p id="message" class="message" aria-live="polite"></p>
+
+      <div class="actions actions-row">
+        <button type="button" id="next-level" class="btn btn-secondary" hidden>下一关</button>
+        <button type="button" id="retry-level" class="btn btn-secondary" hidden>重试</button>
+        <button type="button" id="restart" class="btn btn-secondary" hidden>第一关</button>
+      </div>
+    </section>
+  </div>
+
+  <div id="goals-modal" class="modal goals-modal" role="dialog" aria-modal="true" aria-labelledby="goals-title" hidden>
+    <div class="modal-backdrop"></div>
+    <div class="modal-panel goals-panel">
+      <div class="modal-head">
+        <h2 id="goals-title" class="modal-title">第 <span id="goals-level-num">1</span> 关</h2>
+      </div>
+      <div class="modal-body goals-body">
+        <p id="goals-world" class="goals-world"></p>
+        <p id="goals-boss-badge" class="goals-boss-badge" hidden>⚱ 守关层 · 层位加难</p>
+        <p id="goals-story" class="goals-story" hidden></p>
+        <ul class="goals-list">
+          <li>🎯 层位得分 <strong id="goals-target">100</strong></li>
+          <li>👣 步数 <strong id="goals-moves">20</strong></li>
+          <li id="goals-ice-line" hidden>🧱 消除封土层障碍</li>
+          <li>⭐ 三星：高分或剩余步数多</li>
+          <li>✨ 4连条纹圣物 · 5连爆破符印</li>
+        </ul>
+      </div>
+      <div class="modal-actions actions-row">
+        <button type="button" id="goals-start" class="btn">开始挑战</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="level-modal" class="modal level-result-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" hidden>
+    <div class="modal-backdrop" data-modal-close="1"></div>
+    <div class="modal-panel">
+      <div class="modal-head">
+        <h2 id="modal-title" class="modal-title">本关结算</h2>
+        <button type="button" class="modal-close" aria-label="关闭" data-modal-close="1">×</button>
+      </div>
+      <div class="modal-body">
+        <div id="modal-result-banner" class="modal-result-banner">
+          <span id="modal-result-tag" class="modal-result-tag">层位记录</span>
+          <span id="modal-result-relic" class="modal-result-relic" aria-hidden="true">🏺</span>
+        </div>
+        <div class="modal-stars" id="modal-stars" aria-label="本关星级">
+          <span class="star star-lg" data-star="1">★</span>
+          <span class="star star-lg" data-star="2">★</span>
+          <span class="star star-lg" data-star="3">★</span>
+        </div>
+        <div class="modal-score">
+          <div class="modal-score-item">
+            <span class="modal-label">关卡</span>
+            <strong id="modal-level" class="modal-value">1 / 100</strong>
+          </div>
+          <div class="modal-score-item">
+            <span class="modal-label">目标</span>
+            <strong id="modal-target" class="modal-value">0</strong>
+          </div>
+          <div class="modal-score-item">
+            <span class="modal-label">得分</span>
+            <strong id="modal-score" class="modal-value">0</strong>
+          </div>
+          <div class="modal-score-item">
+            <span class="modal-label">剩余步数</span>
+            <strong id="modal-left" class="modal-value">0</strong>
+          </div>
+        </div>
+        <div class="easter-egg">
+          <div id="modal-egg-icon" class="egg-icon">🏆</div>
+          <div class="egg-text">
+            <div class="egg-title">本关评价</div>
+            <div id="modal-egg-text" class="egg-desc">继续加油！</div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-actions actions-row">
+        <button type="button" id="modal-map" class="btn btn-secondary">返回地图</button>
+        <button type="button" id="modal-prev" class="btn btn-secondary" hidden>上一关</button>
+        <button type="button" id="modal-retry" class="btn btn-secondary" hidden>重玩</button>
+        <button type="button" id="modal-next" class="btn">下一关</button>
+        <button type="button" id="modal-restart" class="btn btn-secondary" hidden>从头开始</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="rules-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="rules-title" hidden>
+    <div class="modal-backdrop" data-rules-close="1"></div>
+    <div class="modal-panel">
+      <div class="modal-head">
+        <h2 id="rules-title" class="modal-title">游戏规则</h2>
+        <button type="button" class="modal-close" aria-label="关闭" data-rules-close="1">×</button>
+      </div>
+      <div class="modal-body rules-body">
+        <div id="rules-content" class="rules-content" aria-live="polite"></div>
+      </div>
+      <div class="modal-actions actions-row">
+        <button type="button" class="btn" data-rules-close="1">知道了</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="ad-modal" class="modal ad-modal" role="dialog" aria-modal="true" aria-labelledby="ad-title" hidden>
+    <div class="modal-backdrop ad-backdrop"></div>
+    <div class="modal-panel ad-panel">
+      <div class="ad-letterbox ad-letterbox-top" aria-hidden="true"></div>
+      <div class="modal-head ad-head">
+        <p class="ad-sponsored-tag">Sponsored · 赞助</p>
+        <h2 id="ad-title" class="modal-title">赞助内容</h2>
+        <span id="ad-countdown" class="ad-countdown">3</span>
+      </div>
+      <div class="modal-body ad-body">
+        <p id="ad-slot-label" class="ad-slot-label">探方启程赞助</p>
+        <p id="ad-sponsor" class="ad-sponsor">赞助商</p>
+        <p id="ad-price-badge" class="ad-price-badge" hidden></p>
+        <div class="ad-frame" id="ad-frame">
+          <div class="ad-preview-card">
+            <span id="ad-preview-icon" class="ad-preview-icon" aria-hidden="true">🏺</span>
+            <div class="ad-preview-copy">
+              <p id="ad-preview-headline" class="ad-preview-headline">赞助预览</p>
+              <p id="ad-preview-teaser" class="ad-preview-teaser">点击查看详情</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-actions actions-row ad-actions">
+        <button type="button" id="ad-visit" class="btn btn-secondary">了解详情</button>
+        <button type="button" id="ad-continue" class="btn" disabled>继续游戏</button>
+      </div>
+      <div class="ad-letterbox ad-letterbox-bottom" aria-hidden="true"></div>
+    </div>
+  </div>
+
+  <div id="admin-gate-modal" class="modal admin-modal" role="dialog" aria-modal="true" aria-labelledby="admin-gate-title" hidden>
+    <div class="modal-backdrop" data-admin-gate-close="1"></div>
+    <div class="modal-panel admin-panel">
+      <div class="modal-head">
+        <h2 id="admin-gate-title" class="modal-title">开发者验证</h2>
+        <button type="button" class="modal-close" aria-label="关闭" data-admin-gate-close="1">×</button>
+      </div>
+      <div class="modal-body">
+        <p class="admin-hint">口令已为你配置好，输入后即可查看收益（玩家看不到这些数字）。</p>
+        <label class="admin-field">
+          <span class="admin-field-label">口令</span>
+          <input id="admin-pass-input" class="admin-input" type="password" autocomplete="off" />
+        </label>
+        <p id="admin-gate-error" class="admin-error" hidden>口令错误</p>
+      </div>
+      <div class="modal-actions actions-row">
+        <button type="button" id="admin-gate-cancel" class="btn btn-secondary" data-admin-gate-close="1">取消</button>
+        <button type="button" id="admin-gate-submit" class="btn">进入</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="admin-panel-modal" class="modal admin-modal" role="dialog" aria-modal="true" aria-labelledby="admin-panel-title" hidden>
+    <div class="modal-backdrop" data-admin-panel-close="1"></div>
+    <div class="modal-panel admin-panel admin-panel-wide">
+      <div class="modal-head">
+        <h2 id="admin-panel-title" class="modal-title">虚拟账户 · 收益</h2>
+        <button type="button" class="modal-close" aria-label="关闭" data-admin-panel-close="1">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="admin-guide">
+          <p><strong>已帮你弄好，你只需要：</strong></p>
+          <ol>
+            <li>把游戏链接发给玩家：<a href="https://jushuolot.github.io/game/" target="_blank" rel="noopener">jushuolot.github.io/game</a></li>
+            <li>玩家闯关时会自动看赞助（不用你操作）</li>
+            <li>来这里看累计赚了多少钱 ↓</li>
+          </ol>
+          <p class="admin-guide-note">金额记在本浏览器 localStorage；换电脑会重新开始。点「复制账户报表」可备份。</p>
+        </div>
+        <p class="admin-policy">账户策略：允许从赞助/网络等外部来源入账；<strong>禁止扣减或花费</strong>用户的真实货币与虚拟货币（无提取、无内购扣费）。</p>
+        <p id="admin-status-line" class="admin-status-line"></p>
+        <div class="admin-stats">
+          <div class="admin-stat"><span class="admin-stat-label">本局入账</span><strong id="admin-session" class="admin-stat-value">¥0</strong></div>
+          <div class="admin-stat"><span class="admin-stat-label">累计入账</span><strong id="admin-total" class="admin-stat-value">¥0</strong></div>
+          <div class="admin-stat admin-stat-highlight"><span class="admin-stat-label">虚拟余额</span><strong id="admin-balance" class="admin-stat-value">¥0</strong></div>
+        </div>
+        <div class="admin-slot-block">
+          <p class="admin-field-label">各寻金渠道入账</p>
+          <div id="admin-channel-stats" class="admin-slot-stats"></div>
+        </div>
+        <div class="admin-slot-block">
+          <p class="admin-field-label">各广告位收益</p>
+          <div id="admin-slot-stats" class="admin-slot-stats"></div>
+        </div>
+        <p class="admin-field-label">最近入账</p>
+        <ul id="admin-credit-list" class="admin-credit-list"></ul>
+        <div class="admin-tools">
+          <button type="button" id="admin-export-btn" class="btn btn-secondary">复制账户报表</button>
+          <p id="admin-export-msg" class="admin-msg"></p>
+        </div>
+      </div>
+      <div class="modal-actions actions-row">
+        <button type="button" id="admin-panel-close" class="btn" data-admin-panel-close="1">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="discovery-modal" class="modal discovery-modal" role="dialog" aria-modal="true" hidden>
+    <div class="modal-backdrop"></div>
+    <div class="modal-panel">
+      <div class="discovery-scene">
+        <span id="discovery-tag" class="discovery-tag">发现探点</span>
+        <h2 id="discovery-title" class="discovery-title"></h2>
+        <div id="discovery-cinema" class="cinema-mount discovery-cinema-mount"></div>
+        <p id="discovery-text" class="discovery-text"></p>
+        <p id="discovery-hint" class="discovery-hint">完成本层消除挑战，方可深入下一探点。</p>
+      </div>
+      <div class="modal-actions actions-row">
+        <button type="button" id="discovery-cancel" class="btn btn-secondary">稍后</button>
+        <button type="button" id="discovery-go" class="btn">开始闯关</button>
+      </div>
+      <p class="discovery-kbd-hint">回车 开始闯关 · Esc 稍后</p>
+    </div>
+  </div>
+
+  <div id="codex-modal" class="modal codex-modal" role="dialog" aria-modal="true" aria-labelledby="codex-title" hidden>
+    <div class="modal-backdrop" data-codex-close="1"></div>
+    <div class="modal-panel">
+      <div class="modal-head">
+        <h2 id="codex-title" class="modal-title">文物图鉴 · 3D</h2>
+        <button type="button" class="modal-close" aria-label="关闭" data-codex-close="1">×</button>
+      </div>
+      <div id="artifact-3d-mount" class="artifact-3d-mount"></div>
+      <div id="codex-grid" class="codex-grid"></div>
+      <div class="modal-actions actions-row">
+        <button type="button" class="btn" data-codex-close="1">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="story-modal" class="modal story-modal" role="dialog" aria-modal="true" aria-labelledby="story-title" hidden>
+    <div class="modal-backdrop"></div>
+    <div class="modal-panel">
+      <div class="story-modal-head">
+        <p class="story-chapter-tag">章节演绎</p>
+        <h2 id="story-title" class="story-modal-title">古蜀秘档</h2>
+      </div>
+      <div id="story-scroll" class="story-scroll"></div>
+      <div class="modal-actions actions-row">
+        <button type="button" id="story-continue" class="btn">继续</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="boot-loader.js"></script>
+  <script src="asset-loader.js"></script>
+</body>
+</html>

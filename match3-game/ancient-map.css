@@ -1,0 +1,250 @@
+/* 古风堪舆图 · 蜀地总览 & 探方路线 Gen.44 */
+
+.ancient-map-stack {
+  position: relative;
+  overflow: hidden;
+}
+
+.ancient-map-ambient {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  opacity: 0.28;
+  pointer-events: none;
+}
+
+.ancient-map-ambient .blockbuster-canvas-wrap,
+.ancient-map-ambient canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.ancient-map-ui {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  min-height: inherit;
+}
+
+/* ── 图例 ── */
+.ancient-map-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.75rem;
+  padding: 0.45rem 0.65rem;
+  margin-bottom: 0.5rem;
+  border-radius: 10px;
+  background: rgba(42, 32, 18, 0.75);
+  border: 1px solid rgba(201, 162, 39, 0.35);
+  font-size: 0.68rem;
+  color: rgba(245, 230, 200, 0.88);
+  letter-spacing: 0.04em;
+}
+
+.ancient-map-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.ancient-map-legend .leg-dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.leg-open { background: #6ec6ff; box-shadow: 0 0 6px rgba(110, 198, 255, 0.6); }
+.leg-done { background: #a8d4b8; }
+.leg-lock { background: #555; }
+.leg-tomb { background: #ffd93d; box-shadow: 0 0 8px rgba(255, 217, 61, 0.5); }
+
+/* ── 蜀地总览卷轴 ── */
+.world-map-canvas.ancient-scroll {
+  position: relative;
+  min-height: min(58vh, 480px);
+  height: 100%;
+  border-radius: 16px;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse 90% 70% at 50% 20%, rgba(255, 220, 160, 0.12), transparent 55%),
+    linear-gradient(175deg, #3d2e1a 0%, #2a2012 35%, #1e1810 100%);
+  border: 2px solid rgba(201, 162, 39, 0.45);
+  box-shadow:
+    inset 0 0 60px rgba(0, 0, 0, 0.35),
+    0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.world-map-canvas.ancient-scroll::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0, 0, 0, 0.03) 3px, rgba(0, 0, 0, 0.03) 4px),
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E");
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+.ancient-scroll-title {
+  position: absolute;
+  top: 0.65rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3;
+  padding: 0.25rem 1rem;
+  font-family: "Noto Serif SC", serif;
+  font-size: 0.78rem;
+  letter-spacing: 0.35em;
+  color: rgba(255, 232, 180, 0.95);
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(201, 162, 39, 0.4);
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.world-map-canvas.ancient-scroll .world-map-bg {
+  opacity: 0.5;
+  background:
+    radial-gradient(ellipse 60% 40% at 30% 60%, rgba(110, 198, 255, 0.08), transparent),
+    radial-gradient(ellipse 50% 35% at 70% 40%, rgba(201, 162, 39, 0.1), transparent);
+}
+
+.world-map-canvas.ancient-scroll .world-map-path-svg path {
+  stroke: rgba(255, 217, 61, 0.55);
+  stroke-width: 2.5;
+  stroke-dasharray: none;
+  filter: drop-shadow(0 0 4px rgba(255, 217, 61, 0.3));
+}
+
+.world-map-canvas.ancient-scroll .world-chapter-node .world-node-pin {
+  width: 3.4rem;
+  height: 3.4rem;
+  font-size: 1.65rem;
+  background: radial-gradient(circle at 35% 30%, rgba(255, 230, 160, 0.5), rgba(90, 60, 25, 0.9));
+  border: 2px solid rgba(255, 217, 61, 0.65);
+  box-shadow: 0 0 20px rgba(201, 162, 39, 0.35), 0 4px 12px rgba(0, 0, 0, 0.45);
+}
+
+.world-map-canvas.ancient-scroll .world-chapter-node.current .world-node-pin {
+  border-color: #fff0a0;
+  box-shadow: 0 0 28px rgba(255, 217, 61, 0.65);
+  animation: ancientPinPulse 2s ease-in-out infinite;
+}
+
+.world-map-canvas.ancient-scroll .world-chapter-node.locked .world-node-pin {
+  filter: grayscale(0.85);
+  opacity: 0.45;
+}
+
+.world-map-canvas.ancient-scroll .world-node-label {
+  font-size: 0.72rem;
+  max-width: 6.5rem;
+  padding: 0.15rem 0.4rem;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(201, 162, 39, 0.25);
+}
+
+.world-node-tier {
+  font-size: 0.58rem;
+  color: rgba(255, 217, 61, 0.85);
+  margin-top: 0.1rem;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+@keyframes ancientPinPulse {
+  50% { transform: scale(1.06); box-shadow: 0 0 32px rgba(255, 217, 61, 0.75); }
+}
+
+/* ── 探方路线卷轴 ── */
+.expedition-scroll-map {
+  min-height: min(52vh, 440px);
+  max-height: min(62vh, 520px);
+  display: flex;
+  flex-direction: column;
+  border-radius: 16px;
+  background:
+    linear-gradient(175deg, #3a2c18 0%, #261e12 40%, #1a140c 100%);
+  border: 2px solid rgba(201, 162, 39, 0.4);
+  box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+}
+
+.expedition-scroll-map .ancient-map-legend {
+  margin: 0;
+  border-radius: 0;
+  border: none;
+  border-bottom: 1px solid rgba(201, 162, 39, 0.25);
+  flex-shrink: 0;
+}
+
+.expedition-scroll-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.75rem 0.5rem 1rem;
+}
+
+.expedition-scroll-map .route-path::before {
+  background: linear-gradient(
+    180deg,
+    rgba(201, 162, 39, 0.15),
+    rgba(255, 217, 61, 0.55),
+    rgba(201, 162, 39, 0.15)
+  );
+  width: 4px;
+  box-shadow: 0 0 12px rgba(255, 217, 61, 0.25);
+}
+
+.expedition-scroll-map .route-node-card {
+  background: linear-gradient(145deg, rgba(60, 48, 28, 0.92), rgba(30, 24, 14, 0.95));
+  border: 1px solid rgba(201, 162, 39, 0.35);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+
+.expedition-scroll-map .route-node-card.current {
+  border-color: #ffd93d;
+  box-shadow: 0 0 20px rgba(255, 217, 61, 0.3);
+}
+
+.expedition-scroll-map .route-node-card.boss {
+  background: linear-gradient(145deg, rgba(90, 70, 30, 0.95), rgba(50, 35, 15, 0.98));
+  border-color: rgba(255, 217, 61, 0.55);
+}
+
+.expedition-scroll-map .route-node-pin {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  font-size: 0.9rem;
+  margin-bottom: 0.25rem;
+  background: radial-gradient(circle at 30% 30%, rgba(255, 220, 150, 0.4), rgba(80, 55, 25, 0.9));
+  border: 1px solid rgba(201, 162, 39, 0.5);
+}
+
+.expedition-scroll-map .route-node-card.locked .route-node-pin {
+  filter: grayscale(1);
+  opacity: 0.5;
+}
+
+.expedition-scroll-map .route-node-card.done .route-node-pin {
+  border-color: #a8d4b8;
+  box-shadow: 0 0 8px rgba(168, 212, 184, 0.4);
+}
+
+.route-node-level {
+  font-size: 0.62rem;
+  color: rgba(200, 180, 140, 0.75);
+}
+
+body.blockbuster-mode .world-3d-mount.ancient-map-stack,
+body.blockbuster-mode .expedition-3d-mount.ancient-map-stack {
+  height: auto;
+  min-height: min(58vh, 480px);
+  background: transparent;
+  border: none;
+}

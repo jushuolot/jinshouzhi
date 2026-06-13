@@ -1,0 +1,1 @@
+import{k as s,E as a,N as r,d as e,J as o,r as t,_ as d}from"./index-M3PYQg10.js";import{r as m,O as n}from"./ops-mode.CEHlAmvQ.js";const p=d(s({__name:"admin-hub",setup:s=>(a(()=>{m()&&r({url:n})}),(s,a)=>{const r=t;return o(),e(r,{class:"redirect"})})}),[["__scopeId","data-v-34000290"]]);export{p as default};

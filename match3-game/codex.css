@@ -1,0 +1,145 @@
+.home-chapter-block {
+  width: 100%;
+  max-width: 320px;
+  margin: 0.5rem auto 0.75rem;
+  text-align: left;
+}
+
+.home-chapter-label {
+  margin: 0 0 0.35rem;
+  font-size: 0.78rem;
+  color: rgba(245, 230, 200, 0.88);
+}
+
+.home-chapter-track {
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.home-chapter-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #8b6914, #c9a227, #ffd93d);
+  transition: width 0.4s ease;
+}
+
+.home-codex-hint {
+  margin: 0.35rem 0 0;
+  font-size: 0.68rem;
+  color: rgba(200, 180, 140, 0.75);
+}
+
+.codex-modal .modal-panel {
+  max-width: min(560px, calc(100vw - 1.5rem));
+}
+
+.codex-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 0.65rem;
+  padding: 0.85rem 1rem;
+  max-height: min(58vh, 420px);
+  overflow-y: auto;
+}
+
+.codex-card {
+  padding: 0.65rem 0.7rem;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(201, 162, 39, 0.18);
+  transition: border-color 0.2s, transform 0.2s;
+}
+
+.codex-card.unlocked {
+  border-color: rgba(201, 162, 39, 0.45);
+}
+
+.codex-card.locked {
+  opacity: 0.45;
+  filter: grayscale(0.6);
+}
+
+.codex-card-head {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-bottom: 0.35rem;
+}
+
+.codex-card-icon {
+  font-size: 1.35rem;
+}
+
+.codex-card-name {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #f5e6c8;
+}
+
+.codex-card-meta {
+  font-size: 0.65rem;
+  color: rgba(200, 180, 140, 0.8);
+  margin-bottom: 0.3rem;
+}
+
+.codex-card-lore {
+  margin: 0;
+  font-size: 0.72rem;
+  line-height: 1.45;
+  color: rgba(245, 230, 200, 0.82);
+}
+
+.codex-card-count {
+  margin-top: 0.35rem;
+  font-size: 0.65rem;
+  color: #ffd93d;
+}
+
+.goals-boss-badge {
+  display: inline-block;
+  margin: 0 0 0.65rem;
+  padding: 0.35rem 0.65rem;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #1a1408;
+  background: linear-gradient(135deg, #ffd93d, #c9a227);
+  animation: bossPulse 1.2s ease infinite;
+}
+
+@keyframes bossPulse {
+  50% { box-shadow: 0 0 16px rgba(255, 217, 61, 0.55); }
+}
+
+.ice-overlay {
+  background: linear-gradient(135deg, rgba(160, 130, 90, 0.55), rgba(90, 70, 45, 0.45)) !important;
+  border: 1px solid rgba(201, 162, 39, 0.35) !important;
+  box-shadow: inset 0 0 10px rgba(60, 45, 25, 0.4) !important;
+}
+
+.ice-overlay.ice-2 {
+  background: linear-gradient(135deg, rgba(120, 95, 60, 0.75), rgba(70, 55, 35, 0.55)) !important;
+  box-shadow: inset 0 0 0 2px rgba(201, 162, 39, 0.4) !important;
+}
+
+.map-node.map-boss {
+  font-weight: 800;
+  border-color: rgba(255, 217, 61, 0.55) !important;
+  background: linear-gradient(135deg, rgba(201, 162, 39, 0.25), rgba(139, 105, 20, 0.15)) !important;
+  box-shadow: 0 0 12px rgba(255, 217, 61, 0.25);
+}
+
+.ice-overlay::after {
+  content: "封";
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: rgba(245, 230, 200, 0.55);
+  pointer-events: none;
+}

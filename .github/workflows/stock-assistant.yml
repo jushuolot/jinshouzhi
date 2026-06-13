@@ -1,0 +1,51 @@
+name: stock-assistant
+
+on:
+  push:
+    paths:
+      - "stock-assistant/**"
+      - ".github/workflows/stock-assistant.yml"
+  pull_request:
+    paths:
+      - "stock-assistant/**"
+      - ".github/workflows/stock-assistant.yml"
+
+defaults:
+  run:
+    working-directory: stock-assistant
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: stock-assistant/requirements.txt
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Evolve verify
+        run: bash scripts/evolve_verify.sh
+
+  auto-evolve:
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: preflight
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: stock-assistant/requirements.txt
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Buddha self-check (strict)
+        run: python3 scripts/buddha_self_check.py --strict
+      - name: Restart Streamlit Cloud (optional)
+        env:
+          STREAMLIT_API_TOKEN: ${{ secrets.STREAMLIT_API_TOKEN }}
+          STREAMLIT_APP_ID: ${{ secrets.STREAMLIT_APP_ID }}
+        run: python3 scripts/streamlit_cloud_restart.py

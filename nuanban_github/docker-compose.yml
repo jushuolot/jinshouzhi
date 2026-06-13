@@ -1,0 +1,69 @@
+# 暖伴勤工 · 极简部署
+# 用法:
+#   docker compose up -d pocketbase          # 仅后端（推荐本地开发）
+#   docker compose --profile full up -d      # PocketBase + Caddy(H5)
+#   docker compose --profile webrtc up -d    # + coturn TURN（跨 NAT 语音）
+
+services:
+  pocketbase:
+    build:
+      context: ./packages/pocketbase
+      dockerfile: Dockerfile
+    image: nuanban-pocketbase:local
+    container_name: nuanban-pocketbase
+    restart: unless-stopped
+    ports:
+      - "8090:8090"
+    environment:
+      # 本地开发请固定 .env 中的密钥；随意更换会导致旧 pb_data 无法正常使用
+      PB_ENCRYPTION_KEY: ${PB_ENCRYPTION_KEY:-nuanban-local-dev-key-32chars!!}
+      # 正式鉴权：禁用 000000 万能码、禁止 dev-login、短信码仅走发件箱
+      NUANBAN_FORMAL_AUTH: ${NUANBAN_FORMAL_AUTH:-true}
+    volumes:
+      - ./packages/pocketbase/pb_data:/pb_data
+      - ./packages/pocketbase/pb_public:/pb_public
+      - ./packages/pocketbase/pb_hooks:/pb_hooks
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8090/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  caddy:
+    profiles: ["full"]
+    image: caddy:2-alpine
+    container_name: nuanban-caddy
+    restart: unless-stopped
+    depends_on:
+      - pocketbase
+    ports:
+      - "8080:80"
+      - "8443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./packages/miniapp/dist/build/h5:/srv/h5:ro
+      - ../match3-game:/srv/match3-game:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+  coturn:
+    profiles: ["webrtc"]
+    image: coturn/coturn:latest
+    container_name: nuanban-coturn
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      TURN_USERNAME: ${NUANBAN_TURN_USER:-nuanban}
+      TURN_PASSWORD: ${NUANBAN_TURN_PASS:-nuanban_turn_secret}
+    command:
+      - -n
+      - --log-file=stdout
+      - --listening-port=3478
+      - --fingerprint
+      - --lt-cred-mech
+      - --user=${NUANBAN_TURN_USER:-nuanban}:${NUANBAN_TURN_PASS:-nuanban_turn_secret}
+      - --realm=nuanban.local
+
+volumes:
+  caddy_data:
+  caddy_config:

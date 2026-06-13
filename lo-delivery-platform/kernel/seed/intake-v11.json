@@ -1,0 +1,53 @@
+{
+  "version": 11,
+  "label": "货主下单种子 · 草稿 + 审单",
+  "chainOrders": [
+    {
+      "chainOrderId": "CO-SEED-INTAKE-DRAFT",
+      "origin": "sales",
+      "anchorEnterpriseId": "ENT-LUWEI-BRAND",
+      "anchorGroupId": "GRP-BRAND-A",
+      "title": "种子订单 · 货主草拟中",
+      "cargoSummary": "智能终端整机",
+      "status": "draft",
+      "upstreamExpanded": false,
+      "salesFlowComplete": false,
+      "customerRef": "SO-SEED-INTAKE-DRAFT",
+      "consignee": "北京海淀终端客户",
+      "intakeSource": "manual",
+      "legLoIds": [
+        "LO-PUR-INTAKE-DRAFT",
+        "LO-MFG-INTAKE-DRAFT",
+        "LO-WHI-INTAKE-DRAFT",
+        "LO-SAL-INTAKE-DRAFT",
+        "LO-LHL-INTAKE-DRAFT",
+        "LO-EXP-INTAKE-DRAFT"
+      ]
+    }
+  ],
+  "events": [
+    {
+      "loId": "LO-SAL-INTAKE-DRAFT",
+      "type": "FACT",
+      "code": "SO_DRAFT",
+      "actor": "shipper",
+      "spatialCellId": "bj-dc-shunyi",
+      "payload": { "seed": "v11-remote" }
+    }
+  ],
+  "documents": [
+    {
+      "docId": "DOC-SO-SEED-INTAKE-DRAFT",
+      "docType": "SO",
+      "loId": "LO-SAL-INTAKE-DRAFT",
+      "status": "draft",
+      "header": {
+        "docNo": "SO-SEED-INTAKE-DRAFT",
+        "title": "销售订单 · 智能终端整机",
+        "partyFrom": "ENT-LUWEI-BRAND",
+        "partyTo": "北京海淀终端客户",
+        "amount": 153600
+      }
+    }
+  ]
+}

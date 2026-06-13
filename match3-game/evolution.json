@@ -1,0 +1,35 @@
+{
+  "version": "5.9.2",
+  "generation": 58,
+  "universeDay": 7,
+  "civilizationEpoch": "1929-07",
+  "civilizationDay": 58,
+  "civilizationYear": 2045,
+  "civilizationPhase": "超越期",
+  "dailyChronicle": "第 7 日·收工复盘。文明历 2045，宇宙一圈走完——神树层位对上图鉴，王墩说最后一铲留给胖爷；造物主，此间比人间又多活了一周。",
+  "releasedAt": "2026-06-10",
+  "autoTune": {
+    "enabled": true,
+    "windowSize": 8,
+    "maxMoveAdjust": 3,
+    "targetWinRate": 0.52
+  },
+  "patchNotes": [
+    "Gen.58 · 宇宙第7日 · 收工复盘 · 文明历 2045",
+    "神树章超越期叙事；周复盘寻金渠道",
+    "超越期驻场收益略增"
+  ],
+  "virtualAccount": {
+    "module": "virtual-account.js",
+    "networkEarnings": "network-earnings.js",
+    "storage": "localStorage:match3_virtual_account",
+    "policy": "credit-only-external-sources",
+    "spendForbidden": true,
+    "note": "允许网络/广告入账；禁止扣减用户真实或虚拟货币"
+  },
+  "performance": {
+    "module": "asset-loader.js",
+    "strategy": "critical-first-deferred-cinema-three",
+    "portraitFormat": "jpeg"
+  }
+}

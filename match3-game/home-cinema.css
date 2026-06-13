@@ -1,0 +1,80 @@
+/* 首页氛围影院 Gen.37 */
+
+.screen-home {
+  position: relative;
+  overflow: hidden;
+}
+
+.home-atmosphere {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.screen-home > *:not(.home-atmosphere) {
+  position: relative;
+  z-index: 1;
+}
+
+.home-dust {
+  position: absolute;
+  font-size: clamp(1rem, 3vw, 1.4rem);
+  opacity: 0;
+  filter: blur(0.3px);
+  animation: homeDustDrift var(--dur, 14s) linear infinite;
+  animation-delay: var(--delay, 0s);
+}
+
+@keyframes homeDustDrift {
+  0% {
+    opacity: 0;
+    transform: translateY(20%) translateX(0) rotate(0deg);
+  }
+  12% {
+    opacity: var(--peak, 0.22);
+  }
+  88% {
+    opacity: var(--peak, 0.18);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-120%) translateX(var(--drift, 20px)) rotate(12deg);
+  }
+}
+
+.home-glow-orb {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(201, 162, 39, 0.14), transparent 70%);
+  animation: homeOrbPulse 8s ease-in-out infinite alternate;
+}
+
+@keyframes homeOrbPulse {
+  from {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+  to {
+    transform: scale(1.15);
+    opacity: 0.85;
+  }
+}
+
+.screen-home .title {
+  animation: homeTitleShine 6s ease-in-out infinite;
+}
+
+@keyframes homeTitleShine {
+  0%, 100% {
+    text-shadow: 0 0 0 transparent;
+  }
+  50% {
+    text-shadow: 0 0 32px rgba(201, 162, 39, 0.35);
+  }
+}
+
+.screen-home.home-cinema-on .home-chapter-fill {
+  box-shadow: 0 0 12px rgba(201, 162, 39, 0.35);
+}

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <title>LOT Field · 选择角色</title>
+  <style>
+    :root { --bg:#060a10; --card:#101820; --line:#1e3348; --text:#eef8ff; --muted:#6d8fa8; --accent:#3dffb0; }
+    * { box-sizing:border-box; }
+    body { margin:0; min-height:100dvh; font-family:"PingFang SC",system-ui,sans-serif;
+      background:var(--bg); color:var(--text); padding:env(safe-area-inset-top) 20px env(safe-area-inset-bottom); }
+    h1 { font-size:20px; margin:20px 0 8px; }
+    p { color:var(--muted); font-size:13px; line-height:1.5; }
+    .grid { display:grid; gap:12px; margin-top:20px; }
+    a.card { display:block; padding:18px; border-radius:14px; background:var(--card);
+      border:1px solid var(--line); color:var(--text); text-decoration:none; }
+    a.card b { display:block; font-size:16px; margin-bottom:4px; }
+    a.card span { font-size:12px; color:var(--muted); }
+    .foot { margin-top:28px; font-size:12px; }
+    .foot a { color:var(--accent); }
+  </style>
+</head>
+<body>
+  <h1>🌿 Field 现场</h1>
+  <p>每个角色独立生命周期，同一内核。选你的身份进入手机作业台。</p>
+  <div class="grid" id="roles"></div>
+  <p class="foot"><a href="../index.html">→ C4I 指挥大屏</a> · <a href="../driver.html">司机旧入口</a></p>
+  <script type="module">
+    import { ACTOR_LENSES } from '../../kernel/lot-nucleus.js';
+    const FIELD_ROLES = ['shipper','planner','warehouse','driver','dispatcher','purchaser','finance','customs_broker'];
+    document.getElementById('roles').innerHTML = FIELD_ROLES.map((id) => {
+      const a = ACTOR_LENSES[id] || { labelZh: id, desc: '' };
+      return `<a class="card" href="role.html?role=${id}"><b>${a.labelZh}</b><span>${a.desc || id} · 手机待办</span></a>`;
+    }).join('');
+  </script>
+</body>
+</html>

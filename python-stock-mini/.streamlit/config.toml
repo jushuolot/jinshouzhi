@@ -1,0 +1,9 @@
+# 监听所有网卡，便于局域网或公网 IP / 反向代理访问（勿在不可信网络裸奔暴露）
+[server]
+address = "0.0.0.0"
+port = 8501
+enableCORS = true
+enableXsrfProtection = true
+
+[browser]
+gatherUsageStats = false

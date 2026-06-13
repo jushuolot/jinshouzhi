@@ -1,0 +1,125 @@
+/* 肥嘟嘟 · 全站圆润暖调 Gen.38 */
+
+:root {
+  --fd-radius: 18px;
+  --fd-radius-sm: 12px;
+  --fd-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+  --fd-shadow-hover: 0 12px 36px rgba(201, 162, 39, 0.18);
+  --fd-warm: rgba(255, 220, 170, 0.08);
+}
+
+body.feidudu-mode {
+  --radius: var(--fd-radius);
+}
+
+body.feidudu-mode .btn {
+  border-radius: 999px;
+  box-shadow: var(--fd-shadow);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+}
+
+body.feidudu-mode .btn:hover:not(:disabled) {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: var(--fd-shadow-hover);
+}
+
+body.feidudu-mode .btn:active:not(:disabled) {
+  transform: translateY(0) scale(0.98);
+}
+
+body.feidudu-mode .home-stat,
+body.feidudu-mode .score-chip,
+body.feidudu-mode .level-badge,
+body.feidudu-mode .moves-pill,
+body.feidudu-mode .booster-btn,
+body.feidudu-mode .modal-panel,
+body.feidudu-mode .daily-challenge {
+  border-radius: var(--fd-radius-sm);
+  box-shadow: var(--fd-shadow);
+}
+
+body.feidudu-mode .booster-btn:hover:not(:disabled) {
+  transform: scale(1.06);
+  box-shadow: var(--fd-shadow-hover);
+}
+
+body.feidudu-mode .cell {
+  border-radius: 14px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+body.feidudu-mode .cell:hover:not(.matched) {
+  transform: scale(1.04);
+  box-shadow: 0 6px 16px rgba(201, 162, 39, 0.2);
+}
+
+body.feidudu-mode .home-team .team-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(201, 162, 39, 0.22);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+  font-size: 0.82rem;
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+body.feidudu-mode .home-team .team-pill:hover {
+  transform: scale(1.05);
+  background: rgba(201, 162, 39, 0.12);
+}
+
+body.feidudu-mode .home-team .team-pill.chubby-star {
+  background: linear-gradient(135deg, rgba(224, 122, 74, 0.22), rgba(201, 162, 39, 0.14));
+  border-color: rgba(224, 122, 74, 0.45);
+  font-weight: 600;
+}
+
+body.feidudu-mode .home-squad-tag {
+  display: inline-block;
+  margin: 0 0 0.65rem;
+  padding: 0.2rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  letter-spacing: 0.18em;
+  color: #ffe8b0;
+  background: rgba(201, 162, 39, 0.15);
+  border: 1px solid rgba(201, 162, 39, 0.3);
+}
+
+body.feidudu-mode .wrap {
+  filter: saturate(1.04) brightness(1.02);
+}
+
+.portrait-cinema.pc-feidudu .pc-bg-gradient {
+  background:
+    radial-gradient(ellipse 88% 68% at 62% 28%, color-mix(in srgb, var(--pc-accent) 18%, transparent), transparent 58%),
+    radial-gradient(ellipse 50% 40% at 30% 75%, rgba(255, 200, 140, 0.12), transparent),
+    linear-gradient(180deg, #0c0a08 0%, #060504 55%, #0a0806 100%);
+}
+
+.portrait-cinema.pc-feidudu .pc-grade {
+  background: linear-gradient(180deg, rgba(255, 200, 140, 0.08) 0%, transparent 30%, rgba(0, 0, 0, 0.5) 100%);
+  mix-blend-mode: soft-light;
+}
+
+.portrait-cinema.pc-feidudu .pc-layer-main img.pc-photo-main {
+  filter: drop-shadow(0 24px 56px rgba(0, 0, 0, 0.78)) saturate(1.08) brightness(1.06) contrast(1.02)
+    sepia(0.06);
+}
+
+.portrait-cinema.pc-feidudu.pc-chubby .pc-layer-main img.pc-photo-main {
+  transform: scale(1.04);
+  filter: drop-shadow(0 28px 60px rgba(0, 0, 0, 0.8)) saturate(1.1) brightness(1.08) sepia(0.08);
+}
+
+.portrait-cinema.pc-feidudu.pc-chubby.pc-talking .pc-layer-main img.pc-photo-main {
+  animation: pcChubbyBounce 0.4s ease-in-out infinite alternate;
+}
+
+@keyframes pcChubbyBounce {
+  from { transform: scale(1.05) translateY(0); }
+  to { transform: scale(1.07) translateY(-4px); }
+}

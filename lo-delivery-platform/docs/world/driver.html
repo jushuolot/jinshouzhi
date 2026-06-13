@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <title>LOT 司机 · 今日任务</title>
+  <style>
+    :root {
+      --bg: #060a10;
+      --card: #101820;
+      --line: #1e3348;
+      --text: #eef8ff;
+      --muted: #6d8fa8;
+      --accent: #3dffb0;
+      --warn: #ffc14d;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; min-height: 100dvh;
+      font-family: "PingFang SC", system-ui, sans-serif;
+      background: var(--bg); color: var(--text);
+      padding: env(safe-area-inset-top) 16px env(safe-area-inset-bottom);
+    }
+    header {
+      padding: 16px 0 12px; display: flex; align-items: center; gap: 10px;
+      border-bottom: 1px solid var(--line);
+    }
+    header h1 { font-size: 18px; margin: 0; flex: 1; }
+    header a { color: var(--muted); font-size: 13px; text-decoration: none; }
+    .badge {
+      font-size: 11px; padding: 4px 10px; border-radius: 999px;
+      background: #0a2a1e; color: var(--accent); border: 1px solid #1a5a40;
+    }
+    .task {
+      margin: 14px 0; padding: 16px; border-radius: 14px;
+      background: var(--card); border: 1px solid var(--line);
+    }
+    .task.active { border-color: var(--accent); box-shadow: 0 0 20px rgba(61,255,176,0.15); }
+    .task-id { font-size: 12px; color: var(--warn); font-weight: 600; }
+    .task-route { font-size: 14px; margin: 8px 0; line-height: 1.5; }
+    .task-meta { font-size: 11px; color: var(--muted); }
+    .task-progress { height: 4px; background: #1a2a3a; border-radius: 2px; margin-top: 10px; }
+    .task-progress i { display: block; height: 100%; background: var(--accent); border-radius: 2px; }
+    .actions { display: grid; gap: 10px; margin-top: 20px; }
+    .actions button {
+      padding: 18px; border: none; border-radius: 14px; font-size: 16px; font-weight: 700;
+      cursor: pointer; background: linear-gradient(135deg, #1a5a40, #0d3020); color: var(--accent);
+    }
+    .actions button:disabled { opacity: 0.35; }
+    .actions button.secondary {
+      background: #141e2a; color: var(--text); border: 1px solid var(--line);
+    }
+    #empty { text-align: center; color: var(--muted); padding: 40px 20px; }
+    #toast {
+      position: fixed; bottom: 24px; left: 16px; right: 16px;
+      background: #0a2a1e; border: 1px solid var(--accent); color: var(--accent);
+      padding: 14px; border-radius: 12px; text-align: center; font-size: 14px;
+      opacity: 0; transition: opacity 0.3s; pointer-events: none;
+    }
+    #toast.show { opacity: 1; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>司机任务</h1>
+    <span class="badge" id="task-count">0 单</span>
+    <a href="index.html">世界图</a>
+  </header>
+  <div id="task-list"></div>
+  <div id="empty" hidden>今日无在途司机任务<br/><small>去世界图播放全链演示</small></div>
+  <div class="actions" id="actions" hidden>
+    <button type="button" id="btn-pickup">揽收 / 发车</button>
+    <button type="button" id="btn-transit" class="secondary">在途上报</button>
+    <button type="button" id="btn-pod">签收完成</button>
+  </div>
+  <div id="toast"></div>
+  <script type="module">
+    import { defaultChain } from '../kernel/lot-chain.js';
+    import { listDriverTasks } from '../kernel/lot-network.js';
+    import { projectLOState } from '../kernel/lot-nucleus.js';
+
+    const chain = defaultChain;
+    let tasks = [];
+    let activeIx = 0;
+
+    function toast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2000);
+    }
+
+    async function load() {
+      await chain.init();
+      tasks = await listDriverTasks(chain);
+      document.getElementById('task-count').textContent = tasks.length + ' 单';
+      const list = document.getElementById('task-list');
+      const empty = document.getElementById('empty');
+      const actions = document.getElementById('actions');
+      if (!tasks.length) {
+        list.innerHTML = '';
+        empty.hidden = false;
+        actions.hidden = true;
+        return;
+      }
+      empty.hidden = true;
+      actions.hidden = false;
+      const spatial = await chain.listSpatial();
+      const label = (id) => spatial.find((c) => c.id === id)?.labelZh || id;
+      list.innerHTML = tasks.map((t, i) => {
+        const proj = projectLOState(t.lo, t.events);
+        const on = i === activeIx ? ' active' : '';
+        return `<div class="task${on}" data-ix="${i}">
+          <div class="task-id">${t.lo.loId}</div>
+          <div class="task-route">${label(t.lo.originCellId)} → ${label(t.lo.destCellId)}</div>
+          <div class="task-meta">${t.lo.channel} · ${t.lastEvent?.code || '待出发'}</div>
+          <div class="task-progress"><i style="width:${proj.progress}%"></i></div>
+        </div>`;
+      }).join('');
+      list.querySelectorAll('.task').forEach((el) => {
+        el.onclick = () => { activeIx = +el.dataset.ix; load(); };
+      });
+    }
+
+    async function act(code) {
+      const t = tasks[activeIx];
+      if (!t) return;
+      await chain.emitAction(t.lo.loId, {
+        code, actor: 'driver', spatialCellId: t.lo.originCellId, payload: { mobile: true },
+      });
+      toast(code + ' 已写入链');
+      await load();
+    }
+
+    document.getElementById('btn-pickup').onclick = () => act('PICKUP_DONE');
+    document.getElementById('btn-transit').onclick = () => act('IN_TRANSIT');
+    document.getElementById('btn-pod').onclick = () => act('POD_SIGNED');
+
+    await load();
+  </script>
+</body>
+</html>

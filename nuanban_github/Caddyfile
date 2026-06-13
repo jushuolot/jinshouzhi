@@ -1,0 +1,40 @@
+# 本地开发示例：:80 提供 H5 静态，/api 反代 PocketBase
+# 生产将 :80 改为你的域名，并在 Caddy 中配置 TLS
+
+:80 {
+	# 保留 /api 前缀转发给 PocketBase（勿用 handle_path，会剥掉 /api）
+	handle /api/* {
+		reverse_proxy pocketbase:8090
+	}
+
+	handle /_/* {
+		reverse_proxy pocketbase:8090
+	}
+
+	handle /game/* {
+		uri strip_prefix /game
+		root * /srv/match3-game
+		try_files {path} /index.html
+		file_server
+	}
+
+	handle /game {
+		redir /game/ permanent
+	}
+
+	# 废弃旧项目 /login 路径（如金手指），统一进暖伴 hash 登录
+	handle /login {
+		redir /#/pages/common/login permanent
+	}
+	handle /login/* {
+		redir /#/pages/common/login permanent
+	}
+
+	handle {
+		root * /srv/h5
+		@html path /index.html
+		header @html Cache-Control "no-cache, must-revalidate"
+		try_files {path} /index.html
+		file_server
+	}
+}

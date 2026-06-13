@@ -1,0 +1,133 @@
+# 暖伴勤工
+
+连接福利院老人、家属与高校勤工学生的一站式服务平台（**单微信小程序 + H5** + **PocketBase 管理后台**）。
+
+## 技术栈（V1）
+
+| 组件 | 说明 |
+|------|------|
+| `packages/miniapp` | uni-app Vue3：老人 / 家属 / 学生 |
+| `packages/pocketbase` | 后端 + Admin UI（SQLite） |
+| `docker-compose.yml` | 一键部署 PocketBase（可选 Caddy + H5） |
+
+> 仓库中的 `packages/api`、`packages/admin-web`、`database/` 为历史参考，新环境请按极简栈部署。
+
+## 发布规则（测试备份 → 正式版）
+
+| 环境 | 角色 | 链接 |
+|------|------|------|
+| **GitHub Pages** | **测试备份**（浏览器 Mock，零安装） | https://jushuolot.github.io/jinshouzhi/nuanban/#/pages/common/login |
+| **阿里云** | **正式发布** | http://101.200.128.82（备案后 nuanban.cc） |
+
+- 环境一致性：**[docs/ENV_PARITY.md](docs/ENV_PARITY.md)**
+- 测试版验收：**[docs/TEST_VERSION.md](docs/TEST_VERSION.md)**
+- 发布规则：**[docs/RELEASE.md](docs/RELEASE.md)**
+
+```bash
+# 1. 本地 parity 测通（VITE_DEMO_MOCK=false + dev-test.sh）
+./scripts/dev-test.sh && ./scripts/start-h5.sh
+
+# 2. 推送 GitHub 测试备份
+./scripts/release-test.sh
+
+# 3. 验收通过 → 阿里云正式发布
+./scripts/release-prod.sh
+
+# 对比 GitHub 与阿里云版本
+./scripts/release-status.sh
+```
+
+`./scripts/sync-all.sh`：本地=测试发布，服务器=正式发布。
+
+阿里云首次部署：[docs/ALIYUN_DEPLOY.md](docs/ALIYUN_DEPLOY.md)
+
+## 本地测试 / GitHub 克隆测试
+
+- **单仓（推荐）**：https://github.com/jushuolot/jinshouzhi → 进入 `nuanban_github/`  
+- **独立仓（同步）**：https://github.com/jushuolot/nuanban  
+- **详细步骤**：[docs/LOCAL_TEST.md](docs/LOCAL_TEST.md)
+
+```bash
+git clone https://github.com/jushuolot/jinshouzhi.git
+cd jinshouzhi/nuanban_github
+chmod +x scripts/*.sh
+./scripts/dev-test.sh          # 后端 + 演示数据
+
+# 新开终端
+cd packages/miniapp && cp .env.example .env && npm install && npm run dev:h5
+# 浏览器 http://localhost:5174 →「开发账号登录（学生）」
+```
+
+## 快速开始
+
+### 1. 启动后端
+
+```bash
+# 生产请先设置 PB_ENCRYPTION_KEY，见 docs/DEPLOY.md
+docker compose up -d pocketbase
+```
+
+- API：`http://localhost:8090/api`
+- Admin：`http://localhost:8090/_/`
+- 导入集合：`packages/pocketbase/pb_schema.json`（须勾选 **Merge**）
+- 一键演示数据：`./scripts/seed-demo.sh`
+
+### 2. 客户端
+
+```bash
+cd packages/miniapp
+cp .env.example .env   # VITE_API_BASE_URL=http://localhost:8090/api
+npm install
+npm run dev:mp-weixin  # 或 dev:h5
+```
+
+推荐 HBuilderX 打开 `packages/miniapp`（见该目录 README）。
+
+### 3. 生产（H5 + HTTPS）
+
+```bash
+cd packages/miniapp && npm run build:h5
+docker compose --profile full up -d
+```
+
+详见 **[docs/DEPLOY.md](docs/DEPLOY.md)**。
+
+### 后台登不上？
+
+见 **[docs/PB_ADMIN_LOGIN.md](docs/PB_ADMIN_LOGIN.md)**，或执行：
+
+```bash
+./scripts/pb-reset-admin.sh
+```
+
+## 核心能力
+
+- 服务按 SKU 分类定价
+- 家属支付、平台结算（V1 字段预留）
+- 管理员派单 + 老人/学生双向就近匹配
+- 院校合作与指定老人（**非按校租户**）
+- 管理端导出（无监督端）
+
+## 文档
+
+**完整手册（Markdown + PDF）**：运行 `node scripts/build-docs-pdf.mjs` 后查看  
+`docs/暖伴勤工-完整文档手册.pdf`
+
+| 文档 | 说明 |
+|------|------|
+| [docs/README.md](docs/README.md) | **文档索引** |
+| [docs/PRODUCT.md](docs/PRODUCT.md) | **产品资料**（规则 + V1 实现状态） |
+| [docs/TECH_STACK_SIMPLE.md](docs/TECH_STACK_SIMPLE.md) | 极简栈与成本 |
+| [docs/DEPLOY.md](docs/DEPLOY.md) | Docker Compose 部署 |
+| [docs/DEMO_LINK.md](docs/DEMO_LINK.md) | 客人公网演示链接 |
+| [docs/GITHUB_DEMO.md](docs/GITHUB_DEMO.md) | GitHub Pages + Render 部署 |
+| [docs/PUBLIC_DEMO.md](docs/PUBLIC_DEMO.md) | 自有服务器演示（可选） |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | 系统架构 |
+| [docs/API.md](docs/API.md) | PocketBase API |
+| [docs/LOGIN_STATE.md](docs/LOGIN_STATE.md) | 登录与多角色 |
+| [docs/MINIAPP_ROUTING.md](docs/MINIAPP_ROUTING.md) | 小程序路由 |
+| [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) | 故障排查 |
+
+## License
+
+Private / 项目内部使用

@@ -1,0 +1,16 @@
+---
+description: 阿里云正式版 — API 同域、无 Mock、发布路径
+globs: nuanban_github/packages/**,nuanban_github/docs/**,nuanban_github/scripts/**
+alwaysApply: false
+---
+
+# 阿里云生产环境（写代码必读）
+
+详述见 `docs/ALIYUN_ENV.md`。改 `nuanban_github` 时兼顾：
+
+1. **双环境**：GitHub Pages = Mock（`isDemoMockEnabled`）；阿里云 = 真实 PocketBase，**勿**设 `VITE_DEMO_MOCK`
+2. **API**：`resolveApiBase()` 同域 `/api`；禁止正式版写死 `github.io` / `localhost`；hooks 用 `h5AppBaseUrl(e)`
+3. **双端对齐**：`demo-mock.ts` + `pb_hooks/nuanban.pb.js` 同步改
+4. **数据**：正式版业务在服务端；`localStorage` 演示键仅测试版
+5. **外链**：避免核心流程依赖不可控外网（如 `api.qrserver.com`）
+6. **发布**：测试 `./scripts/release-test.sh`；正式 `./scripts/release-prod.sh`（服务器 `/opt/jinshouzhi/nuanban_github`）

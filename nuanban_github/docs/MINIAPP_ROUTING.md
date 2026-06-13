@@ -1,0 +1,108 @@
+# 暖伴勤工 · 小程序路由与分包
+
+> 以 `packages/miniapp/src/pages.json` 为 **唯一真相**。
+
+## 1. V1 已上线页面结构
+
+```
+主包 pages/common/
+  launch           启动（深链 role/target/id）
+  login            微信登录（演示）+ 开发账号：student1/2/3、family1、elder1、**multi1（多角色）**
+  role-select      多角色选择
+  register         注册角色（写 user_roles）
+  agreement        用户协议与隐私说明
+  org-dispatch     机构派单（运营台 Tab）
+  ops-gate         运营口令门禁
+  ops-home         运营台首页（KPI · 动态 · 待办）
+  ops-more         运营台更多（配置 · 验收 · 设置）
+  admin-hub        兼容跳转 → ops-home
+  student-profiles 学生资料（卡通头像 · 核验照）
+  fund-admin       资金管理（储值/支付/提现 · 运营台 Tab）
+  school-coop      学校合作配置
+  ops-service-catalog  服务类目与定价（运营台）
+  student-pending  学生资质审核中拦截页
+  god-view-gate    超级管理密码门（默认演示密码见 VITE_GOD_VIEW_PASSWORD）
+  god-view         平台上帝视角（撮合 KPI · 需超级管理员解锁）
+  demo-tour        动画演示（5 幕自动轮播 · 明日验收）
+
+分包 package-elder/
+  home
+  caregivers/list    找陪护（附近学生）
+  caregivers/detail
+  order/create       预约（POST /nuanban/elder/orders）
+  order/list
+  order/detail
+  bind-code          家属绑定码
+  settings           无障碍设置
+  wallet/index       储值卡（充值 / 消费记录 · 老人大字）
+  profile
+  profile/edit       编辑资料（老人基本信息）
+
+分包 package-family/
+  home
+  bind               绑定老人
+  order/list
+  order/pay          模拟支付
+  order/detail
+  outdoor/approve    外出审批
+  package/buy        服务包购买（mock 下单 → 待支付）
+  wallet/index       储值卡（充值 / 消费记录）
+  profile
+  profile/edit       编辑资料（联系信息 / 照护关系）
+
+分包 package-student/
+  home
+  discover/list      附近老人 + 学校合作筛选
+  discover/elder     老人详情
+  order/pending      待接单列表（scroll-view）
+  order/active       服务中
+  order/request      接单 / 拒单 / 签到 / 完成
+  income             收入明细
+  withdrawal/index   提现（已结算余额 · 微信/银行卡 mock）
+  schedule/list      排班
+  schedule/checkin   到场签到
+  schedule/log       服务日志
+  profile
+  profile/edit       编辑资料（学校 / 显示名）
+```
+
+## 2. 深链
+
+| 参数 | 说明 |
+|------|------|
+| `role` | `elder` \| `family` \| `student` |
+| `target` | 页面 key（如 `order-pay`） |
+| `id` | 业务 ID |
+
+示例：`/pages/common/launch?role=family&target=order-pay&id=<orderId>`
+
+`launch` 流程：校验 token → 若无 `activeRole` 则 `role-select` → `reLaunch` 到对应分包首页或目标页。
+
+## 3. TabBar
+
+未使用微信原生三套 tabBar。各分包首页内嵌 **`RoleTabBar`**（`config/tabs.ts`），按 `activeRole` 切换 Tab 配置。
+
+## 4. 角色切换
+
+- 存储：`pinia` `store/role.ts` + `uni.setStorageSync('activeRole')`  
+- 多角色：登录后或 `role-select` 页选择  
+- **注意**：切换身份应调用 `roleStore.setActiveRole()`，**不要** 请求已废弃的 Nest `POST /auth/switch-role`
+
+## 5. 导航守卫
+
+`utils/nav-guard.ts`：
+
+1. 已登录（`access_token`）  
+2. `activeRole` 与分包前缀一致  
+3. 学生角色需 `user_roles.status === active`
+
+## 6. 演示专用入口
+
+| 路径 | 说明 |
+|------|------|
+| login → 用户协议 | 合规说明 |
+| login → 机构派单 | 已并入运营台「派单」Tab |
+| ops-gate → ops-home | 口令门禁 → 五 Tab 运营台（概览/学生/派单/资金/更多） |
+| family/home → 服务包购买 | 套餐占位，无真实支付 |
+
+产品说明见 [PRODUCT.md](./PRODUCT.md) §10、§12。

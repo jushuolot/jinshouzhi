@@ -1,0 +1,7 @@
+{
+  "name": "lo-delivery-platform",
+  "version": "13.1.0",
+  "description": "LOT 全球物流供应链控制塔 · 事件账本内核 + 种子进化",
+  "private": true,
+  "license": "MIT"
+}

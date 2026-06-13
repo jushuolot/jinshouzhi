@@ -1,0 +1,22 @@
+{
+  "name": "暖伴勤工",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:20",
+  "workspaceFolder": "/workspaces/jinshouzhi/nuanban_github",
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+  },
+  "forwardPorts": [8080, 8090],
+  "portsAttributes": {
+    "8080": {
+      "label": "暖伴-H5+API",
+      "onAutoForward": "openBrowser",
+      "visibility": "public"
+    },
+    "8090": {
+      "label": "暖伴-PocketBase",
+      "onAutoForward": "notify"
+    }
+  },
+  "postCreateCommand": "chmod +x scripts/*.sh && cd packages/miniapp && npm install",
+  "postAttachCommand": "printf '\\n✅ 暖伴 Codespaces 就绪\\n   终端执行: ./scripts/github-demo.sh\\n   PORTS → 8080 → Public → 把 HTTPS 链接发给客人\\n   固定公网链接见 docs/GITHUB_DEMO.md\\n\\n'"
+}

@@ -1,0 +1,295 @@
+import { normalizeElderId } from '../utils/elder-id';
+import { guestBrowseRole, isGuestBrowse } from '../utils/guest-browse';
+import type { OrderTimelineEvent } from '../utils/order-timeline';
+import { request } from '../utils/request';
+import { useRoleStore } from '../store/role';
+import { pbList, type PbRecord } from './pb';
+
+export interface CaregiverItem {
+  id: string;
+  userId?: string;
+  name: string;
+  school: string;
+  gender?: string;
+  distance: string;
+  distanceKm?: number;
+  tags?: string[];
+  rating?: number;
+  orderCount?: number;
+  intro?: string;
+}
+
+export interface CaregiverProfileDetail {
+  id: string;
+  userId: string;
+  name: string;
+  school: string;
+  distance?: string;
+  distanceKm?: number;
+  rating: number;
+  orderCount: number;
+  intro: string;
+  tags: string[];
+  gender: string;
+  major: string;
+  grade: string;
+  age: number;
+  phone: string;
+  bio?: string;
+  serviceAreas: string[];
+  availableHours: string[];
+  certifications?: string[];
+  languages?: string[];
+  personalityTags?: string[];
+  serviceTypes?: string[];
+  completedOrderThemes?: string[];
+  reviewSummary?: string;
+}
+
+export interface ElderSelfProfile {
+  id: string;
+  name: string;
+  avatarUrl?: string;
+  profileComplete?: boolean;
+  orgProfileComplete?: boolean;
+  orgProfileHint?: string;
+  age: number;
+  gender: string;
+  district: string;
+  address: string;
+  orgName: string;
+  healthStatus: string;
+  mobility: string;
+  hobbies: string[];
+  servicePreferences: string[];
+  livingSituation: string;
+  emergencyContact: { name: string; relation: string; phone: string };
+  preferredVisitTimes: string[];
+  notes: string;
+}
+
+export interface ElderStats {
+  elderProfileId: string | null;
+  elderName: string;
+  orderCount: number;
+  activeCount: number;
+  caregiverNearbyCount?: number;
+}
+
+export async function fetchElderStats() {
+  return request<ElderStats>({
+    url: '/nuanban/elder/stats',
+    method: 'GET',
+  });
+}
+
+/** 列表/下单用：优先 store，缺失时从 stats 回填 elderProfileId */
+export async function resolveElderIdForApi(): Promise<string | null> {
+  if (isGuestBrowse() && guestBrowseRole() === 'elder') return normalizeElderId('elder-1');
+  const roleStore = useRoleStore();
+  const fromStore = roleStore.currentElderId;
+  if (fromStore) return normalizeElderId(fromStore);
+  if (roleStore.activeRole !== 'elder') return null;
+  try {
+    const stats = await fetchElderStats();
+    if (stats.elderProfileId) {
+      roleStore.setElderProfileId(stats.elderProfileId);
+      return normalizeElderId(stats.elderProfileId);
+    }
+  } catch {
+    /* ignore */
+  }
+  return null;
+}
+
+export interface CaregiverListResult {
+  list: CaregiverItem[];
+  total: number;
+  filtered?: number;
+}
+
+export interface CaregiverListParams {
+  lat?: number;
+  lng?: number;
+  /** 不传或 0 表示不过滤距离，返回全部可接单同学 */
+  radiusKm?: number;
+  q?: string;
+  gender?: string;
+  school?: string;
+}
+
+function caregiverQuery(params: CaregiverListParams = {}) {
+  const qs = new URLSearchParams();
+  if (params.lat != null) qs.set('lat', String(params.lat));
+  if (params.lng != null) qs.set('lng', String(params.lng));
+  if (params.radiusKm != null && params.radiusKm > 0) qs.set('radiusKm', String(params.radiusKm));
+  if (params.q?.trim()) qs.set('q', params.q.trim());
+  if (params.gender?.trim()) qs.set('gender', params.gender.trim());
+  if (params.school?.trim()) qs.set('school', params.school.trim());
+  return qs.toString();
+}
+
+export async function listCaregivers(params: CaregiverListParams = {}) {
+  const q = caregiverQuery(params);
+  const res = await request<CaregiverListResult>({
+    url: `/nuanban/elder/caregivers/nearby${q ? `?${q}` : ''}`,
+    method: 'GET',
+  });
+  return res;
+}
+
+/** @deprecated 使用 listCaregivers；默认不再限制 5km */
+export async function getNearbyCaregivers(lat: number, lng: number, radiusKm?: number) {
+  const res = await listCaregivers({ lat, lng, radiusKm });
+  return res.list ?? [];
+}
+
+export async function getCaregiverDetail(id: string) {
+  return request<CaregiverProfileDetail>({
+    url: `/nuanban/elder/caregivers/${id}`,
+    method: 'GET',
+  });
+}
+
+export async function fetchElderSelfProfile() {
+  return request<ElderSelfProfile>({
+    url: '/nuanban/elder/profile',
+    method: 'GET',
+  });
+}
+
+export async function updateElderProfile(data: {
+  name?: string;
+  age?: number;
+  gender?: string;
+  district?: string;
+  address?: string;
+  emergencyContactName?: string;
+  emergencyContactPhone?: string;
+  emergencyContactRelation?: string;
+}) {
+  return request<{ ok: boolean; profileComplete?: boolean } & Partial<ElderSelfProfile>>({
+    url: '/nuanban/elder/profile',
+    method: 'PATCH',
+    data,
+  });
+}
+
+export interface ServiceItemRow extends PbRecord {
+  name: string;
+  price_cents: number;
+  duration_minutes?: number;
+  requires_outdoor_approval?: boolean;
+  enabled?: boolean;
+  category?: string;
+  expand?: { category?: { id: string; name: string } };
+}
+
+export async function listServiceItems() {
+  const res = await pbList<ServiceItemRow>('service_items', {
+    filter: 'enabled = true',
+    sort: 'name',
+    expand: 'category',
+    perPage: 50,
+  });
+  return res.items;
+}
+
+export interface CreateOrderInput {
+  elderId: string;
+  serviceItemId: string;
+  studentId?: string;
+  scheduledAt?: string;
+  requirePayment?: boolean;
+}
+
+export async function createOrder(input: CreateOrderInput) {
+  return request<{ id: string; status: string }>({
+    url: '/nuanban/elder/orders',
+    method: 'POST',
+    data: {
+      elderId: input.elderId,
+      serviceItemId: input.serviceItemId,
+      studentId: input.studentId,
+      scheduledAt: input.scheduledAt,
+      requirePayment: input.requirePayment,
+    },
+  });
+}
+
+export interface OrderRow extends PbRecord {
+  status: string;
+  elder: string;
+  service_item: string;
+  amount_cents?: number;
+  scheduled_at?: string;
+}
+
+export async function listOrdersForElder(elderId: string) {
+  const eid = normalizeElderId(elderId);
+  const res = await pbList<
+    OrderRow & {
+      expand?: { service_item?: { name: string; requires_outdoor_approval?: boolean } };
+    }
+  >('orders', {
+    filter: `elder = "${eid}"`,
+    expand: 'service_item',
+    perPage: 30,
+  });
+  return res.items;
+}
+
+export interface ElderServiceLogItem {
+  id: string;
+  orderId: string;
+  elderId: string;
+  elderName: string;
+  serviceName: string;
+  summary: string;
+  createdAt: string;
+}
+
+export async function listElderServiceLogs() {
+  const res = await request<{ list: ElderServiceLogItem[] }>({
+    url: '/nuanban/elder/service-logs',
+    method: 'GET',
+  });
+  return res.list ?? [];
+}
+
+export interface ElderOrderDetail {
+  id: string;
+  status: string;
+  amount_cents?: number;
+  scheduled_at?: string;
+  payment_status?: string;
+  serviceName?: string;
+  studentName?: string;
+  requiresOutdoorApproval?: boolean;
+  timeline?: OrderTimelineEvent[];
+  chatOpen?: boolean;
+  callOpen?: boolean;
+}
+
+export async function getOrder(id: string) {
+  return request<ElderOrderDetail | null>({
+    url: `/nuanban/elder/orders/${id}`,
+    method: 'GET',
+  });
+}
+
+export async function confirmOrderComplete(orderId: string, payMethod?: 'wallet') {
+  return request<{ ok: boolean; status: string; payment_status?: string }>({
+    url: `/nuanban/elder/orders/${orderId}/confirm-complete`,
+    method: 'POST',
+    data: payMethod ? { payMethod } : undefined,
+  });
+}
+
+export async function triggerSos(elderId: string, message?: string) {
+  return request<{ id: string; ok: boolean }>({
+    url: '/nuanban/elder/sos',
+    method: 'POST',
+    data: { elderId, message: message || '老人发起一键求助' },
+  });
+}

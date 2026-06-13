@@ -1,0 +1,77 @@
+{
+  "enabled": true,
+  "cadence": "daily",
+  "mode": "parallel-universe",
+  "ownerRole": "observer-god",
+  "ownerNote": "用户上帝视角每晚验收；世界每日循环、每日不同，像真人过日子",
+  "checkTimeLocal": "evening",
+  "universeDay": 7,
+  "lastGeneration": 58,
+  "lastVersion": "5.9.2",
+  "civilizationEpoch": "1929-07",
+  "civilizationDay": 58,
+  "civilizationYear": 2045,
+  "civilizationPhase": "超越期",
+  "dailyChronicle": "第 7 日收工复盘：文明历 2045，神树层位对齐，宇宙一周走完。",
+  "performancePolicy": {
+    "module": "asset-loader.js",
+    "nightlyGoal": "no-regression-on-first-interactive; defer heavy assets",
+    "firstPaintTargetMs": 1500
+  },
+  "virtualAccountPolicy": {
+    "allowEarning": true,
+    "sources": [
+      "impression",
+      "click",
+      "affiliate",
+      "reward",
+      "network_settlement",
+      "sponsor_visit",
+      "passive_yield",
+      "bounty",
+      "faucet_demo"
+    ],
+    "spendForbidden": true,
+    "forbiddenOps": ["debit", "withdraw", "iap_charge", "wallet_spend"],
+    "adminGate": "Mz168-title-5-tap",
+    "module": "virtual-account.js",
+    "networkEarningsModule": "network-earnings.js"
+  },
+  "networkEarningsPolicy": {
+    "registryModule": "network-earnings.js",
+    "nightlyGoal": "add-or-improve-at-least-one-channel",
+    "registerApi": "MATCH3_NETWORK_EARNINGS.registerChannel(id, { label, source, description })",
+    "spendForbidden": true,
+    "noApiKeysInRepo": true
+  },
+  "civilizationClockPolicy": {
+    "module": "civilization-clock.js",
+    "anchor": "1929-07",
+    "anchorNote": "燕道诚广汉首发现",
+    "yearsPerGeneration": 2,
+    "phases": ["发现期", "苏醒期", "复兴期", "超越期"],
+    "nightlyGoal": "update civilizationDay/Year/Phase + dailyChronicle reflecting accelerated history"
+  },
+  "storyPolicy": {
+    "allowRewrite": true,
+    "files": ["story.js", "map-narrative.js", "expedition-data.js"],
+    "minDialogueChangesPerNight": 3,
+    "keepTheme": "古蜀秘档 · 三星堆 · 摸金考古"
+  },
+  "nextThemes": [
+    "周一：新坑 discover 台词换一批",
+    "周二：王墩与金牙刘拌嘴日",
+    "周三：险情旁白 + BOSS 关前后对白",
+    "周四：营地伙食与天气真人细节",
+    "周五：briefing 或 assembly 整段换新",
+    "周六：轻松整活 + 音效/视觉小彩蛋",
+    "周日：收工复盘与图鉴旁白"
+  ],
+  "deploy": {
+    "monorepo": "jushuolot/jinshouzhi",
+    "branch": "main",
+    "subtreeRemote": "game",
+    "subtreePrefix": "match3-game",
+    "liveUrl": "https://jushuolot.github.io/game/"
+  }
+}

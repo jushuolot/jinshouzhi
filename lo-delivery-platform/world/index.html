@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>LOT 世界核 · 生态链全链管理</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <style>
+    :root {
+      --bg: #050810; --panel: #0d1524; --line: #1e3a5f; --text: #e8f4ff;
+      --muted: #7da8c8; --accent: #3dff9a; --warn: #ffb347; --nucleus: #ff6b9d;
+      --orange: #ff8c2a;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; font-family: "SF Pro Text", "PingFang SC", system-ui, sans-serif;
+      background: radial-gradient(ellipse at 50% 0%, #0a2840 0%, var(--bg) 55%);
+      color: var(--text); min-height: 100vh;
+    }
+    header {
+      display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 14px;
+      border-bottom: 1px solid var(--line); background: rgba(5, 8, 16, 0.9);
+      backdrop-filter: blur(8px); position: sticky; top: 0; z-index: 100;
+    }
+    header h1 { font-size: 14px; margin: 0; font-weight: 600; }
+    .nucleus-dot {
+      width: 9px; height: 9px; border-radius: 50%; background: var(--nucleus);
+      box-shadow: 0 0 12px var(--nucleus); animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse { 50% { opacity: 0.5; } }
+    .hdr-tools { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 10px; }
+    .hdr-tools select { padding: 3px 6px; border-radius: 6px; border: 1px solid var(--line); background: #111c2e; color: var(--text); }
+    .hdr-tools button {
+      padding: 4px 10px; border-radius: 6px; border: 1px solid var(--line);
+      background: #111c2e; color: var(--text); font-size: 10px; cursor: pointer;
+    }
+    .hdr-tools button.primary { border-color: var(--orange); color: var(--orange); }
+    .hdr-tools button.on { border-color: var(--accent); color: var(--accent); }
+    .chain-pills { display: flex; flex-wrap: wrap; gap: 4px; margin-left: auto; }
+    .chain-pill { font-size: 9px; padding: 2px 7px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
+    .chain-pill.on { border-color: var(--accent); color: var(--accent); }
+    .chain-pill.off { opacity: 0.45; }
+    main { display: grid; grid-template-columns: 300px 1fr 300px; height: calc(100vh - 46px); }
+    @media (max-width: 1000px) { main { grid-template-columns: 1fr; height: auto; } }
+    aside, .quest {
+      background: var(--panel); border-right: 1px solid var(--line);
+      padding: 10px; overflow: auto;
+    }
+    .quest { border-right: none; border-left: 1px solid var(--line); }
+    .sec-title { font-size: 9px; letter-spacing: 0.12em; color: var(--muted); margin: 0 0 6px; }
+    .crumb { display: flex; flex-wrap: wrap; gap: 3px; margin-bottom: 8px; }
+    .crumb button {
+      background: transparent; border: 1px solid var(--line); color: var(--text);
+      border-radius: 6px; padding: 3px 7px; font-size: 11px; cursor: pointer;
+    }
+    .crumb button.on { border-color: var(--accent); color: var(--accent); }
+    .crumb span { color: var(--muted); font-size: 10px; align-self: center; }
+    .zoom-hint { font-size: 10px; color: var(--muted); line-height: 1.45; margin-bottom: 10px; }
+    #map { min-height: 360px; height: 100%; background: #0a1628; }
+    .co-card, .lo-card {
+      border: 1px solid var(--line); border-radius: 8px; padding: 8px;
+      margin-bottom: 6px; cursor: pointer; font-size: 10px;
+    }
+    .co-card.active, .lo-card.active { border-color: var(--nucleus); box-shadow: 0 0 0 1px rgba(255,107,157,0.25); }
+    .co-card b { color: var(--orange); font-size: 11px; }
+    .lo-id { font-size: 11px; font-weight: 600; color: var(--nucleus); }
+    .lo-meta { font-size: 10px; color: var(--muted); margin-top: 2px; }
+    .progress { height: 3px; background: #1a2d44; border-radius: 2px; margin-top: 6px; }
+    .progress i { display: block; height: 100%; background: linear-gradient(90deg, var(--nucleus), var(--accent)); }
+    .badge { font-size: 8px; padding: 1px 5px; border-radius: 4px; background: #1a2d44; color: var(--warn); }
+    .badge.ex { background: #3a1020; color: #ff6b9d; }
+    .next-hint.warn { border-color: #ff6b9d; background: #1a0a12; color: #ff9eb8; }
+    .evt-ex { color: #ff6b9d; }
+    .actor-row { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 10px; }
+    .actor-row button {
+      flex: 1; min-width: 60px; padding: 6px; border-radius: 6px;
+      border: 1px solid var(--line); background: #111c2e; color: var(--text); font-size: 11px; cursor: pointer;
+    }
+    .actor-row button.on { border-color: var(--accent); background: #0f2a22; }
+    .next-hint {
+      font-size: 10px; padding: 8px; border-radius: 8px; border: 1px solid var(--orange);
+      background: #1a1408; color: var(--orange); margin-bottom: 10px;
+    }
+    .actions { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }
+    .actions button {
+      padding: 9px; border-radius: 8px; border: none;
+      background: linear-gradient(135deg, #1a4d3a, #0d3328);
+      color: var(--accent); font-weight: 600; font-size: 11px; cursor: pointer;
+    }
+    .actions button.biz { background: linear-gradient(135deg, #4d2a0a, #2a1808); color: var(--orange); }
+    .actions button:disabled { opacity: 0.35; cursor: not-allowed; }
+    .evt {
+      font-size: 10px; padding: 5px 0; border-bottom: 1px solid #152238;
+      font-family: ui-monospace, monospace;
+    }
+    .evt b { color: var(--warn); }
+    .evt-sync { color: var(--nucleus); }
+    .integrity { font-size: 10px; margin-top: 6px; }
+    .integrity.ok { color: var(--accent); }
+    .stl { font-size: 9px; padding: 6px; border: 1px solid var(--line); border-radius: 6px; margin-top: 6px; }
+    .stl button { font-size: 9px; margin-left: 4px; padding: 2px 6px; cursor: pointer; border-radius: 4px; border: 1px solid var(--line); background: #111c2e; color: var(--text); }
+    .foot-links { font-size: 10px; margin-top: 10px; display: flex; gap: 10px; }
+    .foot-links a { color: var(--muted); }
+    .evolve-log {
+      font-size: 9px; color: var(--muted); margin-top: 8px; padding: 6px;
+      border-top: 1px solid var(--line); max-height: 48px; overflow: auto;
+    }
+    .evolve-log b { color: var(--orange); }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="nucleus-dot"></div>
+    <h1>LOT 世界核 · 免费资源链</h1>
+    <div class="hdr-tools">
+      <select id="sel-ent" title="企业视角"></select>
+      <button type="button" class="primary" id="btn-new">＋货主下单</button>
+      <button type="button" class="primary" id="btn-advance">推进业务</button>
+      <button type="button" id="btn-auto">自动裂变</button>
+    </div>
+    <div class="chain-pills" id="chain-pills"></div>
+  </header>
+  <main>
+    <aside>
+      <p class="sec-title">空间 zoom · 宇宙 → 乡村</p>
+      <div class="crumb" id="spatial-crumb"></div>
+      <p class="zoom-hint" id="zoom-hint"></p>
+      <p class="sec-title">链订单 · 采购原料 → 用户签收</p>
+      <div id="co-list"></div>
+      <p class="sec-title">任务核（LO）</p>
+      <div id="lo-list"></div>
+      <div class="foot-links">
+        <a href="../web/index.html">← 旧版演示壳</a>
+        <a href="driver.html">司机端 →</a>
+      </div>
+    </aside>
+    <section id="map" aria-label="世界地图"></section>
+    <div class="quest">
+      <p class="sec-title">角色镜头</p>
+      <div class="actor-row" id="actors"></div>
+      <div id="next-hint" hidden class="next-hint"></div>
+      <p class="sec-title">动作 · 写入事件链</p>
+      <div class="actions" id="actions"></div>
+      <p class="sec-title">轨道电子 · 事件账本</p>
+      <div id="event-log"></div>
+      <p class="integrity ok" id="integrity"></p>
+      <div id="stl-panel"></div>
+      <div class="evolve-log" id="evolve-log">系统进化：关闭</div>
+    </div>
+  </main>
+  <script type="module">
+    import { defaultChain } from '../kernel/lot-chain.js';
+    import { projectLOState, ACTOR_LENSES, SPATIAL_LEVELS } from '../kernel/lot-nucleus.js';
+    import { CHAIN_STATUS, legMeta } from '../kernel/lot-chain-order.js';
+    import { ENTERPRISES, getEnterprise } from '../kernel/lot-ecosystem.js';
+    import { SETTLEMENT_STATUS } from '../kernel/lot-settlement.js';
+    import { settlementActionsForViewer } from '../kernel/lot-business.js';
+    import { getDomain } from '../kernel/lot-domains.js';
+
+    const state = {
+      chain: defaultChain,
+      focusCellId: 'beijing',
+      activeLoId: null,
+      activeCoId: null,
+      actor: 'driver',
+      viewerEnterpriseId: localStorage.getItem('lot_viewer_ent') || 'ENT-LUWEI-BRAND',
+      map: null,
+      markers: [],
+      autoFission: false,
+      autoTimer: null,
+      evolveLog: [],
+    };
+
+    const ACTION_TABLE = {
+      driver: [
+        { code: 'PICKUP_DONE', label: '揽收完成', cell: 'origin' },
+        { code: 'IN_TRANSIT', label: '在途', cell: null },
+        { code: 'POD_SIGNED', label: '签收', cell: 'dest' },
+      ],
+      warehouse: [
+        { code: 'INBOUND_SCAN', label: '入库扫码', cell: 'facility' },
+        { code: 'PICK_PACK', label: '拣配', cell: 'facility' },
+        { code: 'LOADED', label: '装车', cell: 'facility' },
+      ],
+      dispatcher: [
+        { code: 'DISPATCH', label: '派车', cell: null },
+        { code: 'LOAD_PLAN', label: '配载计划', cell: null },
+        { code: 'IN_TRANSIT', label: '在途', cell: null },
+      ],
+      shipper: [
+        { code: 'ORDER_CREATED', label: '销售建单', cell: 'origin' },
+        { code: 'CONFIRM', label: '货主确认', cell: 'origin' },
+      ],
+      purchaser: [
+        { code: 'PO_ISSUED', label: '下达采购', cell: 'origin' },
+        { code: 'SUPPLIER_CONFIRM', label: '供应商确认', cell: 'origin' },
+        { code: 'PUTAWAY_DONE', label: '上架完成', cell: 'dest' },
+      ],
+      planner: [
+        { code: 'MATERIAL_CALL', label: '生产叫料', cell: 'facility' },
+        { code: 'FG_STOCK_IN', label: '成品入库', cell: 'facility' },
+      ],
+      finance: [
+        { code: 'SETTLEMENT', label: '运费结算', cell: null },
+        { code: 'INVOICE_MATCHED', label: '三单匹配', cell: null },
+      ],
+    };
+
+    const ROLE_FILTER = {
+      'ENT-LUWEI-BRAND': ['shipper', 'purchaser', 'planner', 'finance', 'dispatcher'],
+      'ENT-LOT-3PL': ['warehouse', 'dispatcher'],
+      'ENT-ZHOU-CARRIER': ['driver', 'dispatcher'],
+      'ENT-YANQING-SUP': ['purchaser'],
+    };
+
+    function renderChainPills(status) {
+      document.getElementById('chain-pills').innerHTML = status
+        .map((s) => `<span class="chain-pill ${s.ok ? 'on' : 'off'}">${s.id}</span>`)
+        .join('');
+    }
+
+    function initEnt() {
+      const sel = document.getElementById('sel-ent');
+      sel.innerHTML = ENTERPRISES.map((e) => `<option value="${e.id}">${e.nameZh}</option>`).join('');
+      sel.value = state.viewerEnterpriseId;
+      sel.onchange = () => {
+        state.viewerEnterpriseId = sel.value;
+        localStorage.setItem('lot_viewer_ent', sel.value);
+        const roles = ROLE_FILTER[state.viewerEnterpriseId];
+        if (roles && !roles.includes(state.actor)) state.actor = roles[0] || 'driver';
+        renderAll();
+      };
+    }
+
+    async function buildCrumb() {
+      const all = await state.chain.listSpatial();
+      const map = new Map(all.map((c) => [c.id, c]));
+      const path = [];
+      let cur = map.get(state.focusCellId);
+      while (cur) { path.unshift(cur); cur = cur.parentId ? map.get(cur.parentId) : null; }
+      document.getElementById('spatial-crumb').innerHTML = path.map((c, i) => {
+        const sep = i ? '<span>›</span>' : '';
+        const on = c.id === state.focusCellId ? ' on' : '';
+        return `${sep}<button type="button" data-cell="${c.id}" class="${on.trim()}">${c.labelZh}</button>`;
+      }).join('');
+      document.querySelectorAll('#spatial-crumb button').forEach((btn) => {
+        btn.onclick = () => { state.focusCellId = btn.dataset.cell; renderMap(); };
+      });
+      const focus = map.get(state.focusCellId);
+      const lvl = focus ? SPATIAL_LEVELS.indexOf(focus.level) + 1 : 0;
+      document.getElementById('zoom-hint').textContent =
+        `当前层级 ${lvl}/${SPATIAL_LEVELS.length} · 事件 SHA-256 哈希链 · 本地 IndexedDB 零云费 · 业务推进实时投影`;
+    }
+
+    function ensureMap() {
+      if (state.map) return;
+      state.map = L.map('map', { zoomControl: true, attributionControl: true });
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        subdomains: 'abcd', maxZoom: 19, attribution: '&copy; OSM &copy; CARTO',
+      }).addTo(state.map);
+    }
+
+    async function renderMap() {
+      ensureMap();
+      state.markers.forEach((m) => state.map.removeLayer(m));
+      state.markers = [];
+      const los = await visibleLos();
+      const spatial = await state.chain.listSpatial();
+      const labels = new Map(spatial.map((c) => [c.id, c.labelZh]));
+
+      for (const lo of los) {
+        for (const cellId of [lo.originCellId, lo.destCellId]) {
+          const c = spatial.find((x) => x.id === cellId);
+          if (!c?.lat) continue;
+          const active = lo.loId === state.activeLoId;
+          const m = L.circleMarker([c.lat, c.lng], {
+            radius: active ? 11 : 7,
+            color: active ? '#ff6b9d' : '#3dff9a',
+            fillColor: active ? '#ff6b9d' : '#1a4d3a',
+            fillOpacity: 0.9, weight: 2,
+          }).addTo(state.map);
+          m.bindPopup(`<b>${labels.get(cellId)}</b><br/>${lo.loId}<br/>${lo.chainOrderId || ''}`);
+          m.on('click', () => { state.activeLoId = lo.loId; renderAll(); });
+          state.markers.push(m);
+        }
+      }
+
+      const focus = spatial.find((c) => c.id === state.focusCellId);
+      const children = spatial.filter((c) => c.parentId === state.focusCellId && c.lat);
+      const pts = [...children, ...(focus?.lat ? [focus] : [])];
+      if (pts.length) state.map.fitBounds(L.latLngBounds(pts.map((p) => [p.lat, p.lng])).pad(0.3));
+      else if (focus?.lat) state.map.setView([focus.lat, focus.lng], 10);
+      setTimeout(() => state.map.invalidateSize(), 40);
+    }
+
+    async function visibleLos() {
+      if (state.activeCoId) {
+        const view = await state.chain.getChainOrderView(state.activeCoId);
+        const ids = new Set((view?.legs || []).map((l) => l.loId));
+        const all = await state.chain.listLOs();
+        const filtered = all.filter((l) => ids.has(l.loId));
+        if (filtered.length) return filtered;
+      }
+      return state.chain.listLOs();
+    }
+
+    async function renderChainOrders() {
+      const rows = await state.chain.listChainOrders({ viewerEnterpriseId: state.viewerEnterpriseId });
+      if (!state.activeCoId && rows[0]) state.activeCoId = rows[0].chainOrderId;
+      const views = await Promise.all(rows.map((r) => state.chain.getChainOrderView(r.chainOrderId)));
+      document.getElementById('co-list').innerHTML = views.filter(Boolean).map((v) => {
+        const on = v.chainOrderId === state.activeCoId ? ' active' : '';
+        const st = CHAIN_STATUS[v.status]?.labelZh || v.status;
+        const exCls = v.status === 'exception' ? ' ex' : '';
+        return `<div class="co-card${on}" data-co="${v.chainOrderId}">
+          <b>${v.title}</b> <span class="badge${exCls}">${st}</span>
+          <div class="lo-meta">${v.chainOrderId} · ${v.progress}%</div></div>`;
+      }).join('') || '<p class="lo-meta">无链订单 · 点顶栏「货主下单」</p>';
+      document.querySelectorAll('.co-card').forEach((c) => {
+        c.onclick = async () => {
+          state.activeCoId = c.dataset.co;
+          const view = await state.chain.getChainOrderView(state.activeCoId);
+          if (view?.legs?.[0]) state.activeLoId = view.legs[0].loId;
+          renderAll();
+        };
+      });
+    }
+
+    async function renderLOs() {
+      const los = await visibleLos();
+      if (!state.activeLoId && los.length) state.activeLoId = los[0].loId;
+      const html = [];
+      for (const lo of los.slice(0, 40)) {
+        const events = await state.chain.getEvents(lo.loId);
+        const proj = projectLOState(lo, events);
+        const active = lo.loId === state.activeLoId ? ' active' : '';
+        const leg = legMeta(lo.legType || lo.logisticsDomain);
+        html.push(
+          `<div class="lo-card${active}" data-lo="${lo.loId}">` +
+          `<div class="lo-id">${leg.icon} ${lo.loId}</div>` +
+          `<div class="lo-meta">${lo.channel} · ${lo.originCellId}→${lo.destCellId}</div>` +
+          `<div class="progress"><i style="width:${proj.progress}%"></i></div></div>`
+        );
+      }
+      const el = document.getElementById('lo-list');
+      el.innerHTML = html.join('') || '<p class="lo-meta">无 LO</p>';
+      el.querySelectorAll('.lo-card').forEach((card) => {
+        card.onclick = () => { state.activeLoId = card.dataset.lo; renderAll(); };
+      });
+    }
+
+    function renderActors() {
+      const allowed = ROLE_FILTER[state.viewerEnterpriseId];
+      const actors = Object.values(ACTOR_LENSES).filter((a) => a.id !== 'all' && (!allowed || allowed.includes(a.id)));
+      document.getElementById('actors').innerHTML = actors.map((a) =>
+        `<button type="button" data-actor="${a.id}" class="${a.id === state.actor ? 'on' : ''}">${a.labelZh}</button>`
+      ).join('');
+      document.querySelectorAll('#actors button').forEach((btn) => {
+        btn.onclick = () => { state.actor = btn.dataset.actor; renderActions(); renderActors(); };
+      });
+    }
+
+    async function renderNextHint() {
+      const el = document.getElementById('next-hint');
+      if (!state.activeCoId) { el.hidden = true; return; }
+      const block = await state.chain.getStageBlock(state.activeCoId);
+      const next = await state.chain.getNextStep(state.activeCoId);
+      if (!next && !block) { el.hidden = true; el.className = 'next-hint'; return; }
+      el.hidden = false;
+      if (block?.kind === 'exception') {
+        el.className = 'next-hint warn';
+        el.innerHTML = block.labelZh;
+        return;
+      }
+      if (block?.kind === 'doc') {
+        el.className = 'next-hint warn';
+        el.innerHTML = block.labelZh;
+        return;
+      }
+      if (!next) { el.hidden = true; return; }
+      el.className = 'next-hint';
+      el.innerHTML = `下一业务步：<b>${next.labelZh}</b> · ${next.loId} · @${next.actor}`;
+    }
+
+    async function renderActions() {
+      const lo = state.activeLoId ? await state.chain.getLO(state.activeLoId) : null;
+      const acts = [...(ACTION_TABLE[state.actor] || [])];
+      if (lo?.logisticsDomain) {
+        const dom = getDomain(lo.logisticsDomain);
+        const events = lo ? await state.chain.getEvents(lo.loId) : [];
+        const done = new Set(events.filter((e) => e.type === 'FACT').map((e) => e.code));
+        const stage = dom?.stages?.find((s) => !done.has(s.code) && s.actor === state.actor);
+        if (stage && !acts.find((a) => a.code === stage.code)) {
+          acts.unshift({ code: stage.code, label: stage.labelZh, cell: 'facility' });
+        }
+      }
+      const el = document.getElementById('actions');
+      let html = '';
+      if (state.activeCoId) {
+        html += `<button type="button" class="biz" id="btn-biz-step" ${lo ? '' : 'disabled'}>⚡ 推进链上下一步</button>`;
+      }
+      html += acts.map((a) =>
+        `<button type="button" data-code="${a.code}" data-cell="${a.cell || ''}" ${lo ? '' : 'disabled'}>${a.label}</button>`
+      ).join('');
+      el.innerHTML = html;
+      const bizBtn = document.getElementById('btn-biz-step');
+      if (bizBtn) bizBtn.onclick = async () => {
+        const r = await state.chain.advanceChain(state.activeCoId);
+        if (r.step) state.activeLoId = r.step.loId;
+        await renderAll();
+      };
+      el.querySelectorAll('button[data-code]').forEach((btn) => {
+        btn.onclick = async () => {
+          if (!state.activeLoId) return;
+          const lo = await state.chain.getLO(state.activeLoId);
+          let cellId = state.focusCellId;
+          if (btn.dataset.cell === 'origin') cellId = lo.originCellId;
+          if (btn.dataset.cell === 'dest' || btn.dataset.cell === 'facility') cellId = lo.destCellId || lo.originCellId;
+          await state.chain.emitAction(state.activeLoId, {
+            code: btn.dataset.code,
+            actor: state.actor,
+            spatialCellId: cellId,
+            payload: { viewer: state.viewerEnterpriseId },
+          });
+          await renderAll();
+        };
+      });
+    }
+
+    async function renderEvents() {
+      if (!state.activeLoId) {
+        document.getElementById('event-log').innerHTML = '';
+        document.getElementById('integrity').textContent = '';
+        return;
+      }
+      const events = await state.chain.getEvents(state.activeLoId);
+      const lo = await state.chain.getLO(state.activeLoId);
+      const proj = projectLOState(lo, events);
+      document.getElementById('event-log').innerHTML = events.map((e) => {
+        const sync = e.type === 'SYNC' ? ' evt-sync' : '';
+        const ex = e.type === 'EXCEPTION' ? ' evt-ex' : '';
+        return `<div class="evt${sync}${ex}"><b>#${e.seq}</b> ${e.code} <span style="color:#7da8c8">@${e.actor}</span><br/>
+          <span style="color:#5a7a96">${(e.hash || '').slice(0, 16)}…</span></div>`;
+      }).join('');
+      const ig = document.getElementById('integrity');
+      ig.className = 'integrity ' + (proj.integrity.ok ? 'ok' : 'bad');
+      ig.textContent = proj.integrity.ok
+        ? `哈希链完整 · ${events.length} 个轨道电子`
+        : `链断裂 @#${proj.integrity.brokenAt}`;
+    }
+
+    async function renderSettlements() {
+      const panel = document.getElementById('stl-panel');
+      if (!state.activeCoId) { panel.innerHTML = ''; return; }
+      const stls = await state.chain.listSettlements({
+        chainOrderId: state.activeCoId,
+        viewerEnterpriseId: state.viewerEnterpriseId,
+      });
+      if (!stls.length) { panel.innerHTML = ''; return; }
+      panel.innerHTML = '<p class="sec-title" style="margin-top:12px">点对点结算</p>' + stls.map((s) => {
+        const st = SETTLEMENT_STATUS[s.status]?.labelZh || s.status;
+        const acts = settlementActionsForViewer(state.viewerEnterpriseId, s)
+          .map((a) => `<button type="button" data-stl="${s.settlementId}" data-act="${a.id}">${a.label}</button>`).join('');
+        return `<div class="stl">${s.title} · ¥${s.amount} · ${st}${acts}</div>`;
+      }).join('');
+      panel.querySelectorAll('button[data-stl]').forEach((btn) => {
+        btn.onclick = async () => {
+          await state.chain.advanceSettlementStatus(btn.dataset.stl, btn.dataset.act);
+          await renderAll();
+        };
+      });
+    }
+
+    async function renderAll() {
+      await buildCrumb();
+      await renderChainOrders();
+      await renderLOs();
+      await renderMap();
+      renderActors();
+      await renderNextHint();
+      await renderActions();
+      await renderEvents();
+      await renderSettlements();
+    }
+
+    document.getElementById('btn-new').onclick = async () => {
+      const r = await state.chain.createChainFromSales({
+        anchorEnterpriseId: state.viewerEnterpriseId,
+        title: '链订单 ' + new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }),
+        cargoSummary: '采购原料→生产→仓运配→签收',
+      });
+      state.activeCoId = r.chainOrder.chainOrderId;
+      state.activeLoId = r.salesLoId;
+      await renderAll();
+    };
+
+    document.getElementById('btn-advance').onclick = async () => {
+      if (!state.activeCoId) return;
+      const r = await state.chain.advanceChain(state.activeCoId);
+      if (r.step) state.activeLoId = r.step.loId;
+      await renderAll();
+    };
+
+    function logEvolve(msg) {
+      const t = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      state.evolveLog.unshift(`[${t}] ${msg}`);
+      state.evolveLog = state.evolveLog.slice(0, 6);
+      document.getElementById('evolve-log').innerHTML = state.evolveLog
+        .map((l) => `<div>${l}</div>`).join('') || '系统进化：待机';
+    }
+
+    async function tickEvolution() {
+      const r = await state.chain.runEvolutionTick({ viewerEnterpriseId: state.viewerEnterpriseId });
+      if (r?.step) {
+        state.activeCoId = r.chainOrderId;
+        if (r.step.loId) state.activeLoId = r.step.loId;
+        const phaseMap = { settlement: '结算', exception: '异常闭环', exception_inject: '异常注入', fulfillment: '履约' };
+        const phase = phaseMap[r.phase] || '履约';
+        logEvolve(`<b>${phase}</b> ${r.step.labelZh || r.step.code} · ${r.chainOrderId}`);
+      }
+      await renderAll();
+    }
+
+    document.getElementById('btn-auto').onclick = () => {
+      state.autoFission = !state.autoFission;
+      const btn = document.getElementById('btn-auto');
+      btn.classList.toggle('on', state.autoFission);
+      btn.textContent = state.autoFission ? '进化ON' : '自动进化';
+      if (state.autoFission) {
+        logEvolve('自动进化启动 · 闸门/三单/异常闭环');
+        tickEvolution();
+        state.autoTimer = setInterval(tickEvolution, 6000);
+      } else {
+        clearInterval(state.autoTimer);
+        logEvolve('自动进化已暂停');
+      }
+    };
+
+    initEnt();
+    const status = await state.chain.init();
+    renderChainPills(status);
+    await renderAll();
+    setInterval(() => { if (!state.autoFission) renderAll(); }, 15000);
+  </script>
+</body>
+</html>
