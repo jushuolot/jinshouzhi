@@ -116,6 +116,18 @@
     window.PortraitPainter.preloadAll(null, null);
   }
 
+  function runWhenIdle(fn, timeout, delayMs) {
+    var schedule = function () {
+      if (window.requestIdleCallback) {
+        window.requestIdleCallback(fn, { timeout: timeout || 1200 });
+      } else {
+        window.setTimeout(fn, 0);
+      }
+    };
+    if (delayMs > 0) window.setTimeout(schedule, delayMs);
+    else schedule();
+  }
+
   function startDeferredIdle() {
     if (deferredStarted) return;
     deferredStarted = true;
@@ -127,14 +139,17 @@
       .catch(function () {
         return null;
       });
-    codexReady = loadScriptChain(CODEX_SCRIPTS).catch(function () {
-      return null;
-    });
-    window.setTimeout(function () {
+    runWhenIdle(function () {
+      if (codexReady) return;
+      codexReady = loadScriptChain(CODEX_SCRIPTS).catch(function () {
+        return null;
+      });
+    }, 1400, 900);
+    runWhenIdle(function () {
       ensureThree().catch(function () {
         return null;
       });
-    }, 1200);
+    }, 2200, 2400);
   }
 
   function ensureCinema() {
