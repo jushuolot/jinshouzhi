@@ -115,7 +115,7 @@
       id: "weekly_recap",
       label: "周复盘赏金",
       source: "network_settlement",
-      description: "宇宙第七日收工复盘入账",
+      description: "宇宙每七日收工复盘入账",
     },
   };
 
