@@ -15,17 +15,17 @@
     chapters: [
       {
         nodes: [
-          { id: "c0n0", name: "雨夜营地", level: 0, x: -3.5, z: 2.2, discover: ["chenli", "二〇四一，超越期首日。探照灯撕开雨幕——造物主不在屏前，层位照样记。"], artifactHint: 3 },
+          { id: "c0n0", name: "雨后营地", level: 0, x: -3.5, z: 2.2, discover: ["chenli", "二〇四七，超越期第八日。探照灯撕开雨后薄雾——新坑声纹已入档，层位照样从第一铲记起。"], artifactHint: 3 },
           { id: "c0n1", name: "陶片层", level: 4, x: -2, z: 0.8, discover: ["wangdun", "胖爷铲子下去——陶片！成片的！刘哥你别顺手揣兜里！"], artifactHint: 3 },
           { id: "c0n2", name: "象牙露头", level: 9, x: -0.5, z: -0.3, discover: ["yangxue", "象牙饰！古蜀不产象，这是丝路来的。"], artifactHint: 4 },
           { id: "c0n3", name: "金粉纹层", level: 14, x: 1, z: -1.2, discover: ["jinyaliu", "金粉！刘哥我……就看看！王墩你闭嘴，昨晚泡面的事还没算呢！"], artifactHint: 1 },
-          { id: "c0n4", name: "祭祀面", level: 18, x: 2.2, z: -2, discover: ["hutan", "罗盘疯了。前面是祭祀面，层位不能乱。"], artifactHint: 0 },
+          { id: "c0n4", name: "祭祀面", level: 18, x: 2.2, z: -2, discover: ["hutan", "罗盘疯了。前面是祭祀面，二〇四七的声纹在这里分叉，层位不能乱。"], artifactHint: 0 },
           { id: "c0n5", name: "青铜门墓", level: 19, isTomb: true, discover: ["chenli", "门缝里有光。I 级大墓——青铜门启。"], artifactHint: 0 },
         ],
       },
       {
         nodes: [
-          { id: "c1n0", name: "门后甬道", level: 20, x: -3.2, z: 2, discover: ["yangxue", "二〇四三，超越期第六日。门后风带着铜锈味——层位图比人间论文快一代。"], artifactHint: 0 },
+          { id: "c1n0", name: "门后甬道", level: 20, x: -3.2, z: 2, discover: ["yangxue", "二〇四七，超越期第八日。门后风带着铜锈味——新坑二次回填比人间论文又快一代。"], artifactHint: 0 },
           { id: "c1n1", name: "封土区", level: 24, x: -1.8, z: 0.5, discover: ["yangxue", "封土层！消除相邻文物等于震土。"], artifactHint: 3 },
           { id: "c1n2", name: "金杖影", level: 29, x: -0.3, z: -0.8, discover: ["narrator", "黑暗中一根金杖的轮廓。王权与神权，在一根杖上。"], artifactHint: 1 },
           { id: "c1n3", name: "神格位", level: 34, x: 1.2, z: -1.8, discover: ["chenli", "面具不是装饰，是容器。记录每一面。"], artifactHint: 0 },

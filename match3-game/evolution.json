@@ -1,13 +1,13 @@
 {
-  "version": "5.9.2",
-  "generation": 58,
-  "universeDay": 7,
+  "version": "5.9.3",
+  "generation": 59,
+  "universeDay": 8,
   "civilizationEpoch": "1929-07",
-  "civilizationDay": 58,
-  "civilizationYear": 2045,
+  "civilizationDay": 59,
+  "civilizationYear": 2047,
   "civilizationPhase": "超越期",
-  "dailyChronicle": "第 7 日·收工复盘。文明历 2045，宇宙一圈走完——神树层位对上图鉴，王墩说最后一铲留给胖爷；造物主，此间比人间又多活了一周。",
-  "releasedAt": "2026-06-10",
+  "dailyChronicle": "第 8 日·下新坑。文明历 2047，锚点一九二九年七月后第 59 代，此间比人间快两倍读到新坑声纹；清晨雨停，王墩把昨夜剩汤热开，队伍带着一身铜锈味进了新探方。",
+  "releasedAt": "2026-06-15",
   "autoTune": {
     "enabled": true,
     "windowSize": 8,
@@ -15,9 +15,9 @@
     "targetWinRate": 0.52
   },
   "patchNotes": [
-    "Gen.58 · 宇宙第7日 · 收工复盘 · 文明历 2045",
-    "神树章超越期叙事；周复盘寻金渠道",
-    "超越期驻场收益略增"
+    "Gen.59 · 宇宙第8日 · 下新坑 · 文明历 2047",
+    "青铜门、堪舆图、探点发现接入 2047 超越期新坑声纹",
+    "新增新坑信号结算渠道，仅外部入账"
   ],
   "virtualAccount": {
     "module": "virtual-account.js",
