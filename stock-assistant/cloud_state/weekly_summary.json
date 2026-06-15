@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-06-14",
+  "updated_at": "2026-06-15",
   "days": [
     {
       "date": "2026-06-11",
@@ -738,9 +738,274 @@
         ]
       },
       "picks_checked": 21
+    },
+    {
+      "date": "2026-06-15",
+      "snapshot_count": 151,
+      "diff": {
+        "prev_date": "2026-06-14",
+        "curr_date": "2026-06-15",
+        "compared": 82,
+        "avg_pct_delta": 5.62,
+        "movers": [
+          {
+            "code": "301013",
+            "name": "利和兴",
+            "prev_pct": -12.69,
+            "curr_pct": 14.61,
+            "delta_pct": 27.3
+          },
+          {
+            "code": "688549",
+            "name": "中巨芯",
+            "prev_pct": -17.3,
+            "curr_pct": 8.73,
+            "delta_pct": 26.04
+          },
+          {
+            "code": "920634",
+            "name": "新威凌",
+            "prev_pct": 29.95,
+            "curr_pct": 4.71,
+            "delta_pct": -25.24
+          },
+          {
+            "code": "301630",
+            "name": "同宇新材",
+            "prev_pct": -8.29,
+            "curr_pct": 14.93,
+            "delta_pct": 23.22
+          },
+          {
+            "code": "300285",
+            "name": "国瓷材料",
+            "prev_pct": -9.73,
+            "curr_pct": 12.37,
+            "delta_pct": 22.1
+          },
+          {
+            "code": "920083",
+            "name": "金戈新材",
+            "prev_pct": -22.73,
+            "curr_pct": -1.05,
+            "delta_pct": 21.68
+          },
+          {
+            "code": "301348",
+            "name": "蓝箭电子",
+            "prev_pct": 19.98,
+            "curr_pct": 0.07,
+            "delta_pct": -19.92
+          },
+          {
+            "code": "688530",
+            "name": "欧莱新材",
+            "prev_pct": -15.48,
+            "curr_pct": 3.56,
+            "delta_pct": 19.04
+          },
+          {
+            "code": "000636",
+            "name": "风华高科",
+            "prev_pct": -8.06,
+            "curr_pct": 10.0,
+            "delta_pct": 18.05
+          },
+          {
+            "code": "688507",
+            "name": "索辰科技",
+            "prev_pct": 19.95,
+            "curr_pct": 2.37,
+            "delta_pct": -17.58
+          },
+          {
+            "code": "920161",
+            "name": "龙辰科技",
+            "prev_pct": -6.58,
+            "curr_pct": 9.04,
+            "delta_pct": 15.62
+          },
+          {
+            "code": "300433",
+            "name": "蓝思科技",
+            "prev_pct": -3.61,
+            "curr_pct": 11.77,
+            "delta_pct": 15.37
+          },
+          {
+            "code": "300537",
+            "name": "广信材料",
+            "prev_pct": -6.63,
+            "curr_pct": 8.68,
+            "delta_pct": 15.31
+          },
+          {
+            "code": "301500",
+            "name": "飞南资源",
+            "prev_pct": 15.24,
+            "curr_pct": 0.5,
+            "delta_pct": -14.75
+          },
+          {
+            "code": "603435",
+            "name": "嘉德利",
+            "prev_pct": -5.12,
+            "curr_pct": 9.34,
+            "delta_pct": 14.47
+          }
+        ],
+        "pick_checks": [
+          {
+            "code": "000725",
+            "name": "京东方Ａ",
+            "signal": "买入",
+            "delta_pct": 10.74,
+            "hit": true
+          },
+          {
+            "code": "000988",
+            "name": "华工科技",
+            "signal": "买入",
+            "delta_pct": 6.1,
+            "hit": true
+          },
+          {
+            "code": "002463",
+            "name": "沪电股份",
+            "signal": "观望",
+            "delta_pct": 8.18,
+            "hit": true
+          },
+          {
+            "code": "301563",
+            "name": "云汉芯城",
+            "signal": "观望",
+            "delta_pct": 11.4,
+            "hit": true
+          },
+          {
+            "code": "600498",
+            "name": "烽火通信",
+            "signal": "买入",
+            "delta_pct": 3.94,
+            "hit": true
+          },
+          {
+            "code": "000657",
+            "name": "中钨高新",
+            "signal": "买入",
+            "delta_pct": 8.65,
+            "hit": true
+          },
+          {
+            "code": "600487",
+            "name": "亨通光电",
+            "signal": "买入",
+            "delta_pct": 7.62,
+            "hit": true
+          },
+          {
+            "code": "000657",
+            "name": "中钨高新",
+            "signal": "观望",
+            "delta_pct": 8.65,
+            "hit": true
+          },
+          {
+            "code": "000725",
+            "name": "京东方Ａ",
+            "signal": "观望",
+            "delta_pct": 10.74,
+            "hit": true
+          },
+          {
+            "code": "002463",
+            "name": "沪电股份",
+            "signal": "观望",
+            "delta_pct": 8.18,
+            "hit": true
+          },
+          {
+            "code": "600498",
+            "name": "烽火通信",
+            "signal": "买入",
+            "delta_pct": 3.94,
+            "hit": true
+          },
+          {
+            "code": "000657",
+            "name": "中钨高新",
+            "signal": "观望",
+            "delta_pct": 8.65,
+            "hit": true
+          },
+          {
+            "code": "002463",
+            "name": "沪电股份",
+            "signal": "观望",
+            "delta_pct": 8.18,
+            "hit": true
+          },
+          {
+            "code": "600498",
+            "name": "烽火通信",
+            "signal": "买入",
+            "delta_pct": 3.94,
+            "hit": true
+          },
+          {
+            "code": "000657",
+            "name": "中钨高新",
+            "signal": "观望",
+            "delta_pct": 8.65,
+            "hit": true
+          },
+          {
+            "code": "002463",
+            "name": "沪电股份",
+            "signal": "观望",
+            "delta_pct": 8.18,
+            "hit": true
+          },
+          {
+            "code": "600498",
+            "name": "烽火通信",
+            "signal": "买入",
+            "delta_pct": 3.94,
+            "hit": true
+          },
+          {
+            "code": "000657",
+            "name": "中钨高新",
+            "signal": "观望",
+            "delta_pct": 8.65,
+            "hit": true
+          },
+          {
+            "code": "002463",
+            "name": "沪电股份",
+            "signal": "观望",
+            "delta_pct": 8.18,
+            "hit": true
+          },
+          {
+            "code": "600498",
+            "name": "烽火通信",
+            "signal": "买入",
+            "delta_pct": 3.94,
+            "hit": true
+          }
+        ],
+        "conclusions": [
+          "快照对比 82 只，均涨跌变化 +5.62%。",
+          "昨日推荐 20 只，快照验证 20 只方向正确。",
+          "最大异动 利和兴 301013 Δ+27.3%。"
+        ]
+      },
+      "picks_checked": 20
     }
   ],
-  "week_hit_rate_pct": 3.9,
-  "week_checks": 51,
-  "headline": "近 4 个交易日快照；预测快照验证 2/51 方向正确。"
+  "week_hit_rate_pct": 31.0,
+  "week_checks": 71,
+  "headline": "近 5 个交易日快照；预测快照验证 22/71 方向正确。"
 }
