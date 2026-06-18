@@ -57,7 +57,6 @@
     "codex.js",
     "artifact-photos.js",
     "artifact-gallery.js",
-    "artifacts-3d.js",
   ];
 
   var THREE_SCRIPTS = [
@@ -127,14 +126,6 @@
       .catch(function () {
         return null;
       });
-    codexReady = loadScriptChain(CODEX_SCRIPTS).catch(function () {
-      return null;
-    });
-    window.setTimeout(function () {
-      ensureThree().catch(function () {
-        return null;
-      });
-    }, 1200);
   }
 
   function ensureCinema() {
