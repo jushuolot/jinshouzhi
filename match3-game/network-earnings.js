@@ -22,6 +22,7 @@
     publicCommonsMirror: { amount: 0.016, phases: ["超越期"] },
     beyondPhaseTick: { amount: 0.0014, sessionCap: 0.01, phases: ["超越期"] },
     weeklyRecap: { amount: 0.02, phases: ["超越期", "复兴期"] },
+    newPitSurvey: { amount: 0.024, universeDayMod: 1, phases: ["超越期"] },
     bounty: {
       label: "任务赏金(演示)",
       endpoint: "https://api.coingecko.com/api/v3/ping",
@@ -110,6 +111,12 @@
       source: "network_settlement",
       description: "宇宙第七日收工复盘入账",
     },
+    new_pit_survey: {
+      id: "new_pit_survey",
+      label: "新坑测绘结算",
+      source: "network_settlement",
+      description: "周一下新坑时，同步文明历测绘格网的外部结算入账",
+    },
   };
 
   var state = {
@@ -123,6 +130,7 @@
     lastPublicCommonsMirror: "",
     beyondSessionTickTotal: 0,
     lastWeeklyRecap: "",
+    lastNewPitSurvey: "",
   };
 
   var tickTimer = null;
@@ -147,6 +155,7 @@
       state.beyondSessionTickTotal =
         typeof data.beyondSessionTickTotal === "number" ? data.beyondSessionTickTotal : 0;
       state.lastWeeklyRecap = data.lastWeeklyRecap || "";
+      state.lastNewPitSurvey = data.lastNewPitSurvey || "";
     } catch (e) {
       // ignore
     }
@@ -161,6 +170,10 @@
           sessionTickTotal: state.sessionTickTotal,
           lastRelicBounty: state.lastRelicBounty,
           lastCivilizationArchive: state.lastCivilizationArchive,
+          lastPublicCommonsMirror: state.lastPublicCommonsMirror,
+          beyondSessionTickTotal: state.beyondSessionTickTotal,
+          lastWeeklyRecap: state.lastWeeklyRecap,
+          lastNewPitSurvey: state.lastNewPitSurvey,
           updatedAt: Date.now(),
         })
       );
@@ -406,6 +419,37 @@
     return credited;
   }
 
+  function tryNewPitSurvey() {
+    var evo = typeof window !== "undefined" && window.MATCH3_EVOLUTION ? window.MATCH3_EVOLUTION : {};
+    var uday = evo.universeDay || 0;
+    var cfg = CONFIG.newPitSurvey;
+    if (!cfg || uday % 7 !== cfg.universeDayMod) return 0;
+    var clock =
+      typeof window !== "undefined" && window.MATCH3_CIVILIZATION_CLOCK
+        ? window.MATCH3_CIVILIZATION_CLOCK
+        : null;
+    var phase = clock ? clock.getPhase() : "超越期";
+    if (cfg.phases.indexOf(phase) < 0) return 0;
+    var date = clock ? clock.getCivilizationDate() : { civilizationYear: 2047 };
+    var key = todayKey() + "-survey-" + uday + "-" + date.civilizationYear;
+    if (state.lastNewPitSurvey === key) return 0;
+    state.lastNewPitSurvey = key;
+    saveState();
+    var credited = creditChannel("new_pit_survey", {
+      amount: cfg.amount,
+      meta: {
+        kind: "new_pit_survey",
+        universeDay: uday,
+        phase: phase,
+        year: date.civilizationYear,
+      },
+    });
+    if (credited > 0 && typeof window.showSystemToast === "function") {
+      window.showSystemToast("🧭 新坑测绘结算 · 文明历 " + date.civilizationYear + " · 入账", 3600);
+    }
+    return credited;
+  }
+
   function tryPublicCommonsMirror() {
     var key = todayKey();
     if (state.lastPublicCommonsMirror === key) return 0;
@@ -457,6 +501,7 @@
     tryCivilizationArchive();
     tryPublicCommonsMirror();
     tryWeeklyRecap();
+    tryNewPitSurvey();
     tryAffiliateReferral();
     startPeriodicTick();
     deferNetworkProbes();
