@@ -20,6 +20,7 @@
     relicBounty: { startHour: 18, endHour: 24, amount: 0.018 },
     civilizationArchive: { amount: 0.022, beyondAmount: 0.032, phases: ["复兴期", "超越期"] },
     publicCommonsMirror: { amount: 0.016, phases: ["超越期"] },
+    newPitArchive: { amount: 0.024, phases: ["超越期"], dayModulo: 1 },
     beyondPhaseTick: { amount: 0.0014, sessionCap: 0.01, phases: ["超越期"] },
     weeklyRecap: { amount: 0.02, phases: ["超越期", "复兴期"] },
     bounty: {
@@ -98,6 +99,12 @@
       source: "network_settlement",
       description: "超越期每日公开文物档案镜像入账",
     },
+    new_pit_archive: {
+      id: "new_pit_archive",
+      label: "新坑档案同步",
+      source: "network_settlement",
+      description: "周一新坑日同步层位档案，模拟公开资料结算",
+    },
     beyond_phase_presence: {
       id: "beyond_phase_presence",
       label: "超越期驻场",
@@ -108,7 +115,7 @@
       id: "weekly_recap",
       label: "周复盘赏金",
       source: "network_settlement",
-      description: "宇宙第七日收工复盘入账",
+      description: "宇宙每七日收工复盘入账",
     },
   };
 
@@ -121,6 +128,7 @@
     lastRelicBounty: "",
     lastCivilizationArchive: "",
     lastPublicCommonsMirror: "",
+    lastNewPitArchive: "",
     beyondSessionTickTotal: 0,
     lastWeeklyRecap: "",
   };
@@ -144,6 +152,7 @@
       state.lastRelicBounty = data.lastRelicBounty || "";
       state.lastCivilizationArchive = data.lastCivilizationArchive || "";
       state.lastPublicCommonsMirror = data.lastPublicCommonsMirror || "";
+      state.lastNewPitArchive = data.lastNewPitArchive || "";
       state.beyondSessionTickTotal =
         typeof data.beyondSessionTickTotal === "number" ? data.beyondSessionTickTotal : 0;
       state.lastWeeklyRecap = data.lastWeeklyRecap || "";
@@ -161,6 +170,10 @@
           sessionTickTotal: state.sessionTickTotal,
           lastRelicBounty: state.lastRelicBounty,
           lastCivilizationArchive: state.lastCivilizationArchive,
+          lastPublicCommonsMirror: state.lastPublicCommonsMirror,
+          lastNewPitArchive: state.lastNewPitArchive,
+          beyondSessionTickTotal: state.beyondSessionTickTotal,
+          lastWeeklyRecap: state.lastWeeklyRecap,
           updatedAt: Date.now(),
         })
       );
@@ -401,7 +414,7 @@
       meta: { kind: "weekly_recap", universeDay: uday, phase: phase },
     });
     if (credited > 0 && typeof window.showSystemToast === "function") {
-      window.showSystemToast("📋 宇宙第" + uday + "日收工复盘 · 入账", 3600);
+      window.showSystemToast("📋 宇宙第" + uday + "日收工复盘 · 档案已同步", 3600);
     }
     return credited;
   }
@@ -424,7 +437,33 @@
       meta: { kind: "commons_mirror", phase: phase, day: key },
     });
     if (credited > 0 && typeof window.showSystemToast === "function") {
-      window.showSystemToast("📚 公开资料镜像入账 · 超越期 · Wikimedia 档", 3400);
+      window.showSystemToast("📚 Wikimedia 公开资料镜像已同步 · 超越期", 3400);
+    }
+    return credited;
+  }
+
+  function tryNewPitArchive() {
+    var evo = typeof window !== "undefined" && window.MATCH3_EVOLUTION ? window.MATCH3_EVOLUTION : {};
+    var uday = evo.universeDay || 0;
+    var cfg = CONFIG.newPitArchive;
+    if (!cfg || uday % 7 !== cfg.dayModulo) return 0;
+    var key = todayKey() + "-pit-" + uday;
+    if (state.lastNewPitArchive === key) return 0;
+    var clock =
+      typeof window !== "undefined" && window.MATCH3_CIVILIZATION_CLOCK
+        ? window.MATCH3_CIVILIZATION_CLOCK
+        : null;
+    var phase = clock ? clock.getPhase() : "超越期";
+    if (cfg.phases.indexOf(phase) < 0) return 0;
+    state.lastNewPitArchive = key;
+    saveState();
+    var year = clock ? clock.getCivilizationDate().civilizationYear : "";
+    var credited = creditChannel("new_pit_archive", {
+      amount: cfg.amount,
+      meta: { kind: "new_pit_archive", universeDay: uday, phase: phase, year: year },
+    });
+    if (credited > 0 && typeof window.showSystemToast === "function") {
+      window.showSystemToast("🕳 新坑档案同步 · 文明历" + year + " · " + phase, 3400);
     }
     return credited;
   }
@@ -456,6 +495,7 @@
     tryRelicBounty();
     tryCivilizationArchive();
     tryPublicCommonsMirror();
+    tryNewPitArchive();
     tryWeeklyRecap();
     tryAffiliateReferral();
     startPeriodicTick();
