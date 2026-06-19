@@ -1,6 +1,6 @@
 # 文物图鉴 · 公开资料出处
 
-图鉴顶部实拍图来自 [Wikimedia Commons](https://commons.wikimedia.org/) 等开放授权资源，仅供教育展示。
+图鉴顶部实拍图来自 [Wikimedia Commons](https://commons.wikimedia.org/) 等开放授权资源，仅供教育展示。本地 `*.jpg` 为 Commons 公开文件的展示尺寸副本。
 
 | 文物 | 文件 | 作者 | 许可 |
 |------|------|------|------|

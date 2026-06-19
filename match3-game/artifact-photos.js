@@ -5,7 +5,7 @@
 (function () {
   "use strict";
 
-  var VER = 2;
+  var VER = 3;
   var BASE = "assets/artifacts/";
 
   window.MATCH3_ARTIFACT_PHOTOS = [

@@ -57,7 +57,6 @@
     "codex.js",
     "artifact-photos.js",
     "artifact-gallery.js",
-    "artifacts-3d.js",
   ];
 
   var THREE_SCRIPTS = [
@@ -65,6 +64,7 @@
     "three-engine.js",
     "world-3d.js",
     "expedition-3d.js",
+    "artifacts-3d.js",
   ];
 
   var cinemaReady = null;
@@ -127,14 +127,6 @@
       .catch(function () {
         return null;
       });
-    codexReady = loadScriptChain(CODEX_SCRIPTS).catch(function () {
-      return null;
-    });
-    window.setTimeout(function () {
-      ensureThree().catch(function () {
-        return null;
-      });
-    }, 1200);
   }
 
   function ensureCinema() {
@@ -152,13 +144,9 @@
     if (window.ArtifactGallery) return Promise.resolve();
     if (!codexReady) {
       loadDeferredCss();
-      codexReady = loadScriptChain(CODEX_SCRIPTS)
-        .then(function () {
-          if (window.ThreeEngine && window.ThreeEngine.retryInit) window.ThreeEngine.retryInit();
-        })
-        .catch(function () {
-          return null;
-        });
+      codexReady = loadScriptChain(CODEX_SCRIPTS).catch(function () {
+        return null;
+      });
     }
     return codexReady || Promise.resolve();
   }
