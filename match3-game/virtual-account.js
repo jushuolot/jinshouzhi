@@ -165,13 +165,6 @@
     return amount;
   }
 
-  function debit() {
-    return {
-      ok: false,
-      error: "POLICY_VIOLATION: 禁止扣减用户真实或虚拟货币",
-    };
-  }
-
   function resetSession() {
     state.sessionCredits = 0;
     save();
@@ -228,7 +221,6 @@
     load: load,
     save: save,
     credit: credit,
-    debit: debit,
     getBalance: function () {
       return Math.max(0, state.balance);
     },
