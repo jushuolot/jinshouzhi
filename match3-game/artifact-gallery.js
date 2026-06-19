@@ -29,6 +29,7 @@
     var img = document.createElement("img");
     img.className = "artifact-museum-photo";
     img.draggable = false;
+    img.loading = "lazy";
     img.decoding = "async";
     var e = entry(typeId);
     img.alt = e.name;
