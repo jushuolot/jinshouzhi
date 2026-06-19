@@ -41,11 +41,29 @@
     return Math.round(Number(n) * 1000) / 1000;
   }
 
+  function nonNegativeMoney(n) {
+    return Math.max(0, roundMoney(n));
+  }
+
   function ensureSlot(slotKey) {
     if (!state.bySlot[slotKey]) {
       state.bySlot[slotKey] = { impressions: 0, clicks: 0, amount: 0 };
     }
     return state.bySlot[slotKey];
+  }
+
+  function sanitizeBySlot(input) {
+    var out = {};
+    if (!input || typeof input !== "object") return out;
+    Object.keys(input).forEach(function (key) {
+      var item = input[key] || {};
+      out[key] = {
+        impressions: Math.max(0, Number(item.impressions) || 0),
+        clicks: Math.max(0, Number(item.clicks) || 0),
+        amount: nonNegativeMoney(item.amount || 0),
+      };
+    });
+    return out;
   }
 
   function migrateFromLegacy() {
@@ -54,9 +72,8 @@
       if (!raw) return false;
       var data = JSON.parse(raw);
       if (!data || typeof data.total !== "number") return false;
-      state.balance = roundMoney(data.total);
-      state.bySlot =
-        data.bySlot && typeof data.bySlot === "object" ? data.bySlot : {};
+      state.balance = nonNegativeMoney(data.total);
+      state.bySlot = sanitizeBySlot(data.bySlot);
       state.migratedFromLegacy = true;
       state.updatedAt = Date.now();
       save();
@@ -78,10 +95,10 @@
         migrateFromLegacy();
         return;
       }
-      state.balance = typeof data.balance === "number" ? roundMoney(data.balance) : 0;
+      state.balance = typeof data.balance === "number" ? nonNegativeMoney(data.balance) : 0;
       state.sessionCredits =
-        typeof data.sessionCredits === "number" ? roundMoney(data.sessionCredits) : 0;
-      state.bySlot = data.bySlot && typeof data.bySlot === "object" ? data.bySlot : {};
+        typeof data.sessionCredits === "number" ? nonNegativeMoney(data.sessionCredits) : 0;
+      state.bySlot = sanitizeBySlot(data.bySlot);
       state.credits = Array.isArray(data.credits) ? data.credits : [];
       state.migratedFromLegacy = !!data.migratedFromLegacy;
       state.updatedAt = data.updatedAt || 0;
