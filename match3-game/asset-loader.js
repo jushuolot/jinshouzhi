@@ -57,8 +57,9 @@
     "codex.js",
     "artifact-photos.js",
     "artifact-gallery.js",
-    "artifacts-3d.js",
   ];
+
+  var ARTIFACT_3D_SCRIPTS = ["artifacts-3d.js"];
 
   var THREE_SCRIPTS = [
     "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js",
@@ -70,6 +71,7 @@
   var cinemaReady = null;
   var threeReady = null;
   var codexReady = null;
+  var artifact3dReady = null;
   var deferredStarted = false;
 
   function loadStylesheet(href) {
@@ -130,11 +132,6 @@
     codexReady = loadScriptChain(CODEX_SCRIPTS).catch(function () {
       return null;
     });
-    window.setTimeout(function () {
-      ensureThree().catch(function () {
-        return null;
-      });
-    }, 1200);
   }
 
   function ensureCinema() {
@@ -152,13 +149,9 @@
     if (window.ArtifactGallery) return Promise.resolve();
     if (!codexReady) {
       loadDeferredCss();
-      codexReady = loadScriptChain(CODEX_SCRIPTS)
-        .then(function () {
-          if (window.ThreeEngine && window.ThreeEngine.retryInit) window.ThreeEngine.retryInit();
-        })
-        .catch(function () {
-          return null;
-        });
+      codexReady = loadScriptChain(CODEX_SCRIPTS).catch(function () {
+        return null;
+      });
     }
     return codexReady || Promise.resolve();
   }
@@ -184,6 +177,19 @@
     return threeReady;
   }
 
+  function ensureArtifact3D() {
+    if (window.ArtifactViewer3D) return Promise.resolve();
+    if (artifact3dReady) return artifact3dReady;
+    artifact3dReady = ensureThree()
+      .then(function () {
+        return loadScriptChain(ARTIFACT_3D_SCRIPTS);
+      })
+      .catch(function () {
+        return null;
+      });
+    return artifact3dReady;
+  }
+
   function boot() {
     if (window.setBootStatus) window.setBootStatus("加载核心模块…");
     loadScriptChain(CRITICAL_SCRIPTS)
@@ -203,6 +209,7 @@
     ensureCinema: ensureCinema,
     ensureCodex: ensureCodex,
     ensureThree: ensureThree,
+    ensureArtifact3D: ensureArtifact3D,
     preloadPortraits: preloadPortraits,
     prefetchCinema: function () {
       if (!deferredStarted) startDeferredIdle();

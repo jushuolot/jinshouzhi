@@ -2021,7 +2021,6 @@
     showScreen("map");
     if (window.MATCH3_ASSETS) {
       window.MATCH3_ASSETS.prefetchCinema();
-      window.MATCH3_ASSETS.ensureThree();
     }
     renderWorldMap();
     if (window.BlockbusterIntro && mapPhaseWorldEl) {
