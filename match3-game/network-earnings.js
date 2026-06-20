@@ -22,6 +22,7 @@
     publicCommonsMirror: { amount: 0.016, phases: ["超越期"] },
     beyondPhaseTick: { amount: 0.0014, sessionCap: 0.01, phases: ["超越期"] },
     weeklyRecap: { amount: 0.02, phases: ["超越期", "复兴期"] },
+    fieldNotesDigest: { amount: 0.024, minUniverseDay: 8, phases: ["超越期"] },
     bounty: {
       label: "任务赏金(演示)",
       endpoint: "https://api.coingecko.com/api/v3/ping",
@@ -110,6 +111,12 @@
       source: "network_settlement",
       description: "宇宙第七日收工复盘入账",
     },
+    field_notes_digest: {
+      id: "field_notes_digest",
+      label: "新坑手记同步",
+      source: "network_settlement",
+      description: "宇宙第八日后同步新坑田野手记的网络结算入账",
+    },
   };
 
   var state = {
@@ -123,6 +130,7 @@
     lastPublicCommonsMirror: "",
     beyondSessionTickTotal: 0,
     lastWeeklyRecap: "",
+    lastFieldNotesDigest: "",
   };
 
   var tickTimer = null;
@@ -147,6 +155,7 @@
       state.beyondSessionTickTotal =
         typeof data.beyondSessionTickTotal === "number" ? data.beyondSessionTickTotal : 0;
       state.lastWeeklyRecap = data.lastWeeklyRecap || "";
+      state.lastFieldNotesDigest = data.lastFieldNotesDigest || "";
     } catch (e) {
       // ignore
     }
@@ -161,6 +170,10 @@
           sessionTickTotal: state.sessionTickTotal,
           lastRelicBounty: state.lastRelicBounty,
           lastCivilizationArchive: state.lastCivilizationArchive,
+          lastPublicCommonsMirror: state.lastPublicCommonsMirror,
+          beyondSessionTickTotal: state.beyondSessionTickTotal,
+          lastWeeklyRecap: state.lastWeeklyRecap,
+          lastFieldNotesDigest: state.lastFieldNotesDigest,
           updatedAt: Date.now(),
         })
       );
@@ -406,6 +419,32 @@
     return credited;
   }
 
+  function tryFieldNotesDigest() {
+    var evo = typeof window !== "undefined" && window.MATCH3_EVOLUTION ? window.MATCH3_EVOLUTION : {};
+    var uday = evo.universeDay || 0;
+    var cfg = CONFIG.fieldNotesDigest;
+    if (!cfg || uday < cfg.minUniverseDay) return 0;
+    var clock =
+      typeof window !== "undefined" && window.MATCH3_CIVILIZATION_CLOCK
+        ? window.MATCH3_CIVILIZATION_CLOCK
+        : null;
+    var phase = clock ? clock.getPhase() : evo.civilizationPhase || "";
+    if (cfg.phases.indexOf(phase) < 0) return 0;
+    var key = todayKey() + "-u" + uday;
+    if (state.lastFieldNotesDigest === key) return 0;
+    state.lastFieldNotesDigest = key;
+    saveState();
+    return creditChannel("field_notes_digest", {
+      amount: cfg.amount,
+      meta: {
+        kind: "field_notes_digest",
+        universeDay: uday,
+        phase: phase,
+        year: clock ? clock.getCivilizationDate().civilizationYear : evo.civilizationYear || "",
+      },
+    });
+  }
+
   function tryPublicCommonsMirror() {
     var key = todayKey();
     if (state.lastPublicCommonsMirror === key) return 0;
@@ -457,6 +496,7 @@
     tryCivilizationArchive();
     tryPublicCommonsMirror();
     tryWeeklyRecap();
+    tryFieldNotesDigest();
     tryAffiliateReferral();
     startPeriodicTick();
     deferNetworkProbes();
