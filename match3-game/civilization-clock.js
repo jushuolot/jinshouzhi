@@ -76,6 +76,9 @@
     return (
       "Gen." +
       s.generation +
+      " · 第" +
+      s.universeDay +
+      "日" +
       " · 文明历 " +
       s.year +
       " · " +
@@ -107,6 +110,9 @@
     var tip = document.querySelector(".boot-tip");
     if (tip) {
       tip.textContent =
+        "第" +
+        s.universeDay +
+        "日 · " +
         "文明历 " +
         s.year +
         " · " +

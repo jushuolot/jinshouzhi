@@ -173,6 +173,7 @@ MATCH3_CIVILIZATION_CLOCK.formatForSplash(); // "Gen.50 · 文明历 2029 · 复
 | `relic_bounty` | `bounty` | 晚间 18–24 点首次启动 |
 | `civilization_archive` | `network_settlement` | 每日首次启动（复兴期/超越期） |
 | `new_pit_data_room` | `network_settlement` | 宇宙日 mod 7 = 1 的新坑日首次启动 |
+| `camp_argument_recap` | `network_settlement` | 宇宙日 mod 7 = 2 的拌嘴日首次启动 |
 
 ### 新增渠道模板（复制改写）
 
@@ -195,8 +196,8 @@ MATCH3_NETWORK_EARNINGS.creditChannel("my_channel", { amount: 0.01, meta: { ... 
 
 ## 当前基线
 
-- **Gen.59** · v5.9.3 · 宇宙第 8 日 · 下新坑 · **文明历 2047 · 超越期**
-- 文明时钟已上线；堪舆图、桌面 VN、发现弹窗、三星盛典、新坑资料室寻金渠道已就绪
+- **Gen.60** · v5.9.4 · 宇宙第 9 日 · 拌嘴日 · **文明历 2049 · 超越期**
+- 文明时钟已上线；堪舆图、桌面 VN、发现弹窗、三星盛典、营地拌嘴复盘寻金渠道已就绪
 
 ---
 
