@@ -1,0 +1,1 @@
+import{n as a,P as s,a3 as e,Y as t,O as r,g as n,T as d,v as o,b as c}from"./index-W2U90dCU.js";const u=c(a({__name:"admin-hub",setup:a=>(s(()=>{e()&&t({url:r})}),(a,s)=>{const e=o;return d(),n(e,{class:"redirect"})})}),[["__scopeId","data-v-34000290"]]);export{u as default};
