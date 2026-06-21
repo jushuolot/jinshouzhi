@@ -1,23 +1,28 @@
 <template>
   <view class="page nb-page elder-mode" :class="fontClass">
     <GuestBrowseBanner v-if="guestMode" />
+    <view v-if="loading" class="nb-loading-hint">
+      <view class="nb-loading-dot" />
+      <text>正在加载…</text>
+    </view>
+
     <view class="hero">
       <text class="h1">您好，{{ stats?.elderName || '长辈' }}</text>
       <text class="sub">{{ orgName }}</text>
     </view>
 
     <view class="stats-card nb-stats-card">
-      <view class="stat-item" @tap="goOrders">
+      <view class="stat-item nb-stat-tap" @tap="goOrders">
         <text class="stat-num">{{ stats?.orderCount ?? 0 }}</text>
         <text class="stat-label">我的订单</text>
       </view>
       <view class="stat-divider" />
-      <view class="stat-item" @tap="goOrders">
+      <view class="stat-item nb-stat-tap" @tap="goOrders">
         <text class="stat-num accent">{{ stats?.activeCount ?? 0 }}</text>
         <text class="stat-label">进行中</text>
       </view>
       <view class="stat-divider" />
-      <view class="stat-item" @tap="goFind">
+      <view class="stat-item nb-stat-tap" @tap="goFind">
         <text class="stat-num">{{ stats?.caregiverNearbyCount ?? 0 }}</text>
         <text class="stat-label">附近大学生</text>
       </view>
@@ -28,7 +33,7 @@
       <view
         v-for="o in recentOrders"
         :key="o.id"
-        class="order-card"
+        class="order-card nb-tile"
         @tap="goOrderDetail(o.id)"
       >
         <view class="order-head">
@@ -38,14 +43,14 @@
         <text class="order-meta">{{ formatTime(o.scheduled_at) }} · ¥{{ ((o.amount_cents || 0) / 100).toFixed(0) }}</text>
       </view>
     </view>
-    <view v-else class="empty-orders" @tap="goFind">
+    <view v-else-if="!loading" class="empty-orders nb-tile" @tap="goFind">
       <text class="empty-icon">📋</text>
       <text class="empty-text">暂无服务记录</text>
       <text class="empty-cta">找附近大学生陪护 ›</text>
     </view>
 
     <view class="section-title nb-section-title">快捷服务</view>
-    <view class="wallet-card" @tap="goWallet">
+    <view class="wallet-card nb-tile" @tap="goWallet">
       <view class="wallet-left">
         <text class="wallet-icon">💰</text>
         <view>
@@ -56,21 +61,21 @@
       <text class="chevron">›</text>
     </view>
     <view class="quick-grid">
-      <view class="quick-item primary" @tap="goFind">
+      <view class="quick-item primary nb-tile" @tap="goFind">
         <text class="quick-icon">🤝</text>
         <text class="quick-text">找陪护</text>
         <text class="quick-desc">附近 {{ stats?.caregiverNearbyCount ?? 0 }} 位大学生</text>
       </view>
-      <view class="quick-item" @tap="goOrders">
+      <view class="quick-item nb-tile" @tap="goOrders">
         <text class="quick-icon">📋</text>
         <text class="quick-text">我的服务</text>
       </view>
-      <view class="quick-item" @tap="goServiceLogs">
+      <view class="quick-item nb-tile" @tap="goServiceLogs">
         <text class="quick-icon">📝</text>
         <text class="quick-text">服务记录</text>
         <text class="quick-desc">{{ serviceLogCount }} 条归档</text>
       </view>
-      <view class="quick-item warn" @tap="sos">
+      <view class="quick-item warn nb-tile" @tap="sos">
         <text class="quick-icon">🆘</text>
         <text class="quick-text">一键求助</text>
       </view>
@@ -105,6 +110,7 @@ import { isGuestBrowse, requireOperableAuth } from '../utils/guest-browse';
 import { guardPackageRoute } from '../utils/nav-guard';
 import { orderStatusLabel } from '../utils/order-status';
 import { pbErrorMessage } from '../utils/request';
+import { toastFail } from '../utils/toast';
 
 const stats = ref<ElderStats | null>(null);
 const recentOrders = ref<
@@ -116,6 +122,7 @@ const roleStore = useRoleStore();
 const walletBalanceYuan = ref('0.00');
 const serviceLogCount = ref(0);
 const guestMode = ref(false);
+const loading = ref(false);
 
 function loadGuestPreview() {
   const p = GUEST_ELDER_PREVIEW;
@@ -148,6 +155,7 @@ onShow(async () => {
     loadGuestPreview();
     return;
   }
+  loading.value = true;
   try {
     const [st, wallet, logs, profile] = await Promise.all([
       fetchElderStats(),
@@ -171,7 +179,9 @@ onShow(async () => {
     }
   } catch (e) {
     recentOrders.value = [];
-    uni.showToast({ title: pbErrorMessage(e), icon: 'none' });
+    toastFail(pbErrorMessage(e));
+  } finally {
+    loading.value = false;
   }
 });
 
@@ -207,7 +217,7 @@ async function sos() {
       showCancel: false,
     });
   } catch (e) {
-    uni.showToast({ title: pbErrorMessage(e), icon: 'none' });
+    toastFail(pbErrorMessage(e));
   }
 }
 </script>

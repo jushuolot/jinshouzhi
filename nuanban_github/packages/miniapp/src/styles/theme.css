@@ -188,6 +188,62 @@ page[data-page='pages/common/demo-tour'] {
   transition: transform 0.12s ease;
 }
 
+.nb-tile {
+  transition: transform 0.12s ease, opacity 0.12s ease;
+}
+
+.nb-stat-tap:active {
+  opacity: 0.85;
+}
+
+.nb-loading-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+  padding: 20rpx 24rpx;
+  margin-bottom: 16rpx;
+  font-size: 24rpx;
+  color: var(--nb-text-muted);
+  background: var(--nb-surface-muted);
+  border-radius: var(--nb-radius-sm);
+}
+
+.nb-loading-dot {
+  width: 14rpx;
+  height: 14rpx;
+  border-radius: 50%;
+  background: var(--nb-primary);
+  animation: nb-pulse 1s ease infinite;
+}
+
+@keyframes nb-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(0.85);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.nb-field-hint {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 22rpx;
+  line-height: 1.4;
+}
+
+.nb-field-hint.warn {
+  color: #c45c26;
+}
+
+.nb-field-hint.ok {
+  color: #2e7d32;
+}
+
 /* —— H5 桌面：uni-input 包装层须可聚焦（scroll-view / v-model 场景） —— */
 .uni-input-wrapper,
 .uni-textarea-wrapper,

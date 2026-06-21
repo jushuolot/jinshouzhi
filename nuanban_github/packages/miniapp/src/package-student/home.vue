@@ -14,7 +14,12 @@
       </view>
     </view>
 
-    <view class="referral-banner" @tap="goReferral">
+    <view v-if="loading" class="nb-loading-hint">
+      <view class="nb-loading-dot" />
+      <text>正在刷新首页…</text>
+    </view>
+
+    <view class="referral-banner nb-tile" @tap="goReferral">
       <text class="ref-icon">🎁</text>
       <view class="ref-text">
         <text class="ref-title">推荐同学加入 · 最高得 ¥15</text>
@@ -23,7 +28,7 @@
       <text class="ref-arrow">›</text>
     </view>
 
-    <view v-if="sosAlerts.length" class="sos-banner" @tap="handleSos">
+    <view v-if="sosAlerts.length" class="sos-banner nb-tile" @tap="handleSos">
       <text class="sos-icon">🆘</text>
       <view class="sos-text">
         <text class="sos-title">紧急求助 {{ sosAlerts.length }} 条</text>
@@ -31,7 +36,7 @@
       </view>
     </view>
 
-    <view v-if="withdrawAvailableYuan" class="withdraw-banner" @tap="goWithdraw">
+    <view v-if="withdrawAvailableYuan" class="withdraw-banner nb-tile" @tap="goWithdraw">
       <text class="wd-icon">💸</text>
       <view class="wd-text">
         <text class="wd-title">可提现 ¥{{ withdrawAvailableYuan }}</text>
@@ -41,17 +46,17 @@
     </view>
 
     <view class="stats-card nb-stats-card">
-      <view class="stat-item" @tap="goPending">
+      <view class="stat-item nb-stat-tap" @tap="goPending">
         <text class="stat-num accent">{{ pendingCount }}</text>
         <text class="stat-label">待接单</text>
       </view>
       <view class="stat-divider" />
-      <view class="stat-item" @tap="goActive">
+      <view class="stat-item nb-stat-tap" @tap="goActive">
         <text class="stat-num">{{ activeCount }}</text>
         <text class="stat-label">服务中</text>
       </view>
       <view class="stat-divider" />
-      <view class="stat-item" @tap="goIncome">
+      <view class="stat-item nb-stat-tap" @tap="goIncome">
         <text class="stat-num">¥{{ stats?.incomeYuan ?? '0.00' }}</text>
         <text class="stat-label">本月收入</text>
       </view>
@@ -59,33 +64,33 @@
 
     <view class="section-title nb-section-title">快捷入口</view>
     <view class="quick-grid">
-      <view class="quick-item" @tap="goPending">
+      <view class="quick-item nb-tile" @tap="goPending">
         <text class="quick-icon">📋</text>
         <text class="quick-text">待接单</text>
         <text v-if="pendingCount" class="quick-badge">{{ pendingCount }}</text>
       </view>
-      <view class="quick-item" @tap="goActive">
+      <view class="quick-item nb-tile" @tap="goActive">
         <text class="quick-icon">🧑‍⚕️</text>
         <text class="quick-text">服务中</text>
         <text v-if="activeCount" class="quick-badge">{{ activeCount }}</text>
       </view>
-      <view class="quick-item" @tap="goIncome">
+      <view class="quick-item nb-tile" @tap="goIncome">
         <text class="quick-icon">💰</text>
         <text class="quick-text">收入明细</text>
       </view>
-      <view class="quick-item" @tap="goServiceLog">
+      <view class="quick-item nb-tile" @tap="goServiceLog">
         <text class="quick-icon">📝</text>
         <text class="quick-text">服务日志</text>
       </view>
-      <view v-if="withdrawAvailableYuan" class="quick-item highlight" @tap="goWithdraw">
+      <view v-if="withdrawAvailableYuan" class="quick-item highlight nb-tile" @tap="goWithdraw">
         <text class="quick-icon">💸</text>
         <text class="quick-text">提现</text>
       </view>
-      <view class="quick-item" @tap="goDiscover">
+      <view class="quick-item nb-tile" @tap="goDiscover">
         <text class="quick-icon">📍</text>
         <text class="quick-text">附近老人</text>
       </view>
-      <view class="quick-item" @tap="goProfile">
+      <view class="quick-item nb-tile" @tap="goProfile">
         <text class="quick-icon">👤</text>
         <text class="quick-text">我的资料</text>
       </view>
@@ -103,7 +108,13 @@
       @tap="openElder(e)"
     />
 
-    <view v-if="errorMsg" class="error" @tap="reload">
+    <view v-if="!loading && !previewElders.length && !errorMsg" class="empty-preview nb-card">
+      <text class="empty-icon">📍</text>
+      <text class="empty-text">附近暂无老人需求</text>
+      <text class="empty-cta nb-tile" @tap="goDiscover">去发现页看看 ›</text>
+    </view>
+
+    <view v-if="errorMsg" class="error nb-tile" @tap="reload">
       <text>加载失败（点此重试）</text>
       <text class="mono">{{ errorMsg }}</text>
     </view>
@@ -137,6 +148,7 @@ import { isGuestBrowse, requireOperableAuth } from '../utils/guest-browse';
 import { guardPackageRoute } from '../utils/nav-guard';
 import { getLocationWithFallback } from '../utils/location';
 import { pbErrorMessage } from '../utils/request';
+import { toastFail, toastOk } from '../utils/toast';
 import { isDemoMockEnabled } from '../utils/demo-mock';
 import { studentGreetingName } from '../utils/student-display-name';
 import { useRoleStore } from '../store/role';
@@ -162,6 +174,7 @@ const previewElders = ref<ElderPreview[]>([]);
 const errorMsg = ref('');
 const withdrawAvailableYuan = ref('');
 const guestMode = ref(false);
+const loading = ref(false);
 const roleStore = useRoleStore();
 
 function loadGuestPreview() {
@@ -183,42 +196,50 @@ function formatDistance(km: number) {
 }
 
 async function reload() {
+  if (loading.value) return;
+  loading.value = true;
   errorMsg.value = '';
-  const [profile, st, pendingList, activeRes, sosRes, withdrawal] = await Promise.all([
-    fetchStudentProfile().catch(() => null),
-    fetchStudentStats().catch(() => null),
-    listPendingOrders().catch(() => []),
-    listActiveOrders().catch(() => []),
-    listActiveSosAlerts().catch(() => []),
-    fetchStudentWithdrawal().catch(() => null),
-  ]);
-  if (profile) {
-    profileName.value = studentGreetingName(profile);
-    schoolName.value = profile.schoolName || '';
-    if (profile.displayName?.trim()) {
-      roleStore.setUserNickname(profile.displayName.trim());
-    }
-  }
-  stats.value = st;
-  pendingCount.value = pendingList.length || st?.pendingCount || 0;
-  activeCount.value = activeRes.length;
-  sosAlerts.value = sosRes;
-  withdrawAvailableYuan.value =
-    withdrawal && withdrawal.availableCents > 0 ? withdrawal.availableYuan : '';
-
   try {
-    const loc = await getLocationWithFallback(2000);
-    const rows = await listNearbyElders(loc.lat, loc.lng);
-    previewElders.value = rows.slice(0, 2).map((e) => ({
-      id: e.id,
-      name: e.name,
-      orgName: e.expand?.org?.name || '未指定机构',
-      gender: e.gender,
-      distanceKm: e.distanceKm,
-      tags: (e as { tags?: string[] }).tags,
-    }));
-  } catch {
-    previewElders.value = [];
+    const [profile, st, pendingList, activeRes, sosRes, withdrawal] = await Promise.all([
+      fetchStudentProfile().catch(() => null),
+      fetchStudentStats().catch(() => null),
+      listPendingOrders().catch(() => []),
+      listActiveOrders().catch(() => []),
+      listActiveSosAlerts().catch(() => []),
+      fetchStudentWithdrawal().catch(() => null),
+    ]);
+    if (profile) {
+      profileName.value = studentGreetingName(profile);
+      schoolName.value = profile.schoolName || '';
+      if (profile.displayName?.trim()) {
+        roleStore.setUserNickname(profile.displayName.trim());
+      }
+    }
+    stats.value = st;
+    pendingCount.value = pendingList.length || st?.pendingCount || 0;
+    activeCount.value = activeRes.length;
+    sosAlerts.value = sosRes;
+    withdrawAvailableYuan.value =
+      withdrawal && withdrawal.availableCents > 0 ? withdrawal.availableYuan : '';
+
+    try {
+      const loc = await getLocationWithFallback(2000);
+      const rows = await listNearbyElders(loc.lat, loc.lng);
+      previewElders.value = rows.slice(0, 2).map((e) => ({
+        id: e.id,
+        name: e.name,
+        orgName: e.expand?.org?.name || '未指定机构',
+        gender: e.gender,
+        distanceKm: e.distanceKm,
+        tags: (e as { tags?: string[] }).tags,
+      }));
+    } catch {
+      previewElders.value = [];
+    }
+  } catch (e) {
+    errorMsg.value = pbErrorMessage(e);
+  } finally {
+    loading.value = false;
   }
 }
 
@@ -261,9 +282,9 @@ function handleSos() {
         try {
           await acknowledgeSosAlert(alert.id);
           sosAlerts.value = sosAlerts.value.filter((a) => a.id !== alert.id);
-          uni.showToast({ title: '已确认', icon: 'success' });
+          toastOk('已确认');
         } catch (e) {
-          uni.showToast({ title: pbErrorMessage(e), icon: 'none' });
+          toastFail(pbErrorMessage(e));
         }
       }
     },
@@ -510,5 +531,27 @@ function openElder(e: ElderPreview) {
   margin-top: 8rpx;
   font-size: 22rpx;
   word-break: break-all;
+}
+.empty-preview {
+  text-align: center;
+  padding: 32rpx 24rpx;
+  margin-bottom: 24rpx;
+}
+.empty-icon {
+  display: block;
+  font-size: 44rpx;
+  margin-bottom: 8rpx;
+}
+.empty-text {
+  display: block;
+  font-size: 26rpx;
+  color: var(--nb-text-muted);
+}
+.empty-cta {
+  display: block;
+  margin-top: 12rpx;
+  font-size: 26rpx;
+  color: var(--nb-primary);
+  font-weight: 500;
 }
 </style>

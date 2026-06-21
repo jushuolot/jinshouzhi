@@ -1,23 +1,28 @@
 <template>
   <view class="page nb-page">
     <GuestBrowseBanner v-if="guestMode" />
+    <view v-if="loading" class="nb-loading-hint">
+      <view class="nb-loading-dot" />
+      <text>正在刷新…</text>
+    </view>
+
     <view class="hero">
       <text class="title">家属中心</text>
       <text class="sub">代付 · 外出审批 · 绑定老人</text>
     </view>
 
     <view class="stats-card nb-stats-card">
-      <view class="stat-item">
+      <view class="stat-item nb-stat-tap" @tap="goBind">
         <text class="stat-num">{{ stats?.boundElderCount ?? 0 }}</text>
         <text class="stat-label">绑定老人</text>
       </view>
       <view class="stat-divider" />
-      <view class="stat-item">
+      <view class="stat-item nb-stat-tap" @tap="goPay">
         <text class="stat-num accent">{{ stats?.pendingPaymentCount ?? 0 }}</text>
         <text class="stat-label">待支付</text>
       </view>
       <view class="stat-divider" />
-      <view class="stat-item">
+      <view class="stat-item nb-stat-tap" @tap="goOutdoor">
         <text class="stat-num accent">{{ stats?.outdoorPendingCount ?? 0 }}</text>
         <text class="stat-label">外出待批</text>
       </view>
@@ -35,11 +40,12 @@
       <text class="empty-icon">👵</text>
       <text class="empty-text">暂未绑定老人</text>
       <text class="empty-desc">绑定后可代付、审批外出与查看服务记录</text>
+      <text class="empty-cta nb-tile" @tap="goBind">立即绑定 ›</text>
     </view>
-    <view class="bind-link" @tap="goBind">+ 绑定更多老人</view>
+    <view class="bind-link nb-tile" @tap="goBind">+ 绑定更多老人</view>
 
     <view class="section-title nb-section-title">待办事项</view>
-    <view class="todo-card highlight" @tap="goWallet">
+    <view class="todo-card highlight nb-tile" @tap="goWallet">
       <view class="todo-left">
         <text class="todo-icon">💰</text>
         <view>
@@ -49,7 +55,7 @@
       </view>
       <text class="chevron">›</text>
     </view>
-    <view class="todo-card" @tap="goPay">
+    <view class="todo-card nb-tile" @tap="goPay">
       <view class="todo-left">
         <text class="todo-icon">💳</text>
         <view>
@@ -59,7 +65,7 @@
       </view>
       <text class="chevron">›</text>
     </view>
-    <view class="todo-card highlight" @tap="goConfirm">
+    <view class="todo-card highlight nb-tile" @tap="goConfirm">
       <view class="todo-left">
         <text class="todo-icon">✅</text>
         <view>
@@ -69,7 +75,7 @@
       </view>
       <text class="chevron">›</text>
     </view>
-    <view class="todo-card" @tap="goServiceLogs">
+    <view class="todo-card nb-tile" @tap="goServiceLogs">
       <view class="todo-left">
         <text class="todo-icon">📝</text>
         <view>
@@ -79,7 +85,7 @@
       </view>
       <text class="chevron">›</text>
     </view>
-    <view class="todo-card" @tap="goPackageBuy">
+    <view class="todo-card nb-tile" @tap="goPackageBuy">
       <view class="todo-left">
         <text class="todo-icon">📦</text>
         <view>
@@ -89,7 +95,7 @@
       </view>
       <text class="chevron">›</text>
     </view>
-    <view class="todo-card highlight" @tap="goOutdoor">
+    <view class="todo-card highlight nb-tile" @tap="goOutdoor">
       <view class="todo-left">
         <text class="todo-icon">🚶</text>
         <view>
@@ -99,7 +105,7 @@
       </view>
       <text class="chevron">›</text>
     </view>
-    <view v-if="recentActivities.length" class="activity-preview" @tap="goActivities">
+    <view v-if="recentActivities.length" class="activity-preview nb-tile" @tap="goActivities">
       <view class="activity-head">
         <text class="activity-label">最新动态</text>
         <text class="activity-more">查看全部 ›</text>
@@ -113,7 +119,7 @@
       </view>
     </view>
 
-    <view v-if="(stats?.sosPendingCount ?? 0) > 0" class="todo-card sos" @tap="goSos">
+    <view v-if="(stats?.sosPendingCount ?? 0) > 0" class="todo-card sos nb-tile" @tap="goSos">
       <view class="todo-left">
         <text class="todo-icon">🆘</text>
         <view>
@@ -157,6 +163,7 @@ import { openOpsMode } from '../utils/ops-mode';
 import { guardPackageRoute } from '../utils/nav-guard';
 import { formatRelativeTime } from '../utils/format-time';
 import { pbErrorMessage } from '../utils/request';
+import { toastFail, toastHint, toastOk } from '../utils/toast';
 import { isDemoMockEnabled } from '../utils/demo-mock';
 import type { PbRecord } from '../api/pb';
 
@@ -220,7 +227,7 @@ async function reload() {
     recentActivities.value = acts.slice(0, 2);
     if (wallet) walletBalanceYuan.value = wallet.balanceYuan;
   } catch (e) {
-    uni.showToast({ title: pbErrorMessage(e), icon: 'none' });
+    toastFail(pbErrorMessage(e));
   } finally {
     loading.value = false;
   }
@@ -239,7 +246,7 @@ onShow(() => {
 async function goConfirm() {
   if (!requireOperableAuth()) return;
   if (!roleStore.user?.id) {
-    uni.showToast({ title: '请先登录', icon: 'none' });
+    toastHint('请先登录');
     return;
   }
   try {
@@ -247,19 +254,19 @@ async function goConfirm() {
     const elderIds = bindingsRes.map((b) => b.elder).filter(Boolean);
     const orders = await listPendingConfirmOrders(elderIds);
     if (!orders.length) {
-      uni.showToast({ title: '暂无待确认订单', icon: 'none' });
+      toastHint('暂无待确认订单');
       return;
     }
     uni.navigateTo({ url: `/package-family/order/detail?id=${orders[0].id}` });
   } catch (e) {
-    uni.showToast({ title: pbErrorMessage(e), icon: 'none' });
+    toastFail(pbErrorMessage(e));
   }
 }
 
 async function goPay() {
   if (!requireOperableAuth()) return;
   if (!roleStore.user?.id) {
-    uni.showToast({ title: '请先登录', icon: 'none' });
+    toastHint('请先登录');
     return;
   }
   try {
@@ -267,12 +274,12 @@ async function goPay() {
     const elderIds = bindingsRes.map((b) => b.elder).filter(Boolean);
     const orders = await listPendingPaymentOrders(elderIds);
     if (!orders.length) {
-      uni.showToast({ title: '暂无待支付订单', icon: 'none' });
+      toastHint('暂无待支付订单');
       return;
     }
     uni.navigateTo({ url: `/package-family/order/pay?id=${orders[0].id}` });
   } catch (e) {
-    uni.showToast({ title: pbErrorMessage(e), icon: 'none' });
+    toastFail(pbErrorMessage(e));
   }
 }
 
@@ -284,13 +291,13 @@ async function goOutdoor() {
       ? outdoorList.value
       : await listPendingOutdoorApprovals(roleStore.user.id);
     if (!list.length) {
-      uni.showToast({ title: '暂无外出待审批', icon: 'none' });
+      toastHint('暂无外出待审批');
       return;
     }
     const orderId = list[0].order;
     uni.navigateTo({ url: `/package-family/outdoor/approve?id=${orderId}` });
   } catch (e) {
-    uni.showToast({ title: pbErrorMessage(e), icon: 'none' });
+    toastFail(pbErrorMessage(e));
   }
 }
 
@@ -324,7 +331,7 @@ async function goSos() {
   try {
     const list = await listActiveSosAlerts();
     if (!list.length) {
-      uni.showToast({ title: '暂无 SOS 求助', icon: 'none' });
+      toastHint('暂无 SOS 求助');
       return;
     }
     const alert = list[0];
@@ -336,12 +343,12 @@ async function goSos() {
         if (res.confirm) {
           await acknowledgeSosAlert(alert.id);
           await reload();
-          uni.showToast({ title: '已确认', icon: 'success' });
+          toastOk('已确认');
         }
       },
     });
   } catch (e) {
-    uni.showToast({ title: pbErrorMessage(e), icon: 'none' });
+    toastFail(pbErrorMessage(e));
   }
 }
 </script>
@@ -418,6 +425,13 @@ async function goSos() {
   margin-top: 8rpx;
   font-size: 24rpx;
   color: var(--nb-text-muted);
+}
+.empty-cta {
+  display: block;
+  margin-top: 16rpx;
+  font-size: 28rpx;
+  color: var(--nb-primary);
+  font-weight: 500;
 }
 .elder-card {
   display: flex;

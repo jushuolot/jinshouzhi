@@ -8,6 +8,11 @@
       <text class="sub">平台撮合 · 学生审核 · 派单与资金</text>
     </view>
 
+    <view v-if="loading" class="nb-loading-hint">
+      <view class="nb-loading-dot" />
+      <text>正在加载运营数据…</text>
+    </view>
+
     <view class="kpi-grid">
       <view class="kpi">
         <text class="kpi-num accent">{{ overview?.ordersPendingAccept ?? pendingCount }}</text>
@@ -52,7 +57,7 @@
     </view>
 
     <view v-if="todoItems.length" class="section-title">待办</view>
-    <view v-for="item in todoItems" :key="item.key" class="todo-card" @tap="item.go">
+    <view v-for="item in todoItems" :key="item.key" class="todo-card nb-tile" @tap="item.go">
       <text class="todo-icon">{{ item.icon }}</text>
       <view class="todo-body">
         <text class="todo-title">{{ item.title }}</text>
@@ -94,6 +99,7 @@ import { formatRelativeTime, formatShortTime } from '../../utils/format-time';
 import { releaseLabel } from '../../config/release';
 import { requireOpsSession } from '../../utils/ops-mode';
 import { pbErrorMessage } from '../../utils/request';
+import { toastFail } from '../../utils/toast';
 import { isDemoMockEnabled } from '../../utils/demo-mock';
 
 const isDemoMock = isDemoMockEnabled();
@@ -103,6 +109,7 @@ const pendingCount = ref(0);
 const pendingWithdrawals = ref(0);
 const overview = ref<PlatformOverview | null>(null);
 const activities = ref<ActivityEvent[]>([]);
+const loading = ref(false);
 
 const todoItems = computed(() => {
   const items: Array<{
@@ -197,6 +204,8 @@ function formatTime(iso: string) {
 }
 
 async function reload() {
+  if (loading.value) return;
+  loading.value = true;
   try {
     const [list, o, acts, funds] = await Promise.all([
       listDispatchableOrders(),
@@ -210,7 +219,9 @@ async function reload() {
     activities.value = acts.slice(0, 6);
   } catch (e) {
     pendingCount.value = 0;
-    uni.showToast({ title: pbErrorMessage(e), icon: 'none' });
+    toastFail(pbErrorMessage(e));
+  } finally {
+    loading.value = false;
   }
 }
 
@@ -308,6 +319,7 @@ onShow(() => {
   border-radius: var(--nb-radius-md);
   padding: 24rpx;
   margin-bottom: 12rpx;
+  transition: transform 0.12s ease;
 }
 .todo-icon {
   font-size: 32rpx;

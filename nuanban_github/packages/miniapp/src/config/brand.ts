@@ -1,10 +1,10 @@
 /** 品牌文案 — 登录页、上帝视角、平台看板等统一引用 */
 export const APP_TITLE = '暖伴勤工';
-export const APP_VERSION = '1.1.0';
-export const APP_VERSION_LABEL = 'v1.1';
-export const APP_VERSION_LINE = '暖伴勤工 v1.1';
+export const APP_VERSION = '1.2.0';
+export const APP_VERSION_LABEL = 'v1.2';
+export const APP_VERSION_LINE = '暖伴勤工 v1.2';
 export const APP_TAGLINE = '让陪伴有温度，让勤工有意义';
-export const COPYRIGHT_LINE = '© 2026 暖伴勤工 v1.1 · 保留所有权利';
+export const COPYRIGHT_LINE = '© 2026 暖伴勤工 v1.2 · 保留所有权利';
 /** 品牌色 — 从 login-bg-kawaii 提取的柔和暖色盘 */
 export const BRAND_PEACH = '#fff5eb';
 export const BRAND_CREAM = '#fff8f0';

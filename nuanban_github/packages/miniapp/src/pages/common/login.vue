@@ -29,6 +29,10 @@
             @input="onPhoneInput"
           />
         </view>
+        <text v-if="phone.length > 0 && phone.length < 11" class="nb-field-hint warn">
+          还需输入 {{ 11 - phone.length }} 位数字
+        </text>
+        <text v-else-if="phone.length === 11" class="nb-field-hint ok">手机号格式正确</text>
 
         <view class="form-row code-row">
           <input
@@ -49,6 +53,9 @@
             {{ codeBtnText }}
           </text>
         </view>
+        <text v-if="smsCode.length > 0 && smsCode.length < 6" class="nb-field-hint warn">
+          验证码为 6 位数字
+        </text>
         <text v-if="!formalAuth" class="demo-fill" @tap="fillDemoCode">
           开发环境万能码：{{ demoMasterCode }}
         </text>
@@ -62,7 +69,7 @@
 
         <view
           class="btn-submit"
-          :class="{ ready: agreed, loading }"
+          :class="{ ready: canSubmit, loading, dimmed: !canSubmit && !loading }"
           @tap="onPhoneLogin"
         >
           <text v-if="loading">登录中…</text>
@@ -112,6 +119,7 @@ import CaptchaPicker from '../../components/CaptchaPicker.vue';
 import OpsSessionBar from '../../components/OpsSessionBar.vue';
 import { sendSelfHostedSms } from '../../api/captcha-sms';
 import { openOpsMode } from '../../utils/ops-mode';
+import { toastFail, toastHint, toastOk } from '../../utils/toast';
 
 const loading = ref(false);
 const phone = ref('');
@@ -157,7 +165,7 @@ const codeBtnText = computed(() =>
 
 function fillDemoCode() {
   smsCode.value = demoMasterCode;
-  uni.showToast({ title: '已填入演示验证码', icon: 'none' });
+  toastHint('已填入演示验证码');
 }
 
 const canSubmit = computed(
@@ -202,7 +210,7 @@ function startCooldown() {
 
 function sendCode() {
   if (phone.value.length !== 11) {
-    uni.showToast({ title: '请输入 11 位手机号', icon: 'none' });
+    toastHint('请输入 11 位手机号');
     return;
   }
   if (codeCooldown.value > 0) return;
@@ -221,19 +229,19 @@ async function onCaptchaVerified(token: string) {
         showCancel: false,
       });
     } else if (formalAuth) {
-      uni.showToast({ title: '验证码已发送，请查收短信', icon: 'none' });
+      toastHint('验证码已发送，请查收短信');
     } else {
-      uni.showToast({ title: res.message || '验证码已发出', icon: 'none' });
+      toastHint(res.message || '验证码已发出');
     }
     startCooldown();
   } catch (e) {
-    uni.showToast({ title: pbErrorMessage(e), icon: 'none' });
+    toastFail(pbErrorMessage(e));
   }
 }
 
 function ensureAgreed(): boolean {
   if (agreed.value) return true;
-  uni.showToast({ title: '请先同意用户协议与隐私政策', icon: 'none' });
+  toastHint('请先同意用户协议与隐私政策');
   return false;
 }
 
@@ -290,11 +298,11 @@ function afterLogin(res: LoginResult) {
 async function onPhoneLogin() {
   if (!ensureAgreed()) return;
   if (phone.value.length !== 11) {
-    uni.showToast({ title: '请输入 11 位手机号', icon: 'none' });
+    toastHint('请输入 11 位手机号');
     return;
   }
   if (smsCode.value.length !== 6) {
-    uni.showToast({ title: '请输入 6 位验证码', icon: 'none' });
+    toastHint('请输入 6 位验证码');
     return;
   }
   if (!canSubmit.value || loading.value) return;
@@ -303,7 +311,7 @@ async function onPhoneLogin() {
     const res = await loginWithPhone(phone.value, smsCode.value);
     afterLogin(res);
   } catch (e) {
-    uni.showToast({ title: pbErrorMessage(e), icon: 'none' });
+    toastFail(pbErrorMessage(e));
   } finally {
     loading.value = false;
   }
@@ -467,6 +475,9 @@ function switchAccount() {
 }
 .btn-submit.loading {
   opacity: 0.75;
+}
+.btn-submit.dimmed {
+  opacity: 0.55;
 }
 .hint {
   display: block;
