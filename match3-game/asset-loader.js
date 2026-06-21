@@ -116,6 +116,22 @@
     window.PortraitPainter.preloadAll(null, null);
   }
 
+  function warmThreeWhenIdle() {
+    var nav = window.navigator || {};
+    var conn = nav.connection || nav.mozConnection || nav.webkitConnection;
+    if (conn && conn.saveData) return;
+    var run = function () {
+      ensureThree().catch(function () {
+        return null;
+      });
+    };
+    if (window.requestIdleCallback) {
+      window.requestIdleCallback(run, { timeout: 5000 });
+    } else {
+      window.setTimeout(run, 3500);
+    }
+  }
+
   function startDeferredIdle() {
     if (deferredStarted) return;
     deferredStarted = true;
@@ -130,11 +146,7 @@
     codexReady = loadScriptChain(CODEX_SCRIPTS).catch(function () {
       return null;
     });
-    window.setTimeout(function () {
-      ensureThree().catch(function () {
-        return null;
-      });
-    }, 1200);
+    warmThreeWhenIdle();
   }
 
   function ensureCinema() {
