@@ -29,7 +29,7 @@
 | [暖伴勤工-完整文档手册.pdf](./暖伴勤工-完整文档手册.pdf) | PDF（同上） |
 
 ```bash
-cd ~/Projects/nuanban
+cd ~/Downloads/cursor/nuanban_github
 node scripts/build-docs-pdf.mjs
 ```
 

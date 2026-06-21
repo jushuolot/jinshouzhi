@@ -11,17 +11,6 @@
 		reverse_proxy pocketbase:8090
 	}
 
-	handle /game/* {
-		uri strip_prefix /game
-		root * /srv/match3-game
-		try_files {path} /index.html
-		file_server
-	}
-
-	handle /game {
-		redir /game/ permanent
-	}
-
 	# 废弃旧项目 /login 路径（如金手指），统一进暖伴 hash 登录
 	handle /login {
 		redir /#/pages/common/login permanent

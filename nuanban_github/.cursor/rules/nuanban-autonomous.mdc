@@ -1,12 +1,12 @@
 ---
-description: 暖伴勤工自主迭代 — 零成本 demo、双端 API、发货闭环
+description: 暖伴勤工自主迭代 — 三环境对齐、双端 API、发货闭环
 globs: nuanban_github/**
 alwaysApply: false
 ---
 
 # 暖伴勤工 Agent 规则
 
-开始改 `nuanban_github` 前阅读 `AGENTS.md` 与 `docs/AGENT_EVOLUTION.md`。
+开始改 `nuanban_github` 前阅读 `AGENTS.md` 与 `docs/RELEASE.md`。
 
 ## 必做
 
@@ -19,8 +19,15 @@ alwaysApply: false
 
 - 真实微信支付/商户接入（用 mock 演示）
 - 只改代码不 push（子任务也算）
-- 破坏零成本栈（GitHub Pages + demo-mock）
+- 恢复或扩展 `archive/legacy-stack/`（NestJS 已废弃）
+- 本地开发默认启动 Caddy full profile（仅需 `docker compose up -d pocketbase`）
 
-## 演示栈
+## 三环境
 
-公网 `*.github.io` + `/nuanban` 走 `isDemoMockEnabled()`；本地用 `scripts/dev-test.sh`。
+| 环境 | 说明 |
+|------|------|
+| 本地 | `dev-test.sh` + PocketBase :8090，`VITE_DEMO_MOCK=false` |
+| GitHub Pages | 发布版 H5，真实 API（`NUANBAN_FORMAL_API_URL`） |
+| 阿里云 | 发布稳定版，同域 `/api` |
+
+游客未登录可走 `demo-mock.ts`；已登录用户必须走 PocketBase API。

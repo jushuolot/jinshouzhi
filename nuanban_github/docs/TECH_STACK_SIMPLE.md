@@ -124,9 +124,7 @@ docker compose --profile full up -d
 | `packages/miniapp` | **使用** — 主客户端 |
 | `packages/pocketbase` | **使用** — schema、pb_data、文档 |
 | `docker-compose.yml` + `Caddyfile` | **使用** — 部署 |
-| `packages/api` | 遗留 — NestJS，不部署 |
-| `packages/admin-web` | 遗留 — 由 PB Admin 替代 |
-| `database/*.sql` | 参考 — 字段对照，不执行 |
+| `archive/legacy-stack/` | 遗留 — NestJS + admin-web + PostgreSQL DDL，不部署 |
 
 业务逻辑优先级：
 

@@ -1,13 +1,28 @@
 # 故障排查
 
+## 电脑卡 / Docker 占 CPU
+
+本地开发 **只需 PocketBase**，不必启动 Caddy full profile：
+
+```bash
+cd nuanban_github
+docker stop nuanban-caddy 2>/dev/null || true
+docker compose up -d pocketbase
+curl -s http://localhost:8090/api/health
+```
+
+- 若 `nuanban-caddy` 状态为 **Restarting**：先 `docker stop nuanban-caddy`，检查 `Caddyfile` 语法后再启 full
+- Docker Desktop 持续高 CPU：停掉不用的容器；开发 H5 用 `npm run dev:h5`（5174），不必跑 Caddy
+- **唯一工作目录**：`~/Downloads/cursor/nuanban_github/`（勿用 `empty-window/nuanban` 或 `~/Projects/nuanban` 空壳）
+
 ## `npm install` 报 EPERM / Operation not permitted
 
 若在路径 `.../empty-window/nuanban` 下无法创建 `node_modules`，多为 **目录权限或 Cursor 沙箱** 限制。
 
 **建议：**
 
-1. 复制到可写目录：`cp -R <repo> ~/Projects/nuanban`
-2. macOS 清除扩展属性：`xattr -cr ~/Projects/nuanban`
+1. 使用正式目录：`~/Downloads/cursor/nuanban_github`
+2. macOS 清除扩展属性：`xattr -cr ~/Downloads/cursor/nuanban_github`
 3. 在系统终端（非 Agent 沙箱）执行安装
 
 根目录 **不要** `npm install`（无 workspaces）；分别在 `packages/miniapp` 内安装。
@@ -41,4 +56,4 @@ curl -s http://localhost:8090/api/health
 
 ## 历史栈（NestJS + PostgreSQL）
 
-若仍在使用 `packages/api`，需 `DATABASE_URL` 并执行 `database/schema.sql`。**V1 新部署请改用 PocketBase**，见 [DEPLOY.md](./DEPLOY.md)。
+已移至 `archive/legacy-stack/`。**V1 新部署请改用 PocketBase**，见 [DEPLOY.md](./DEPLOY.md)。

@@ -1,7 +1,7 @@
 # 暖伴勤工 · 极简部署
 # 用法:
-#   docker compose up -d pocketbase          # 仅后端（推荐本地开发）
-#   docker compose --profile full up -d      # PocketBase + Caddy(H5)
+#   docker compose up -d pocketbase          # 仅后端（推荐本地开发，省资源）
+#   docker compose --profile full up -d      # PocketBase + Caddy(H5)，需先 build:h5
 #   docker compose --profile webrtc up -d    # + coturn TURN（跨 NAT 语音）
 
 services:
@@ -42,7 +42,6 @@ services:
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - ./packages/miniapp/dist/build/h5:/srv/h5:ro
-      - ../match3-game:/srv/match3-game:ro
       - caddy_data:/data
       - caddy_config:/config
 

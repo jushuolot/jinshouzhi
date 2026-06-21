@@ -36,9 +36,7 @@ flowchart LR
 | `packages/miniapp` | **主客户端** | uni-app：老人 / 家属 / 学生三分包 + 公共登录 |
 | `packages/pocketbase` | **主后端** | Schema、数据目录、Hooks（二期） |
 | `docker-compose.yml` + `Caddyfile` | **部署** | PocketBase 容器；可选 Caddy 反代 |
-| `packages/api` | 遗留 | NestJS，不再用于 V1 部署 |
-| `packages/admin-web` | 遗留 | Vue Admin，由 PB Admin 替代 |
-| `database/` | 遗留参考 | PostgreSQL DDL，字段对照用 |
+| `archive/legacy-stack/` | 遗留 | NestJS + Vue Admin + PostgreSQL DDL |
 
 ## 身份与多角色
 

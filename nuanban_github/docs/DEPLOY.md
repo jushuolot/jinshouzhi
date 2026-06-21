@@ -193,4 +193,4 @@ docker compose up -d pocketbase
 
 ## 七、与旧栈的关系
 
-仓库中 `packages/api`（NestJS）、`packages/admin-web`、`database/*.sql` 为 **历史参考**，V1 部署不再依赖 PostgreSQL。新业务以 PocketBase 集合为准，见 [TECH_STACK_SIMPLE.md](./TECH_STACK_SIMPLE.md)。
+历史 NestJS 栈已移至 `archive/legacy-stack/`（api / admin-web / database）。V1 部署不再依赖 PostgreSQL，新业务以 PocketBase 集合为准，见 [TECH_STACK_SIMPLE.md](./TECH_STACK_SIMPLE.md)。

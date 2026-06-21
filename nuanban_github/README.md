@@ -10,14 +10,14 @@
 | `packages/pocketbase` | 后端 + Admin UI（SQLite） |
 | `docker-compose.yml` | 一键部署 PocketBase（可选 Caddy + H5） |
 
-> 仓库中的 `packages/api`、`packages/admin-web`、`database/` 为历史参考，新环境请按极简栈部署。
+> 历史 NestJS 栈已移至 `archive/legacy-stack/`（api / admin-web / database），新环境请按极简栈部署。
 
-## 发布规则（测试备份 → 正式版）
+## 发布规则（本地 → GitHub → 阿里云）
 
 | 环境 | 角色 | 链接 |
 |------|------|------|
-| **GitHub Pages** | **测试备份**（浏览器 Mock，零安装） | https://jushuolot.github.io/jinshouzhi/nuanban/#/pages/common/login |
-| **阿里云** | **正式发布** | http://101.200.128.82（备案后 nuanban.cc） |
+| **GitHub Pages** | **发布版**（真实 API，零安装 H5） | https://jushuolot.github.io/jinshouzhi/nuanban/#/pages/common/login |
+| **阿里云** | **发布稳定版** | http://101.200.128.82（备案后 nuanban.cc） |
 
 - 环境一致性：**[docs/ENV_PARITY.md](docs/ENV_PARITY.md)**
 - 测试版验收：**[docs/TEST_VERSION.md](docs/TEST_VERSION.md)**
