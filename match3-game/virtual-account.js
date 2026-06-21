@@ -54,7 +54,7 @@
       if (!raw) return false;
       var data = JSON.parse(raw);
       if (!data || typeof data.total !== "number") return false;
-      state.balance = roundMoney(data.total);
+      state.balance = Math.max(0, roundMoney(data.total));
       state.bySlot =
         data.bySlot && typeof data.bySlot === "object" ? data.bySlot : {};
       state.migratedFromLegacy = true;
@@ -78,9 +78,9 @@
         migrateFromLegacy();
         return;
       }
-      state.balance = typeof data.balance === "number" ? roundMoney(data.balance) : 0;
+      state.balance = typeof data.balance === "number" ? Math.max(0, roundMoney(data.balance)) : 0;
       state.sessionCredits =
-        typeof data.sessionCredits === "number" ? roundMoney(data.sessionCredits) : 0;
+        typeof data.sessionCredits === "number" ? Math.max(0, roundMoney(data.sessionCredits)) : 0;
       state.bySlot = data.bySlot && typeof data.bySlot === "object" ? data.bySlot : {};
       state.credits = Array.isArray(data.credits) ? data.credits : [];
       state.migratedFromLegacy = !!data.migratedFromLegacy;
