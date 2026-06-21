@@ -1,13 +1,13 @@
 {
-  "version": "5.9.3",
-  "generation": 59,
-  "universeDay": 8,
+  "version": "6.0.0",
+  "generation": 60,
+  "universeDay": 9,
   "civilizationEpoch": "1929-07",
-  "civilizationDay": 59,
-  "civilizationYear": 2047,
+  "civilizationDay": 60,
+  "civilizationYear": 2049,
   "civilizationPhase": "超越期",
-  "dailyChronicle": "第 8 日·下新坑。文明历 2047，广汉首发现后的第 59 代把新坑资料又向前推了两年；清晨泥气很重，胡探改罗盘、杨雪重编号，王墩把早饭揣进工具包，古蜀知识继续跑在人间之前。",
-  "releasedAt": "2026-06-10",
+  "dailyChronicle": "第 9 日·拌嘴日。文明历 2049，广汉首发现后的第 60 代让符号墙与新坑数据又快进两年；清晨帐篷漏雨，王墩和金牙刘为一碗臊子面吵到探方口，杨雪把他们的吵声也记进超越期层位日志。",
+  "releasedAt": "2026-06-21",
   "autoTune": {
     "enabled": true,
     "windowSize": 8,
@@ -15,9 +15,9 @@
     "targetWinRate": 0.52
   },
   "patchNotes": [
-    "Gen.59 · 宇宙第8日 · 下新坑 · 文明历 2047",
-    "新坑日叙事：青铜门、纵目坑、神树探点同步超越期新资料",
-    "新增新坑资料室寻金渠道，只入账不扣减"
+    "Gen.60 · 宇宙第9日 · 拌嘴日 · 文明历 2049",
+    "拌嘴日叙事：王墩与金牙刘把营地生活、符号墙、神树探点都吵活了",
+    "新增符号解读室寻金渠道，只入账不扣减"
   ],
   "virtualAccount": {
     "module": "virtual-account.js",
