@@ -1,4 +1,9 @@
 import { useRoleStore } from '../store/role';
+import {
+  isGithubPagesHost,
+  isMixedContentApiBlock,
+  NUANBAN_STAGING_H5_ORIGIN,
+} from '../config/remote-api';
 import { demoMockRequest, isDemoMockEnabled } from './demo-mock';
 import { guestBrowseRole, isGuestBrowse } from './guest-browse';
 
@@ -45,14 +50,17 @@ export interface PbErrorBody {
 
 function backendDownHint(): string {
   if (typeof window !== 'undefined') {
-    const { hostname } = window.location;
-    const onGithubPages = hostname.endsWith('.github.io');
-    const onDevHost = hostname === 'localhost' || hostname === '127.0.0.1';
+    const onGithubPages = isGithubPagesHost();
+    const onDevHost =
+      window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
     if (onGithubPages) {
       if (isDemoMockEnabled()) {
         return '网络或服务暂不可用，请稍后重试，或点底部「游客账号」先体验';
       }
-      return '无法连接远程 API，请检查网络；HTTPS 页面访问 HTTP API 可能被浏览器拦截（mixed-content），或需确认 CORS 已放行 github.io';
+      if (isMixedContentApiBlock()) {
+        return `GitHub 为 HTTPS，浏览器会拦截 HTTP API。请暂用阿里云版继续：${NUANBAN_STAGING_H5_ORIGIN}/#/pages/common/login（服务器需执行 deploy-staging-https-api.sh 后可恢复 GitHub 直连）`;
+      }
+      return '无法连接远程 API，请检查网络或稍后重试';
     }
     if (!onDevHost) {
       return '无法连接服务器，请检查网络后重试';

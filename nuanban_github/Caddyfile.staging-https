@@ -1,0 +1,18 @@
+# GitHub Pages（HTTPS）专用 API 反代 · sslip.io 自动证书
+# 101.200.128.82 → 101-200-128-82.sslip.io
+# 部署: ./scripts/deploy-staging-https-api.sh
+# 安全组需放行 TCP 443
+
+101-200-128-82.sslip.io {
+	handle /api/* {
+		reverse_proxy pocketbase:8090
+	}
+
+	handle /_/* {
+		reverse_proxy pocketbase:8090
+	}
+
+	handle {
+		respond "暖伴勤工 API（HTTPS）· 请使用 GitHub Pages 或阿里云 H5" 200
+	}
+}

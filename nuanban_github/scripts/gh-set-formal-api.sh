@@ -10,7 +10,7 @@ if [[ -f config/github.env ]]; then
   source config/github.env
 fi
 
-API_URL="${1:-${NUANBAN_FORMAL_API_URL:-http://101.200.128.82/api}}"
+API_URL="${1:-${NUANBAN_FORMAL_API_URL:-https://101-200-128-82.sslip.io/api}}"
 
 echo "==> 设置 GitHub Variable: NUANBAN_FORMAL_API_URL=$API_URL"
 gh variable set NUANBAN_FORMAL_API_URL --body "$API_URL"

@@ -1,0 +1,25 @@
+# GitHub Pages 跨域：为 PocketBase 提供 HTTPS API（sslip.io）
+# 用法: docker compose -f docker-compose.yml -f docker-compose.staging-https.yml --profile staging-https up -d
+
+services:
+  pocketbase:
+    ports: !override
+      - "127.0.0.1:8090:8090"
+
+  caddy-https:
+    profiles: ["staging-https"]
+    image: caddy:2-alpine
+    container_name: nuanban-caddy-https
+    restart: unless-stopped
+    depends_on:
+      - pocketbase
+    ports:
+      - "443:443"
+    volumes:
+      - ./Caddyfile.staging-https:/etc/caddy/Caddyfile:ro
+      - caddy_https_data:/data
+      - caddy_https_config:/config
+
+volumes:
+  caddy_https_data:
+  caddy_https_config:
