@@ -76,7 +76,9 @@
     return (
       "Gen." +
       s.generation +
-      " · 文明历 " +
+      " · 第" +
+      s.universeDay +
+      "日 · 文明历 " +
       s.year +
       " · " +
       s.phase
