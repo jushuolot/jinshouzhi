@@ -1,118 +1,141 @@
 {
-  "prev_date": "2026-06-18",
-  "curr_date": "2026-06-22",
-  "compared": 47,
-  "avg_pct_delta": -0.53,
+  "prev_date": "2026-06-22",
+  "curr_date": "2026-06-23",
+  "compared": 46,
+  "avg_pct_delta": -10.48,
   "movers": [
     {
-      "code": "920206",
-      "name": "彩客科技",
-      "prev_pct": 18.22,
-      "curr_pct": -8.19,
-      "delta_pct": -26.41
-    },
-    {
-      "code": "301687",
-      "name": "新广益",
+      "code": "300243",
+      "name": "瑞丰高材",
       "prev_pct": 20.0,
-      "curr_pct": -5.41,
-      "delta_pct": -25.41
-    },
-    {
-      "code": "920083",
-      "name": "金戈新材",
-      "prev_pct": 21.67,
-      "curr_pct": -2.74,
-      "delta_pct": -24.41
-    },
-    {
-      "code": "301310",
-      "name": "鑫宏业",
-      "prev_pct": 19.99,
-      "curr_pct": -3.53,
-      "delta_pct": -23.52
+      "curr_pct": -9.89,
+      "delta_pct": -29.89
     },
     {
       "code": "920725",
       "name": "惠丰钻石",
-      "prev_pct": 7.36,
-      "curr_pct": 29.99,
-      "delta_pct": 22.63
+      "prev_pct": 29.99,
+      "curr_pct": 2.33,
+      "delta_pct": -27.66
     },
     {
-      "code": "301669",
-      "name": "高特电子",
-      "prev_pct": 13.64,
-      "curr_pct": -4.5,
-      "delta_pct": -18.14
-    },
-    {
-      "code": "301666",
-      "name": "大普微-UW",
-      "prev_pct": -3.0,
-      "curr_pct": 13.57,
-      "delta_pct": 16.57
-    },
-    {
-      "code": "688598",
-      "name": "金博股份",
-      "prev_pct": 20.0,
-      "curr_pct": 3.83,
-      "delta_pct": -16.17
-    },
-    {
-      "code": "300166",
-      "name": "东方国信",
-      "prev_pct": 20.03,
-      "curr_pct": 4.92,
-      "delta_pct": -15.11
-    },
-    {
-      "code": "002141",
-      "name": "贤丰控股",
-      "prev_pct": 10.05,
-      "curr_pct": -4.46,
-      "delta_pct": -14.51
-    },
-    {
-      "code": "300179",
-      "name": "四方达",
-      "prev_pct": 5.55,
-      "curr_pct": 20.0,
-      "delta_pct": 14.45
-    },
-    {
-      "code": "300283",
-      "name": "温州宏丰",
-      "prev_pct": 0.45,
-      "curr_pct": 14.74,
-      "delta_pct": 14.29
+      "code": "920078",
+      "name": "族兴新材",
+      "prev_pct": 15.36,
+      "curr_pct": -9.65,
+      "delta_pct": -25.01
     },
     {
       "code": "920211",
       "name": "新睿电子",
-      "prev_pct": 2.96,
-      "curr_pct": -10.65,
-      "delta_pct": -13.61
+      "prev_pct": -10.65,
+      "curr_pct": 13.35,
+      "delta_pct": 24.0
+    },
+    {
+      "code": "301139",
+      "name": "*ST元道",
+      "prev_pct": 20.1,
+      "curr_pct": -3.79,
+      "delta_pct": -23.89
+    },
+    {
+      "code": "300283",
+      "name": "温州宏丰",
+      "prev_pct": 14.74,
+      "curr_pct": -8.11,
+      "delta_pct": -22.85
+    },
+    {
+      "code": "301666",
+      "name": "大普微",
+      "prev_pct": 13.57,
+      "curr_pct": -7.66,
+      "delta_pct": -21.23
+    },
+    {
+      "code": "300179",
+      "name": "四方达",
+      "prev_pct": 20.0,
+      "curr_pct": -0.85,
+      "delta_pct": -20.85
+    },
+    {
+      "code": "600549",
+      "name": "厦门钨业",
+      "prev_pct": 10.0,
+      "curr_pct": -9.6,
+      "delta_pct": -19.6
+    },
+    {
+      "code": "688530",
+      "name": "欧莱新材",
+      "prev_pct": 19.22,
+      "curr_pct": 0.85,
+      "delta_pct": -18.37
     },
     {
       "code": "300274",
       "name": "阳光电源",
-      "prev_pct": -1.46,
-      "curr_pct": 11.21,
-      "delta_pct": 12.67
+      "prev_pct": 11.21,
+      "curr_pct": -7.01,
+      "delta_pct": -18.22
     },
     {
-      "code": "601991",
-      "name": "大唐发电",
-      "prev_pct": -9.97,
-      "curr_pct": 1.82,
-      "delta_pct": 11.79
+      "code": "603993",
+      "name": "洛阳钼业",
+      "prev_pct": 8.03,
+      "curr_pct": -9.98,
+      "delta_pct": -18.01
+    },
+    {
+      "code": "002842",
+      "name": "翔鹭钨业",
+      "prev_pct": 10.0,
+      "curr_pct": -7.83,
+      "delta_pct": -17.83
+    },
+    {
+      "code": "301687",
+      "name": "新广益",
+      "prev_pct": -5.41,
+      "curr_pct": 11.0,
+      "delta_pct": 16.41
+    },
+    {
+      "code": "001257",
+      "name": "盛龙股份",
+      "prev_pct": 5.79,
+      "curr_pct": -10.0,
+      "delta_pct": -15.79
     }
   ],
-  "pick_checks": [],
+  "pick_checks": [
+    {
+      "code": "688530",
+      "name": "欧莱新材",
+      "signal": "观望",
+      "delta_pct": -18.37,
+      "hit": false
+    },
+    {
+      "code": "688530",
+      "name": "欧莱新材",
+      "signal": "观望",
+      "delta_pct": -18.37,
+      "hit": false
+    },
+    {
+      "code": "688530",
+      "name": "欧莱新材",
+      "signal": "观望",
+      "delta_pct": -18.37,
+      "hit": false
+    }
+  ],
   "conclusions": [
-    "快照对比 47 只，均涨跌变化 -0.53%。",
-    "最大异动 彩客科技 920206 Δ-26.4%。"
+    "快照对比 46 只，均涨跌变化 -10.48%。",
+    "昨日推荐 3 只，快照验证 0 只方向正确。",
+    "最大异动 瑞丰高材 300243 Δ-29.9%。"
   ]
 }
