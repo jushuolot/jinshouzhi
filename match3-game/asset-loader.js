@@ -70,12 +70,25 @@
   var threeReady = null;
   var codexReady = null;
   var deferredStarted = false;
+  var deferredCssCursor = 0;
+
+  function scheduleIdle(fn, timeout, fallbackMs) {
+    if (window.requestIdleCallback) {
+      window.requestIdleCallback(fn, { timeout: timeout || 1200 });
+    } else {
+      window.setTimeout(fn, fallbackMs || 50);
+    }
+  }
 
   function loadStylesheet(href) {
     if (document.querySelector('link[href="' + href + '"]')) return;
     var l = document.createElement("link");
     l.rel = "stylesheet";
     l.href = href;
+    l.media = "print";
+    l.onload = function () {
+      l.media = "all";
+    };
     document.head.appendChild(l);
   }
 
@@ -106,8 +119,19 @@
     }, Promise.resolve());
   }
 
+  function loadDeferredCssChunk() {
+    var next = Math.min(deferredCssCursor + 4, DEFERRED_CSS.length);
+    for (; deferredCssCursor < next; deferredCssCursor += 1) {
+      loadStylesheet(DEFERRED_CSS[deferredCssCursor]);
+    }
+    if (deferredCssCursor < DEFERRED_CSS.length) {
+      scheduleIdle(loadDeferredCssChunk, 1200, 16);
+    }
+  }
+
   function loadDeferredCss() {
-    DEFERRED_CSS.forEach(loadStylesheet);
+    if (deferredCssCursor >= DEFERRED_CSS.length) return;
+    loadDeferredCssChunk();
   }
 
   function preloadPortraits() {
@@ -121,7 +145,7 @@
     loadDeferredCss();
     cinemaReady = loadScriptChain(CINEMA_SCRIPTS)
       .then(function () {
-        preloadPortraits();
+        scheduleIdle(preloadPortraits, 2200, 300);
       })
       .catch(function () {
         return null;
@@ -176,11 +200,7 @@
     if (window.setBootStatus) window.setBootStatus("加载核心模块…");
     loadScriptChain(CRITICAL_SCRIPTS)
       .then(function () {
-        if (window.requestIdleCallback) {
-          window.requestIdleCallback(startDeferredIdle, { timeout: 800 });
-        } else {
-          window.setTimeout(startDeferredIdle, 50);
-        }
+        scheduleIdle(startDeferredIdle, 800, 50);
       })
       .catch(function () {
         if (window.setBootStatus) window.setBootStatus("加载失败 · 请刷新页面");

@@ -11,6 +11,13 @@
     return catalog[typeId] || catalog[0];
   }
 
+  function formatCaption(e) {
+    var parts = [e.name, e.ref];
+    if (e.source) parts.push(e.source);
+    if (e.license) parts.push(e.license);
+    return parts.join(" · ");
+  }
+
   function buildDom(mount, typeId) {
     mount.innerHTML = "";
     var wrap = document.createElement("div");
@@ -40,7 +47,7 @@
 
     var cap = document.createElement("p");
     cap.className = "artifact-museum-caption";
-    cap.textContent = e.name + " · " + e.ref;
+    cap.textContent = formatCaption(e);
     if (e.license) {
       cap.title = (e.source || "公开资料") + " · " + e.license + (e.author ? " · " + e.author : "");
     }
@@ -69,7 +76,7 @@
       }.bind(this), 320);
     }
     if (this.dom && this.dom.cap) {
-      this.dom.cap.textContent = e.name + " · " + e.ref;
+      this.dom.cap.textContent = formatCaption(e);
       if (e.license) {
         this.dom.cap.title =
           (e.source || "公开资料") + " · " + e.license + (e.author ? " · " + e.author : "");
