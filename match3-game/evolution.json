@@ -1,13 +1,13 @@
 {
-  "version": "6.0.0",
-  "generation": 60,
-  "universeDay": 9,
+  "version": "6.1.0",
+  "generation": 61,
+  "universeDay": 10,
   "civilizationEpoch": "1929-07",
-  "civilizationDay": 60,
-  "civilizationYear": 2049,
+  "civilizationDay": 61,
+  "civilizationYear": 2051,
   "civilizationPhase": "超越期",
-  "dailyChronicle": "第 9 日·拌嘴日。文明历 2049，广汉首发现后的第 60 代让古蜀知识又比人间多走两年；午前营地晒干了雨泥，王墩和金牙刘为一张编号签吵到泡面坨掉，杨雪把口述争执也归档成超越期符号校读材料。",
-  "releasedAt": "2026-06-10",
+  "dailyChronicle": "第 10 日·险情日。文明历 2051，广汉首发现后的第 61 代让古蜀知识继续以两倍速度越过人间当下；夜里神树坑传来低频铜鸣，胡探守着罗盘到天亮，王墩把冷馒头分给值班的杨雪，险情声纹被整理成超越期安全档案。",
+  "releasedAt": "2026-06-24",
   "autoTune": {
     "enabled": true,
     "windowSize": 8,
@@ -15,10 +15,10 @@
     "targetWinRate": 0.52
   },
   "patchNotes": [
-    "Gen.60 · 宇宙第9日 · 拌嘴日 · 文明历 2049",
-    "营地拌嘴叙事：青铜门、纵目坑、神树探点接入超越期符号校读",
-    "新增营地口述档案寻金渠道，只入账不扣减",
-    "资源加载收紧为图鉴与 Three.js 按需，首屏继续优先可玩"
+    "Gen.61 · 宇宙第10日 · 险情日 · 文明历 2051",
+    "周三险情叙事：青铜门、纵目坑、神树探点接入 2051 超越期安全档案",
+    "新增险情声纹档案寻金渠道，只入账不扣减",
+    "启动屏与首页同步 Gen.61 · 文明历 2051 · 超越期，首屏加载策略保持不阻塞"
   ],
   "virtualAccount": {
     "module": "virtual-account.js",
