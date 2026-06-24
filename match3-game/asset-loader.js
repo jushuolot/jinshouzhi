@@ -7,18 +7,21 @@
   var DEFERRED_CSS = [
     "ultimate.css",
     "story.css",
-    "codex.css",
     "map-narrative.css",
     "cinema.css",
     "blockbuster.css",
     "portrait-cinema.css",
-    "codex-unlock.css",
-    "result-cinema.css",
     "match-fx.css",
     "tomb-atmosphere.css",
     "stars.css",
     "ancient-map.css",
     "desktop-cinema.css",
+  ];
+
+  var LATE_DEFERRED_CSS = [
+    "codex.css",
+    "codex-unlock.css",
+    "result-cinema.css",
     "artifact-museum.css",
     "discovery-cinema.css",
   ];
@@ -71,11 +74,23 @@
   var codexReady = null;
   var deferredStarted = false;
 
+  function scheduleIdle(fn, timeout, fallbackMs) {
+    if (window.requestIdleCallback) {
+      window.requestIdleCallback(fn, { timeout: timeout || 1200 });
+    } else {
+      window.setTimeout(fn, fallbackMs || 80);
+    }
+  }
+
   function loadStylesheet(href) {
     if (document.querySelector('link[href="' + href + '"]')) return;
     var l = document.createElement("link");
     l.rel = "stylesheet";
     l.href = href;
+    l.media = "print";
+    l.onload = function () {
+      l.media = "all";
+    };
     document.head.appendChild(l);
   }
 
@@ -108,6 +123,9 @@
 
   function loadDeferredCss() {
     DEFERRED_CSS.forEach(loadStylesheet);
+    scheduleIdle(function () {
+      LATE_DEFERRED_CSS.forEach(loadStylesheet);
+    }, 1800, 350);
   }
 
   function preloadPortraits() {
@@ -121,7 +139,7 @@
     loadDeferredCss();
     cinemaReady = loadScriptChain(CINEMA_SCRIPTS)
       .then(function () {
-        preloadPortraits();
+        scheduleIdle(preloadPortraits, 2400, 500);
       })
       .catch(function () {
         return null;
@@ -176,11 +194,7 @@
     if (window.setBootStatus) window.setBootStatus("加载核心模块…");
     loadScriptChain(CRITICAL_SCRIPTS)
       .then(function () {
-        if (window.requestIdleCallback) {
-          window.requestIdleCallback(startDeferredIdle, { timeout: 800 });
-        } else {
-          window.setTimeout(startDeferredIdle, 50);
-        }
+        scheduleIdle(startDeferredIdle, 900, 50);
       })
       .catch(function () {
         if (window.setBootStatus) window.setBootStatus("加载失败 · 请刷新页面");
