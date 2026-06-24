@@ -24,6 +24,7 @@
     weeklyRecap: { amount: 0.02, phases: ["超越期", "复兴期"] },
     newPitDataRoom: { amount: 0.024, phases: ["超越期"], universeDayMod: 1 },
     campArgumentArchive: { amount: 0.019, phases: ["超越期"], universeDayMod: 2 },
+    dangerWatchArchive: { amount: 0.021, phases: ["超越期"], universeDayMod: 3 },
     bounty: {
       label: "任务赏金(演示)",
       endpoint: "https://api.coingecko.com/api/v3/ping",
@@ -124,6 +125,12 @@
       source: "network_settlement",
       description: "周二拌嘴日整理营地口述声纹，模拟档案归档入账",
     },
+    danger_watch_archive: {
+      id: "danger_watch_archive",
+      label: "险情巡更档案",
+      source: "network_settlement",
+      description: "周三险情日整理坑壁渗水与头灯闪频，模拟安全巡更档案入账",
+    },
   };
 
   var state = {
@@ -139,6 +146,7 @@
     lastWeeklyRecap: "",
     lastNewPitDataRoom: "",
     lastCampArgumentArchive: "",
+    lastDangerWatchArchive: "",
   };
 
   var tickTimer = null;
@@ -165,6 +173,7 @@
       state.lastWeeklyRecap = data.lastWeeklyRecap || "";
       state.lastNewPitDataRoom = data.lastNewPitDataRoom || "";
       state.lastCampArgumentArchive = data.lastCampArgumentArchive || "";
+      state.lastDangerWatchArchive = data.lastDangerWatchArchive || "";
     } catch (e) {
       // ignore
     }
@@ -184,6 +193,7 @@
           lastWeeklyRecap: state.lastWeeklyRecap,
           lastNewPitDataRoom: state.lastNewPitDataRoom,
           lastCampArgumentArchive: state.lastCampArgumentArchive,
+          lastDangerWatchArchive: state.lastDangerWatchArchive,
           updatedAt: Date.now(),
         })
       );
@@ -444,7 +454,7 @@
     if (cfg.phases.indexOf(phase) < 0) return 0;
     state.lastNewPitDataRoom = key;
     saveState();
-    var civ = clock ? clock.getCivilizationDate() : { civilizationYear: evo.civilizationYear || 2049 };
+    var civ = clock ? clock.getCivilizationDate() : { civilizationYear: evo.civilizationYear || 2051 };
     var credited = creditChannel("new_pit_data_room", {
       amount: cfg.amount,
       meta: {
@@ -476,7 +486,7 @@
     if (cfg.phases.indexOf(phase) < 0) return 0;
     state.lastCampArgumentArchive = key;
     saveState();
-    var civ = clock ? clock.getCivilizationDate() : { civilizationYear: evo.civilizationYear || 2049 };
+    var civ = clock ? clock.getCivilizationDate() : { civilizationYear: evo.civilizationYear || 2051 };
     return creditChannel("camp_argument_archive", {
       amount: cfg.amount,
       meta: {
@@ -485,6 +495,36 @@
         generation: evo.generation || 0,
         phase: phase,
         year: civ.civilizationYear,
+        simulated: true,
+      },
+    });
+  }
+
+  function tryDangerWatchArchive() {
+    var evo = typeof window !== "undefined" && window.MATCH3_EVOLUTION ? window.MATCH3_EVOLUTION : {};
+    var uday = evo.universeDay || 0;
+    var cfg = CONFIG.dangerWatchArchive;
+    if (!cfg || uday % 7 !== cfg.universeDayMod) return 0;
+    var key = todayKey() + "-g" + (evo.generation || "x") + "-u" + uday;
+    if (state.lastDangerWatchArchive === key) return 0;
+    var clock =
+      typeof window !== "undefined" && window.MATCH3_CIVILIZATION_CLOCK
+        ? window.MATCH3_CIVILIZATION_CLOCK
+        : null;
+    var phase = clock ? clock.getPhase() : evo.civilizationPhase || "超越期";
+    if (cfg.phases.indexOf(phase) < 0) return 0;
+    state.lastDangerWatchArchive = key;
+    saveState();
+    var civ = clock ? clock.getCivilizationDate() : { civilizationYear: evo.civilizationYear || 2051 };
+    return creditChannel("danger_watch_archive", {
+      amount: cfg.amount,
+      meta: {
+        kind: "danger_watch_transcript",
+        universeDay: uday,
+        generation: evo.generation || 0,
+        phase: phase,
+        year: civ.civilizationYear,
+        signals: ["seepage", "headlamp_flicker", "rope_check"],
         simulated: true,
       },
     });
@@ -543,6 +583,7 @@
     tryWeeklyRecap();
     tryNewPitDataRoom();
     tryCampArgumentArchive();
+    tryDangerWatchArchive();
     tryAffiliateReferral();
     startPeriodicTick();
     deferNetworkProbes();
