@@ -15,18 +15,18 @@
     chapters: [
       {
         nodes: [
-          { id: "c0n0", name: "雨后营地", level: 0, x: -3.5, z: 2.2, discover: ["chenli", "二〇五一，第十日险情日。探照灯撕开回潮的雨泥——资料室重开，坑壁湿度报警从第一铲重新记。"], artifactHint: 3 },
-          { id: "c0n1", name: "陶片层", level: 4, x: -2, z: 0.8, discover: ["wangdun", "胖爷铲子下去——陶片！成片的！刘哥你别把应急编号签贴泡面盖上！"], artifactHint: 3 },
-          { id: "c0n2", name: "象牙露头", level: 9, x: -0.5, z: -0.3, discover: ["yangxue", "象牙饰！古蜀不产象，这是丝路来的。"], artifactHint: 4 },
-          { id: "c0n3", name: "金粉纹层", level: 14, x: 1, z: -1.2, discover: ["jinyaliu", "金粉！刘哥我……就看看！王墩你闭嘴，二〇五一的险情档案不能把泡面债也写进去吧？"], artifactHint: 1 },
+          { id: "c0n0", name: "雨后营地", level: 0, x: -3.5, z: 2.2, discover: ["chenli", "二〇五三，第十一日生活日。探照灯撕开回潮的雨泥——资料室重开，炊烟采样从第一铲重新记。"], artifactHint: 3 },
+          { id: "c0n1", name: "陶片层", level: 4, x: -2, z: 0.8, discover: ["wangdun", "胖爷铲子下去——陶片！成片的！刘哥你别把应急编号签贴锅盖上，饭香会串档！"], artifactHint: 3 },
+          { id: "c0n2", name: "象牙露头", level: 9, x: -0.5, z: -0.3, discover: ["yangxue", "象牙饰！古蜀不产象，这是远道而来的礼物流线；二〇五三模型还能读出雨后微量盐分。"], artifactHint: 4 },
+          { id: "c0n3", name: "金粉纹层", level: 14, x: 1, z: -1.2, discover: ["jinyaliu", "金粉！刘哥我……就看看！王墩你闭嘴，二〇五三的生活档案不能把泡面债也写进去吧？"], artifactHint: 1 },
           { id: "c0n4", name: "祭祀面", level: 18, x: 2.2, z: -2, discover: ["hutan", "罗盘疯了。前面是祭祀面，层位不能乱，坑壁一响先退半步。"], artifactHint: 0 },
           { id: "c0n5", name: "青铜门墓", level: 19, isTomb: true, discover: ["chenli", "门缝里有光，湿度报警贴也亮了。I 级大墓——青铜门启。"], artifactHint: 0 },
         ],
       },
       {
         nodes: [
-          { id: "c1n0", name: "门后甬道", level: 20, x: -3.2, z: 2, discover: ["yangxue", "二〇五一，超越期第十日。门后风带着铜锈味——坑壁警报比人间论文快一代。"], artifactHint: 0 },
-          { id: "c1n1", name: "封土区", level: 24, x: -1.8, z: 0.5, discover: ["yangxue", "封土层！消除相邻文物等于震土，但二〇五一模型提醒：先避开回压边。"], artifactHint: 3 },
+          { id: "c1n0", name: "门后甬道", level: 20, x: -3.2, z: 2, discover: ["yangxue", "二〇五三，超越期第十一日。门后风带着铜锈和热饭味——生活档案比人间论文快一代。"], artifactHint: 0 },
+          { id: "c1n1", name: "封土区", level: 24, x: -1.8, z: 0.5, discover: ["yangxue", "封土层！消除相邻文物等于震土，但二〇五三模型提醒：先记雨后湿度，再避开回压边。"], artifactHint: 3 },
           { id: "c1n2", name: "金杖影", level: 29, x: -0.3, z: -0.8, discover: ["narrator", "黑暗中一根金杖的轮廓。王权与神权，在一根杖上。"], artifactHint: 1 },
           { id: "c1n3", name: "神格位", level: 34, x: 1.2, z: -1.8, discover: ["chenli", "面具不是装饰，是容器。记录每一面。"], artifactHint: 0 },
           { id: "c1n4", name: "千面阵", level: 38, x: 2.5, z: -2.8, discover: ["wangdun", "妈呀，全是眼睛！胖爷先消一层——金牙刘闭上你的估价嘴，杨雪的险情录音笔还亮着！"], artifactHint: 0 },
@@ -35,17 +35,17 @@
       },
       {
         nodes: [
-          { id: "c2n0", name: "树根层", level: 40, x: -3, z: 2.5, discover: ["wangdun", "神树！根比胖爷腰还粗——二〇五一第十日，胖爷少贫嘴，第一铲先看安全绳！"], artifactHint: 2 },
-          { id: "c2n1", name: "树腰洞", level: 44, x: -1.5, z: 1, discover: ["hutan", "树腰有榫眼。古蜀人插真枝于此，二〇五一的罗盘说它还在长，也在提醒回压。"], artifactHint: 2 },
-          { id: "c2n2", name: "半百祭台", level: 49, x: 0, z: -0.2, discover: ["chenli", "第五十层探方。半百之数，祭台现；避险档案室给它补了二〇五一标签。"], artifactHint: 5 },
-          { id: "c2n3", name: "九枝叉", level: 54, x: 1.5, z: -1.5, discover: ["yangxue", "九枝九鸟，与《山海经》互文。"], artifactHint: 5 },
+          { id: "c2n0", name: "树根层", level: 40, x: -3, z: 2.5, discover: ["wangdun", "神树！根比胖爷腰还粗——二〇五三第十一日，胖爷少贫嘴，第一铲先把饭盒收好！"], artifactHint: 2 },
+          { id: "c2n1", name: "树腰洞", level: 44, x: -1.5, z: 1, discover: ["hutan", "树腰有榫眼。古蜀人插真枝于此，二〇五三的罗盘说它还在长，也在闻雨后炊烟。"], artifactHint: 2 },
+          { id: "c2n2", name: "半百祭台", level: 49, x: 0, z: -0.2, discover: ["chenli", "第五十层探方。半百之数，祭台现；生活档案室给它补了二〇五三标签。"], artifactHint: 5 },
+          { id: "c2n3", name: "九枝叉", level: 54, x: 1.5, z: -1.5, discover: ["yangxue", "九枝九鸟，与《山海经》互文；今天的超越期模型还把鸟纹和营地火候曲线并排显示。"], artifactHint: 5 },
           { id: "c2n4", name: "树顶平台", level: 58, x: 2.8, z: -2.5, discover: ["narrator", "树顶有金沙碳迹。两个文明，一条河。"], artifactHint: 5 },
           { id: "c2n5", name: "神树天墓", level: 59, isTomb: true, discover: ["hutan", "III 级大墓。树通天地，墓通古今。"], artifactHint: 2 },
         ],
       },
       {
         nodes: [
-          { id: "c3n0", name: "金沙渡口", level: 60, x: -3.3, z: 2, discover: ["hutan", "涉水。金箔区禁声。"], artifactHint: 5 },
+          { id: "c3n0", name: "金沙渡口", level: 60, x: -3.3, z: 2, discover: ["hutan", "涉水。金箔区禁声，饭盒也禁响。"], artifactHint: 5 },
           { id: "c3n1", name: "象牙梯", level: 64, x: -1.6, z: 0.6, discover: ["wangdun", "象牙当梯子？古蜀人真敢想。"], artifactHint: 4 },
           { id: "c3n2", name: "金箔层", level: 69, x: 0.2, z: -0.5, discover: ["yangxue", "0.2 毫米金箔。呼吸都能吹飞。"], artifactHint: 5 },
           { id: "c3n3", name: "陶盉窖", level: 74, x: 1.4, z: -1.6, discover: ["jinyaliu", "陶盉里……是酒？三千年了还香？"], artifactHint: 3 },
