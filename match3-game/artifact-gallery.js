@@ -30,6 +30,7 @@
     img.className = "artifact-museum-photo";
     img.draggable = false;
     img.decoding = "async";
+    img.loading = "lazy";
     var e = entry(typeId);
     img.alt = e.name;
     img.src = e.src;

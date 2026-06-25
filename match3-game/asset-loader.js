@@ -133,26 +133,30 @@
     window.PortraitPainter.preloadAll(null, null);
   }
 
-  function startDeferredIdle() {
-    if (deferredStarted) return;
-    deferredStarted = true;
-    loadDeferredCss();
+  function startCinemaLoad() {
+    if (cinemaReady) return cinemaReady;
     cinemaReady = loadScriptChain(CINEMA_SCRIPTS)
       .then(function () {
-        scheduleIdle(preloadPortraits, 2400, 500);
+        scheduleIdle(preloadPortraits, 2600, 600);
       })
       .catch(function () {
         return null;
       });
+    return cinemaReady;
+  }
+
+  function startDeferredIdle() {
+    if (deferredStarted) return;
+    deferredStarted = true;
+    loadDeferredCss();
+    scheduleIdle(startCinemaLoad, 1800, 350);
   }
 
   function ensureCinema() {
     if (window.PortraitCinema && window.CinemaWipe) return Promise.resolve();
     if (!cinemaReady) {
       loadDeferredCss();
-      cinemaReady = loadScriptChain(CINEMA_SCRIPTS).catch(function () {
-        return null;
-      });
+      startCinemaLoad();
     }
     return cinemaReady || Promise.resolve();
   }
