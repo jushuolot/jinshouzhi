@@ -51,7 +51,7 @@ function summarize(records) {
   const byType = { impression: 0, click: 0 };
   const bySlot = {};
   records.forEach(function (r) {
-    const amt = Number(r.amount) || 0;
+    const amt = Math.max(0, Number(r.amount) || 0);
     totalAmount += amt;
     if (r.type) byType[r.type] = (byType[r.type] || 0) + 1;
     if (r.slot) bySlot[r.slot] = (bySlot[r.slot] || 0) + 1;
@@ -105,6 +105,14 @@ const server = http.createServer(function (req, res) {
         sendJson(res, 403, {
           ok: false,
           error: "withdraw forbidden by virtual account policy",
+        });
+        return;
+      }
+      const amount = Number(payload.amount);
+      if (!(amount > 0)) {
+        sendJson(res, 400, {
+          ok: false,
+          error: "credit amount must be positive",
         });
         return;
       }
