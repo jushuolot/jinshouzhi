@@ -1,16 +1,16 @@
 {
-  "generated_at": "2026-06-25T14:35:44+00:00",
+  "generated_at": "2026-06-26T14:24:47+00:00",
   "source": "快照精选池",
   "stats": {
-    "scanned": 19,
+    "scanned": 9,
     "skipped_st": 0,
-    "skipped_pct": 5,
+    "skipped_pct": 15,
     "no_kline": 0,
-    "low_score": 8,
+    "low_score": 4,
     "errors": 0,
-    "skipped_quality": 0,
+    "skipped_quality": 3,
     "mode": "tomorrow_predict",
-    "target_date": "2026-06-26",
+    "target_date": "2026-06-29",
     "source": "快照精选池",
     "market": "A股",
     "global": {
@@ -19,103 +19,103 @@
       "source_港股": "Yahoo Finance（港股）",
       "source_美股": "Yahoo Finance（美股）",
       "total": 0,
-      "target_date": "2026-06-26"
+      "target_date": "2026-06-29"
     },
     "global_count": 0,
-    "predict_for": "2026-06-26",
+    "predict_for": "2026-06-29",
     "snapshot_deep_reasons": [
-      "快照异动: 300408",
-      "快照异动: 920725",
-      "快照异动: 002141",
-      "快照异动: 688797",
-      "快照异动: 301669",
-      "快照异动: 002580",
-      "快照异动: 301310",
-      "快照异动: 301313",
+      "快照异动: 920083",
+      "快照异动: 002354",
+      "快照异动: 300650",
+      "快照异动: 301292",
+      "快照异动: 920249",
+      "快照异动: 301418",
+      "快照异动: 301013",
       "快照异动: 920220",
-      "昨日推荐: 688530",
-      "快照异动: 300571",
-      "快照异动: 300665"
+      "预测未中·复盘: 688530",
+      "快照异动: 600172",
+      "预测未中·复盘: 000725",
+      "快照异动: 300502"
     ],
     "snapshot_deep_rows": 24
   },
-  "predict_for": "2026-06-26",
+  "predict_for": "2026-06-29",
   "market_outlook": {
-    "as_of": "2026-06-25",
-    "crash_prob_1_2w_pct": 23.0,
-    "crash_label": "低",
-    "outlook_2w": "偏多 · 可积极布局",
-    "outlook_4_8w": "趋势友好 · 持有为主",
+    "as_of": "2026-06-26",
+    "crash_prob_1_2w_pct": 34.0,
+    "crash_label": "偏低",
+    "outlook_2w": "中性 · 可正常选股",
+    "outlook_4_8w": "震荡偏多 · 关注主线",
     "breadth_adv_pct": 100.0,
     "indices": [
       {
         "ticker": "000001.SS",
         "name": "上证指数",
         "region": "A股",
-        "close": 10.42,
-        "pct_5d": -3.34,
-        "pct_20d": -3.16,
-        "drawdown_20d_pct": -7.95,
+        "close": 10.23,
+        "pct_5d": -2.76,
+        "pct_20d": -4.03,
+        "drawdown_20d_pct": -9.63,
         "above_ma20": false,
         "trend": "空头",
-        "vol_ratio": 0.94
+        "vol_ratio": 1.06
       },
       {
         "ticker": "399006.SZ",
         "name": "创业板指",
         "region": "A股",
-        "close": 4371.99,
-        "pct_5d": 4.92,
-        "pct_20d": 8.06,
-        "drawdown_20d_pct": 0.0,
+        "close": 4194.21,
+        "pct_5d": -1.37,
+        "pct_20d": 1.68,
+        "drawdown_20d_pct": -4.07,
         "above_ma20": true,
         "trend": "多头",
-        "vol_ratio": 1.11
+        "vol_ratio": 1.08
       },
       {
         "ticker": "^HSI",
         "name": "恒生指数",
         "region": "港股",
-        "close": 23412.18,
-        "pct_5d": -4.42,
-        "pct_20d": -8.54,
-        "drawdown_20d_pct": -10.09,
+        "close": 23076.91,
+        "pct_5d": -5.08,
+        "pct_20d": -8.89,
+        "drawdown_20d_pct": -11.37,
         "above_ma20": false,
         "trend": "空头",
-        "vol_ratio": 0.9
+        "vol_ratio": 1.12
       },
       {
         "ticker": "^GSPC",
         "name": "标普500",
         "region": "美股",
-        "close": 7358.22,
-        "pct_5d": -2.04,
-        "pct_20d": -2.14,
-        "drawdown_20d_pct": -3.31,
+        "close": 7357.49,
+        "pct_5d": -0.84,
+        "pct_20d": -2.17,
+        "drawdown_20d_pct": -3.32,
         "above_ma20": false,
         "trend": "震荡",
-        "vol_ratio": 1.02
+        "vol_ratio": 0.94
       }
     ],
     "drivers": [
       "上证指数均线空头",
+      "上证指数距20日高点已回撤9.6%",
       "创业板指趋势偏多",
-      "港股/美股同步偏弱",
       "市场广度高（100%上涨）"
     ],
-    "advice": "未来 1~2 周大跌概率 **23%**（相对可控）。建议：可按计划选股，仍须设好止损。"
+    "advice": "未来 1~2 周大跌概率 **34%**（相对可控）。建议：可按计划选股，仍须设好止损。"
   },
   "ritual": {
     "phase": "P112",
-    "data_bar_date": "2026-06-25",
+    "data_bar_date": "2026-06-26",
     "data_source": "新浪财经",
-    "ranking_source": "新浪财经（东财不可用时的备用）",
+    "ranking_source": "东方财富",
     "data_fresh": true,
-    "expected_bar_lo": "2026-06-25",
-    "expected_bar_hi": "2026-06-25",
-    "a_picks": 5,
+    "expected_bar_lo": "2026-06-26",
+    "expected_bar_hi": "2026-06-26",
+    "a_picks": 2,
     "global_picks": 0,
-    "predict_for": "2026-06-26",
+    "predict_for": "2026-06-29",
     "ritual_ok": true,
     "ritual_level": "green",
     "ritual_summary": "佛祖可查：数据新鲜，推荐已就绪",
@@ -123,20 +123,20 @@
     "probe_error": ""
   },
   "nightly_brief": {
-    "as_of": "2026-06-25",
-    "predict_for": "2026-06-26",
+    "as_of": "2026-06-26",
+    "predict_for": "2026-06-29",
     "mood": "green",
-    "action": "可看 A 股 4 只「明日偏多」；结合大盘 23% 大跌概率决策。",
+    "action": "可看 A 股 1 只「明日偏多」；结合大盘 34% 大跌概率决策。",
     "lines": [
       "**版本** v6.2.0 · 进化 1170 步",
-      "**行情截止** 2026-06-25 · 新浪财经 · ✅新鲜",
-      "**明日目标** 2026-06-26 · A股 **5** · 全球 **0** · 偏多 **4**",
-      "**大盘** 1~2周大跌概率 **23%** · 偏多 · 可积极布局",
+      "**行情截止** 2026-06-26 · 新浪财经 · ✅新鲜",
+      "**明日目标** 2026-06-29 · A股 **2** · 全球 **0** · 偏多 **1**",
+      "**大盘** 1~2周大跌概率 **34%** · 中性 · 可正常选股",
       "**成绩单** 尚无到期验证记录",
-      "**云端同步** 2026-06-25T14:35:44+00:00",
+      "**云端同步** 2026-06-26T14:24:47+00:00",
       "**复盘** 尚无足够到期样本；每次预测后会自动与后续 K 线对比。"
     ],
-    "markdown": "# 🪷 佛祖今晚查岗\n\n\n\n**版本** v6.2.0 · 进化 1170 步\n\n**行情截止** 2026-06-25 · 新浪财经 · ✅新鲜\n\n**明日目标** 2026-06-26 · A股 **5** · 全球 **0** · 偏多 **4**\n\n**大盘** 1~2周大跌概率 **23%** · 偏多 · 可积极布局\n\n**成绩单** 尚无到期验证记录\n\n**云端同步** 2026-06-25T14:35:44+00:00\n\n**复盘** 尚无足够到期样本；每次预测后会自动与后续 K 线对比。\n\n\n\n**建议：** 可看 A 股 4 只「明日偏多」；结合大盘 23% 大跌概率决策。\n\n\n\n*规则预测，非投资建议。*"
+    "markdown": "# 🪷 佛祖今晚查岗\n\n\n\n**版本** v6.2.0 · 进化 1170 步\n\n**行情截止** 2026-06-26 · 新浪财经 · ✅新鲜\n\n**明日目标** 2026-06-29 · A股 **2** · 全球 **0** · 偏多 **1**\n\n**大盘** 1~2周大跌概率 **34%** · 中性 · 可正常选股\n\n**成绩单** 尚无到期验证记录\n\n**云端同步** 2026-06-26T14:24:47+00:00\n\n**复盘** 尚无足够到期样本；每次预测后会自动与后续 K 线对比。\n\n\n\n**建议：** 可看 A 股 1 只「明日偏多」；结合大盘 34% 大跌概率决策。\n\n\n\n*规则预测，非投资建议。*"
   },
   "hit_summary": {
     "total_verified": 0,
@@ -149,7 +149,7 @@
     "尚无足够到期样本；每次预测后会自动与后续 K 线对比。"
   ],
   "calibration": {
-    "generated_at": "2026-06-25T14:36:43+00:00",
+    "generated_at": "2026-06-26T14:25:50+00:00",
     "reviewed": 0,
     "hit_rate_pct": null,
     "avg_max_ret_pct": null,
@@ -164,115 +164,115 @@
     "recent_rows": []
   },
   "snapshot_diff": {
-    "prev_date": "2026-06-24",
-    "curr_date": "2026-06-25",
+    "prev_date": "2026-06-25",
+    "curr_date": "2026-06-26",
     "compared": 75,
-    "avg_pct_delta": -16.88,
+    "avg_pct_delta": -7.93,
     "movers": [
       {
-        "code": "688797",
-        "name": "C臻宝",
-        "prev_pct": 1212.84,
-        "curr_pct": -1.8,
-        "delta_pct": -1214.64
+        "code": "920249",
+        "name": "利尔达",
+        "prev_pct": 29.99,
+        "curr_pct": -5.92,
+        "delta_pct": -35.91
       },
       {
-        "code": "920178",
-        "name": "锐翔智能",
-        "prev_pct": 15.48,
-        "curr_pct": -7.21,
-        "delta_pct": -22.69
+        "code": "301013",
+        "name": "利和兴",
+        "prev_pct": 13.29,
+        "curr_pct": -13.94,
+        "delta_pct": -27.23
       },
       {
-        "code": "301132",
-        "name": "满坤科技",
-        "prev_pct": 19.99,
-        "curr_pct": 3.27,
-        "delta_pct": -16.72
-      },
-      {
-        "code": "301310",
-        "name": "鑫宏业",
-        "prev_pct": 20.01,
-        "curr_pct": 3.42,
-        "delta_pct": -16.59
-      },
-      {
-        "code": "300571",
-        "name": "平治信息",
-        "prev_pct": 11.42,
-        "curr_pct": -4.47,
-        "delta_pct": -15.89
-      },
-      {
-        "code": "301669",
-        "name": "高特电子",
-        "prev_pct": 19.99,
-        "curr_pct": 4.8,
-        "delta_pct": -15.19
-      },
-      {
-        "code": "301313",
-        "name": "凡拓数创",
-        "prev_pct": 5.79,
-        "curr_pct": -8.48,
-        "delta_pct": -14.27
-      },
-      {
-        "code": "002141",
-        "name": "贤丰控股",
-        "prev_pct": -3.84,
-        "curr_pct": 10.08,
-        "delta_pct": 13.92
-      },
-      {
-        "code": "300408",
-        "name": "三环集团",
-        "prev_pct": -0.17,
-        "curr_pct": 12.64,
-        "delta_pct": 12.8
-      },
-      {
-        "code": "920725",
-        "name": "惠丰钻石",
-        "prev_pct": -2.01,
-        "curr_pct": 10.18,
-        "delta_pct": 12.19
-      },
-      {
-        "code": "300665",
-        "name": "飞鹿股份",
-        "prev_pct": 3.91,
-        "curr_pct": -7.61,
-        "delta_pct": -11.52
-      },
-      {
-        "code": "002580",
-        "name": "圣阳股份",
-        "prev_pct": 10.0,
-        "curr_pct": -0.9,
-        "delta_pct": -10.91
-      },
-      {
-        "code": "920220",
-        "name": "朗信电气",
-        "prev_pct": -4.28,
-        "curr_pct": 5.86,
-        "delta_pct": 10.14
+        "code": "300223",
+        "name": "北京君正",
+        "prev_pct": 20.0,
+        "curr_pct": -1.75,
+        "delta_pct": -21.75
       },
       {
         "code": "600522",
         "name": "中天科技",
-        "prev_pct": 0.29,
-        "curr_pct": 10.0,
-        "delta_pct": 9.71
+        "prev_pct": 10.0,
+        "curr_pct": -10.0,
+        "delta_pct": -20.0
       },
       {
-        "code": "920181",
-        "name": "赛英电子",
-        "prev_pct": 5.77,
-        "curr_pct": -3.58,
-        "delta_pct": -9.34
+        "code": "002354",
+        "name": "天娱数科",
+        "prev_pct": -9.98,
+        "curr_pct": 9.96,
+        "delta_pct": 19.94
+      },
+      {
+        "code": "920220",
+        "name": "朗信电气",
+        "prev_pct": 5.86,
+        "curr_pct": -12.63,
+        "delta_pct": -18.49
+      },
+      {
+        "code": "301418",
+        "name": "协昌科技",
+        "prev_pct": 16.66,
+        "curr_pct": -0.73,
+        "delta_pct": -17.39
+      },
+      {
+        "code": "300502",
+        "name": "新易盛",
+        "prev_pct": 9.94,
+        "curr_pct": -7.29,
+        "delta_pct": -17.23
+      },
+      {
+        "code": "301292",
+        "name": "海科新源",
+        "prev_pct": 4.62,
+        "curr_pct": -12.04,
+        "delta_pct": -16.66
+      },
+      {
+        "code": "300650",
+        "name": "太龙股份",
+        "prev_pct": 20.03,
+        "curr_pct": 3.63,
+        "delta_pct": -16.4
+      },
+      {
+        "code": "600105",
+        "name": "永鼎股份",
+        "prev_pct": 6.14,
+        "curr_pct": -9.94,
+        "delta_pct": -16.08
+      },
+      {
+        "code": "600172",
+        "name": "黄河旋风",
+        "prev_pct": 6.84,
+        "curr_pct": -8.87,
+        "delta_pct": -15.71
+      },
+      {
+        "code": "300408",
+        "name": "三环集团",
+        "prev_pct": 12.64,
+        "curr_pct": -2.18,
+        "delta_pct": -14.82
+      },
+      {
+        "code": "920083",
+        "name": "金戈新材",
+        "prev_pct": -12.91,
+        "curr_pct": 1.83,
+        "delta_pct": 14.74
+      },
+      {
+        "code": "600487",
+        "name": "亨通光电",
+        "prev_pct": 3.34,
+        "curr_pct": -9.91,
+        "delta_pct": -13.25
       }
     ],
     "pick_checks": [
@@ -280,424 +280,117 @@
         "code": "688530",
         "name": "欧莱新材",
         "signal": "观望",
-        "delta_pct": 5.97,
-        "hit": true
-      },
-      {
-        "code": "000725",
-        "name": "京东方Ａ",
-        "signal": "买入",
-        "delta_pct": 1.93,
-        "hit": true
+        "delta_pct": -7.72,
+        "hit": false
       },
       {
         "code": "002463",
         "name": "沪电股份",
         "signal": "买入",
-        "delta_pct": 4.62,
-        "hit": true
-      },
-      {
-        "code": "600487",
-        "name": "亨通光电",
-        "signal": "买入",
-        "delta_pct": 1.89,
-        "hit": true
-      },
-      {
-        "code": "688530",
-        "name": "欧莱新材",
-        "signal": "观望",
-        "delta_pct": 5.97,
-        "hit": true
-      },
-      {
-        "code": "002463",
-        "name": "沪电股份",
-        "signal": "买入",
-        "delta_pct": 4.62,
-        "hit": true
-      },
-      {
-        "code": "600487",
-        "name": "亨通光电",
-        "signal": "买入",
-        "delta_pct": 1.89,
-        "hit": true
-      },
-      {
-        "code": "000725",
-        "name": "京东方Ａ",
-        "signal": "买入",
-        "delta_pct": 1.93,
-        "hit": true
-      },
-      {
-        "code": "002463",
-        "name": "沪电股份",
-        "signal": "观望",
-        "delta_pct": 4.62,
-        "hit": true
-      },
-      {
-        "code": "600487",
-        "name": "亨通光电",
-        "signal": "买入",
-        "delta_pct": 1.89,
-        "hit": true
-      },
-      {
-        "code": "688530",
-        "name": "欧莱新材",
-        "signal": "观望",
-        "delta_pct": 5.97,
-        "hit": true
-      },
-      {
-        "code": "000725",
-        "name": "京东方Ａ",
-        "signal": "买入",
-        "delta_pct": 1.93,
-        "hit": true
-      },
-      {
-        "code": "300179",
-        "name": "四方达",
-        "signal": "观望",
-        "delta_pct": -0.55,
+        "delta_pct": -13.09,
         "hit": false
       },
       {
         "code": "600487",
         "name": "亨通光电",
         "signal": "买入",
-        "delta_pct": 1.89,
-        "hit": true
-      },
-      {
-        "code": "688530",
-        "name": "欧莱新材",
-        "signal": "观望",
-        "delta_pct": 5.97,
-        "hit": true
+        "delta_pct": -13.25,
+        "hit": false
       },
       {
         "code": "000725",
         "name": "京东方Ａ",
         "signal": "买入",
-        "delta_pct": 1.93,
-        "hit": true
+        "delta_pct": -2.78,
+        "hit": false
       },
       {
-        "code": "300179",
-        "name": "四方达",
+        "code": "002463",
+        "name": "沪电股份",
         "signal": "观望",
-        "delta_pct": -0.55,
+        "delta_pct": -13.09,
         "hit": false
       },
       {
         "code": "600487",
         "name": "亨通光电",
         "signal": "买入",
-        "delta_pct": 1.89,
-        "hit": true
+        "delta_pct": -13.25,
+        "hit": false
+      },
+      {
+        "code": "688530",
+        "name": "欧莱新材",
+        "signal": "观望",
+        "delta_pct": -7.72,
+        "hit": false
+      },
+      {
+        "code": "000725",
+        "name": "京东方Ａ",
+        "signal": "买入",
+        "delta_pct": -2.78,
+        "hit": false
+      },
+      {
+        "code": "600487",
+        "name": "亨通光电",
+        "signal": "买入",
+        "delta_pct": -13.25,
+        "hit": false
+      },
+      {
+        "code": "688530",
+        "name": "欧莱新材",
+        "signal": "观望",
+        "delta_pct": -7.72,
+        "hit": false
+      },
+      {
+        "code": "000725",
+        "name": "京东方Ａ",
+        "signal": "买入",
+        "delta_pct": -2.78,
+        "hit": false
+      },
+      {
+        "code": "600487",
+        "name": "亨通光电",
+        "signal": "买入",
+        "delta_pct": -13.25,
+        "hit": false
       },
       {
         "code": "601138",
         "name": "工业富联",
         "signal": "买入",
-        "delta_pct": -3.34,
+        "delta_pct": -9.07,
+        "hit": false
+      },
+      {
+        "code": "000725",
+        "name": "京东方Ａ",
+        "signal": "买入",
+        "delta_pct": -2.78,
+        "hit": false
+      },
+      {
+        "code": "600487",
+        "name": "亨通光电",
+        "signal": "买入",
+        "delta_pct": -13.25,
         "hit": false
       }
     ],
     "conclusions": [
-      "快照对比 75 只，均涨跌变化 -16.88%。",
-      "昨日推荐 19 只，快照验证 16 只方向正确。",
-      "最大异动 C臻宝 688797 Δ-1214.6%。"
+      "快照对比 75 只，均涨跌变化 -7.93%。",
+      "昨日推荐 15 只，快照验证 0 只方向正确。",
+      "最大异动 利尔达 920249 Δ-35.9%。"
     ]
   },
   "weekly_summary": {
-    "updated_at": "2026-06-25",
+    "updated_at": "2026-06-26",
     "days": [
-      {
-        "date": "2026-06-16",
-        "snapshot_count": 149,
-        "diff": {
-          "prev_date": "2026-06-15",
-          "curr_date": "2026-06-16",
-          "compared": 83,
-          "avg_pct_delta": -5.5,
-          "movers": [
-            {
-              "code": "920126",
-              "name": "永大股份",
-              "prev_pct": 126.96,
-              "curr_pct": 1.53,
-              "delta_pct": -125.43
-            },
-            {
-              "code": "920083",
-              "name": "金戈新材",
-              "prev_pct": -1.05,
-              "curr_pct": 29.99,
-              "delta_pct": 31.04
-            },
-            {
-              "code": "301276",
-              "name": "嘉曼服饰",
-              "prev_pct": 19.4,
-              "curr_pct": -11.44,
-              "delta_pct": -30.84
-            },
-            {
-              "code": "300408",
-              "name": "三环集团",
-              "prev_pct": 18.77,
-              "curr_pct": -0.02,
-              "delta_pct": -18.79
-            },
-            {
-              "code": "301566",
-              "name": "达利凯普",
-              "prev_pct": 20.01,
-              "curr_pct": 4.26,
-              "delta_pct": -15.75
-            },
-            {
-              "code": "301217",
-              "name": "铜冠铜箔",
-              "prev_pct": 20.0,
-              "curr_pct": 4.71,
-              "delta_pct": -15.29
-            },
-            {
-              "code": "688603",
-              "name": "天承科技",
-              "prev_pct": 20.0,
-              "curr_pct": 5.36,
-              "delta_pct": -14.64
-            },
-            {
-              "code": "300548",
-              "name": "长芯博创",
-              "prev_pct": 20.0,
-              "curr_pct": 5.38,
-              "delta_pct": -14.62
-            },
-            {
-              "code": "301687",
-              "name": "新广益",
-              "prev_pct": 17.07,
-              "curr_pct": 2.83,
-              "delta_pct": -14.24
-            },
-            {
-              "code": "603993",
-              "name": "洛阳钼业",
-              "prev_pct": 9.47,
-              "curr_pct": -4.25,
-              "delta_pct": -13.72
-            },
-            {
-              "code": "301373",
-              "name": "凌玮科技",
-              "prev_pct": 20.0,
-              "curr_pct": 7.57,
-              "delta_pct": -12.43
-            },
-            {
-              "code": "002421",
-              "name": "达实智能",
-              "prev_pct": -8.86,
-              "curr_pct": 3.49,
-              "delta_pct": 12.36
-            },
-            {
-              "code": "301013",
-              "name": "利和兴",
-              "prev_pct": 14.61,
-              "curr_pct": 3.28,
-              "delta_pct": -11.33
-            },
-            {
-              "code": "601899",
-              "name": "紫金矿业",
-              "prev_pct": 7.63,
-              "curr_pct": -3.26,
-              "delta_pct": -10.89
-            },
-            {
-              "code": "301630",
-              "name": "同宇新材",
-              "prev_pct": 14.93,
-              "curr_pct": 4.32,
-              "delta_pct": -10.61
-            }
-          ],
-          "pick_checks": [
-            {
-              "code": "301563",
-              "name": "云汉芯城",
-              "signal": "观望",
-              "delta_pct": -5.98,
-              "hit": false
-            },
-            {
-              "code": "600498",
-              "name": "烽火通信",
-              "signal": "买入",
-              "delta_pct": 1.65,
-              "hit": true
-            },
-            {
-              "code": "000657",
-              "name": "中钨高新",
-              "signal": "买入",
-              "delta_pct": -3.56,
-              "hit": false
-            },
-            {
-              "code": "600487",
-              "name": "亨通光电",
-              "signal": "买入",
-              "delta_pct": 5.93,
-              "hit": true
-            },
-            {
-              "code": "000657",
-              "name": "中钨高新",
-              "signal": "观望",
-              "delta_pct": -3.56,
-              "hit": false
-            },
-            {
-              "code": "000725",
-              "name": "京东方Ａ",
-              "signal": "观望",
-              "delta_pct": -3.24,
-              "hit": false
-            },
-            {
-              "code": "002463",
-              "name": "沪电股份",
-              "signal": "观望",
-              "delta_pct": -1.69,
-              "hit": false
-            },
-            {
-              "code": "600498",
-              "name": "烽火通信",
-              "signal": "买入",
-              "delta_pct": 1.65,
-              "hit": true
-            },
-            {
-              "code": "000657",
-              "name": "中钨高新",
-              "signal": "观望",
-              "delta_pct": -3.56,
-              "hit": false
-            },
-            {
-              "code": "002463",
-              "name": "沪电股份",
-              "signal": "观望",
-              "delta_pct": -1.69,
-              "hit": false
-            },
-            {
-              "code": "600498",
-              "name": "烽火通信",
-              "signal": "买入",
-              "delta_pct": 1.65,
-              "hit": true
-            },
-            {
-              "code": "000657",
-              "name": "中钨高新",
-              "signal": "观望",
-              "delta_pct": -3.56,
-              "hit": false
-            },
-            {
-              "code": "002463",
-              "name": "沪电股份",
-              "signal": "观望",
-              "delta_pct": -1.69,
-              "hit": false
-            },
-            {
-              "code": "600498",
-              "name": "烽火通信",
-              "signal": "买入",
-              "delta_pct": 1.65,
-              "hit": true
-            },
-            {
-              "code": "000657",
-              "name": "中钨高新",
-              "signal": "观望",
-              "delta_pct": -3.56,
-              "hit": false
-            },
-            {
-              "code": "002463",
-              "name": "沪电股份",
-              "signal": "观望",
-              "delta_pct": -1.69,
-              "hit": false
-            },
-            {
-              "code": "600498",
-              "name": "烽火通信",
-              "signal": "买入",
-              "delta_pct": 1.65,
-              "hit": true
-            },
-            {
-              "code": "000725",
-              "name": "京东方Ａ",
-              "signal": "买入",
-              "delta_pct": -3.24,
-              "hit": false
-            },
-            {
-              "code": "002463",
-              "name": "沪电股份",
-              "signal": "买入",
-              "delta_pct": -1.69,
-              "hit": false
-            },
-            {
-              "code": "600487",
-              "name": "亨通光电",
-              "signal": "买入",
-              "delta_pct": 5.93,
-              "hit": true
-            },
-            {
-              "code": "600498",
-              "name": "烽火通信",
-              "signal": "买入",
-              "delta_pct": 1.65,
-              "hit": true
-            },
-            {
-              "code": "688530",
-              "name": "欧莱新材",
-              "signal": "观望",
-              "delta_pct": 4.03,
-              "hit": true
-            }
-          ],
-          "conclusions": [
-            "快照对比 83 只，均涨跌变化 -5.50%。",
-            "昨日推荐 22 只，快照验证 9 只方向正确。",
-            "最大异动 永大股份 920126 Δ-125.4%。"
-          ]
-        },
-        "picks_checked": 22
-      },
       {
         "date": "2026-06-17",
         "snapshot_count": 147,
@@ -2061,20 +1754,277 @@
           ]
         },
         "picks_checked": 19
+      },
+      {
+        "date": "2026-06-26",
+        "snapshot_count": 151,
+        "diff": {
+          "prev_date": "2026-06-25",
+          "curr_date": "2026-06-26",
+          "compared": 75,
+          "avg_pct_delta": -7.93,
+          "movers": [
+            {
+              "code": "920249",
+              "name": "利尔达",
+              "prev_pct": 29.99,
+              "curr_pct": -5.92,
+              "delta_pct": -35.91
+            },
+            {
+              "code": "301013",
+              "name": "利和兴",
+              "prev_pct": 13.29,
+              "curr_pct": -13.94,
+              "delta_pct": -27.23
+            },
+            {
+              "code": "300223",
+              "name": "北京君正",
+              "prev_pct": 20.0,
+              "curr_pct": -1.75,
+              "delta_pct": -21.75
+            },
+            {
+              "code": "600522",
+              "name": "中天科技",
+              "prev_pct": 10.0,
+              "curr_pct": -10.0,
+              "delta_pct": -20.0
+            },
+            {
+              "code": "002354",
+              "name": "天娱数科",
+              "prev_pct": -9.98,
+              "curr_pct": 9.96,
+              "delta_pct": 19.94
+            },
+            {
+              "code": "920220",
+              "name": "朗信电气",
+              "prev_pct": 5.86,
+              "curr_pct": -12.63,
+              "delta_pct": -18.49
+            },
+            {
+              "code": "301418",
+              "name": "协昌科技",
+              "prev_pct": 16.66,
+              "curr_pct": -0.73,
+              "delta_pct": -17.39
+            },
+            {
+              "code": "300502",
+              "name": "新易盛",
+              "prev_pct": 9.94,
+              "curr_pct": -7.29,
+              "delta_pct": -17.23
+            },
+            {
+              "code": "301292",
+              "name": "海科新源",
+              "prev_pct": 4.62,
+              "curr_pct": -12.04,
+              "delta_pct": -16.66
+            },
+            {
+              "code": "300650",
+              "name": "太龙股份",
+              "prev_pct": 20.03,
+              "curr_pct": 3.63,
+              "delta_pct": -16.4
+            },
+            {
+              "code": "600105",
+              "name": "永鼎股份",
+              "prev_pct": 6.14,
+              "curr_pct": -9.94,
+              "delta_pct": -16.08
+            },
+            {
+              "code": "600172",
+              "name": "黄河旋风",
+              "prev_pct": 6.84,
+              "curr_pct": -8.87,
+              "delta_pct": -15.71
+            },
+            {
+              "code": "300408",
+              "name": "三环集团",
+              "prev_pct": 12.64,
+              "curr_pct": -2.18,
+              "delta_pct": -14.82
+            },
+            {
+              "code": "920083",
+              "name": "金戈新材",
+              "prev_pct": -12.91,
+              "curr_pct": 1.83,
+              "delta_pct": 14.74
+            },
+            {
+              "code": "600487",
+              "name": "亨通光电",
+              "prev_pct": 3.34,
+              "curr_pct": -9.91,
+              "delta_pct": -13.25
+            }
+          ],
+          "pick_checks": [
+            {
+              "code": "688530",
+              "name": "欧莱新材",
+              "signal": "观望",
+              "delta_pct": -7.72,
+              "hit": false
+            },
+            {
+              "code": "002463",
+              "name": "沪电股份",
+              "signal": "买入",
+              "delta_pct": -13.09,
+              "hit": false
+            },
+            {
+              "code": "600487",
+              "name": "亨通光电",
+              "signal": "买入",
+              "delta_pct": -13.25,
+              "hit": false
+            },
+            {
+              "code": "000725",
+              "name": "京东方Ａ",
+              "signal": "买入",
+              "delta_pct": -2.78,
+              "hit": false
+            },
+            {
+              "code": "002463",
+              "name": "沪电股份",
+              "signal": "观望",
+              "delta_pct": -13.09,
+              "hit": false
+            },
+            {
+              "code": "600487",
+              "name": "亨通光电",
+              "signal": "买入",
+              "delta_pct": -13.25,
+              "hit": false
+            },
+            {
+              "code": "688530",
+              "name": "欧莱新材",
+              "signal": "观望",
+              "delta_pct": -7.72,
+              "hit": false
+            },
+            {
+              "code": "000725",
+              "name": "京东方Ａ",
+              "signal": "买入",
+              "delta_pct": -2.78,
+              "hit": false
+            },
+            {
+              "code": "600487",
+              "name": "亨通光电",
+              "signal": "买入",
+              "delta_pct": -13.25,
+              "hit": false
+            },
+            {
+              "code": "688530",
+              "name": "欧莱新材",
+              "signal": "观望",
+              "delta_pct": -7.72,
+              "hit": false
+            },
+            {
+              "code": "000725",
+              "name": "京东方Ａ",
+              "signal": "买入",
+              "delta_pct": -2.78,
+              "hit": false
+            },
+            {
+              "code": "600487",
+              "name": "亨通光电",
+              "signal": "买入",
+              "delta_pct": -13.25,
+              "hit": false
+            },
+            {
+              "code": "601138",
+              "name": "工业富联",
+              "signal": "买入",
+              "delta_pct": -9.07,
+              "hit": false
+            },
+            {
+              "code": "000725",
+              "name": "京东方Ａ",
+              "signal": "买入",
+              "delta_pct": -2.78,
+              "hit": false
+            },
+            {
+              "code": "600487",
+              "name": "亨通光电",
+              "signal": "买入",
+              "delta_pct": -13.25,
+              "hit": false
+            }
+          ],
+          "conclusions": [
+            "快照对比 75 只，均涨跌变化 -7.93%。",
+            "昨日推荐 15 只，快照验证 0 只方向正确。",
+            "最大异动 利尔达 920249 Δ-35.9%。"
+          ]
+        },
+        "picks_checked": 15
       }
     ],
-    "week_hit_rate_pct": 42.7,
-    "week_checks": 110,
-    "headline": "近 7 个交易日快照；预测快照验证 47/110 方向正确。"
+    "week_hit_rate_pct": 36.9,
+    "week_checks": 103,
+    "headline": "近 7 个交易日快照；预测快照验证 38/103 方向正确。"
   },
   "deep_followups": [
     {
-      "code": "300179",
-      "name": "四方达",
+      "code": "688530",
+      "name": "欧莱新材",
       "tag": "预测未中·复盘",
       "score": null,
       "pct": null,
-      "one_line": "轻量分析失败：未获取到行情：300179",
+      "one_line": "轻量分析失败：未获取到行情：688530",
+      "verdict": "待查"
+    },
+    {
+      "code": "002463",
+      "name": "沪电股份",
+      "tag": "预测未中·复盘",
+      "score": null,
+      "pct": null,
+      "one_line": "轻量分析失败：未获取到行情：002463",
+      "verdict": "待查"
+    },
+    {
+      "code": "600487",
+      "name": "亨通光电",
+      "tag": "预测未中·复盘",
+      "score": null,
+      "pct": null,
+      "one_line": "轻量分析失败：未获取到行情：600487",
+      "verdict": "待查"
+    },
+    {
+      "code": "000725",
+      "name": "京东方Ａ",
+      "tag": "预测未中·复盘",
+      "score": null,
+      "pct": null,
+      "one_line": "轻量分析失败：未获取到行情：000725",
       "verdict": "待查"
     },
     {
@@ -2087,118 +2037,55 @@
       "verdict": "待查"
     },
     {
-      "code": "688797",
-      "name": "C臻宝",
-      "tag": "快照异动Δ-1214.6%",
+      "code": "920249",
+      "name": "利尔达",
+      "tag": "快照异动Δ-35.9%",
       "score": null,
       "pct": null,
-      "one_line": "轻量分析失败：未获取到行情：688797",
-      "verdict": "待查"
-    },
-    {
-      "code": "920178",
-      "name": "锐翔智能",
-      "tag": "快照异动Δ-22.7%",
-      "score": null,
-      "pct": null,
-      "one_line": "轻量分析失败：未获取到行情：920178",
-      "verdict": "待查"
-    },
-    {
-      "code": "301132",
-      "name": "满坤科技",
-      "tag": "快照异动Δ-16.7%",
-      "score": null,
-      "pct": null,
-      "one_line": "轻量分析失败：未获取到行情：301132",
-      "verdict": "待查"
-    },
-    {
-      "code": "301310",
-      "name": "鑫宏业",
-      "tag": "快照异动Δ-16.6%",
-      "score": null,
-      "pct": null,
-      "one_line": "轻量分析失败：未获取到行情：301310",
+      "one_line": "轻量分析失败：未获取到行情：920249",
       "verdict": "待查"
     }
   ],
   "snapshot_meta": {
-    "count": 143,
+    "count": 151,
     "deep_rows": 24
   },
   "data_probe": {
     "probe_code": "600519",
-    "bar_date": "2026-06-25",
+    "bar_date": "2026-06-26",
     "source": "新浪财经",
     "fresh": true,
-    "expected_lo": "2026-06-25",
-    "expected_hi": "2026-06-25",
-    "ranking_source": "新浪财经（东财不可用时的备用）",
+    "expected_lo": "2026-06-26",
+    "expected_hi": "2026-06-26",
+    "ranking_source": "东方财富",
     "error": ""
   },
   "picks": [
     {
-      "code": "002580",
-      "name": "圣阳股份",
-      "score": 88.0,
-      "pct": -0.902,
-      "signal": "买入",
-      "hold_days": "1–3天",
-      "reason": "[强势回踩] 明日看反弹：站上MA20、趋势内回踩、放量、5日动量正 · 质量：主板/中小板、QFII新进、市值115亿",
-      "price": 25.28,
-      "market": "A股",
-      "fund_tag": "QFII新进"
-    },
-    {
-      "code": "301682",
-      "name": "宏明电子",
-      "score": 87.0,
-      "pct": 5.103,
-      "signal": "买入",
-      "hold_days": "1–3天",
-      "reason": "[趋势延续] 明日看延续：均线多头、趋势动能 · 质量：创业板、基金增仓、市值230亿、ROE行业靠前",
-      "price": 188.88,
-      "market": "A股",
-      "fund_tag": "基金增仓"
-    },
-    {
-      "code": "600487",
-      "name": "亨通光电",
-      "score": 85.0,
-      "pct": 3.344,
-      "signal": "买入",
-      "hold_days": "1–3天",
-      "reason": "[趋势延续] 明日看延续：均线多头、趋势动能、5日动量正 · 质量：主板/中小板、基金增仓、基金家数减、市值3034亿",
-      "price": 123.0,
-      "market": "A股",
-      "fund_tag": "基金增仓、基金家数减"
-    },
-    {
       "code": "000725",
       "name": "京东方Ａ",
       "score": 80.0,
-      "pct": 6.365,
+      "pct": 3.59,
       "signal": "买入",
       "hold_days": "1–3天",
       "reason": "[趋势延续] 明日看延续：均线多头、趋势动能、5日动量正 · 质量：主板/中小板、基金减持、基金持股降、基金家数减",
-      "price": 7.52,
+      "price": 7.79,
       "market": "A股",
       "fund_tag": "基金减持、基金持股降、基金家数减"
     },
     {
-      "code": "300179",
-      "name": "四方达",
-      "score": 77.0,
-      "pct": 4.027,
+      "code": "688530",
+      "name": "欧莱新材",
+      "score": 80.0,
+      "pct": 0.445,
       "signal": "观望",
       "hold_days": "1–3天",
-      "reason": "[趋势延续] 明日看延续：均线多头、趋势动能、5日动量正 · 质量：创业板、基金增仓、基金家数减、市值301亿",
-      "price": 62.0,
+      "reason": "[趋势延续] 明日看延续：均线多头、趋势动能、5日动量正 · 质量：科创板、基金增仓、基金家数减、QFII新进",
+      "price": 87.99,
       "market": "A股",
-      "fund_tag": "基金增仓、基金家数减"
+      "fund_tag": "基金增仓、基金家数减、QFII新进"
     }
   ],
   "global_picks": [],
-  "markdown": "# 明日推荐 · 目标交易日 2026-06-26\n\n> 基于 **2026-06-25** 收盘数据 + 历史 K 线规则预测，非保证上涨。\n\n## 🇨🇳 A股 · 明日偏强\n| 信号 | 名称 | 代码 | 明日分 | 今日% | 理由 |\n|------|------|------|--------|-------|------|\n| 明日偏多 | 圣阳股份 | 002580 | 88.0 | -0.90 | [强势回踩] 明日看反弹：站上MA20、趋势内回踩、放量、5日动量正 · 质量：主板/中 |\n| 明日偏多 | 宏明电子 | 301682 | 87.0 | +5.10 | [趋势延续] 明日看延续：均线多头、趋势动能 · 质量：创业板、基金增仓、市值230亿、 |\n| 明日偏多 | 亨通光电 | 600487 | 85.0 | +3.34 | [趋势延续] 明日看延续：均线多头、趋势动能、5日动量正 · 质量：主板/中小板、基金增 |\n| 明日偏多 | 京东方Ａ | 000725 | 80.0 | +6.37 | [趋势延续] 明日看延续：均线多头、趋势动能、5日动量正 · 质量：主板/中小板、基金减 |\n| 明日观望 | 四方达 | 300179 | 77.0 | +4.03 | [趋势延续] 明日看延续：均线多头、趋势动能、5日动量正 · 质量：创业板、基金增仓、基 |\n\n## 🌍 全球 · 明日关注（港/美）\n暂无港/美明日关注。\n\n*规则型预测，非投资建议。*\n\n# 大盘长线风向标 · 2026-06-25\n\n## 未来 1~2 周大跌概率：**23%**（低）\n\n- **2 周看法：** 偏多 · 可积极布局\n- **4~8 周看法：** 趋势友好 · 持有为主\n\n未来 1~2 周大跌概率 **23%**（相对可控）。建议：可按计划选股，仍须设好止损。\n\n### 主要依据\n- 上证指数均线空头\n- 创业板指趋势偏多\n- 港股/美股同步偏弱\n- 市场广度高（100%上涨）\n- A股样本上涨占比：**100%**\n\n### 指数快照\n\n| 指数 | 趋势 | 5日% | 20日% | 距20日高% |\n|------|------|------|-------|-----------|\n| 上证指数 | 空头 | -3.34 | -3.16 | -7.95 |\n| 创业板指 | 多头 | 4.92 | 8.06 | 0.0 |\n| 恒生指数 | 空头 | -4.42 | -8.54 | -10.09 |\n| 标普500 | 震荡 | -2.04 | -2.14 | -3.31 |\n\n*规则模型估计，非投资建议。*"
+  "markdown": "# 明日推荐 · 目标交易日 2026-06-29\n\n> 基于 **2026-06-26** 收盘数据 + 历史 K 线规则预测，非保证上涨。\n\n## 🇨🇳 A股 · 明日偏强\n| 信号 | 名称 | 代码 | 明日分 | 今日% | 理由 |\n|------|------|------|--------|-------|------|\n| 明日偏多 | 京东方Ａ | 000725 | 80.0 | +3.59 | [趋势延续] 明日看延续：均线多头、趋势动能、5日动量正 · 质量：主板/中小板、基金减 |\n| 明日观望 | 欧莱新材 | 688530 | 80.0 | +0.45 | [趋势延续] 明日看延续：均线多头、趋势动能、5日动量正 · 质量：科创板、基金增仓、基 |\n\n## 🌍 全球 · 明日关注（港/美）\n暂无港/美明日关注。\n\n*规则型预测，非投资建议。*\n\n# 大盘长线风向标 · 2026-06-26\n\n## 未来 1~2 周大跌概率：**34%**（偏低）\n\n- **2 周看法：** 中性 · 可正常选股\n- **4~8 周看法：** 震荡偏多 · 关注主线\n\n未来 1~2 周大跌概率 **34%**（相对可控）。建议：可按计划选股，仍须设好止损。\n\n### 主要依据\n- 上证指数均线空头\n- 上证指数距20日高点已回撤9.6%\n- 创业板指趋势偏多\n- 市场广度高（100%上涨）\n- A股样本上涨占比：**100%**\n\n### 指数快照\n\n| 指数 | 趋势 | 5日% | 20日% | 距20日高% |\n|------|------|------|-------|-----------|\n| 上证指数 | 空头 | -2.76 | -4.03 | -9.63 |\n| 创业板指 | 多头 | -1.37 | 1.68 | -4.07 |\n| 恒生指数 | 空头 | -5.08 | -8.89 | -11.37 |\n| 标普500 | 震荡 | -0.84 | -2.17 | -3.32 |\n\n*规则模型估计，非投资建议。*"
 }
