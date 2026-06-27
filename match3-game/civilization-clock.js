@@ -76,10 +76,25 @@
     return (
       "Gen." +
       s.generation +
-      " · 文明历 " +
+      " · 第" +
+      s.universeDay +
+      "日 · 文明历 " +
       s.year +
       " · " +
       s.phase
+    );
+  }
+
+  function formatClockTip(cfg) {
+    var s = resolveState(cfg);
+    return (
+      "文明历 " +
+      s.year +
+      " · " +
+      s.phase +
+      " · 此宇宙比人间快 " +
+      YEARS_PER_GENERATION +
+      " 倍"
     );
   }
 
@@ -101,19 +116,11 @@
 
   function applyToSplash(cfg) {
     if (typeof document === "undefined") return;
-    var s = resolveState(cfg);
     var ver = document.querySelector(".boot-ver");
     if (ver) ver.textContent = formatForSplash(cfg);
     var tip = document.querySelector(".boot-tip");
     if (tip) {
-      tip.textContent =
-        "文明历 " +
-        s.year +
-        " · " +
-        s.phase +
-        " · 此宇宙比人间快 " +
-        YEARS_PER_GENERATION +
-        " 倍";
+      tip.textContent = formatClockTip(cfg);
     }
   }
 
@@ -123,6 +130,7 @@
     getCivilizationDate: getCivilizationDate,
     getPhase: getPhase,
     formatForSplash: formatForSplash,
+    formatClockTip: formatClockTip,
     formatForHome: formatForHome,
     applyToSplash: applyToSplash,
     computeYear: computeYear,
