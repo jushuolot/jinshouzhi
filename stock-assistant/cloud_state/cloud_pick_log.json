@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-06-26",
+  "updated_at": "2026-06-27",
   "records": [
     {
       "pick_date": "2026-06-09",
@@ -1043,6 +1043,21 @@
       "signal": "观望",
       "pick_score": 80.0,
       "pick_pct": 0.445,
+      "hold_days": 1,
+      "pattern": "趋势延续",
+      "reason": "[趋势延续] 明日看延续：均线多头、趋势动能、5日动量正 · 质量：科创板、基金增仓、基金家数减、QFII新进",
+      "verified": false,
+      "end_pct": null,
+      "hit": null,
+      "note": ""
+    },
+    {
+      "pick_date": "2026-06-27",
+      "code": "688530",
+      "name": "欧莱新材",
+      "signal": "观望",
+      "pick_score": 80.0,
+      "pick_pct": 0.45,
       "hold_days": 1,
       "pattern": "趋势延续",
       "reason": "[趋势延续] 明日看延续：均线多头、趋势动能、5日动量正 · 质量：科创板、基金增仓、基金家数减、QFII新进",
