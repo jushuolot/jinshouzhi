@@ -444,7 +444,7 @@
       meta: { kind: "weekly_recap", universeDay: uday, phase: phase },
     });
     if (credited > 0 && typeof window.showSystemToast === "function") {
-      window.showSystemToast("📋 宇宙第" + uday + "日收工复盘 · 入账", 3600);
+      window.showSystemToast("📋 宇宙第" + uday + "日收工复盘 · 档案已同步", 3600);
     }
     return credited;
   }
@@ -476,7 +476,7 @@
       },
     });
     if (credited > 0 && typeof window.showSystemToast === "function") {
-      window.showSystemToast("🗂 新坑资料室整理 · 文明历 " + civ.civilizationYear + " · 入账", 3600);
+      window.showSystemToast("🗂 新坑资料室整理 · 文明历 " + civ.civilizationYear + " · 档案已同步", 3600);
     }
     return credited;
   }
@@ -588,7 +588,7 @@
       meta: { kind: "commons_mirror", phase: phase, day: key },
     });
     if (credited > 0 && typeof window.showSystemToast === "function") {
-      window.showSystemToast("📚 公开资料镜像入账 · 超越期 · Wikimedia 档", 3400);
+      window.showSystemToast("📚 公开资料镜像完成 · 超越期 · Wikimedia 档", 3400);
     }
     return credited;
   }
