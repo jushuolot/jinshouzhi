@@ -25,6 +25,7 @@
     newPitDataRoom: { amount: 0.024, phases: ["超越期"], universeDayMod: 1 },
     campArgumentArchive: { amount: 0.019, phases: ["超越期"], universeDayMod: 2 },
     pitWallHazardScan: { amount: 0.026, phases: ["超越期"], universeDayMod: 3 },
+    campMealWeatherLog: { amount: 0.021, phases: ["超越期"], universeDayMod: 4 },
     bounty: {
       label: "任务赏金(演示)",
       endpoint: "https://api.coingecko.com/api/v3/ping",
@@ -147,6 +148,7 @@
     lastNewPitDataRoom: "",
     lastCampArgumentArchive: "",
     lastPitWallHazardScan: "",
+    lastCampMealWeatherLog: "",
   };
 
   var tickTimer = null;
@@ -174,6 +176,7 @@
       state.lastNewPitDataRoom = data.lastNewPitDataRoom || "";
       state.lastCampArgumentArchive = data.lastCampArgumentArchive || "";
       state.lastPitWallHazardScan = data.lastPitWallHazardScan || "";
+      state.lastCampMealWeatherLog = data.lastCampMealWeatherLog || "";
     } catch (e) {
       // ignore
     }
@@ -194,6 +197,7 @@
           lastNewPitDataRoom: state.lastNewPitDataRoom,
           lastCampArgumentArchive: state.lastCampArgumentArchive,
           lastPitWallHazardScan: state.lastPitWallHazardScan,
+          lastCampMealWeatherLog: state.lastCampMealWeatherLog,
           updatedAt: Date.now(),
         })
       );
@@ -212,6 +216,12 @@
     registry[id] = Object.assign({ id: id }, def);
     return true;
   }
+
+  registerChannel("camp_meal_weather_log", {
+    label: "营地伙食气象档案",
+    source: "network_settlement",
+    description: "周四生活日整理营地伙食、潮气与队员口述，模拟档案入账",
+  });
 
   function listChannels() {
     return Object.keys(registry).map(function (k) {
@@ -454,7 +464,7 @@
     if (cfg.phases.indexOf(phase) < 0) return 0;
     state.lastNewPitDataRoom = key;
     saveState();
-    var civ = clock ? clock.getCivilizationDate() : { civilizationYear: evo.civilizationYear || 2051 };
+    var civ = clock ? clock.getCivilizationDate() : { civilizationYear: evo.civilizationYear || 2053 };
     var credited = creditChannel("new_pit_data_room", {
       amount: cfg.amount,
       meta: {
@@ -486,7 +496,7 @@
     if (cfg.phases.indexOf(phase) < 0) return 0;
     state.lastCampArgumentArchive = key;
     saveState();
-    var civ = clock ? clock.getCivilizationDate() : { civilizationYear: evo.civilizationYear || 2051 };
+    var civ = clock ? clock.getCivilizationDate() : { civilizationYear: evo.civilizationYear || 2053 };
     return creditChannel("camp_argument_archive", {
       amount: cfg.amount,
       meta: {
@@ -515,7 +525,7 @@
     if (cfg.phases.indexOf(phase) < 0) return 0;
     state.lastPitWallHazardScan = key;
     saveState();
-    var civ = clock ? clock.getCivilizationDate() : { civilizationYear: evo.civilizationYear || 2051 };
+    var civ = clock ? clock.getCivilizationDate() : { civilizationYear: evo.civilizationYear || 2053 };
     return creditChannel("pit_wall_hazard_scan", {
       amount: cfg.amount,
       meta: {
@@ -524,6 +534,37 @@
         generation: evo.generation || 0,
         phase: phase,
         year: civ.civilizationYear,
+        simulated: true,
+      },
+    });
+  }
+
+  function tryCampMealWeatherLog() {
+    var evo = typeof window !== "undefined" && window.MATCH3_EVOLUTION ? window.MATCH3_EVOLUTION : {};
+    var uday = evo.universeDay || 0;
+    var cfg = CONFIG.campMealWeatherLog;
+    if (!cfg || uday % 7 !== cfg.universeDayMod) return 0;
+    var key = todayKey() + "-g" + (evo.generation || "x") + "-u" + uday;
+    if (state.lastCampMealWeatherLog === key) return 0;
+    var clock =
+      typeof window !== "undefined" && window.MATCH3_CIVILIZATION_CLOCK
+        ? window.MATCH3_CIVILIZATION_CLOCK
+        : null;
+    var phase = clock ? clock.getPhase() : evo.civilizationPhase || "超越期";
+    if (cfg.phases.indexOf(phase) < 0) return 0;
+    state.lastCampMealWeatherLog = key;
+    saveState();
+    var civ = clock ? clock.getCivilizationDate() : { civilizationYear: evo.civilizationYear || 2053 };
+    return creditChannel("camp_meal_weather_log", {
+      amount: cfg.amount,
+      meta: {
+        kind: "camp_meal_weather_log",
+        universeDay: uday,
+        generation: evo.generation || 0,
+        phase: phase,
+        year: civ.civilizationYear,
+        meal: "红油抄手",
+        weather: "雨后潮湿",
         simulated: true,
       },
     });
@@ -583,6 +624,7 @@
     tryNewPitDataRoom();
     tryCampArgumentArchive();
     tryPitWallHazardScan();
+    tryCampMealWeatherLog();
     tryAffiliateReferral();
     startPeriodicTick();
     deferNetworkProbes();
