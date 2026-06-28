@@ -1,112 +1,112 @@
 {
-  "prev_date": "2026-06-26",
-  "curr_date": "2026-06-27",
-  "compared": 107,
+  "prev_date": "2026-06-27",
+  "curr_date": "2026-06-28",
+  "compared": 135,
   "avg_pct_delta": 0.0,
   "movers": [
     {
-      "code": "301310",
-      "name": "鑫宏业",
-      "prev_pct": -1.79,
-      "curr_pct": -1.8,
-      "delta_pct": -0.01
-    },
-    {
-      "code": "002119",
-      "name": "康强电子",
-      "prev_pct": 10.02,
-      "curr_pct": 10.01,
-      "delta_pct": -0.01
-    },
-    {
-      "code": "688272",
-      "name": "富吉瑞",
-      "prev_pct": 11.69,
-      "curr_pct": 11.68,
-      "delta_pct": -0.01
-    },
-    {
-      "code": "688530",
-      "name": "欧莱新材",
-      "prev_pct": 0.45,
-      "curr_pct": 0.45,
-      "delta_pct": 0.01
-    },
-    {
-      "code": "002910",
-      "name": "庄园牧场",
-      "prev_pct": 10.04,
-      "curr_pct": 10.04,
-      "delta_pct": -0.01
-    },
-    {
-      "code": "688328",
-      "name": "深科达",
-      "prev_pct": 11.69,
-      "curr_pct": 11.69,
+      "code": "920981",
+      "name": "晶赛科技",
+      "prev_pct": 1.94,
+      "curr_pct": 1.94,
       "delta_pct": 0.0
     },
     {
-      "code": "300274",
-      "name": "阳光电源",
-      "prev_pct": -1.05,
-      "curr_pct": -1.05,
+      "code": "301666",
+      "name": "大普微-UW",
+      "prev_pct": -9.88,
+      "curr_pct": -9.88,
       "delta_pct": 0.0
     },
     {
-      "code": "600667",
-      "name": "太极实业",
-      "prev_pct": 6.2,
-      "curr_pct": 6.2,
-      "delta_pct": -0.0
-    },
-    {
-      "code": "300537",
-      "name": "广信材料",
-      "prev_pct": 5.14,
-      "curr_pct": 5.14,
-      "delta_pct": -0.0
-    },
-    {
-      "code": "920662",
-      "name": "方盛股份",
-      "prev_pct": 1.6,
-      "curr_pct": 1.6,
+      "code": "300102",
+      "name": "乾照光电",
+      "prev_pct": 9.84,
+      "curr_pct": 9.84,
       "delta_pct": 0.0
     },
     {
-      "code": "300084",
-      "name": "海默科技",
-      "prev_pct": 12.31,
-      "curr_pct": 12.31,
+      "code": "300342",
+      "name": "天银机电",
+      "prev_pct": 5.11,
+      "curr_pct": 5.11,
       "delta_pct": 0.0
     },
     {
-      "code": "002965",
-      "name": "祥鑫科技",
-      "prev_pct": 10.01,
-      "curr_pct": 10.01,
+      "code": "300668",
+      "name": "杰恩股份",
+      "prev_pct": 15.66,
+      "curr_pct": 15.66,
       "delta_pct": 0.0
     },
     {
-      "code": "688535",
-      "name": "华海诚科",
-      "prev_pct": 10.38,
-      "curr_pct": 10.38,
+      "code": "001399",
+      "name": "N惠科",
+      "prev_pct": 315.02,
+      "curr_pct": 315.02,
       "delta_pct": 0.0
     },
     {
-      "code": "600343",
-      "name": "航天动力",
-      "prev_pct": 10.01,
-      "curr_pct": 10.01,
+      "code": "600879",
+      "name": "航天电子",
+      "prev_pct": 5.65,
+      "curr_pct": 5.65,
       "delta_pct": 0.0
     },
     {
-      "code": "688432",
-      "name": "有研硅",
+      "code": "688409",
+      "name": "富创精密",
       "prev_pct": 20.0,
       "curr_pct": 20.0,
+      "delta_pct": 0.0
+    },
+    {
+      "code": "002456",
+      "name": "欧菲光",
+      "prev_pct": 8.8,
+      "curr_pct": 8.8,
+      "delta_pct": 0.0
+    },
+    {
+      "code": "002930",
+      "name": "宏川智慧",
+      "prev_pct": 10.04,
+      "curr_pct": 10.04,
+      "delta_pct": 0.0
+    },
+    {
+      "code": "300762",
+      "name": "上海瀚讯",
+      "prev_pct": 11.89,
+      "curr_pct": 11.89,
+      "delta_pct": 0.0
+    },
+    {
+      "code": "002842",
+      "name": "翔鹭钨业",
+      "prev_pct": 1.46,
+      "curr_pct": 1.46,
+      "delta_pct": 0.0
+    },
+    {
+      "code": "603063",
+      "name": "禾望电气",
+      "prev_pct": -5.69,
+      "curr_pct": -5.69,
+      "delta_pct": 0.0
+    },
+    {
+      "code": "002335",
+      "name": "科华数据",
+      "prev_pct": 3.24,
+      "curr_pct": 3.24,
+      "delta_pct": 0.0
+    },
+    {
+      "code": "601636",
+      "name": "旗滨集团",
+      "prev_pct": 6.95,
+      "curr_pct": 6.95,
       "delta_pct": 0.0
     }
   ],
@@ -115,27 +115,34 @@
       "code": "688530",
       "name": "欧莱新材",
       "signal": "观望",
-      "delta_pct": 0.01,
-      "hit": true
+      "delta_pct": 0.0,
+      "hit": false
     },
     {
       "code": "688530",
       "name": "欧莱新材",
       "signal": "观望",
-      "delta_pct": 0.01,
-      "hit": true
+      "delta_pct": 0.0,
+      "hit": false
     },
     {
       "code": "688530",
       "name": "欧莱新材",
       "signal": "观望",
-      "delta_pct": 0.01,
-      "hit": true
+      "delta_pct": 0.0,
+      "hit": false
+    },
+    {
+      "code": "688530",
+      "name": "欧莱新材",
+      "signal": "观望",
+      "delta_pct": 0.0,
+      "hit": false
     }
   ],
   "conclusions": [
-    "快照对比 107 只，均涨跌变化 +0.00%。",
-    "昨日推荐 3 只，快照验证 3 只方向正确。",
-    "最大异动 鑫宏业 301310 Δ-0.0%。"
+    "快照对比 135 只，均涨跌变化 +0.00%。",
+    "昨日推荐 4 只，快照验证 0 只方向正确。",
+    "最大异动 晶赛科技 920981 Δ+0.0%。"
   ]
 }
