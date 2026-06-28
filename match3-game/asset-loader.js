@@ -133,10 +133,8 @@
     window.PortraitPainter.preloadAll(null, null);
   }
 
-  function startDeferredIdle() {
-    if (deferredStarted) return;
-    deferredStarted = true;
-    loadDeferredCss();
+  function startCinemaDeferred() {
+    if (cinemaReady) return;
     cinemaReady = loadScriptChain(CINEMA_SCRIPTS)
       .then(function () {
         scheduleIdle(preloadPortraits, 2400, 500);
@@ -144,6 +142,13 @@
       .catch(function () {
         return null;
       });
+  }
+
+  function startDeferredIdle() {
+    if (deferredStarted) return;
+    deferredStarted = true;
+    loadDeferredCss();
+    scheduleIdle(startCinemaDeferred, 2200, 300);
   }
 
   function ensureCinema() {
