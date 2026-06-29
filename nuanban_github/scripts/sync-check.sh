@@ -15,7 +15,9 @@ fi
 
 STAGING_IP="${NUANBAN_STAGING_IP:-}"
 PUBLIC_API="${NUANBAN_PUBLIC_API:-}"
-if [[ -z "$PUBLIC_API" && -n "$STAGING_IP" ]]; then
+if [[ -z "$PUBLIC_API" && -n "${NUANBAN_DOMAIN:-}" ]]; then
+  PUBLIC_API="https://www.${NUANBAN_DOMAIN}"
+elif [[ -z "$PUBLIC_API" && -n "$STAGING_IP" ]]; then
   PUBLIC_API="http://${STAGING_IP}"
 fi
 LOCAL_API="${NUANBAN_API:-http://127.0.0.1:8090}"
@@ -87,7 +89,7 @@ if [[ -f config/github.env ]]; then
   # shellcheck disable=SC1091
   source config/github.env
 fi
-FORMAL_API="${NUANBAN_FORMAL_API_URL:-https://101-200-128-82.sslip.io/api}"
+FORMAL_API="${NUANBAN_FORMAL_API_URL:-https://www.nuanbao.cc/api}"
 echo "  GitHub Pages 发布版 API（Actions 注入）: ${FORMAL_API}"
 if [[ "$FORMAL_API" == http://* ]]; then
   echo "  ⚠ GitHub Pages 为 HTTPS，HTTP API 可能被浏览器 mixed-content 拦截；备案后改用 https://nuanban.cc/api"
