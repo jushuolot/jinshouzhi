@@ -6,15 +6,17 @@
   "use strict";
 
   var DEFAULT = {
-    version: "6.1.0",
-    generation: 61,
-    universeDay: 10,
+    version: "6.2.0",
+    generation: 62,
+    universeDay: 11,
     civilizationEpoch: "1929-07",
-    civilizationDay: 61,
-    civilizationYear: 2051,
+    civilizationDay: 62,
+    civilizationYear: 2053,
     civilizationPhase: "超越期",
+    dailyChronicle:
+      "第 11 日·馋嘴/生活日。文明历 2053，营地灶火与陶盉炊烟样本被写入超越期日常档案。",
     autoTune: { enabled: true, windowSize: 8, maxMoveAdjust: 3, targetWinRate: 0.52 },
-    patchNotes: ["Gen.61 文明时钟", "超越期 2051 · 险情日避险模型"],
+    patchNotes: ["Gen.62 文明时钟", "超越期 2053 · 馋嘴/生活日营地档案"],
   };
 
   window.MATCH3_EVOLUTION = DEFAULT;

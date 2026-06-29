@@ -25,6 +25,7 @@
     newPitDataRoom: { amount: 0.024, phases: ["超越期"], universeDayMod: 1 },
     campArgumentArchive: { amount: 0.019, phases: ["超越期"], universeDayMod: 2 },
     pitWallHazardScan: { amount: 0.026, phases: ["超越期"], universeDayMod: 3 },
+    campKitchenLedger: { amount: 0.021, phases: ["超越期"], universeDayMod: 4 },
     bounty: {
       label: "任务赏金(演示)",
       endpoint: "https://api.coingecko.com/api/v3/ping",
@@ -131,6 +132,12 @@
       source: "network_settlement",
       description: "周三险情日归档坑壁湿度与回压曲线，模拟避险数据入账",
     },
+    camp_kitchen_ledger: {
+      id: "camp_kitchen_ledger",
+      label: "营地炊烟账本",
+      source: "network_settlement",
+      description: "周四生活日归档营地灶火、陶盉烟炱与食谱残留，模拟日常档案入账",
+    },
   };
 
   var state = {
@@ -147,6 +154,7 @@
     lastNewPitDataRoom: "",
     lastCampArgumentArchive: "",
     lastPitWallHazardScan: "",
+    lastCampKitchenLedger: "",
   };
 
   var tickTimer = null;
@@ -174,6 +182,7 @@
       state.lastNewPitDataRoom = data.lastNewPitDataRoom || "";
       state.lastCampArgumentArchive = data.lastCampArgumentArchive || "";
       state.lastPitWallHazardScan = data.lastPitWallHazardScan || "";
+      state.lastCampKitchenLedger = data.lastCampKitchenLedger || "";
     } catch (e) {
       // ignore
     }
@@ -194,6 +203,7 @@
           lastNewPitDataRoom: state.lastNewPitDataRoom,
           lastCampArgumentArchive: state.lastCampArgumentArchive,
           lastPitWallHazardScan: state.lastPitWallHazardScan,
+          lastCampKitchenLedger: state.lastCampKitchenLedger,
           updatedAt: Date.now(),
         })
       );
@@ -434,7 +444,7 @@
       meta: { kind: "weekly_recap", universeDay: uday, phase: phase },
     });
     if (credited > 0 && typeof window.showSystemToast === "function") {
-      window.showSystemToast("📋 宇宙第" + uday + "日收工复盘 · 入账", 3600);
+      window.showSystemToast("📋 宇宙第" + uday + "日收工复盘 · 档案已归整", 3600);
     }
     return credited;
   }
@@ -454,7 +464,7 @@
     if (cfg.phases.indexOf(phase) < 0) return 0;
     state.lastNewPitDataRoom = key;
     saveState();
-    var civ = clock ? clock.getCivilizationDate() : { civilizationYear: evo.civilizationYear || 2051 };
+    var civ = clock ? clock.getCivilizationDate() : { civilizationYear: evo.civilizationYear || 2053 };
     var credited = creditChannel("new_pit_data_room", {
       amount: cfg.amount,
       meta: {
@@ -466,7 +476,7 @@
       },
     });
     if (credited > 0 && typeof window.showSystemToast === "function") {
-      window.showSystemToast("🗂 新坑资料室整理 · 文明历 " + civ.civilizationYear + " · 入账", 3600);
+      window.showSystemToast("🗂 新坑资料室整理 · 文明历 " + civ.civilizationYear + " · 档案已归整", 3600);
     }
     return credited;
   }
@@ -486,7 +496,7 @@
     if (cfg.phases.indexOf(phase) < 0) return 0;
     state.lastCampArgumentArchive = key;
     saveState();
-    var civ = clock ? clock.getCivilizationDate() : { civilizationYear: evo.civilizationYear || 2051 };
+    var civ = clock ? clock.getCivilizationDate() : { civilizationYear: evo.civilizationYear || 2053 };
     return creditChannel("camp_argument_archive", {
       amount: cfg.amount,
       meta: {
@@ -515,7 +525,7 @@
     if (cfg.phases.indexOf(phase) < 0) return 0;
     state.lastPitWallHazardScan = key;
     saveState();
-    var civ = clock ? clock.getCivilizationDate() : { civilizationYear: evo.civilizationYear || 2051 };
+    var civ = clock ? clock.getCivilizationDate() : { civilizationYear: evo.civilizationYear || 2053 };
     return creditChannel("pit_wall_hazard_scan", {
       amount: cfg.amount,
       meta: {
@@ -527,6 +537,40 @@
         simulated: true,
       },
     });
+  }
+
+  function tryCampKitchenLedger() {
+    var evo = typeof window !== "undefined" && window.MATCH3_EVOLUTION ? window.MATCH3_EVOLUTION : {};
+    var uday = evo.universeDay || 0;
+    var cfg = CONFIG.campKitchenLedger;
+    if (!cfg || uday % 7 !== cfg.universeDayMod) return 0;
+    var key = todayKey() + "-g" + (evo.generation || "x") + "-u" + uday;
+    if (state.lastCampKitchenLedger === key) return 0;
+    var clock =
+      typeof window !== "undefined" && window.MATCH3_CIVILIZATION_CLOCK
+        ? window.MATCH3_CIVILIZATION_CLOCK
+        : null;
+    var phase = clock ? clock.getPhase() : evo.civilizationPhase || "超越期";
+    if (cfg.phases.indexOf(phase) < 0) return 0;
+    state.lastCampKitchenLedger = key;
+    saveState();
+    var civ = clock ? clock.getCivilizationDate() : { civilizationYear: evo.civilizationYear || 2053 };
+    var credited = creditChannel("camp_kitchen_ledger", {
+      amount: cfg.amount,
+      meta: {
+        kind: "camp_kitchen_ledger",
+        universeDay: uday,
+        generation: evo.generation || 0,
+        phase: phase,
+        year: civ.civilizationYear,
+        sample: "pottery_soot_and_camp_meal",
+        simulated: true,
+      },
+    });
+    if (credited > 0 && typeof window.showSystemToast === "function") {
+      window.showSystemToast("🍲 营地炊烟样本归档 · 文明历 " + civ.civilizationYear, 3400);
+    }
+    return credited;
   }
 
   function tryPublicCommonsMirror() {
@@ -547,7 +591,7 @@
       meta: { kind: "commons_mirror", phase: phase, day: key },
     });
     if (credited > 0 && typeof window.showSystemToast === "function") {
-      window.showSystemToast("📚 公开资料镜像入账 · 超越期 · Wikimedia 档", 3400);
+      window.showSystemToast("📚 公开资料镜像完成 · 超越期 · Wikimedia 档", 3400);
     }
     return credited;
   }
@@ -583,6 +627,7 @@
     tryNewPitDataRoom();
     tryCampArgumentArchive();
     tryPitWallHazardScan();
+    tryCampKitchenLedger();
     tryAffiliateReferral();
     startPeriodicTick();
     deferNetworkProbes();
