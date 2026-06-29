@@ -73,6 +73,7 @@
   var threeReady = null;
   var codexReady = null;
   var deferredStarted = false;
+  var cinemaWarmupQueued = false;
 
   function scheduleIdle(fn, timeout, fallbackMs) {
     if (window.requestIdleCallback) {
@@ -137,13 +138,22 @@
     if (deferredStarted) return;
     deferredStarted = true;
     loadDeferredCss();
-    cinemaReady = loadScriptChain(CINEMA_SCRIPTS)
-      .then(function () {
-        scheduleIdle(preloadPortraits, 2400, 500);
-      })
-      .catch(function () {
-        return null;
-      });
+    queueCinemaWarmup();
+  }
+
+  function queueCinemaWarmup() {
+    if (cinemaReady || cinemaWarmupQueued) return;
+    cinemaWarmupQueued = true;
+    scheduleIdle(function () {
+      if (cinemaReady) return;
+      cinemaReady = loadScriptChain(CINEMA_SCRIPTS)
+        .then(function () {
+          scheduleIdle(preloadPortraits, 2400, 500);
+        })
+        .catch(function () {
+          return null;
+        });
+    }, 2200, 180);
   }
 
   function ensureCinema() {
