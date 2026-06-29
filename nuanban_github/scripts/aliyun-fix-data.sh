@@ -31,19 +31,37 @@ STAGING_IP="${NUANBAN_STAGING_IP:-}"
 if [[ -z "$STAGING_IP" ]]; then
   STAGING_IP="$(curl -fsS --max-time 5 ifconfig.me 2>/dev/null || curl -fsS --max-time 5 icanhazip.com 2>/dev/null || true)"
 fi
-if [[ -n "$STAGING_IP" ]]; then
-  echo "==> 重建 H5（API: http://${STAGING_IP}/api）"
+
+if [[ -n "${NUANBAN_DOMAIN:-}" ]]; then
+  H5_API_BASE="https://${NUANBAN_DOMAIN}/api"
+elif [[ -n "${NUANBAN_PUBLIC_API:-}" ]]; then
+  H5_API_BASE="${NUANBAN_PUBLIC_API%/}/api"
+elif [[ -n "$STAGING_IP" ]]; then
+  H5_API_BASE="http://${STAGING_IP}/api"
+fi
+
+if [[ -n "${H5_API_BASE:-}" ]]; then
+  echo "==> 重建 H5（API: ${H5_API_BASE}）"
   cd packages/miniapp
   if [[ ! -d node_modules ]]; then
     npm install
   fi
-  VITE_RELEASE_CHANNEL=stable VITE_API_BASE_URL="http://${STAGING_IP}/api" npm run build:h5
+  VITE_RELEASE_CHANNEL=stable VITE_API_BASE_URL="${H5_API_BASE}" npm run build:h5
   cd "$ROOT"
   echo "==> 重启 Caddy"
-  "${COMPOSE[@]}" --profile staging restart caddy 2>/dev/null || "${COMPOSE[@]}" --profile staging up -d caddy
+  "${COMPOSE[@]}" --profile staging restart caddy 2>/dev/null || \
+    "${COMPOSE[@]}" --profile full restart caddy 2>/dev/null || \
+    "${COMPOSE[@]}" --profile staging up -d caddy 2>/dev/null || \
+    "${COMPOSE[@]}" --profile full up -d caddy
 fi
 
 echo ""
 echo "完成。请强刷浏览器 (Ctrl+Shift+R):"
-echo "  http://${STAGING_IP:-你的IP}/#/pages/common/login"
+if [[ -n "${NUANBAN_DOMAIN:-}" ]]; then
+  echo "  https://${NUANBAN_DOMAIN}/#/pages/common/login"
+elif [[ -n "$STAGING_IP" ]]; then
+  echo "  http://${STAGING_IP}/#/pages/common/login"
+else
+  echo "  你的 H5 登录页"
+fi
 echo "测试: 13800000001 验证码 000000（或先获取验证码）"

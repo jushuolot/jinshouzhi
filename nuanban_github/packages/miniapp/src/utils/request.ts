@@ -24,6 +24,10 @@ export function resolveApiBase(): string {
   if (!onDevHost && /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?\/api$/i.test(configured)) {
     return `${origin}/api`;
   }
+  // HTTPS 页面请求 HTTP API 会被浏览器拦截（mixed-content）
+  if (!onDevHost && window.location.protocol === 'https:' && configured.startsWith('http://')) {
+    return `${origin}/api`;
+  }
   return configured;
 }
 
