@@ -3,7 +3,7 @@
 
 services:
   pocketbase:
-    ports:
+    ports: !override
       - "127.0.0.1:8090:8090"  # 仅服务器本机维护/seed，不对公网开放
     command:
       - /pb/pocketbase
