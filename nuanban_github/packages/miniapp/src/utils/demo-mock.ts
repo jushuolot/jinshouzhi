@@ -1630,7 +1630,7 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
         status,
         elderProfileId: role === 'elder' ? `elder-new-${Date.now()}` : null,
       });
-    } else if (role === 'student') {
+    } else if (role === 'student' && existing.status !== 'active') {
       existing.status = 'pending';
     }
     resetRoleProfileState(role, displayName);

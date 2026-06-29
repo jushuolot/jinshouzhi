@@ -66,7 +66,19 @@
     <button v-if="studentStatus === 'rejected'" class="btn nb-btn-primary" @tap="goEdit">
       修改资料并重新提交
     </button>
-    <button class="btn nb-btn-primary" :class="{ 'btn-secondary-spacing': studentStatus === 'rejected' }" @tap="logout">
+    <button
+      v-if="studentStatus === 'pending'"
+      class="btn nb-btn-primary"
+      :loading="refreshing"
+      @tap="refreshAuditStatus"
+    >
+      刷新审核状态
+    </button>
+    <button
+      class="btn-secondary nb-btn-soft"
+      :class="{ 'btn-after-primary': studentStatus === 'pending' || studentStatus === 'rejected' }"
+      @tap="logout"
+    >
       退出登录
     </button>
     <button class="btn-secondary nb-btn-soft" @tap="goLogin">切换账号</button>
@@ -80,11 +92,13 @@ import AuthBrandHeader from '../../components/AuthBrandHeader.vue';
 import { fetchStudentProfile, type StudentProfile } from '../../api/student';
 import { resolveCartoonAvatarUrl } from '../../utils/cartoon-avatars';
 import { serviceAreaSummary } from '../../utils/service-area-geo';
+import { routeStudentAfterAuth } from '../../utils/student-auth-route';
 import { useRoleStore } from '../../store/role';
 
 const roleStore = useRoleStore();
 const profile = ref<StudentProfile | null>(null);
 const loading = ref(true);
+const refreshing = ref(false);
 
 const studentStatus = computed(
   () => roleStore.roles.find((r) => r.role === 'student')?.status || 'pending',
@@ -131,14 +145,45 @@ const serviceHoursText = computed(() => {
 });
 
 onLoad(async () => {
+  await loadProfile();
+});
+
+async function loadProfile() {
+  loading.value = true;
   try {
     profile.value = await fetchStudentProfile();
+    await applyAuditStatusFromProfile(profile.value);
   } catch {
     profile.value = null;
   } finally {
     loading.value = false;
   }
-});
+}
+
+async function applyAuditStatusFromProfile(p: StudentProfile | null) {
+  const audit = p?.auditStatus;
+  if (audit !== 'active') return;
+  roleStore.setStudentRoleStatus('active');
+  await routeStudentAfterAuth();
+}
+
+async function refreshAuditStatus() {
+  refreshing.value = true;
+  try {
+    profile.value = await fetchStudentProfile();
+    if (profile.value?.auditStatus === 'active') {
+      roleStore.setStudentRoleStatus('active');
+      uni.showToast({ title: '审核已通过', icon: 'success' });
+      await routeStudentAfterAuth();
+      return;
+    }
+    uni.showToast({ title: '仍在审核中，请稍后再试', icon: 'none' });
+  } catch {
+    uni.showToast({ title: '刷新失败，请检查网络', icon: 'none' });
+  } finally {
+    refreshing.value = false;
+  }
+}
 
 function previewPhoto() {
   const url = profile.value?.verificationPhotoUrl;
@@ -279,6 +324,9 @@ function goLogin() {
   margin-top: 40rpx;
 }
 .btn-secondary-spacing {
+  margin-top: 16rpx;
+}
+.btn-after-primary {
   margin-top: 16rpx;
 }
 .btn-secondary {

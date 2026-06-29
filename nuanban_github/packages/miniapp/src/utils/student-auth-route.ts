@@ -15,12 +15,24 @@ export async function routeStudentAfterAuth(login?: LoginResult): Promise<void> 
     return;
   }
 
-  if (student.status === 'pending' || student.status === 'rejected') {
-    uni.reLaunch({ url: '/pages/common/student-pending' });
-    return;
+  let status = student.status;
+  if (status === 'pending' || status === 'rejected') {
+    try {
+      const profile = await fetchStudentProfile();
+      if (profile.auditStatus === 'active') {
+        roleStore.setStudentRoleStatus('active');
+        status = 'active';
+      } else {
+        uni.reLaunch({ url: '/pages/common/student-pending' });
+        return;
+      }
+    } catch {
+      uni.reLaunch({ url: '/pages/common/student-pending' });
+      return;
+    }
   }
 
-  if (student.status === 'active') {
+  if (status === 'active') {
     try {
       const profile = await fetchStudentProfile();
       if (!isStudentAuditProfileComplete(profile)) {

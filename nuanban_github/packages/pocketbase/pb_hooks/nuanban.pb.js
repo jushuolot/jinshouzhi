@@ -341,7 +341,11 @@ routerAdd("POST", "/api/nuanban/auth/register", function (e) {
         var schoolUpd = nb.findOrCreateSchoolByName(snUpd);
         roleRec.set("school", schoolUpd.id);
       }
-      roleRec.set("status", "pending");
+      var curStatus = roleRec.getString("status") || "";
+      // 已审核通过的学生补全资料时，勿把 status 打回 pending
+      if (curStatus !== "active") {
+        roleRec.set("status", "pending");
+      }
       $app.save(roleRec);
       if (body.displayName) {
         auth.set("name", String(body.displayName));
