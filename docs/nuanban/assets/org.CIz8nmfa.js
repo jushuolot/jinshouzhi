@@ -1,0 +1,1 @@
+import{r}from"./request.Bgc81Omh.js";async function t(){return(await r({url:"/nuanban/org/orders/dispatchable",method:"GET"})).list??[]}async function a(t,a){if(!a)throw new Error("请选择学生");return r({url:`/nuanban/org/orders/${t}/dispatch`,method:"POST",data:{studentUserId:a}})}export{a as d,t as l};
