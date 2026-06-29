@@ -32,13 +32,6 @@ pb_data.bak*/
 .unpackage/
 .hbuilderx/
 
-# Legacy duplicate path (canonical app: nuanban_github/)
-nuanban/*
-!nuanban/README.md
-
-# Nested duplicate copies (do not publish)
-nuanban/nuanban/
-
 # temp
 .write-test
 *.log

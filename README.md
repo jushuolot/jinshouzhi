@@ -15,6 +15,9 @@
 | [`python-stock-mini/`](python-stock-mini/使用说明.txt) | 轻量 Streamlit 行情页 | Streamlit Cloud |
 | [`lo-delivery-platform/`](lo-delivery-platform/README.md) | 物流订单平台演示 | GitHub Pages `/docs` |
 | [`match3-game/`](match3-game/README.md) | 三消游戏（WIP） | 见目录 README |
+| [`sales-manage`](https://github.com/jushuolot/sales-manage) | 医药销售管理（独立仓库） | [Streamlit Cloud](https://salesmanage.streamlit.app/) |
+
+> 各子项目按目录独立维护；已删除废弃的 `nuanban/` 重复副本与历史嵌套 `jinshouzhi/` 目录结构。
 
 ---
 
