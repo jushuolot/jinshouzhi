@@ -1,7 +1,7 @@
 # 公网演示站 Caddy 配置（由 deploy-public.sh 根据域名生成 Caddyfile.prod）
 # 将 __DOMAIN__ 替换为你的演示域名，DNS A 记录指向云服务器
 
-__DOMAIN__ {
+__DOMAIN__, www.__DOMAIN__ {
 	handle /api/* {
 		reverse_proxy pocketbase:8090
 	}

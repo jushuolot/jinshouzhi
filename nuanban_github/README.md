@@ -17,7 +17,7 @@
 | 环境 | 角色 | 链接 |
 |------|------|------|
 | **GitHub Pages** | **发布版**（真实 API，零安装 H5） | https://jushuolot.github.io/jinshouzhi/nuanban/#/pages/common/login |
-| **阿里云** | **发布稳定版** | http://101.200.128.82（备案后 nuanban.cc） |
+| **阿里云** | **发布稳定版** | https://www.nuanbao.cc（备案已通过） |
 
 - 环境一致性：**[docs/ENV_PARITY.md](docs/ENV_PARITY.md)**
 - 测试版验收：**[docs/TEST_VERSION.md](docs/TEST_VERSION.md)**
