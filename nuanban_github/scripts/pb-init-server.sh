@@ -5,7 +5,10 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-COMPOSE=(docker compose -f docker-compose.yml -f docker-compose.staging.yml)
+# shellcheck disable=SC1091
+source "$ROOT/scripts/lib/resolve-compose.sh"
+resolve_nuanban_compose "$ROOT"
+COMPOSE=(docker compose "${NUANBAN_COMPOSE_FILES[@]}")
 BASE="${NUANBAN_API:-http://127.0.0.1:8090}"
 EMAIL="${NUANBAN_ADMIN_EMAIL:-admin@nuanban.dev}"
 PASS="${NUANBAN_ADMIN_PASS:-Nuanban2025!}"

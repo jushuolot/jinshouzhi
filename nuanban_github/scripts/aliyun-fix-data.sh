@@ -15,7 +15,11 @@ GIT_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || echo "$ROOT")"
 
 chmod +x scripts/*.sh
 
-COMPOSE=(docker compose -f docker-compose.yml -f docker-compose.staging.yml)
+# shellcheck disable=SC1091
+source "$ROOT/scripts/lib/resolve-compose.sh"
+resolve_nuanban_compose "$ROOT"
+COMPOSE=(docker compose "${NUANBAN_COMPOSE_FILES[@]}")
+echo "==> 部署模式: ${NUANBAN_DEPLOY_MODE}（Caddy profile: ${NUANBAN_CADDY_PROFILE}）"
 echo "==> 重启 PocketBase（加载最新 hooks）"
 "${COMPOSE[@]}" restart pocketbase
 sleep 3
@@ -48,11 +52,22 @@ if [[ -n "${H5_API_BASE:-}" ]]; then
   fi
   VITE_RELEASE_CHANNEL=stable VITE_API_BASE_URL="${H5_API_BASE}" npm run build:h5
   cd "$ROOT"
-  echo "==> 重启 Caddy"
-  "${COMPOSE[@]}" --profile staging restart caddy 2>/dev/null || \
-    "${COMPOSE[@]}" --profile full restart caddy 2>/dev/null || \
-    "${COMPOSE[@]}" --profile staging up -d caddy 2>/dev/null || \
-    "${COMPOSE[@]}" --profile full up -d caddy
+
+  H5_DIST="$ROOT/packages/miniapp/dist/build/h5/assets"
+  if [[ -d "$H5_DIST" ]] && ls "$H5_DIST"/request.*.js >/dev/null 2>&1; then
+    if [[ "${H5_API_BASE}" == https://* ]]; then
+      if grep -rq 'http://101\.' "$H5_DIST"/request.*.js 2>/dev/null; then
+        echo "错误：H5 仍含 HTTP IP API，HTTPS 站点会无法登录。请检查 VITE_API_BASE_URL=${H5_API_BASE}"
+        exit 1
+      fi
+      ok_api="$(grep -ohE '"https://[^"]+/api"' "$H5_DIST"/request.*.js | head -1 || true)"
+      echo "  ✓ H5 API 已写入: ${ok_api:-（运行时同域 /api 兜底）}"
+    fi
+  fi
+
+  echo "==> 重启 Caddy（profile ${NUANBAN_CADDY_PROFILE}）"
+  "${COMPOSE[@]}" --profile "${NUANBAN_CADDY_PROFILE}" restart caddy 2>/dev/null || \
+    "${COMPOSE[@]}" --profile "${NUANBAN_CADDY_PROFILE}" up -d caddy
 fi
 
 echo ""

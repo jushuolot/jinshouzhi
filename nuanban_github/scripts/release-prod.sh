@@ -17,9 +17,6 @@ on_aliyun_server() {
   if [[ "$ROOT" == *"/opt/jinshouzhi/nuanban_github"* ]]; then
     return 0
   fi
-  if docker ps --format '{{.Names}}' 2>/dev/null | grep -q '^nuanban-pocketbase$'; then
-    return 0
-  fi
   return 1
 }
 
@@ -40,8 +37,12 @@ deploy_on_server() {
   echo ""
   echo "=============================================="
   echo "发布稳定版已部署: $SHORT"
-  IP="${NUANBAN_STAGING_IP:-你的IP}"
-  echo "  H5:  http://${IP}/#/pages/common/launch"
+  if [[ -n "${NUANBAN_DOMAIN:-}" ]]; then
+    echo "  H5:  https://${NUANBAN_DOMAIN}/#/pages/common/login"
+  else
+    IP="${NUANBAN_STAGING_IP:-你的IP}"
+    echo "  H5:  http://${IP}/#/pages/common/launch"
+  fi
   echo "  登录页角标: 发布稳定版"
   echo "  请强刷浏览器 (Cmd+Shift+R)"
   echo "=============================================="
