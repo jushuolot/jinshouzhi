@@ -910,7 +910,8 @@ routerAdd("PATCH", "/api/nuanban/student/profile", function (e) {
   const roleRec = roles[0];
   const status = roleRec.getString("status") || "";
   const resubmitAudit = !!body.resubmitAudit;
-  if (status === "active" && !resubmitAudit) {
+  var profileBefore = nb.studentProfileDtoFromRole(roleRec, auth, e);
+  if (status === "active" && !resubmitAudit && profileBefore.profileComplete) {
     return e.json(403, { message: "资料已审核通过，如需修改请申请重新提交审核" });
   }
   let displayName = roleRec.getString("display_name") || "";
@@ -985,7 +986,10 @@ routerAdd("POST", "/api/nuanban/student/verification-photo", function (e) {
   if (!roleRec) return e.json(404, { message: "学生角色不存在" });
   const status = roleRec.getString("status") || "";
   if (status === "active") {
-    return e.json(403, { message: "资料已审核通过，如需修改请申请重新提交审核" });
+    var prof = nb.studentProfileDtoFromRole(roleRec, auth, e);
+    if (prof.profileComplete) {
+      return e.json(403, { message: "资料已审核通过，如需修改请申请重新提交审核" });
+    }
   }
   const files = e.findUploadedFiles("photo");
   if (!files || files.length === 0 || !files[0]) {
@@ -1009,7 +1013,10 @@ routerAdd("POST", "/api/nuanban/student/cartoon-avatar", function (e) {
   if (!roleRec) return e.json(404, { message: "学生角色不存在" });
   const status = roleRec.getString("status") || "";
   if (status === "active") {
-    return e.json(403, { message: "资料已审核通过，如需修改请申请重新提交审核" });
+    var profAv = nb.studentProfileDtoFromRole(roleRec, auth, e);
+    if (profAv.profileComplete) {
+      return e.json(403, { message: "资料已审核通过，如需修改请申请重新提交审核" });
+    }
   }
   const files = e.findUploadedFiles("avatar");
   if (!files || files.length === 0 || !files[0]) {

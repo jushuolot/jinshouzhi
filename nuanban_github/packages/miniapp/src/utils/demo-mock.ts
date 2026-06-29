@@ -1630,10 +1630,11 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
         status,
         elderProfileId: role === 'elder' ? `elder-new-${Date.now()}` : null,
       });
+      resetRoleProfileState(role, displayName);
     } else if (role === 'student' && existing.status !== 'active') {
       existing.status = 'pending';
+      resetRoleProfileState(role, displayName);
     }
-    resetRoleProfileState(role, displayName);
     if (role === 'student') {
       if (data.gender) studentProfileState.gender = String(data.gender);
       if (data.major) studentProfileState.major = String(data.major);
@@ -1881,7 +1882,8 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
     if (roleErr) return Promise.reject({ message: roleErr, statusCode: 403 });
     const status = studentRoleStatus();
     const resubmitAudit = !!data.resubmitAudit;
-    if (status === 'active' && !resubmitAudit) {
+    const profile = studentProfileDto();
+    if (status === 'active' && !resubmitAudit && profile.profileComplete) {
       return Promise.reject({
         message: '资料已审核通过，如需修改请申请重新提交审核',
         statusCode: 403,
@@ -1927,10 +1929,13 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
     const roleErr = assertDemoActiveRole(options, path, 'student');
     if (roleErr) return Promise.reject({ message: roleErr, statusCode: 403 });
     if (studentRoleStatus() === 'active') {
-      return Promise.reject({
-        message: '资料已审核通过，如需修改请申请重新提交审核',
-        statusCode: 403,
-      });
+      const prof = studentProfileDto();
+      if (prof.profileComplete) {
+        return Promise.reject({
+          message: '资料已审核通过，如需修改请申请重新提交审核',
+          statusCode: 403,
+        });
+      }
     }
     const url = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" fill="#ffe0bd"/></svg>');
     mockCustomCartoonByUser[currentDemoUser().id] = url;
@@ -1940,10 +1945,13 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
     const roleErr = assertDemoActiveRole(options, path, 'student');
     if (roleErr) return Promise.reject({ message: roleErr, statusCode: 403 });
     if (studentRoleStatus() === 'active') {
-      return Promise.reject({
-        message: '资料已审核通过，如需修改请申请重新提交审核',
-        statusCode: 403,
-      });
+      const prof = studentProfileDto();
+      if (prof.profileComplete) {
+        return Promise.reject({
+          message: '资料已审核通过，如需修改请申请重新提交审核',
+          statusCode: 403,
+        });
+      }
     }
     return delay({
       ok: true,

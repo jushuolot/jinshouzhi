@@ -23,7 +23,7 @@
       <text class="back" @tap="goLogin">返回登录</text>
     </template>
     <template v-else>
-      <text class="step-title">完善资料 · {{ roleLabel[role] }}</text>
+      <text class="step-title">{{ isActiveCompleting ? '补全资料' : '完善资料' }} · {{ roleLabel[role] }}</text>
       <view v-if="referralCode && role === 'student'" class="ref-tip">
         已绑定推荐码 {{ referralCode }} · 注册成功推荐人得奖励
       </view>
@@ -101,15 +101,15 @@
       </template>
 
       <button class="btn-primary nb-btn-primary" :loading="loading" @tap="submit">
-        {{ role === 'student' ? '提交并等待审核' : '确认身份' }}
+        {{ role === 'student' ? studentSubmitLabel : '确认身份' }}
       </button>
-      <text class="back" @tap="step = 'pick'">重新选择身份</text>
+      <text v-if="!isActiveCompleting" class="back" @tap="step = 'pick'">重新选择身份</text>
     </template>
   </view>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { onLoad } from '@dcloudio/uni-app';
 import { registerRole } from '../../api/auth';
 import AuthBrandHeader from '../../components/AuthBrandHeader.vue';
@@ -121,7 +121,7 @@ import ServiceTimePicker from '../../components/ServiceTimePicker.vue';
 import { takePendingReferralCode } from '../../utils/demo-referral';
 import type { RoleKey } from '../../config/tabs';
 import { ROLE_HOME } from '../../config/tabs';
-import { fetchStudentProfile } from '../../api/student';
+import { fetchStudentProfile, updateStudentProfile } from '../../api/student';
 import { isStudentAuditProfileComplete } from '../../utils/student-audit-profile';
 import { navigateAfterAuth } from '../../utils/profile-onboarding';
 import { useRoleStore } from '../../store/role';
@@ -157,6 +157,12 @@ const step = ref<'pick' | 'form'>('pick');
 const referralCode = ref('');
 const roleStore = useRoleStore();
 const guestEntry = ref(false);
+/** 已通过审核、仅需补全服务区域/时段等 */
+const isActiveCompleting = ref(false);
+
+const studentSubmitLabel = computed(() =>
+  isActiveCompleting.value ? '保存并进入首页' : '提交并等待审核',
+);
 
 const roleLabel: Record<RoleKey, string> = {
   elder: '老人',
@@ -192,11 +198,13 @@ onLoad(async (q) => {
         uni.reLaunch({ url: ROLE_HOME.student });
         return;
       }
+      isActiveCompleting.value = true;
       await prefillFromProfile(profile);
       role.value = 'student';
       step.value = 'form';
       return;
     } catch {
+      isActiveCompleting.value = true;
       role.value = 'student';
       step.value = 'form';
       contactPhone.value = phoneFromLoginEmail(roleStore.user?.email);
@@ -314,6 +322,11 @@ function resolveVerificationPick(): CameraPickResult | null {
   return null;
 }
 
+function hasVerificationPhoto(): boolean {
+  if (resolveVerificationPick()) return true;
+  return isActiveCompleting.value && !!verificationPreviewUrl.value;
+}
+
 function goAuth() {
   uni.navigateTo({ url: '/pages/common/login?from=guest' });
 }
@@ -347,7 +360,7 @@ async function submit() {
       uni.showToast({ title: '请从学校列表中点选', icon: 'none' });
       return;
     }
-    if (!resolveVerificationPick()) {
+    if (!hasVerificationPhoto()) {
       uni.showToast({ title: '请先拍摄或选择实名核验照', icon: 'none' });
       return;
     }
@@ -363,6 +376,11 @@ async function submit() {
       uni.showToast({ title: '请选择或上传卡通头像', icon: 'none' });
       return;
     }
+  }
+
+  if (role.value === 'student' && isActiveCompleting.value) {
+    await submitActiveProfileCompletion();
+    return;
   }
 
   loading.value = true;
@@ -442,6 +460,67 @@ async function submit() {
     }
     uni.showToast({ title: '身份已设定', icon: 'success' });
     void navigateAfterAuth(role.value);
+  } catch (e) {
+    uni.showToast({ title: pbErrorMessage(e), icon: 'none' });
+  } finally {
+    loading.value = false;
+  }
+}
+
+async function submitActiveProfileCompletion() {
+  loading.value = true;
+  try {
+    await updateStudentProfile({
+      contactPhone: contactPhone.value.trim(),
+      displayName: displayName.value.trim(),
+      schoolName: schoolName.value,
+      gender: genders[genderIdx.value],
+      major: major.value.trim(),
+      grade: grades[gradeIdx.value],
+      studentId: studentId.value.trim() || undefined,
+      cartoonAvatarId: cartoonAvatarId.value || undefined,
+      serviceAreaPolygons: serviceAreaGeo.value.polygons,
+      serviceHours: serviceHours.value,
+    });
+
+    if (customCartoonPick.value) {
+      try {
+        const url = await uploadCustomCartoonPick(customCartoonPick.value);
+        customCartoonPreview.value = url;
+        roleStore.setUserAvatar(url);
+      } catch (e) {
+        uni.showToast({
+          title: `资料已保存，自定义头像上传失败：${pbErrorMessage(e)}`,
+          icon: 'none',
+          duration: 3000,
+        });
+      }
+    } else if (cartoonAvatarId.value) {
+      roleStore.setUserAvatar(resolveCartoonAvatarUrl(cartoonAvatarId.value));
+    }
+
+    const pick = verificationPick.value || (await (async () => {
+      const r = resolveVerificationPick();
+      if (!r?.previewUrl?.startsWith('data:')) return r;
+      if (r.file) return r;
+      return dataUrlToPick(r.previewUrl);
+    })());
+    if (pick) {
+      try {
+        await uploadVerificationPick(pick);
+      } catch (e) {
+        uni.showToast({
+          title: `资料已保存，核验照上传失败：${pbErrorMessage(e)}`,
+          icon: 'none',
+          duration: 3000,
+        });
+      }
+    }
+
+    roleStore.setUserNickname(displayName.value.trim());
+    roleStore.setActiveRole('student');
+    uni.showToast({ title: '资料已保存', icon: 'success' });
+    uni.reLaunch({ url: ROLE_HOME.student });
   } catch (e) {
     uni.showToast({ title: pbErrorMessage(e), icon: 'none' });
   } finally {
