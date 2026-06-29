@@ -1,1 +1,0 @@
-import{s as n,a6 as r}from"./index-wYKPYhq1.js";const e="nuanban_elder_large_font";function t(){try{return"1"===n(e)}catch{return!1}}function a(n){r(e,n?"1":"0")}function s(){return t()?"elder-large":""}export{s as e,t as i,a as s};
