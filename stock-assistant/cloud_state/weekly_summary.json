@@ -1,129 +1,6 @@
 {
-  "updated_at": "2026-06-28",
+  "updated_at": "2026-06-30",
   "days": [
-    {
-      "date": "2026-06-22",
-      "snapshot_count": 138,
-      "diff": {
-        "prev_date": "2026-06-18",
-        "curr_date": "2026-06-22",
-        "compared": 47,
-        "avg_pct_delta": -0.53,
-        "movers": [
-          {
-            "code": "920206",
-            "name": "彩客科技",
-            "prev_pct": 18.22,
-            "curr_pct": -8.19,
-            "delta_pct": -26.41
-          },
-          {
-            "code": "301687",
-            "name": "新广益",
-            "prev_pct": 20.0,
-            "curr_pct": -5.41,
-            "delta_pct": -25.41
-          },
-          {
-            "code": "920083",
-            "name": "金戈新材",
-            "prev_pct": 21.67,
-            "curr_pct": -2.74,
-            "delta_pct": -24.41
-          },
-          {
-            "code": "301310",
-            "name": "鑫宏业",
-            "prev_pct": 19.99,
-            "curr_pct": -3.53,
-            "delta_pct": -23.52
-          },
-          {
-            "code": "920725",
-            "name": "惠丰钻石",
-            "prev_pct": 7.36,
-            "curr_pct": 29.99,
-            "delta_pct": 22.63
-          },
-          {
-            "code": "301669",
-            "name": "高特电子",
-            "prev_pct": 13.64,
-            "curr_pct": -4.5,
-            "delta_pct": -18.14
-          },
-          {
-            "code": "301666",
-            "name": "大普微-UW",
-            "prev_pct": -3.0,
-            "curr_pct": 13.57,
-            "delta_pct": 16.57
-          },
-          {
-            "code": "688598",
-            "name": "金博股份",
-            "prev_pct": 20.0,
-            "curr_pct": 3.83,
-            "delta_pct": -16.17
-          },
-          {
-            "code": "300166",
-            "name": "东方国信",
-            "prev_pct": 20.03,
-            "curr_pct": 4.92,
-            "delta_pct": -15.11
-          },
-          {
-            "code": "002141",
-            "name": "贤丰控股",
-            "prev_pct": 10.05,
-            "curr_pct": -4.46,
-            "delta_pct": -14.51
-          },
-          {
-            "code": "300179",
-            "name": "四方达",
-            "prev_pct": 5.55,
-            "curr_pct": 20.0,
-            "delta_pct": 14.45
-          },
-          {
-            "code": "300283",
-            "name": "温州宏丰",
-            "prev_pct": 0.45,
-            "curr_pct": 14.74,
-            "delta_pct": 14.29
-          },
-          {
-            "code": "920211",
-            "name": "新睿电子",
-            "prev_pct": 2.96,
-            "curr_pct": -10.65,
-            "delta_pct": -13.61
-          },
-          {
-            "code": "300274",
-            "name": "阳光电源",
-            "prev_pct": -1.46,
-            "curr_pct": 11.21,
-            "delta_pct": 12.67
-          },
-          {
-            "code": "601991",
-            "name": "大唐发电",
-            "prev_pct": -9.97,
-            "curr_pct": 1.82,
-            "delta_pct": 11.79
-          }
-        ],
-        "pick_checks": [],
-        "conclusions": [
-          "快照对比 47 只，均涨跌变化 -0.53%。",
-          "最大异动 彩客科技 920206 Δ-26.4%。"
-        ]
-      },
-      "picks_checked": 0
-    },
     {
       "date": "2026-06-23",
       "snapshot_count": 149,
@@ -1356,6 +1233,129 @@
         ]
       },
       "picks_checked": 4
+    },
+    {
+      "date": "2026-06-30",
+      "snapshot_count": 148,
+      "diff": {
+        "prev_date": "2026-06-28",
+        "curr_date": "2026-06-30",
+        "compared": 34,
+        "avg_pct_delta": -9.01,
+        "movers": [
+          {
+            "code": "001399",
+            "name": "C惠科",
+            "prev_pct": 315.02,
+            "curr_pct": 10.16,
+            "delta_pct": -304.86
+          },
+          {
+            "code": "688797",
+            "name": "C臻宝",
+            "prev_pct": -5.11,
+            "curr_pct": 15.35,
+            "delta_pct": 20.46
+          },
+          {
+            "code": "920662",
+            "name": "方盛股份",
+            "prev_pct": 1.6,
+            "curr_pct": 18.97,
+            "delta_pct": 17.37
+          },
+          {
+            "code": "002167",
+            "name": "东方锆业",
+            "prev_pct": -5.31,
+            "curr_pct": 10.02,
+            "delta_pct": 15.33
+          },
+          {
+            "code": "300721",
+            "name": "怡达股份",
+            "prev_pct": 5.15,
+            "curr_pct": -8.82,
+            "delta_pct": -13.97
+          },
+          {
+            "code": "603459",
+            "name": "红板科技",
+            "prev_pct": -2.34,
+            "curr_pct": 10.0,
+            "delta_pct": 12.34
+          },
+          {
+            "code": "002559",
+            "name": "亚威股份",
+            "prev_pct": 10.01,
+            "curr_pct": -2.23,
+            "delta_pct": -12.24
+          },
+          {
+            "code": "300666",
+            "name": "江丰电子",
+            "prev_pct": 7.51,
+            "curr_pct": -3.63,
+            "delta_pct": -11.14
+          },
+          {
+            "code": "000823",
+            "name": "超声电子",
+            "prev_pct": 10.01,
+            "curr_pct": -1.12,
+            "delta_pct": -11.13
+          },
+          {
+            "code": "002910",
+            "name": "庄园牧场",
+            "prev_pct": 10.04,
+            "curr_pct": 0.36,
+            "delta_pct": -9.68
+          },
+          {
+            "code": "300162",
+            "name": "雷曼光电",
+            "prev_pct": 19.98,
+            "curr_pct": 10.92,
+            "delta_pct": -9.06
+          },
+          {
+            "code": "603407",
+            "name": "长裕集团",
+            "prev_pct": -0.15,
+            "curr_pct": 8.75,
+            "delta_pct": 8.9
+          },
+          {
+            "code": "301421",
+            "name": "波长光电",
+            "prev_pct": 6.1,
+            "curr_pct": 14.53,
+            "delta_pct": 8.43
+          },
+          {
+            "code": "688328",
+            "name": "深科达",
+            "prev_pct": 11.69,
+            "curr_pct": 20.0,
+            "delta_pct": 8.31
+          },
+          {
+            "code": "002354",
+            "name": "天娱数科",
+            "prev_pct": 9.96,
+            "curr_pct": 2.09,
+            "delta_pct": -7.87
+          }
+        ],
+        "pick_checks": [],
+        "conclusions": [
+          "快照对比 34 只，均涨跌变化 -9.01%。",
+          "最大异动 C惠科 001399 Δ-304.9%。"
+        ]
+      },
+      "picks_checked": 0
     }
   ],
   "week_hit_rate_pct": 55.1,

@@ -1,148 +1,118 @@
 {
-  "prev_date": "2026-06-27",
-  "curr_date": "2026-06-28",
-  "compared": 135,
-  "avg_pct_delta": 0.0,
+  "prev_date": "2026-06-28",
+  "curr_date": "2026-06-30",
+  "compared": 34,
+  "avg_pct_delta": -9.01,
   "movers": [
     {
-      "code": "920981",
-      "name": "晶赛科技",
-      "prev_pct": 1.94,
-      "curr_pct": 1.94,
-      "delta_pct": 0.0
-    },
-    {
-      "code": "301666",
-      "name": "大普微-UW",
-      "prev_pct": -9.88,
-      "curr_pct": -9.88,
-      "delta_pct": 0.0
-    },
-    {
-      "code": "300102",
-      "name": "乾照光电",
-      "prev_pct": 9.84,
-      "curr_pct": 9.84,
-      "delta_pct": 0.0
-    },
-    {
-      "code": "300342",
-      "name": "天银机电",
-      "prev_pct": 5.11,
-      "curr_pct": 5.11,
-      "delta_pct": 0.0
-    },
-    {
-      "code": "300668",
-      "name": "杰恩股份",
-      "prev_pct": 15.66,
-      "curr_pct": 15.66,
-      "delta_pct": 0.0
-    },
-    {
       "code": "001399",
-      "name": "N惠科",
+      "name": "C惠科",
       "prev_pct": 315.02,
-      "curr_pct": 315.02,
-      "delta_pct": 0.0
+      "curr_pct": 10.16,
+      "delta_pct": -304.86
     },
     {
-      "code": "600879",
-      "name": "航天电子",
-      "prev_pct": 5.65,
-      "curr_pct": 5.65,
-      "delta_pct": 0.0
+      "code": "688797",
+      "name": "C臻宝",
+      "prev_pct": -5.11,
+      "curr_pct": 15.35,
+      "delta_pct": 20.46
     },
     {
-      "code": "688409",
-      "name": "富创精密",
-      "prev_pct": 20.0,
-      "curr_pct": 20.0,
-      "delta_pct": 0.0
+      "code": "920662",
+      "name": "方盛股份",
+      "prev_pct": 1.6,
+      "curr_pct": 18.97,
+      "delta_pct": 17.37
     },
     {
-      "code": "002456",
-      "name": "欧菲光",
-      "prev_pct": 8.8,
-      "curr_pct": 8.8,
-      "delta_pct": 0.0
+      "code": "002167",
+      "name": "东方锆业",
+      "prev_pct": -5.31,
+      "curr_pct": 10.02,
+      "delta_pct": 15.33
     },
     {
-      "code": "002930",
-      "name": "宏川智慧",
+      "code": "300721",
+      "name": "怡达股份",
+      "prev_pct": 5.15,
+      "curr_pct": -8.82,
+      "delta_pct": -13.97
+    },
+    {
+      "code": "603459",
+      "name": "红板科技",
+      "prev_pct": -2.34,
+      "curr_pct": 10.0,
+      "delta_pct": 12.34
+    },
+    {
+      "code": "002559",
+      "name": "亚威股份",
+      "prev_pct": 10.01,
+      "curr_pct": -2.23,
+      "delta_pct": -12.24
+    },
+    {
+      "code": "300666",
+      "name": "江丰电子",
+      "prev_pct": 7.51,
+      "curr_pct": -3.63,
+      "delta_pct": -11.14
+    },
+    {
+      "code": "000823",
+      "name": "超声电子",
+      "prev_pct": 10.01,
+      "curr_pct": -1.12,
+      "delta_pct": -11.13
+    },
+    {
+      "code": "002910",
+      "name": "庄园牧场",
       "prev_pct": 10.04,
-      "curr_pct": 10.04,
-      "delta_pct": 0.0
+      "curr_pct": 0.36,
+      "delta_pct": -9.68
     },
     {
-      "code": "300762",
-      "name": "上海瀚讯",
-      "prev_pct": 11.89,
-      "curr_pct": 11.89,
-      "delta_pct": 0.0
+      "code": "300162",
+      "name": "雷曼光电",
+      "prev_pct": 19.98,
+      "curr_pct": 10.92,
+      "delta_pct": -9.06
     },
     {
-      "code": "002842",
-      "name": "翔鹭钨业",
-      "prev_pct": 1.46,
-      "curr_pct": 1.46,
-      "delta_pct": 0.0
+      "code": "603407",
+      "name": "长裕集团",
+      "prev_pct": -0.15,
+      "curr_pct": 8.75,
+      "delta_pct": 8.9
     },
     {
-      "code": "603063",
-      "name": "禾望电气",
-      "prev_pct": -5.69,
-      "curr_pct": -5.69,
-      "delta_pct": 0.0
+      "code": "301421",
+      "name": "波长光电",
+      "prev_pct": 6.1,
+      "curr_pct": 14.53,
+      "delta_pct": 8.43
     },
     {
-      "code": "002335",
-      "name": "科华数据",
-      "prev_pct": 3.24,
-      "curr_pct": 3.24,
-      "delta_pct": 0.0
+      "code": "688328",
+      "name": "深科达",
+      "prev_pct": 11.69,
+      "curr_pct": 20.0,
+      "delta_pct": 8.31
     },
     {
-      "code": "601636",
-      "name": "旗滨集团",
-      "prev_pct": 6.95,
-      "curr_pct": 6.95,
-      "delta_pct": 0.0
+      "code": "002354",
+      "name": "天娱数科",
+      "prev_pct": 9.96,
+      "curr_pct": 2.09,
+      "delta_pct": -7.87
     }
   ],
-  "pick_checks": [
-    {
-      "code": "688530",
-      "name": "欧莱新材",
-      "signal": "观望",
-      "delta_pct": 0.0,
-      "hit": false
-    },
-    {
-      "code": "688530",
-      "name": "欧莱新材",
-      "signal": "观望",
-      "delta_pct": 0.0,
-      "hit": false
-    },
-    {
-      "code": "688530",
-      "name": "欧莱新材",
-      "signal": "观望",
-      "delta_pct": 0.0,
-      "hit": false
-    },
-    {
-      "code": "688530",
-      "name": "欧莱新材",
-      "signal": "观望",
-      "delta_pct": 0.0,
-      "hit": false
-    }
-  ],
+  "pick_checks": [],
   "conclusions": [
-    "快照对比 135 只，均涨跌变化 +0.00%。",
-    "昨日推荐 4 只，快照验证 0 只方向正确。",
-    "最大异动 晶赛科技 920981 Δ+0.0%。"
+    "快照对比 34 只，均涨跌变化 -9.01%。",
+    "最大异动 C惠科 001399 Δ-304.9%。"
   ]
 }
