@@ -5,14 +5,18 @@
 (function () {
   "use strict";
 
-  var VER = 2;
-  var BASE = "assets/artifacts/";
+  var PHOTO_WIDTH = 900;
+  var COMMONS_FILEPATH = "https://commons.wikimedia.org/wiki/Special:FilePath/";
+
+  function commonsPhoto(fileName) {
+    return COMMONS_FILEPATH + encodeURIComponent(fileName) + "?width=" + PHOTO_WIDTH;
+  }
 
   window.MATCH3_ARTIFACT_PHOTOS = [
     {
       id: 0,
       name: "青铜纵目面具",
-      src: BASE + "mask.jpg?v=" + VER,
+      src: commonsPhoto("Ancient Bronze Mask Largest Bronze Mask Unearthed at Sanxingdui (9951464665).jpg"),
       ref: "三星堆 · 迄今最大青铜面具 · 公开资料",
       source: "Wikimedia Commons",
       license: "CC0 1.0",
@@ -23,7 +27,7 @@
     {
       id: 1,
       name: "金杖（权杖）",
-      src: BASE + "staff.jpg?v=" + VER,
+      src: commonsPhoto("Sanxingdui Gold Scepter (9950984395).jpg"),
       ref: "一号祭祀坑 · 鱼鸟箭羽纹金箔 · 公开资料",
       source: "Wikimedia Commons",
       license: "CC0 1.0",
@@ -34,7 +38,7 @@
     {
       id: 2,
       name: "玉璋",
-      src: BASE + "jade.jpg?v=" + VER,
+      src: commonsPhoto("三星堆遗址出土玉璋.jpg"),
       ref: "二号祭祀坑出土 · 公开资料",
       source: "Wikimedia Commons",
       license: "CC BY-SA 4.0",
@@ -44,7 +48,7 @@
     {
       id: 3,
       name: "陶盉",
-      src: BASE + "pot.jpg?v=" + VER,
+      src: commonsPhoto("Sanxingdui Pottery He Wine Vessel (9951053475).jpg"),
       ref: "三星堆陶盉温酒器 · 公开资料",
       source: "Wikimedia Commons",
       license: "CC0 1.0",
@@ -55,7 +59,7 @@
     {
       id: 4,
       name: "象牙器",
-      src: BASE + "ivory.jpg?v=" + VER,
+      src: commonsPhoto("Sanxingdui Ivory (9951099384).jpg"),
       ref: "祭祀坑象牙 · 公开资料",
       source: "Wikimedia Commons",
       license: "CC0 1.0",
@@ -66,7 +70,7 @@
     {
       id: 5,
       name: "太阳神鸟金饰",
-      src: BASE + "sunbird.jpg?v=" + VER,
+      src: commonsPhoto("2014 Jinsha Gold Sun-Bird Disc.jpg"),
       ref: "金沙遗址 · 中国文化遗产标志 · 公开资料",
       source: "Wikimedia Commons",
       license: "CC0 1.0",

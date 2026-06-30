@@ -25,6 +25,7 @@
     newPitDataRoom: { amount: 0.024, phases: ["超越期"], universeDayMod: 1 },
     campArgumentArchive: { amount: 0.019, phases: ["超越期"], universeDayMod: 2 },
     pitWallHazardScan: { amount: 0.026, phases: ["超越期"], universeDayMod: 3 },
+    campKitchenArchive: { amount: 0.021, phases: ["超越期"], universeDayMod: 4 },
     bounty: {
       label: "任务赏金(演示)",
       endpoint: "https://api.coingecko.com/api/v3/ping",
@@ -131,6 +132,12 @@
       source: "network_settlement",
       description: "周三险情日归档坑壁湿度与回压曲线，模拟避险数据入账",
     },
+    camp_kitchen_archive: {
+      id: "camp_kitchen_archive",
+      label: "营地炊事档案",
+      source: "network_settlement",
+      description: "周四生活日归档陶盉温痕、炊烟灰样与营地口述，模拟档案入账",
+    },
   };
 
   var state = {
@@ -147,6 +154,7 @@
     lastNewPitDataRoom: "",
     lastCampArgumentArchive: "",
     lastPitWallHazardScan: "",
+    lastCampKitchenArchive: "",
   };
 
   var tickTimer = null;
@@ -174,6 +182,7 @@
       state.lastNewPitDataRoom = data.lastNewPitDataRoom || "";
       state.lastCampArgumentArchive = data.lastCampArgumentArchive || "";
       state.lastPitWallHazardScan = data.lastPitWallHazardScan || "";
+      state.lastCampKitchenArchive = data.lastCampKitchenArchive || "";
     } catch (e) {
       // ignore
     }
@@ -194,6 +203,7 @@
           lastNewPitDataRoom: state.lastNewPitDataRoom,
           lastCampArgumentArchive: state.lastCampArgumentArchive,
           lastPitWallHazardScan: state.lastPitWallHazardScan,
+          lastCampKitchenArchive: state.lastCampKitchenArchive,
           updatedAt: Date.now(),
         })
       );
@@ -454,7 +464,7 @@
     if (cfg.phases.indexOf(phase) < 0) return 0;
     state.lastNewPitDataRoom = key;
     saveState();
-    var civ = clock ? clock.getCivilizationDate() : { civilizationYear: evo.civilizationYear || 2051 };
+    var civ = clock ? clock.getCivilizationDate() : { civilizationYear: evo.civilizationYear || 2053 };
     var credited = creditChannel("new_pit_data_room", {
       amount: cfg.amount,
       meta: {
@@ -486,7 +496,7 @@
     if (cfg.phases.indexOf(phase) < 0) return 0;
     state.lastCampArgumentArchive = key;
     saveState();
-    var civ = clock ? clock.getCivilizationDate() : { civilizationYear: evo.civilizationYear || 2051 };
+    var civ = clock ? clock.getCivilizationDate() : { civilizationYear: evo.civilizationYear || 2053 };
     return creditChannel("camp_argument_archive", {
       amount: cfg.amount,
       meta: {
@@ -515,7 +525,7 @@
     if (cfg.phases.indexOf(phase) < 0) return 0;
     state.lastPitWallHazardScan = key;
     saveState();
-    var civ = clock ? clock.getCivilizationDate() : { civilizationYear: evo.civilizationYear || 2051 };
+    var civ = clock ? clock.getCivilizationDate() : { civilizationYear: evo.civilizationYear || 2053 };
     return creditChannel("pit_wall_hazard_scan", {
       amount: cfg.amount,
       meta: {
@@ -524,6 +534,36 @@
         generation: evo.generation || 0,
         phase: phase,
         year: civ.civilizationYear,
+        simulated: true,
+      },
+    });
+  }
+
+  function tryCampKitchenArchive() {
+    var evo = typeof window !== "undefined" && window.MATCH3_EVOLUTION ? window.MATCH3_EVOLUTION : {};
+    var uday = evo.universeDay || 0;
+    var cfg = CONFIG.campKitchenArchive;
+    if (!cfg || uday % 7 !== cfg.universeDayMod) return 0;
+    var key = todayKey() + "-g" + (evo.generation || "x") + "-u" + uday;
+    if (state.lastCampKitchenArchive === key) return 0;
+    var clock =
+      typeof window !== "undefined" && window.MATCH3_CIVILIZATION_CLOCK
+        ? window.MATCH3_CIVILIZATION_CLOCK
+        : null;
+    var phase = clock ? clock.getPhase() : evo.civilizationPhase || "超越期";
+    if (cfg.phases.indexOf(phase) < 0) return 0;
+    state.lastCampKitchenArchive = key;
+    saveState();
+    var civ = clock ? clock.getCivilizationDate() : { civilizationYear: evo.civilizationYear || 2053 };
+    return creditChannel("camp_kitchen_archive", {
+      amount: cfg.amount,
+      meta: {
+        kind: "camp_kitchen_archive",
+        universeDay: uday,
+        generation: evo.generation || 0,
+        phase: phase,
+        year: civ.civilizationYear,
+        topic: "pottery-warmth-and-camp-meal",
         simulated: true,
       },
     });
@@ -583,6 +623,7 @@
     tryNewPitDataRoom();
     tryCampArgumentArchive();
     tryPitWallHazardScan();
+    tryCampKitchenArchive();
     tryAffiliateReferral();
     startPeriodicTick();
     deferNetworkProbes();
