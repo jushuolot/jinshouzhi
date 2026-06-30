@@ -25,6 +25,7 @@
     newPitDataRoom: { amount: 0.024, phases: ["超越期"], universeDayMod: 1 },
     campArgumentArchive: { amount: 0.019, phases: ["超越期"], universeDayMod: 2 },
     pitWallHazardScan: { amount: 0.026, phases: ["超越期"], universeDayMod: 3 },
+    fieldKitchenLedger: { amount: 0.021, phases: ["超越期"], universeDayMod: 4 },
     bounty: {
       label: "任务赏金(演示)",
       endpoint: "https://api.coingecko.com/api/v3/ping",
@@ -131,6 +132,12 @@
       source: "network_settlement",
       description: "周三险情日归档坑壁湿度与回压曲线，模拟避险数据入账",
     },
+    field_kitchen_ledger: {
+      id: "field_kitchen_ledger",
+      label: "营地伙食账本",
+      source: "network_settlement",
+      description: "周四馋嘴/生活日归档灶灰、炭化米粒与营地伙食清单，模拟生活考古数据入账",
+    },
   };
 
   var state = {
@@ -147,6 +154,7 @@
     lastNewPitDataRoom: "",
     lastCampArgumentArchive: "",
     lastPitWallHazardScan: "",
+    lastFieldKitchenLedger: "",
   };
 
   var tickTimer = null;
@@ -174,6 +182,7 @@
       state.lastNewPitDataRoom = data.lastNewPitDataRoom || "";
       state.lastCampArgumentArchive = data.lastCampArgumentArchive || "";
       state.lastPitWallHazardScan = data.lastPitWallHazardScan || "";
+      state.lastFieldKitchenLedger = data.lastFieldKitchenLedger || "";
     } catch (e) {
       // ignore
     }
@@ -194,6 +203,7 @@
           lastNewPitDataRoom: state.lastNewPitDataRoom,
           lastCampArgumentArchive: state.lastCampArgumentArchive,
           lastPitWallHazardScan: state.lastPitWallHazardScan,
+          lastFieldKitchenLedger: state.lastFieldKitchenLedger,
           updatedAt: Date.now(),
         })
       );
@@ -529,6 +539,39 @@
     });
   }
 
+  function tryFieldKitchenLedger() {
+    var evo = typeof window !== "undefined" && window.MATCH3_EVOLUTION ? window.MATCH3_EVOLUTION : {};
+    var uday = evo.universeDay || 0;
+    var cfg = CONFIG.fieldKitchenLedger;
+    if (!cfg || uday % 7 !== cfg.universeDayMod) return 0;
+    var key = todayKey() + "-g" + (evo.generation || "x") + "-u" + uday;
+    if (state.lastFieldKitchenLedger === key) return 0;
+    var clock =
+      typeof window !== "undefined" && window.MATCH3_CIVILIZATION_CLOCK
+        ? window.MATCH3_CIVILIZATION_CLOCK
+        : null;
+    var phase = clock ? clock.getPhase() : evo.civilizationPhase || "超越期";
+    if (cfg.phases.indexOf(phase) < 0) return 0;
+    state.lastFieldKitchenLedger = key;
+    saveState();
+    var civ = clock ? clock.getCivilizationDate() : { civilizationYear: evo.civilizationYear || 2053 };
+    var credited = creditChannel("field_kitchen_ledger", {
+      amount: cfg.amount,
+      meta: {
+        kind: "field_kitchen_life_archive",
+        universeDay: uday,
+        generation: evo.generation || 0,
+        phase: phase,
+        year: civ.civilizationYear,
+        simulated: true,
+      },
+    });
+    if (credited > 0 && typeof window.showSystemToast === "function") {
+      window.showSystemToast("🍚 营地伙食账本归档 · 文明历 " + civ.civilizationYear + " · 入账", 3600);
+    }
+    return credited;
+  }
+
   function tryPublicCommonsMirror() {
     var key = todayKey();
     if (state.lastPublicCommonsMirror === key) return 0;
@@ -583,6 +626,7 @@
     tryNewPitDataRoom();
     tryCampArgumentArchive();
     tryPitWallHazardScan();
+    tryFieldKitchenLedger();
     tryAffiliateReferral();
     startPeriodicTick();
     deferNetworkProbes();
