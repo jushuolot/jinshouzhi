@@ -13,4 +13,4 @@
 
 CC BY-SA 4.0 条目若再分发需注明作者并保持相同许可。CC0 可自由使用。
 
-数据配置：`artifact-photos.js` · 展示：`artifact-gallery.js`
+数据配置：`artifact-photos.js`（Wikimedia `Special:FilePath` 缩略图） · 展示：`artifact-gallery.js`

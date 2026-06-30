@@ -43,17 +43,22 @@
     "game.js",
   ];
 
-  var CINEMA_SCRIPTS = [
+  var EARLY_CINEMA_SCRIPTS = [
     "portrait-art.js",
     "portrait-painter.js",
     "portrait-real.js",
     "portrait-cinema.js",
     "cinema-wipe.js",
+  ];
+
+  var LATE_CINEMA_SCRIPTS = [
     "discovery-cinema.js",
     "result-cinema.js",
     "home-cinema.js",
     "blockbuster-intro.js",
   ];
+
+  var CINEMA_SCRIPTS = EARLY_CINEMA_SCRIPTS.concat(LATE_CINEMA_SCRIPTS);
 
   var CODEX_SCRIPTS = [
     "codex-unlock.js",
@@ -137,9 +142,23 @@
     if (deferredStarted) return;
     deferredStarted = true;
     loadDeferredCss();
-    cinemaReady = loadScriptChain(CINEMA_SCRIPTS)
+    var earlyCinemaReady = loadScriptChain(EARLY_CINEMA_SCRIPTS).catch(function () {
+      return null;
+    });
+    cinemaReady = earlyCinemaReady
       .then(function () {
-        scheduleIdle(preloadPortraits, 2400, 500);
+        return new Promise(function (resolve) {
+          scheduleIdle(function () {
+            loadScriptChain(LATE_CINEMA_SCRIPTS)
+              .then(function () {
+                scheduleIdle(preloadPortraits, 2400, 500);
+                resolve();
+              })
+              .catch(function () {
+                resolve();
+              });
+          }, 2600, 900);
+        });
       })
       .catch(function () {
         return null;
@@ -147,7 +166,7 @@
   }
 
   function ensureCinema() {
-    if (window.PortraitCinema && window.CinemaWipe) return Promise.resolve();
+    if (window.PortraitCinema && window.CinemaWipe && window.BlockbusterIntro) return Promise.resolve();
     if (!cinemaReady) {
       loadDeferredCss();
       cinemaReady = loadScriptChain(CINEMA_SCRIPTS).catch(function () {
