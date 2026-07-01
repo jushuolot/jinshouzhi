@@ -1,118 +1,134 @@
 {
-  "prev_date": "2026-06-28",
-  "curr_date": "2026-06-30",
-  "compared": 34,
-  "avg_pct_delta": -9.01,
+  "prev_date": "2026-06-30",
+  "curr_date": "2026-07-01",
+  "compared": 46,
+  "avg_pct_delta": -9.06,
   "movers": [
     {
-      "code": "001399",
-      "name": "C惠科",
-      "prev_pct": 315.02,
-      "curr_pct": 10.16,
-      "delta_pct": -304.86
+      "code": "920222",
+      "name": "益坤电气",
+      "prev_pct": 258.47,
+      "curr_pct": 8.52,
+      "delta_pct": -249.95
     },
     {
-      "code": "688797",
-      "name": "C臻宝",
-      "prev_pct": -5.11,
-      "curr_pct": 15.35,
-      "delta_pct": 20.46
+      "code": "300545",
+      "name": "联得装备",
+      "prev_pct": 20.0,
+      "curr_pct": -6.56,
+      "delta_pct": -26.56
     },
     {
-      "code": "920662",
-      "name": "方盛股份",
-      "prev_pct": 1.6,
-      "curr_pct": 18.97,
-      "delta_pct": 17.37
+      "code": "920072",
+      "name": "科莱瑞迪",
+      "prev_pct": -22.25,
+      "curr_pct": 2.38,
+      "delta_pct": 24.63
     },
     {
-      "code": "002167",
-      "name": "东方锆业",
-      "prev_pct": -5.31,
-      "curr_pct": 10.02,
-      "delta_pct": 15.33
+      "code": "301513",
+      "name": "尚水智能",
+      "prev_pct": 20.0,
+      "curr_pct": -2.43,
+      "delta_pct": -22.43
     },
     {
-      "code": "300721",
-      "name": "怡达股份",
-      "prev_pct": 5.15,
-      "curr_pct": -8.82,
-      "delta_pct": -13.97
+      "code": "301520",
+      "name": "万邦医药",
+      "prev_pct": 15.0,
+      "curr_pct": -4.62,
+      "delta_pct": -19.62
+    },
+    {
+      "code": "300975",
+      "name": "商络电子",
+      "prev_pct": 16.32,
+      "curr_pct": -2.2,
+      "delta_pct": -18.52
     },
     {
       "code": "603459",
       "name": "红板科技",
-      "prev_pct": -2.34,
-      "curr_pct": 10.0,
-      "delta_pct": 12.34
+      "prev_pct": 10.0,
+      "curr_pct": -6.7,
+      "delta_pct": -16.7
     },
     {
-      "code": "002559",
-      "name": "亚威股份",
-      "prev_pct": 10.01,
-      "curr_pct": -2.23,
-      "delta_pct": -12.24
-    },
-    {
-      "code": "300666",
-      "name": "江丰电子",
-      "prev_pct": 7.51,
-      "curr_pct": -3.63,
-      "delta_pct": -11.14
-    },
-    {
-      "code": "000823",
-      "name": "超声电子",
-      "prev_pct": 10.01,
-      "curr_pct": -1.12,
-      "delta_pct": -11.13
-    },
-    {
-      "code": "002910",
-      "name": "庄园牧场",
-      "prev_pct": 10.04,
-      "curr_pct": 0.36,
-      "delta_pct": -9.68
+      "code": "301045",
+      "name": "天禄科技",
+      "prev_pct": 20.01,
+      "curr_pct": 3.94,
+      "delta_pct": -16.07
     },
     {
       "code": "300162",
       "name": "雷曼光电",
-      "prev_pct": 19.98,
-      "curr_pct": 10.92,
-      "delta_pct": -9.06
+      "prev_pct": 10.92,
+      "curr_pct": -5.07,
+      "delta_pct": -15.99
+    },
+    {
+      "code": "688729",
+      "name": "屹唐股份",
+      "prev_pct": 12.89,
+      "curr_pct": 0.28,
+      "delta_pct": -12.61
     },
     {
       "code": "603407",
       "name": "长裕集团",
-      "prev_pct": -0.15,
-      "curr_pct": 8.75,
-      "delta_pct": 8.9
+      "prev_pct": 8.75,
+      "curr_pct": -2.61,
+      "delta_pct": -11.36
     },
     {
-      "code": "301421",
-      "name": "波长光电",
-      "prev_pct": 6.1,
-      "curr_pct": 14.53,
-      "delta_pct": 8.43
+      "code": "001399",
+      "name": "C惠科",
+      "prev_pct": 10.16,
+      "curr_pct": 21.22,
+      "delta_pct": 11.06
     },
     {
-      "code": "688328",
-      "name": "深科达",
-      "prev_pct": 11.69,
-      "curr_pct": 20.0,
-      "delta_pct": 8.31
+      "code": "002962",
+      "name": "五方光电",
+      "prev_pct": 4.87,
+      "curr_pct": -6.01,
+      "delta_pct": -10.88
     },
     {
-      "code": "002354",
-      "name": "天娱数科",
-      "prev_pct": 9.96,
-      "curr_pct": 2.09,
-      "delta_pct": -7.87
+      "code": "300270",
+      "name": "中威电子",
+      "prev_pct": 20.02,
+      "curr_pct": 9.76,
+      "delta_pct": -10.26
+    },
+    {
+      "code": "300503",
+      "name": "昊志机电",
+      "prev_pct": 19.99,
+      "curr_pct": 9.95,
+      "delta_pct": -10.04
     }
   ],
-  "pick_checks": [],
+  "pick_checks": [
+    {
+      "code": "000823",
+      "name": "超声电子",
+      "signal": "买入",
+      "delta_pct": 2.48,
+      "hit": true
+    },
+    {
+      "code": "603407",
+      "name": "长裕集团",
+      "signal": "观望",
+      "delta_pct": -11.36,
+      "hit": false
+    }
+  ],
   "conclusions": [
-    "快照对比 34 只，均涨跌变化 -9.01%。",
-    "最大异动 C惠科 001399 Δ-304.9%。"
+    "快照对比 46 只，均涨跌变化 -9.06%。",
+    "昨日推荐 2 只，快照验证 1 只方向正确。",
+    "最大异动 益坤电气 920222 Δ-249.9%。"
   ]
 }

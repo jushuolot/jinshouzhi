@@ -1,152 +1,6 @@
 {
-  "updated_at": "2026-06-30",
+  "updated_at": "2026-07-01",
   "days": [
-    {
-      "date": "2026-06-23",
-      "snapshot_count": 149,
-      "diff": {
-        "prev_date": "2026-06-22",
-        "curr_date": "2026-06-23",
-        "compared": 46,
-        "avg_pct_delta": -10.48,
-        "movers": [
-          {
-            "code": "300243",
-            "name": "瑞丰高材",
-            "prev_pct": 20.0,
-            "curr_pct": -9.89,
-            "delta_pct": -29.89
-          },
-          {
-            "code": "920725",
-            "name": "惠丰钻石",
-            "prev_pct": 29.99,
-            "curr_pct": 2.33,
-            "delta_pct": -27.66
-          },
-          {
-            "code": "920078",
-            "name": "族兴新材",
-            "prev_pct": 15.36,
-            "curr_pct": -9.65,
-            "delta_pct": -25.01
-          },
-          {
-            "code": "920211",
-            "name": "新睿电子",
-            "prev_pct": -10.65,
-            "curr_pct": 13.35,
-            "delta_pct": 24.0
-          },
-          {
-            "code": "301139",
-            "name": "*ST元道",
-            "prev_pct": 20.1,
-            "curr_pct": -3.79,
-            "delta_pct": -23.89
-          },
-          {
-            "code": "300283",
-            "name": "温州宏丰",
-            "prev_pct": 14.74,
-            "curr_pct": -8.11,
-            "delta_pct": -22.85
-          },
-          {
-            "code": "301666",
-            "name": "大普微",
-            "prev_pct": 13.57,
-            "curr_pct": -7.66,
-            "delta_pct": -21.23
-          },
-          {
-            "code": "300179",
-            "name": "四方达",
-            "prev_pct": 20.0,
-            "curr_pct": -0.85,
-            "delta_pct": -20.85
-          },
-          {
-            "code": "600549",
-            "name": "厦门钨业",
-            "prev_pct": 10.0,
-            "curr_pct": -9.6,
-            "delta_pct": -19.6
-          },
-          {
-            "code": "688530",
-            "name": "欧莱新材",
-            "prev_pct": 19.22,
-            "curr_pct": 0.85,
-            "delta_pct": -18.37
-          },
-          {
-            "code": "300274",
-            "name": "阳光电源",
-            "prev_pct": 11.21,
-            "curr_pct": -7.01,
-            "delta_pct": -18.22
-          },
-          {
-            "code": "603993",
-            "name": "洛阳钼业",
-            "prev_pct": 8.03,
-            "curr_pct": -9.98,
-            "delta_pct": -18.01
-          },
-          {
-            "code": "002842",
-            "name": "翔鹭钨业",
-            "prev_pct": 10.0,
-            "curr_pct": -7.83,
-            "delta_pct": -17.83
-          },
-          {
-            "code": "301687",
-            "name": "新广益",
-            "prev_pct": -5.41,
-            "curr_pct": 11.0,
-            "delta_pct": 16.41
-          },
-          {
-            "code": "001257",
-            "name": "盛龙股份",
-            "prev_pct": 5.79,
-            "curr_pct": -10.0,
-            "delta_pct": -15.79
-          }
-        ],
-        "pick_checks": [
-          {
-            "code": "688530",
-            "name": "欧莱新材",
-            "signal": "观望",
-            "delta_pct": -18.37,
-            "hit": false
-          },
-          {
-            "code": "688530",
-            "name": "欧莱新材",
-            "signal": "观望",
-            "delta_pct": -18.37,
-            "hit": false
-          },
-          {
-            "code": "688530",
-            "name": "欧莱新材",
-            "signal": "观望",
-            "delta_pct": -18.37,
-            "hit": false
-          }
-        ],
-        "conclusions": [
-          "快照对比 46 只，均涨跌变化 -10.48%。",
-          "昨日推荐 3 只，快照验证 0 只方向正确。",
-          "最大异动 瑞丰高材 300243 Δ-29.9%。"
-        ]
-      },
-      "picks_checked": 3
-    },
     {
       "date": "2026-06-24",
       "snapshot_count": 150,
@@ -1356,9 +1210,148 @@
         ]
       },
       "picks_checked": 0
+    },
+    {
+      "date": "2026-07-01",
+      "snapshot_count": 147,
+      "diff": {
+        "prev_date": "2026-06-30",
+        "curr_date": "2026-07-01",
+        "compared": 46,
+        "avg_pct_delta": -9.06,
+        "movers": [
+          {
+            "code": "920222",
+            "name": "益坤电气",
+            "prev_pct": 258.47,
+            "curr_pct": 8.52,
+            "delta_pct": -249.95
+          },
+          {
+            "code": "300545",
+            "name": "联得装备",
+            "prev_pct": 20.0,
+            "curr_pct": -6.56,
+            "delta_pct": -26.56
+          },
+          {
+            "code": "920072",
+            "name": "科莱瑞迪",
+            "prev_pct": -22.25,
+            "curr_pct": 2.38,
+            "delta_pct": 24.63
+          },
+          {
+            "code": "301513",
+            "name": "尚水智能",
+            "prev_pct": 20.0,
+            "curr_pct": -2.43,
+            "delta_pct": -22.43
+          },
+          {
+            "code": "301520",
+            "name": "万邦医药",
+            "prev_pct": 15.0,
+            "curr_pct": -4.62,
+            "delta_pct": -19.62
+          },
+          {
+            "code": "300975",
+            "name": "商络电子",
+            "prev_pct": 16.32,
+            "curr_pct": -2.2,
+            "delta_pct": -18.52
+          },
+          {
+            "code": "603459",
+            "name": "红板科技",
+            "prev_pct": 10.0,
+            "curr_pct": -6.7,
+            "delta_pct": -16.7
+          },
+          {
+            "code": "301045",
+            "name": "天禄科技",
+            "prev_pct": 20.01,
+            "curr_pct": 3.94,
+            "delta_pct": -16.07
+          },
+          {
+            "code": "300162",
+            "name": "雷曼光电",
+            "prev_pct": 10.92,
+            "curr_pct": -5.07,
+            "delta_pct": -15.99
+          },
+          {
+            "code": "688729",
+            "name": "屹唐股份",
+            "prev_pct": 12.89,
+            "curr_pct": 0.28,
+            "delta_pct": -12.61
+          },
+          {
+            "code": "603407",
+            "name": "长裕集团",
+            "prev_pct": 8.75,
+            "curr_pct": -2.61,
+            "delta_pct": -11.36
+          },
+          {
+            "code": "001399",
+            "name": "C惠科",
+            "prev_pct": 10.16,
+            "curr_pct": 21.22,
+            "delta_pct": 11.06
+          },
+          {
+            "code": "002962",
+            "name": "五方光电",
+            "prev_pct": 4.87,
+            "curr_pct": -6.01,
+            "delta_pct": -10.88
+          },
+          {
+            "code": "300270",
+            "name": "中威电子",
+            "prev_pct": 20.02,
+            "curr_pct": 9.76,
+            "delta_pct": -10.26
+          },
+          {
+            "code": "300503",
+            "name": "昊志机电",
+            "prev_pct": 19.99,
+            "curr_pct": 9.95,
+            "delta_pct": -10.04
+          }
+        ],
+        "pick_checks": [
+          {
+            "code": "000823",
+            "name": "超声电子",
+            "signal": "买入",
+            "delta_pct": 2.48,
+            "hit": true
+          },
+          {
+            "code": "603407",
+            "name": "长裕集团",
+            "signal": "观望",
+            "delta_pct": -11.36,
+            "hit": false
+          }
+        ],
+        "conclusions": [
+          "快照对比 46 只，均涨跌变化 -9.06%。",
+          "昨日推荐 2 只，快照验证 1 只方向正确。",
+          "最大异动 益坤电气 920222 Δ-249.9%。"
+        ]
+      },
+      "picks_checked": 2
     }
   ],
-  "week_hit_rate_pct": 55.1,
-  "week_checks": 69,
-  "headline": "近 7 个交易日快照；预测快照验证 38/69 方向正确。"
+  "week_hit_rate_pct": 57.4,
+  "week_checks": 68,
+  "headline": "近 7 个交易日快照；预测快照验证 39/68 方向正确。"
 }
