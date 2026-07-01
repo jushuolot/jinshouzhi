@@ -30,6 +30,8 @@
     "landing/sponsors.js",
     "ad-config.js",
     "virtual-account.js",
+    "evolution.js",
+    "civilization-clock.js",
     "network-earnings.js",
     "story.js",
     "map-narrative.js",
@@ -38,8 +40,6 @@
     "expedition-map-2d.js",
     "match-fx.js",
     "tomb-atmosphere.js",
-    "evolution.js",
-    "civilization-clock.js",
     "game.js",
   ];
 
