@@ -1,0 +1,1 @@
+import{$ as n}from"./index-C7WTO9SX.js";function t(t){n({title:t,icon:"none",duration:2200})}function i(t){n({title:t,icon:"success",duration:1600})}function o(t){n({title:t,icon:"none",duration:2200})}export{t as a,i as b,o as t};
