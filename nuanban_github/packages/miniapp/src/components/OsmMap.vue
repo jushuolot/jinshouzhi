@@ -3,13 +3,15 @@
     <view v-if="!ready" class="osm-loading">地图加载中…</view>
     <view v-else class="osm-stage" :style="{ width: stageW + 'px', height: stageH + 'px' }">
       <view class="osm-tiles">
-        <image
+        <img
           v-for="tile in tiles"
-          :key="tile.key"
+          :key="tile.key + '-' + tileProvider"
           class="osm-tile"
           :src="tile.url"
           :style="{ left: tile.x + 'px', top: tile.y + 'px' }"
-          mode="scaleToFill"
+          referrerpolicy="no-referrer"
+          alt=""
+          @error="onTileError"
         />
       </view>
       <view
@@ -23,7 +25,7 @@
         <view class="osm-pin-dot" />
         <text v-if="pin.label" class="osm-pin-label">{{ pin.label }}</text>
       </view>
-      <text class="osm-attr">{{ OSM_ATTRIBUTION }}</text>
+      <text class="osm-attr">{{ attribution }}</text>
     </view>
   </view>
 </template>
@@ -31,7 +33,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
 import {
-  OSM_ATTRIBUTION,
+  mapAttribution,
   markerPixel,
   visibleOsmTiles,
   zoomToFitBounds,
@@ -62,6 +64,8 @@ const stageH = ref(360);
 const viewCenterLat = ref(props.centerLat);
 const viewCenterLng = ref(props.centerLng);
 const viewZoom = ref(14);
+const tileProvider = ref<'auto' | 'gaode' | 'osm' | 'carto'>('auto');
+let tileErrorSwitches = 0;
 
 const allPoints = computed(() => [
   { lat: props.centerLat, lng: props.centerLng },
@@ -69,8 +73,27 @@ const allPoints = computed(() => [
 ]);
 
 const tiles = computed(() =>
-  visibleOsmTiles(viewCenterLat.value, viewCenterLng.value, viewZoom.value, stageW.value, stageH.value),
+  visibleOsmTiles(
+    viewCenterLat.value,
+    viewCenterLng.value,
+    viewZoom.value,
+    stageW.value,
+    stageH.value,
+    tileProvider.value,
+  ),
 );
+
+const attribution = computed(() => mapAttribution(tileProvider.value));
+
+function onTileError() {
+  if (tileErrorSwitches > 2) return;
+  tileErrorSwitches += 1;
+  if (tileProvider.value === 'auto' || tileProvider.value === 'gaode') {
+    tileProvider.value = 'carto';
+  } else if (tileProvider.value === 'carto') {
+    tileProvider.value = 'osm';
+  }
+}
 
 const pins = computed(() => {
   const toPin = (m: MapPin) => {

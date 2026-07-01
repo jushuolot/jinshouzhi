@@ -16,13 +16,15 @@
         @touchend.stop.prevent="onStagePointer"
       >
         <view class="tiles">
-          <image
+          <img
             v-for="tile in tiles"
-            :key="tile.key"
+            :key="tile.key + '-' + tileProvider"
             class="tile"
             :src="tile.url"
             :style="{ left: tile.x + 'px', top: tile.y + 'px' }"
-            mode="scaleToFill"
+            referrerpolicy="no-referrer"
+            alt=""
+            @error="onTileError"
           />
         </view>
         <view
@@ -33,7 +35,7 @@
           <view class="pin-dot" />
           <text class="pin-label">{{ cityLabel || '大概位置' }}</text>
         </view>
-        <text class="attr">{{ OSM_ATTRIBUTION }}</text>
+        <text class="attr">{{ attribution }}</text>
       </view>
     </view>
     <text v-if="hasPin" class="coord">
@@ -46,7 +48,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import {
-  OSM_ATTRIBUTION,
+  mapAttribution,
   markerPixel,
   pixelToLatLng,
   visibleOsmTiles,
@@ -88,6 +90,8 @@ const geocoding = ref(false);
 const viewCenterLat = ref(props.defaultLat);
 const viewCenterLng = ref(props.defaultLng);
 const viewZoom = ref(12);
+const tileProvider = ref<'auto' | 'gaode' | 'osm' | 'carto'>('auto');
+let tileErrorSwitches = 0;
 
 const hasPin = computed(
   () => props.modelValue != null && Number.isFinite(props.modelValue.lat) && Number.isFinite(props.modelValue.lng),
@@ -109,8 +113,27 @@ const pinPx = computed(() => {
 });
 
 const tiles = computed(() =>
-  visibleOsmTiles(viewCenterLat.value, viewCenterLng.value, viewZoom.value, stageW.value, stageH.value),
+  visibleOsmTiles(
+    viewCenterLat.value,
+    viewCenterLng.value,
+    viewZoom.value,
+    stageW.value,
+    stageH.value,
+    tileProvider.value,
+  ),
 );
+
+const attribution = computed(() => mapAttribution(tileProvider.value));
+
+function onTileError() {
+  if (tileErrorSwitches > 2) return;
+  tileErrorSwitches += 1;
+  if (tileProvider.value === 'auto' || tileProvider.value === 'gaode') {
+    tileProvider.value = 'carto';
+  } else if (tileProvider.value === 'carto') {
+    tileProvider.value = 'osm';
+  }
+}
 
 function fitToPin() {
   if (!hasPin.value || !props.modelValue) return;

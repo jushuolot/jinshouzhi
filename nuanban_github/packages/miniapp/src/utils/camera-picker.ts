@@ -40,19 +40,15 @@ function isMobileH5(): boolean {
   return isMobileH5Browser();
 }
 
-/** H5 选图：桌面允许相册/文件；移动端可走 capture；局域网 HTTP 走系统相册/相机选择 */
-function pickCameraViaNativeInput(
-  capture?: 'user' | 'environment',
-  allowAlbum = false,
-): Promise<CameraPickResult> {
+function nativeFileInputPick(capture?: string): Promise<CameraPickResult> {
   return new Promise((resolve, reject) => {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'image/*';
-    if (capture && isMobileH5() && !allowAlbum) {
+    if (capture) {
       input.setAttribute('capture', capture);
     }
-    input.style.cssText = 'position:fixed;left:-9999px;opacity:0';
+    input.style.cssText = 'position:fixed;left:-9999px;width:1px;height:1px;opacity:0';
     document.body.appendChild(input);
 
     const cleanup = () => {
@@ -67,12 +63,7 @@ function pickCameraViaNativeInput(
         return;
       }
       try {
-        const dataUrl = await fileToDataUrl(file);
-        resolve({
-          filePath: dataUrl,
-          previewUrl: dataUrl,
-          file,
-        });
+        resolve(await fileToPickResult(file));
       } catch (err) {
         reject(err);
       }
@@ -88,14 +79,65 @@ function pickCameraViaNativeInput(
   });
 }
 
+function mobileCameraCaptureAttr(): string {
+  const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
+  if (/HarmonyOS|OpenHarmony|Android/i.test(ua)) return 'environment';
+  if (isIOSDevice()) return 'user';
+  return 'environment';
+}
+
+/** H5 相册选图（无 capture） */
+export function pickImageFromAlbum(): Promise<CameraPickResult> {
+  if (!isH5()) {
+    return new Promise((resolve, reject) => {
+      uni.chooseImage({
+        count: 1,
+        sizeType: ['compressed'],
+        sourceType: ['album'],
+        success: (pick) => {
+          const filePath = pick.tempFilePaths?.[0];
+          if (!filePath) {
+            reject(new Error('未选择照片'));
+            return;
+          }
+          resolve({ filePath, previewUrl: filePath });
+        },
+        fail: reject,
+      });
+    });
+  }
+  return nativeFileInputPick();
+}
+
+/** H5 直接调起相机（动态 input + capture，兼容鸿蒙内置浏览器） */
+export function pickImageFromCamera(): Promise<CameraPickResult> {
+  if (!isH5()) {
+    return new Promise((resolve, reject) => {
+      uni.chooseImage({
+        count: 1,
+        sizeType: ['compressed'],
+        sourceType: ['camera'],
+        success: (pick) => {
+          const filePath = pick.tempFilePaths?.[0];
+          if (!filePath) {
+            reject(new Error('未拍摄照片'));
+            return;
+          }
+          resolve({ filePath, previewUrl: filePath });
+        },
+        fail: reject,
+      });
+    });
+  }
+  return nativeFileInputPick(mobileCameraCaptureAttr());
+}
+
 export async function pickCameraImage(): Promise<CameraPickResult> {
   if (isH5()) {
-    // 桌面浏览器：直接文件选择（本地联调、无摄像头）
     if (!isMobileH5()) {
-      return pickCameraViaNativeInput();
+      return nativeFileInputPick();
     }
-    // 手机内置浏览器（微信/鸿蒙等）getUserMedia 常不可用，统一走相册/相机文件选择
-    return pickCameraViaNativeInput(undefined, true);
+    return pickImageFromCamera();
   }
 
   const pick = await new Promise<UniApp.ChooseImageSuccessCallbackResult>((resolve, reject) => {

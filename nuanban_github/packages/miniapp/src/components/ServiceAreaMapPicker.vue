@@ -17,13 +17,16 @@
         @touchend.stop.prevent="onStagePointer"
       >
         <view class="tiles">
-          <image
+          <!-- H5 用原生 img，避免 uni image 加载外链瓦片失败 -->
+          <img
             v-for="tile in tiles"
-            :key="tile.key"
+            :key="tile.key + '-' + tileProvider"
             class="tile"
             :src="tile.url"
             :style="{ left: tile.x + 'px', top: tile.y + 'px' }"
-            mode="scaleToFill"
+            referrerpolicy="no-referrer"
+            alt=""
+            @error="onTileError"
           />
         </view>
         <svg
@@ -59,7 +62,7 @@
             stroke-width="1.5"
           />
         </svg>
-        <text class="attr">{{ OSM_ATTRIBUTION }}</text>
+        <text class="attr">{{ attribution }}</text>
       </view>
     </view>
     <view v-if="modelValue.polygons.length" class="summary">
@@ -74,7 +77,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import {
-  OSM_ATTRIBUTION,
+  mapAttribution,
   pixelToLatLng,
   markerPixel,
   visibleOsmTiles,
@@ -116,6 +119,8 @@ const viewCenterLat = ref(props.centerLat);
 const viewCenterLng = ref(props.centerLng);
 const viewZoom = ref(13);
 const draftRing = ref<GeoPoint[]>([]);
+const tileProvider = ref<'auto' | 'gaode' | 'osm' | 'carto'>('auto');
+let tileErrorSwitches = 0;
 
 const finishedPolygons = computed(() => props.modelValue.polygons);
 const allVisiblePoints = computed(() => [
@@ -124,8 +129,27 @@ const allVisiblePoints = computed(() => [
 ]);
 
 const tiles = computed(() =>
-  visibleOsmTiles(viewCenterLat.value, viewCenterLng.value, viewZoom.value, stageW.value, stageH.value),
+  visibleOsmTiles(
+    viewCenterLat.value,
+    viewCenterLng.value,
+    viewZoom.value,
+    stageW.value,
+    stageH.value,
+    tileProvider.value,
+  ),
 );
+
+const attribution = computed(() => mapAttribution(tileProvider.value));
+
+function onTileError() {
+  if (tileErrorSwitches > 2) return;
+  tileErrorSwitches += 1;
+  if (tileProvider.value === 'auto' || tileProvider.value === 'gaode') {
+    tileProvider.value = 'carto';
+  } else if (tileProvider.value === 'carto') {
+    tileProvider.value = 'osm';
+  }
+}
 
 function pointPx(pt: GeoPoint) {
   return markerPixel(
@@ -312,7 +336,19 @@ watch(
     linear-gradient(#dfe6eb 1px, transparent 1px),
     linear-gradient(90deg, #dfe6eb 1px, transparent 1px);
   background-size: 32px 32px;
-  background-color: #e8ecef;
+  background-color: #d8e0e8;
+}
+.map-fallback-hint {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1;
+  font-size: 22rpx;
+  color: #888;
+  text-align: center;
+  padding: 0 24rpx;
+  pointer-events: none;
 }
 .stage-hidden {
   visibility: hidden;

@@ -1,4 +1,4 @@
-/** Web Mercator helpers for H5 OpenStreetMap tile overlay (zero API key). */
+/** Web Mercator helpers for H5 map tile overlay */
 
 export const TILE_SIZE = 256;
 export const OSM_TILE_URL = 'https://tile.openstreetmap.org';
@@ -6,6 +6,41 @@ export const OSM_ATTRIBUTION = '© OpenStreetMap';
 
 export function osmTileUrl(z: number, x: number, y: number): string {
   return `${OSM_TILE_URL}/${z}/${x}/${y}.png`;
+}
+
+/** 国内手机浏览器 OSM 常不可用，默认高德道路底图（演示描点） */
+export function preferCnMapTiles(): boolean {
+  if (typeof navigator === 'undefined') return true;
+  const lang = navigator.language || '';
+  const tz = typeof Intl !== 'undefined' ? Intl.DateTimeFormat().resolvedOptions().timeZone : '';
+  return (
+    lang.startsWith('zh')
+    || tz === 'Asia/Shanghai'
+    || /HarmonyOS|OpenHarmony|MicroMessenger/i.test(navigator.userAgent)
+  );
+}
+
+export function gaodeTileUrl(z: number, x: number, y: number): string {
+  const s = ((x + y) % 4) + 1;
+  return `https://webrd0${s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x=${x}&y=${y}&z=${z}`;
+}
+
+export function cartoTileUrl(z: number, x: number, y: number): string {
+  return `https://basemaps.cartocdn.com/rastertiles/voyager/${z}/${x}/${y}.png`;
+}
+
+export function mapTileUrl(z: number, x: number, y: number, provider: 'auto' | 'gaode' | 'osm' | 'carto' = 'auto'): string {
+  if (provider === 'gaode') return gaodeTileUrl(z, x, y);
+  if (provider === 'osm') return osmTileUrl(z, x, y);
+  if (provider === 'carto') return cartoTileUrl(z, x, y);
+  return preferCnMapTiles() ? gaodeTileUrl(z, x, y) : osmTileUrl(z, x, y);
+}
+
+export function mapAttribution(provider: 'auto' | 'gaode' | 'osm' | 'carto' = 'auto'): string {
+  if (provider === 'gaode') return '© 高德地图';
+  if (provider === 'carto') return '© CARTO © OpenStreetMap';
+  if (provider === 'osm') return OSM_ATTRIBUTION;
+  return preferCnMapTiles() ? '© 高德地图' : OSM_ATTRIBUTION;
 }
 
 export function latLngToWorld(lat: number, lng: number, zoom: number): { x: number; y: number } {
@@ -106,6 +141,7 @@ export function visibleOsmTiles(
   zoom: number,
   width: number,
   height: number,
+  provider: 'auto' | 'gaode' | 'osm' | 'carto' = 'auto',
 ): { key: string; url: string; x: number; y: number }[] {
   const z = Math.round(zoom);
   const center = latLngToWorld(centerLat, centerLng, z);
@@ -125,7 +161,7 @@ export function visibleOsmTiles(
     for (let ty = minTileY; ty <= maxTileY; ty++) {
       tiles.push({
         key: `${z}-${tx}-${ty}`,
-        url: osmTileUrl(z, tx, ty),
+        url: mapTileUrl(z, tx, ty, provider),
         x: tx * TILE_SIZE - left,
         y: ty * TILE_SIZE - top,
       });
