@@ -4,11 +4,13 @@ export const TILE_SIZE = 256;
 export const OSM_TILE_URL = 'https://tile.openstreetmap.org';
 export const OSM_ATTRIBUTION = '© OpenStreetMap';
 
+export type MapTileProvider = 'auto' | 'gaode' | 'gaode-webst' | 'tencent' | 'osm' | 'carto';
+
 export function osmTileUrl(z: number, x: number, y: number): string {
   return `${OSM_TILE_URL}/${z}/${x}/${y}.png`;
 }
 
-/** 国内手机浏览器 OSM 常不可用，默认高德道路底图（演示描点） */
+/** 国内手机浏览器 OSM 常不可用 */
 export function preferCnMapTiles(): boolean {
   if (typeof navigator === 'undefined') return true;
   const lang = navigator.language || '';
@@ -20,27 +22,64 @@ export function preferCnMapTiles(): boolean {
   );
 }
 
+function tileSubdomain(x: number, y: number): number {
+  return ((x + y) % 4) + 1;
+}
+
+/** 高德矢量详图（含路网 + 中文注记，wprd 正式 CDN） */
 export function gaodeTileUrl(z: number, x: number, y: number): string {
-  const s = ((x + y) % 4) + 1;
-  return `https://webrd0${s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x=${x}&y=${y}&z=${z}`;
+  const s = tileSubdomain(x, y);
+  return `https://wprd0${s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scl=1&style=7&x=${x}&y=${y}&z=${z}`;
+}
+
+/** 高德 webst 矢量备用源 */
+export function gaodeWebstTileUrl(z: number, x: number, y: number): string {
+  const s = tileSubdomain(x, y);
+  return `https://webst0${s}.is.autonavi.com/appmaptile?style=7&x=${x}&y=${y}&z=${z}`;
+}
+
+/** 腾讯矢量底图（国内备用，非开源） */
+export function tencentTileUrl(z: number, x: number, y: number): string {
+  const s = (x + y) % 4;
+  return `https://rt${s}.map.gtimg.com/realtimerender?z=${z}&x=${x}&y=${y}&type=vector&style=0`;
 }
 
 export function cartoTileUrl(z: number, x: number, y: number): string {
   return `https://basemaps.cartocdn.com/rastertiles/voyager/${z}/${x}/${y}.png`;
 }
 
-export function mapTileUrl(z: number, x: number, y: number, provider: 'auto' | 'gaode' | 'osm' | 'carto' = 'auto'): string {
+export function mapTileUrl(
+  z: number,
+  x: number,
+  y: number,
+  provider: MapTileProvider = 'auto',
+): string {
   if (provider === 'gaode') return gaodeTileUrl(z, x, y);
+  if (provider === 'gaode-webst') return gaodeWebstTileUrl(z, x, y);
+  if (provider === 'tencent') return tencentTileUrl(z, x, y);
   if (provider === 'osm') return osmTileUrl(z, x, y);
   if (provider === 'carto') return cartoTileUrl(z, x, y);
   return preferCnMapTiles() ? gaodeTileUrl(z, x, y) : osmTileUrl(z, x, y);
 }
 
-export function mapAttribution(provider: 'auto' | 'gaode' | 'osm' | 'carto' = 'auto'): string {
-  if (provider === 'gaode') return '© 高德地图';
+export function mapAttribution(provider: MapTileProvider = 'auto'): string {
+  if (provider === 'gaode' || provider === 'gaode-webst') return '© 高德地图';
+  if (provider === 'tencent') return '© 腾讯地图';
   if (provider === 'carto') return '© CARTO © OpenStreetMap';
   if (provider === 'osm') return OSM_ATTRIBUTION;
   return preferCnMapTiles() ? '© 高德地图' : OSM_ATTRIBUTION;
+}
+
+/** 瓦片加载失败时切换图源（国内不走 CARTO 国外风格演示图） */
+export function nextMapTileProvider(current: MapTileProvider): MapTileProvider {
+  if (preferCnMapTiles()) {
+    if (current === 'auto' || current === 'gaode') return 'gaode-webst';
+    if (current === 'gaode-webst') return 'tencent';
+    if (current === 'tencent') return 'osm';
+    return 'osm';
+  }
+  if (current === 'auto' || current === 'osm') return 'carto';
+  return 'osm';
 }
 
 export function latLngToWorld(lat: number, lng: number, zoom: number): { x: number; y: number } {
@@ -141,7 +180,7 @@ export function visibleOsmTiles(
   zoom: number,
   width: number,
   height: number,
-  provider: 'auto' | 'gaode' | 'osm' | 'carto' = 'auto',
+  provider: MapTileProvider = 'auto',
 ): { key: string; url: string; x: number; y: number }[] {
   const z = Math.round(zoom);
   const center = latLngToWorld(centerLat, centerLng, z);

@@ -34,10 +34,12 @@
 import { computed, onMounted, ref, watch } from 'vue';
 import {
   mapAttribution,
+  nextMapTileProvider,
   markerPixel,
   visibleOsmTiles,
   zoomToFitBounds,
   type MapPin,
+  type MapTileProvider,
 } from '../utils/geo-map';
 
 const props = withDefaults(
@@ -64,7 +66,7 @@ const stageH = ref(360);
 const viewCenterLat = ref(props.centerLat);
 const viewCenterLng = ref(props.centerLng);
 const viewZoom = ref(14);
-const tileProvider = ref<'auto' | 'gaode' | 'osm' | 'carto'>('auto');
+const tileProvider = ref<MapTileProvider>('auto');
 let tileErrorSwitches = 0;
 
 const allPoints = computed(() => [
@@ -86,13 +88,9 @@ const tiles = computed(() =>
 const attribution = computed(() => mapAttribution(tileProvider.value));
 
 function onTileError() {
-  if (tileErrorSwitches > 2) return;
+  if (tileErrorSwitches > 4) return;
   tileErrorSwitches += 1;
-  if (tileProvider.value === 'auto' || tileProvider.value === 'gaode') {
-    tileProvider.value = 'carto';
-  } else if (tileProvider.value === 'carto') {
-    tileProvider.value = 'osm';
-  }
+  tileProvider.value = nextMapTileProvider(tileProvider.value);
 }
 
 const pins = computed(() => {

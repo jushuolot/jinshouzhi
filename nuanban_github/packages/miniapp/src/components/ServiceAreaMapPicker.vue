@@ -8,7 +8,14 @@
     </view>
     <view class="map-wrap">
       <view v-if="!ready" class="loading">地图加载中…</view>
+      <div
+        v-if="useAmapMode"
+        ref="amapHostRef"
+        class="amap-stage"
+        :class="{ 'stage-hidden': !ready }"
+      />
       <view
+        v-else
         class="stage"
         :class="{ 'stage-hidden': !ready }"
         :style="{ width: stageW + 'px', height: stageH + 'px' }"
@@ -78,10 +85,14 @@
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import {
   mapAttribution,
+  nextMapTileProvider,
   pixelToLatLng,
   markerPixel,
   visibleOsmTiles,
+  type MapTileProvider,
 } from '../utils/geo-map';
+import { createAmapMap } from '../utils/amap-h5';
+import { useOfficialAmap } from '../utils/map-config';
 import {
   emptyServiceAreaGeo,
   type ServiceAreaGeo,
@@ -119,8 +130,19 @@ const viewCenterLat = ref(props.centerLat);
 const viewCenterLng = ref(props.centerLng);
 const viewZoom = ref(13);
 const draftRing = ref<GeoPoint[]>([]);
-const tileProvider = ref<'auto' | 'gaode' | 'osm' | 'carto'>('auto');
+const tileProvider = ref<MapTileProvider>('auto');
+const amapFailed = ref(false);
+const amapHostRef = ref<HTMLElement | null>(null);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let amapMap: any = null;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let amapNs: any = null;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const amapOverlays: any[] = [];
+let destroyAmap: (() => void) | null = null;
 let tileErrorSwitches = 0;
+
+const useAmapMode = computed(() => isH5Dom() && useOfficialAmap() && !amapFailed.value);
 
 const finishedPolygons = computed(() => props.modelValue.polygons);
 const allVisiblePoints = computed(() => [
@@ -142,12 +164,83 @@ const tiles = computed(() =>
 const attribution = computed(() => mapAttribution(tileProvider.value));
 
 function onTileError() {
-  if (tileErrorSwitches > 2) return;
+  if (tileErrorSwitches > 4) return;
   tileErrorSwitches += 1;
-  if (tileProvider.value === 'auto' || tileProvider.value === 'gaode') {
-    tileProvider.value = 'carto';
-  } else if (tileProvider.value === 'carto') {
-    tileProvider.value = 'osm';
+  tileProvider.value = nextMapTileProvider(tileProvider.value);
+}
+
+function clearAmapOverlays() {
+  if (!amapMap) return;
+  for (const overlay of amapOverlays) {
+    amapMap.remove(overlay);
+  }
+  amapOverlays.length = 0;
+}
+
+function syncAmapOverlays() {
+  if (!amapMap || !amapNs) return;
+  clearAmapOverlays();
+
+  for (const poly of finishedPolygons.value) {
+    const polygon = new amapNs.Polygon({
+      path: poly.ring.map((p) => [p.lng, p.lat]),
+      fillColor: 'rgba(196,92,38,0.25)',
+      strokeColor: '#c45c26',
+      strokeWeight: 2,
+    });
+    amapMap.add(polygon);
+    amapOverlays.push(polygon);
+  }
+
+  if (draftRing.value.length >= 2) {
+    const line = new amapNs.Polyline({
+      path: draftRing.value.map((p) => [p.lng, p.lat]),
+      strokeColor: '#2e7d32',
+      strokeWeight: 2,
+      strokeStyle: 'dashed',
+    });
+    amapMap.add(line);
+    amapOverlays.push(line);
+  }
+
+  for (const pt of allVisiblePoints.value) {
+    const dot = new amapNs.CircleMarker({
+      center: [pt.lng, pt.lat],
+      radius: 5,
+      fillColor: '#c45c26',
+      strokeColor: '#fff',
+      strokeWeight: 1.5,
+    });
+    amapMap.add(dot);
+    amapOverlays.push(dot);
+  }
+}
+
+async function initAmapStage() {
+  if (!useAmapMode.value || !amapHostRef.value) return;
+  try {
+    const { map, AMap, destroy } = await createAmapMap(
+      amapHostRef.value,
+      viewCenterLng.value,
+      viewCenterLat.value,
+      viewZoom.value,
+    );
+    amapMap = map;
+    amapNs = AMap;
+    destroyAmap = destroy;
+    map.on('click', (e: { lnglat: { getLng: () => number; getLat: () => number } }) => {
+      if (props.disabled) return;
+      draftRing.value = [...draftRing.value, { lat: e.lnglat.getLat(), lng: e.lnglat.getLng() }];
+      syncAmapOverlays();
+    });
+    ready.value = true;
+    syncAmapOverlays();
+  } catch {
+    amapFailed.value = true;
+    ready.value = false;
+    void nextTick(() => {
+      void measure();
+    });
   }
 }
 
@@ -233,6 +326,12 @@ function onResize() {
 }
 
 onMounted(() => {
+  if (useAmapMode.value) {
+    void nextTick(() => {
+      void initAmapStage();
+    });
+    return;
+  }
   const fb = defaultMapStageSize();
   applyStageSize(fb.w, fb.h);
   void nextTick(() => {
@@ -247,11 +346,15 @@ onUnmounted(() => {
   if (isH5Dom()) {
     window.removeEventListener('resize', onResize);
   }
+  destroyAmap?.();
+  amapMap = null;
+  amapNs = null;
 });
 
 function undoPoint() {
   if (props.disabled || !draftRing.value.length) return;
   draftRing.value = draftRing.value.slice(0, -1);
+  syncAmapOverlays();
 }
 
 function finishPolygon() {
@@ -268,19 +371,26 @@ function finishPolygon() {
     polygons: [...props.modelValue.polygons, poly],
   });
   draftRing.value = [];
+  syncAmapOverlays();
 }
 
 function startNewPolygon() {
   draftRing.value = [];
+  syncAmapOverlays();
 }
 
 watch(
   () => props.modelValue,
   () => {
     draftRing.value = [];
+    syncAmapOverlays();
   },
   { deep: true },
 );
+
+watch(draftRing, () => {
+  syncAmapOverlays();
+}, { deep: true });
 
 watch(
   () => [props.centerLat, props.centerLng],
@@ -318,6 +428,12 @@ watch(
   background: #e8ecef;
   border-radius: 12rpx;
   overflow: hidden;
+}
+.amap-stage {
+  width: 100%;
+  height: 100%;
+  min-height: 280px;
+  touch-action: manipulation;
 }
 .loading {
   display: flex;

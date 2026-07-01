@@ -49,10 +49,12 @@
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import {
   mapAttribution,
+  nextMapTileProvider,
   markerPixel,
   pixelToLatLng,
   visibleOsmTiles,
   zoomToFitBounds,
+  type MapTileProvider,
 } from '../utils/geo-map';
 import { geocodeCityName } from '../utils/geocode-city';
 import {
@@ -90,7 +92,7 @@ const geocoding = ref(false);
 const viewCenterLat = ref(props.defaultLat);
 const viewCenterLng = ref(props.defaultLng);
 const viewZoom = ref(12);
-const tileProvider = ref<'auto' | 'gaode' | 'osm' | 'carto'>('auto');
+const tileProvider = ref<MapTileProvider>('auto');
 let tileErrorSwitches = 0;
 
 const hasPin = computed(
@@ -126,13 +128,9 @@ const tiles = computed(() =>
 const attribution = computed(() => mapAttribution(tileProvider.value));
 
 function onTileError() {
-  if (tileErrorSwitches > 2) return;
+  if (tileErrorSwitches > 4) return;
   tileErrorSwitches += 1;
-  if (tileProvider.value === 'auto' || tileProvider.value === 'gaode') {
-    tileProvider.value = 'carto';
-  } else if (tileProvider.value === 'carto') {
-    tileProvider.value = 'osm';
-  }
+  tileProvider.value = nextMapTileProvider(tileProvider.value);
 }
 
 function fitToPin() {

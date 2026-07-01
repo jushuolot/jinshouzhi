@@ -33,7 +33,7 @@ cd packages/miniapp && npm run dev:h5
 
 - 微信支付商户、微信开放平台认证
 - Render / 云服务器 / 域名（见 [PUBLIC_DEMO.md](./PUBLIC_DEMO.md) 备用）
-- 短信、模板消息、商业地图 Key
+- 短信、模板消息、商业地图 Key（可选免费申请高德 JS API Key，见 `packages/miniapp/.env.example` 中 `VITE_AMAP_KEY`）
 
 ## 日常全自动同步公网
 
