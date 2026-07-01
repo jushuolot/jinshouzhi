@@ -1,1 +1,0 @@
-import{l as s,H as a,U as o,e,N as n,s as r,a as t}from"./index-ByPmpi0Y.js";const c=t(s({__name:"user-manual",setup:s=>(a(s=>{const a=[];(null==s?void 0:s.from)&&a.push(`from=${s.from}`);const e=a.length?`?${a.join("&")}`:"";o({url:`/pages/common/login${e}`})}),(s,a)=>{const o=r;return n(),e(o,{class:"redirect"})})}),[["__scopeId","data-v-cad03f2e"]]);export{c as default};
