@@ -5,9 +5,12 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-cat > config/demo.env <<'EOF'
+cat > config/formal.env <<'EOF'
 NUANBAN_DOMAIN=nuanbao.cc
-NUANBAN_DEMO_URL=https://www.nuanbao.cc/#/pages/common/launch
+NUANBAN_USER_HOST=user.nuanbao.cc
+NUANBAN_CONTROL_HOST=control.nuanbao.cc
+NUANBAN_FORMAL_URL=https://user.nuanbao.cc/#/pages/common/login
+NUANBAN_PUBLIC_API=https://user.nuanbao.cc
 NUANBAN_STAGING_IP=101.200.128.82
 NUANBAN_REMOTE_DIR=/opt/jinshouzhi/nuanban_github
 EOF

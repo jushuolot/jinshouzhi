@@ -19,7 +19,7 @@
       <text v-if="!loggedIn" class="skip-hint" @tap="skipSplash">轻触跳过</text>
       <text class="copyright">{{ COPYRIGHT_LINE }}</text>
     </view>
-    <OpsSessionBar />
+    <OpsSessionBar v-if="showOpsEntry()" />
   </view>
 </template>
 
@@ -37,6 +37,7 @@ import { navigateAfterAuth } from '../../utils/profile-onboarding';
 import { useRoleStore } from '../../store/role';
 import OpsSessionBar from '../../components/OpsSessionBar.vue';
 import { openOpsMode } from '../../utils/ops-mode';
+import { showOpsEntry } from '../../config/app-variant';
 import {
   hasSeenTour,
   LOGGED_IN_SPLASH_MS,
@@ -66,6 +67,7 @@ function openOps() {
 }
 
 function onLogoTap() {
+  if (!showOpsEntry()) return;
   const now = Date.now();
   if (now - lastLogoTap < 450) {
     openOps();

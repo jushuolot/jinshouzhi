@@ -66,7 +66,7 @@ Caddy 在同一域名下提供 H5 与 API，**避免 H5 跨域**：
 | 路径 / 脚本 | 作用 |
 |-------------|------|
 | `/opt/jinshouzhi/nuanban_github` | 服务器 monorepo 根（暖伴） |
-| `config/demo.env` | `NUANBAN_STAGING_IP`、`NUANBAN_DOMAIN`、`NUANBAN_SSH` 等（勿提交 git） |
+| `config/formal.env` | `NUANBAN_STAGING_IP`、`NUANBAN_DOMAIN`、`NUANBAN_SSH` 等（勿提交 git） |
 | `scripts/release-prod.sh` | 正式发布：pull → `aliyun-fix-data.sh` → 写 `.release/prod.lock` |
 | `scripts/aliyun-fix-data.sh` | 重启 PB、导入集合、seed、**production 构建 H5**、重启 Caddy |
 | `scripts/sync-all.sh` | 本地 → `release-test.sh`；服务器 → `release-prod.sh` |
@@ -127,7 +127,7 @@ cd /opt/jinshouzhi/nuanban_github && ./scripts/sync-all.sh
 |------|------|------|
 | `api.qrserver.com` | 老人绑定码页二维码 | 出站受限时二维码空白；复制链接仍可用 |
 | `github.com` | 服务器 `git pull` | 用 `git-pull-cn.sh` 镜像 |
-| `ifconfig.me` / `icanhazip.com` | 脚本探测公网 IP | 失败时需在 `demo.env` 手写 `NUANBAN_STAGING_IP` |
+| `ifconfig.me` / `icanhazip.com` | 脚本探测公网 IP | 失败时需在 `formal.env` 手写 `NUANBAN_STAGING_IP` |
 
 **不要**在核心业务流程中硬依赖不可控外网（支付、地图、统计等应同域或国内可访问服务）。
 

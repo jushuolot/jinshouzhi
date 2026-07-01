@@ -9,14 +9,13 @@ if [[ -f config/github.env ]]; then
   # shellcheck disable=SC1091
   source config/github.env
 fi
-if [[ -f config/demo.env ]]; then
-  # shellcheck disable=SC1091
-  source config/demo.env
-fi
+# shellcheck source=lib/source-formal-env.sh
+. "$ROOT/scripts/lib/source-formal-env.sh"
+source_formal_env "$ROOT" || true
 
 GIT_ROOT="$(git -C "$ROOT" rev-parse --show-toplevel 2>/dev/null || echo "$ROOT")"
-TEST_URL="${NUANBAN_DEMO_URL:-https://jushuolot.github.io/jinshouzhi/nuanban/#/pages/common/login}"
-PROD_URL="${NUANBAN_DEMO_URL:-http://${NUANBAN_STAGING_IP:-101.200.128.82}/#/pages/common/login}"
+TEST_URL="$(resolve_formal_url "https://jushuolot.github.io/jinshouzhi/nuanban/#/pages/common/login")"
+PROD_URL="$(resolve_formal_url "http://${NUANBAN_STAGING_IP:-101.200.128.82}/#/pages/common/login")"
 
 git -C "$GIT_ROOT" fetch origin main -q 2>/dev/null || true
 LOCAL="$(git -C "$GIT_ROOT" rev-parse --short HEAD 2>/dev/null || echo none)"

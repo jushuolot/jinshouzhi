@@ -97,7 +97,7 @@
         <text class="foot-link" @tap="goGuest">游客账号</text>
       </view>
     </view>
-    <OpsSessionBar />
+    <OpsSessionBar v-if="showOpsEntry()" />
   </view>
 </template>
 
@@ -119,6 +119,7 @@ import CaptchaPicker from '../../components/CaptchaPicker.vue';
 import OpsSessionBar from '../../components/OpsSessionBar.vue';
 import { sendSelfHostedSms } from '../../api/captcha-sms';
 import { openOpsMode } from '../../utils/ops-mode';
+import { showOpsEntry } from '../../config/app-variant';
 import { toastFail, toastHint, toastOk } from '../../utils/toast';
 
 const loading = ref(false);
@@ -318,6 +319,7 @@ async function onPhoneLogin() {
 }
 
 function onLogoTap() {
+  if (!showOpsEntry()) return;
   openOpsMode();
 }
 

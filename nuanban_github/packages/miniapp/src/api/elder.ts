@@ -132,7 +132,7 @@ function caregiverQuery(params: CaregiverListParams = {}) {
 export async function listCaregivers(params: CaregiverListParams = {}) {
   const q = caregiverQuery(params);
   const res = await request<CaregiverListResult>({
-    url: `/nuanban/elder/caregivers/nearby${q ? `?${q}` : ''}`,
+    url: '/nuanban/elder/caregivers/nearby' + (q ? `?${q}` : ''),
     method: 'GET',
   });
   return res;

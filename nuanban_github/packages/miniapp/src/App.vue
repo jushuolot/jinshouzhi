@@ -4,10 +4,13 @@ import './styles/theme.css';
 // #ifdef H5
 import FaceCaptureModal from './components/FaceCaptureModal.vue';
 import { initDevicePreview, syncDevicePreviewRoute } from './utils/device-preview';
+import { resolveLoginHashAlias } from './utils/login-route';
 // #endif
 
 onLaunch(() => {
   // #ifdef H5
+  resolveLoginHashAlias();
+  window.addEventListener('hashchange', resolveLoginHashAlias);
   // 等 Vue 挂载后再套手机框，避免白屏；demo-tour 等路由全屏
   setTimeout(() => {
     initDevicePreview();

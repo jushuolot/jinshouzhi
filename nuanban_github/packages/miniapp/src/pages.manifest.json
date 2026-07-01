@@ -1,0 +1,124 @@
+{
+  "pages": [
+    {
+      "path": "pages/common/launch",
+      "style": {
+        "navigationBarTitleText": "暖伴勤工",
+        "navigationStyle": "custom",
+        "backgroundColor": "#fff8f0"
+      }
+    },
+    {
+      "path": "pages/common/login",
+      "style": {
+        "navigationBarTitleText": "登录",
+        "navigationStyle": "custom",
+        "backgroundColor": "#ffffff"
+      }
+    },
+    { "path": "pages/common/role-select", "style": { "navigationBarTitleText": "选择身份" } },
+    { "path": "pages/common/register", "style": { "navigationBarTitleText": "注册" } },
+    { "path": "pages/common/agreement", "style": { "navigationBarTitleText": "用户协议" } },
+    {
+      "path": "pages/common/user-manual",
+      "style": {
+        "navigationBarTitleText": "注册须知",
+        "navigationStyle": "custom",
+        "backgroundColor": "#ffffff"
+      }
+    },
+    { "path": "pages/common/privacy-policy", "style": { "navigationBarTitleText": "隐私政策" } },
+    { "path": "pages/common/guest-role-pick", "style": { "navigationBarTitleText": "选择演示数据" } },
+    { "path": "pages/common/org-dispatch", "style": { "navigationBarTitleText": "派单" } },
+    { "path": "pages/common/ops-gate", "style": { "navigationBarTitleText": "运营台" } },
+    { "path": "pages/common/ops-home", "style": { "navigationBarTitleText": "运营台" } },
+    { "path": "pages/common/ops-more", "style": { "navigationBarTitleText": "更多" } },
+    { "path": "pages/common/ops-sos", "style": { "navigationBarTitleText": "SOS" } },
+    { "path": "pages/common/ops-sms", "style": { "navigationBarTitleText": "短信发件箱" } },
+    { "path": "pages/common/admin-hub", "style": { "navigationBarTitleText": "运营台" } },
+    { "path": "pages/common/fund-admin", "style": { "navigationBarTitleText": "资金" } },
+    { "path": "pages/common/student-profiles", "style": { "navigationBarTitleText": "学生" } },
+    { "path": "pages/common/ops-org", "style": { "navigationBarTitleText": "机构" } },
+    { "path": "pages/common/ops-elder-profiles", "style": { "navigationBarTitleText": "老人档案" } },
+    { "path": "pages/common/ops-elder-edit", "style": { "navigationBarTitleText": "编辑老人档案" } },
+    { "path": "pages/common/school-coop", "style": { "navigationBarTitleText": "学校合作" } },
+    { "path": "pages/common/ops-service-catalog", "style": { "navigationBarTitleText": "服务类目" } },
+    { "path": "pages/common/student-pending", "style": { "navigationBarTitleText": "审核中" } },
+    { "path": "pages/common/order-chat", "style": { "navigationBarTitleText": "订单密聊" } },
+    { "path": "pages/common/order-voice-call", "style": { "navigationBarTitleText": "语音通话" } },
+    {
+      "path": "pages/common/demo-tour",
+      "style": {
+        "navigationBarTitleText": "动画演示",
+        "navigationStyle": "custom",
+        "navigationBarBackgroundColor": "#1a1a2e",
+        "navigationBarTextStyle": "white"
+      }
+    },
+    { "path": "pages/common/share-demo", "style": { "navigationBarTitleText": "演示链接" } },
+    { "path": "pages/common/scenario-guide", "style": { "navigationBarTitleText": "深度验收向导" } },
+    { "path": "pages/common/module-map", "style": { "navigationBarTitleText": "模块地图" } },
+    { "path": "pages/common/security", "style": { "navigationBarTitleText": "安全中心" } }
+  ],
+  "subPackages": [
+    {
+      "root": "package-elder",
+      "pages": [
+        { "path": "home", "style": { "navigationBarTitleText": "暖伴", "navigationStyle": "custom" } },
+        { "path": "caregivers/list", "style": { "navigationBarTitleText": "找陪护" } },
+        { "path": "caregivers/detail", "style": { "navigationBarTitleText": "陪护资料" } },
+        { "path": "order/create", "style": { "navigationBarTitleText": "预约服务" } },
+        { "path": "order/detail", "style": { "navigationBarTitleText": "订单详情" } },
+        { "path": "order/list", "style": { "navigationBarTitleText": "我的服务" } },
+        { "path": "bind-code", "style": { "navigationBarTitleText": "家属绑定码" } },
+        { "path": "settings", "style": { "navigationBarTitleText": "无障碍设置" } },
+        { "path": "wallet/index", "style": { "navigationBarTitleText": "储值卡" } },
+        { "path": "service/log", "style": { "navigationBarTitleText": "服务记录" } },
+        { "path": "profile", "style": { "navigationBarTitleText": "我的" } },
+        { "path": "profile/edit", "style": { "navigationBarTitleText": "编辑资料" } }
+      ]
+    },
+    {
+      "root": "package-family",
+      "pages": [
+        { "path": "home", "style": { "navigationBarTitleText": "家属端" } },
+        { "path": "bind", "style": { "navigationBarTitleText": "绑定老人" } },
+        { "path": "order/list", "style": { "navigationBarTitleText": "订单" } },
+        { "path": "order/pay", "style": { "navigationBarTitleText": "待支付" } },
+        { "path": "order/detail", "style": { "navigationBarTitleText": "订单详情" } },
+        { "path": "outdoor/approve", "style": { "navigationBarTitleText": "外出审批" } },
+        { "path": "package/buy", "style": { "navigationBarTitleText": "服务包购买" } },
+        { "path": "service/log", "style": { "navigationBarTitleText": "服务记录" } },
+        { "path": "wallet/index", "style": { "navigationBarTitleText": "储值卡" } },
+        { "path": "profile", "style": { "navigationBarTitleText": "我的" } },
+        { "path": "profile/edit", "style": { "navigationBarTitleText": "编辑资料" } }
+      ]
+    },
+    {
+      "root": "package-student",
+      "pages": [
+        { "path": "home", "style": { "navigationBarTitleText": "学生端" } },
+        { "path": "discover/list", "style": { "navigationBarTitleText": "附近老人" } },
+        { "path": "discover/elder", "style": { "navigationBarTitleText": "老人详情" } },
+        { "path": "order/pending", "style": { "navigationBarTitleText": "待接单" } },
+        { "path": "order/active", "style": { "navigationBarTitleText": "服务中" } },
+        { "path": "order/request", "style": { "navigationBarTitleText": "订单详情" } },
+        { "path": "income", "style": { "navigationBarTitleText": "收入明细" } },
+        { "path": "withdrawal/index", "style": { "navigationBarTitleText": "提现" } },
+        { "path": "schedule/list", "style": { "navigationBarTitleText": "我的排班" } },
+        { "path": "schedule/checkin", "style": { "navigationBarTitleText": "到场签到" } },
+        { "path": "schedule/log", "style": { "navigationBarTitleText": "服务日志" } },
+        { "path": "profile", "style": { "navigationBarTitleText": "我的" } },
+        { "path": "profile/edit", "style": { "navigationBarTitleText": "编辑资料" } },
+        { "path": "profile/payment", "style": { "navigationBarTitleText": "收款账户" } },
+        { "path": "referral/index", "style": { "navigationBarTitleText": "推荐有奖" } }
+      ]
+    }
+  ],
+  "globalStyle": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "暖伴勤工",
+    "navigationBarBackgroundColor": "#FFF8F0",
+    "backgroundColor": "#F5F5F5"
+  }
+}

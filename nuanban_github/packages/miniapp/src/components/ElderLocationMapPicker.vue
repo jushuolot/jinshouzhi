@@ -5,9 +5,16 @@
       <button class="tool-btn" size="mini" :loading="geocoding" @tap="centerOnCity">定位到城市</button>
       <button class="tool-btn" size="mini" @tap="clearPin">清除标记</button>
     </view>
-    <view class="map-wrap" @tap="onMapTap">
+    <view ref="mapWrapRef" class="map-wrap">
       <view v-if="!ready" class="loading">地图加载中…</view>
-      <view v-else class="stage" :style="{ width: stageW + 'px', height: stageH + 'px' }">
+      <view
+        v-else
+        ref="stageRef"
+        class="stage"
+        :style="{ width: stageW + 'px', height: stageH + 'px' }"
+        @click.stop="onStagePointer"
+        @touchend.stop.prevent="onStagePointer"
+      >
         <view class="tiles">
           <image
             v-for="tile in tiles"
@@ -37,7 +44,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import {
   OSM_ATTRIBUTION,
   markerPixel,
@@ -46,6 +53,7 @@ import {
   zoomToFitBounds,
 } from '../utils/geo-map';
 import { geocodeCityName } from '../utils/geocode-city';
+import { eventToLocalPoint, isH5Dom, measureMapStage } from '../utils/h5-dom';
 
 export type ElderMapPoint = { lat: number; lng: number };
 
@@ -70,6 +78,8 @@ const emit = defineEmits<{ 'update:modelValue': [value: ElderMapPoint | null] }>
 const ready = ref(false);
 const stageW = ref(320);
 const stageH = ref(280);
+const mapWrapRef = ref<HTMLElement | null>(null);
+const stageRef = ref<HTMLElement | null>(null);
 const geocoding = ref(false);
 const viewCenterLat = ref(props.defaultLat);
 const viewCenterLng = ref(props.defaultLng);
@@ -107,21 +117,69 @@ function fitToPin() {
 }
 
 function measure() {
+  const apply = (w: number, h: number) => {
+    stageW.value = w;
+    stageH.value = h;
+    if (hasPin.value) fitToPin();
+    ready.value = true;
+  };
+
+  if (isH5Dom()) {
+    const el = mapWrapRef.value as unknown as HTMLElement | null;
+    const { w, h } = measureMapStage(el, { w: 320, h: 280 });
+    apply(w, h);
+    return;
+  }
+
   uni
     .createSelectorQuery()
     .select('.map-wrap')
     .boundingClientRect((rect) => {
-      if (!rect || Array.isArray(rect) || !rect.width) return;
-      stageW.value = Math.round(rect.width);
-      stageH.value = Math.max(Math.round(rect.height), 260);
-      if (hasPin.value) fitToPin();
-      ready.value = true;
+      if (!rect || Array.isArray(rect) || !rect.width) {
+        apply(320, 280);
+        return;
+      }
+      apply(Math.round(rect.width), Math.max(Math.round(rect.height), 260));
     })
     .exec();
 }
 
-onMounted(() => {
+function onStagePointer(e: MouseEvent | TouchEvent) {
+  if (props.disabled || !ready.value) return;
+  const stage = stageRef.value as unknown as HTMLElement | null;
+  if (!stage) return;
+  const pt = eventToLocalPoint(e, stage);
+  if (!pt) return;
+  const { lat, lng } = pixelToLatLng(
+    pt.x,
+    pt.y,
+    viewCenterLat.value,
+    viewCenterLng.value,
+    viewZoom.value,
+    stageW.value,
+    stageH.value,
+  );
+  emit('update:modelValue', { lat, lng });
+}
+
+function onResize() {
+  if (!isH5Dom()) return;
   measure();
+}
+
+onMounted(() => {
+  void nextTick(() => {
+    measure();
+    if (isH5Dom()) {
+      window.addEventListener('resize', onResize);
+    }
+  });
+});
+
+onUnmounted(() => {
+  if (isH5Dom()) {
+    window.removeEventListener('resize', onResize);
+  }
 });
 
 watch(
@@ -131,33 +189,6 @@ watch(
   },
   { deep: true },
 );
-
-function onMapTap(e: { detail?: { x?: number; y?: number }; touches?: { x: number; y: number }[] }) {
-  if (props.disabled || !ready.value) return;
-  const touch = e.touches?.[0];
-  const x = touch?.x ?? e.detail?.x;
-  const y = touch?.y ?? e.detail?.y;
-  if (x == null || y == null) return;
-  uni
-    .createSelectorQuery()
-    .select('.stage')
-    .boundingClientRect((rect) => {
-      if (!rect || Array.isArray(rect)) return;
-      const localX = x - rect.left;
-      const localY = y - rect.top;
-      const { lat, lng } = pixelToLatLng(
-        localX,
-        localY,
-        viewCenterLat.value,
-        viewCenterLng.value,
-        viewZoom.value,
-        stageW.value,
-        stageH.value,
-      );
-      emit('update:modelValue', { lat, lng });
-    })
-    .exec();
-}
 
 async function centerOnCity() {
   const city = props.cityName?.trim();
@@ -229,6 +260,13 @@ function clearPin() {
 .stage {
   position: relative;
   overflow: hidden;
+  touch-action: manipulation;
+  cursor: crosshair;
+  background:
+    linear-gradient(#dfe6eb 1px, transparent 1px),
+    linear-gradient(90deg, #dfe6eb 1px, transparent 1px);
+  background-size: 32px 32px;
+  background-color: #e8ecef;
 }
 .tiles {
   position: absolute;

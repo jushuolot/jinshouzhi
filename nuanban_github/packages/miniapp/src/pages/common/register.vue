@@ -63,14 +63,16 @@
         </picker>
 
         <text class="section-label">形象资料（审核用）</text>
-        <text class="field-label">卡通头像</text>
-        <CartoonAvatarPicker
-          :avatar-id="cartoonAvatarId"
-          :custom-url="customCartoonPreview"
-          :name="displayName"
-          @change="onCartoonChange"
-          @custom-change="onCustomCartoonChange"
-        />
+        <template v-if="CARTOON_AVATAR_ENABLED">
+          <text class="field-label">卡通头像</text>
+          <CartoonAvatarPicker
+            :avatar-id="cartoonAvatarId"
+            :custom-url="customCartoonPreview"
+            :name="displayName"
+            @change="onCartoonChange"
+            @custom-change="onCustomCartoonChange"
+          />
+        </template>
 
         <text class="field-label">实名核验照</text>
         <VerificationPhotoSection
@@ -126,6 +128,7 @@ import { isStudentAuditProfileComplete } from '../../utils/student-audit-profile
 import { navigateAfterAuth } from '../../utils/profile-onboarding';
 import { useRoleStore } from '../../store/role';
 import { isKnownSchool } from '../../utils/known-schools';
+import { CARTOON_AVATAR_ENABLED } from '../../utils/feature-flags';
 import { defaultCartoonAvatarId, resolveCartoonAvatarUrl } from '../../utils/cartoon-avatars';
 import type { CameraPickResult } from '../../utils/camera-picker';
 import { uploadVerificationPick } from '../../utils/verification-photo';
@@ -255,7 +258,7 @@ async function prefillFromProfile(p: Awaited<ReturnType<typeof fetchStudentProfi
 function pickRole(r: RoleKey) {
   role.value = r;
   step.value = 'form';
-  if (r === 'student' && !cartoonAvatarId.value) {
+  if (r === 'student' && CARTOON_AVATAR_ENABLED && !cartoonAvatarId.value) {
     cartoonAvatarId.value = defaultCartoonAvatarId('');
   }
 }
@@ -372,7 +375,7 @@ async function submit() {
       uni.showToast({ title: '请选择可服务时间', icon: 'none' });
       return;
     }
-    if (!cartoonAvatarId.value && !customCartoonPreview.value) {
+    if (CARTOON_AVATAR_ENABLED && !cartoonAvatarId.value && !customCartoonPreview.value) {
       uni.showToast({ title: '请选择或上传卡通头像', icon: 'none' });
       return;
     }
@@ -396,7 +399,7 @@ async function submit() {
             major: major.value.trim(),
             grade: grades[gradeIdx.value],
             studentId: studentId.value.trim() || undefined,
-            cartoonAvatarId: cartoonAvatarId.value || undefined,
+            ...(CARTOON_AVATAR_ENABLED ? { cartoonAvatarId: cartoonAvatarId.value || undefined } : {}),
             serviceAreaPolygons: serviceAreaGeo.value.polygons,
             serviceHours: serviceHours.value,
             referralCode: referralCode.value || undefined,
@@ -417,7 +420,7 @@ async function submit() {
     });
 
     if (role.value === 'student') {
-      if (customCartoonPick.value) {
+      if (CARTOON_AVATAR_ENABLED && customCartoonPick.value) {
         try {
           const url = await uploadCustomCartoonPick(customCartoonPick.value);
           customCartoonPreview.value = url;
@@ -429,7 +432,7 @@ async function submit() {
             duration: 3000,
           });
         }
-      } else if (cartoonAvatarId.value) {
+      } else if (CARTOON_AVATAR_ENABLED && cartoonAvatarId.value) {
         roleStore.setUserAvatar(resolveCartoonAvatarUrl(cartoonAvatarId.value));
       }
 
@@ -478,12 +481,12 @@ async function submitActiveProfileCompletion() {
       major: major.value.trim(),
       grade: grades[gradeIdx.value],
       studentId: studentId.value.trim() || undefined,
-      cartoonAvatarId: cartoonAvatarId.value || undefined,
+      ...(CARTOON_AVATAR_ENABLED ? { cartoonAvatarId: cartoonAvatarId.value || undefined } : {}),
       serviceAreaPolygons: serviceAreaGeo.value.polygons,
       serviceHours: serviceHours.value,
     });
 
-    if (customCartoonPick.value) {
+    if (CARTOON_AVATAR_ENABLED && customCartoonPick.value) {
       try {
         const url = await uploadCustomCartoonPick(customCartoonPick.value);
         customCartoonPreview.value = url;
@@ -495,7 +498,7 @@ async function submitActiveProfileCompletion() {
           duration: 3000,
         });
       }
-    } else if (cartoonAvatarId.value) {
+    } else if (CARTOON_AVATAR_ENABLED && cartoonAvatarId.value) {
       roleStore.setUserAvatar(resolveCartoonAvatarUrl(cartoonAvatarId.value));
     }
 

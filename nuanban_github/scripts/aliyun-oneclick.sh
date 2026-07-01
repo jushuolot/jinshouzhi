@@ -45,10 +45,10 @@ chmod +x scripts/*.sh
 echo "==> 初始化环境（Docker + Node）"
 ./scripts/aliyun-bootstrap.sh
 
-echo "==> 写入 config/demo.env"
-cat > config/demo.env <<EOF
+echo "==> 写入 config/formal.env"
+cat > config/formal.env <<EOF
 NUANBAN_DOMAIN=${DOMAIN}
-NUANBAN_DEMO_URL=https://${DOMAIN}/#/pages/common/login
+NUANBAN_FORMAL_URL=https://${DOMAIN}/#/pages/common/login
 NUANBAN_STAGING_IP=${STAGING_IP}
 NUANBAN_SSH=root@${STAGING_IP}
 NUANBAN_REMOTE_DIR=${ROOT}

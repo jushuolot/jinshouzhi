@@ -25,7 +25,7 @@ sync-public.sh  ──────────►  deploy-public.sh
 
 | 文件 | 说明 |
 |------|------|
-| `config/demo.env` | 域名、客人链接、SSH（gitignore） |
+| `config/formal.env` | 域名、正式入口链接、SSH（gitignore） |
 | `Caddyfile.prod` | 由 `deploy-public.sh` 生成，勿手改 |
 | `Caddyfile.prod.example` | 域名模板 |
 | `docker-compose.prod.yml` | 80/443、隐藏 8090、放宽 CORS |

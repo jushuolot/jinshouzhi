@@ -6,10 +6,9 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-if [[ -f config/demo.env ]]; then
-  # shellcheck disable=SC1091
-  source config/demo.env
-fi
+# shellcheck source=lib/source-formal-env.sh
+. "$ROOT/scripts/lib/source-formal-env.sh"
+source_formal_env "$ROOT" || true
 
 STAGING_IP="${NUANBAN_STAGING_IP:-101.200.128.82}"
 HTTPS_HOST="${NUANBAN_HTTPS_API_HOST:-101-200-128-82.sslip.io}"

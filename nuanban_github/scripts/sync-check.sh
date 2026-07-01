@@ -8,10 +8,9 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-if [[ -f config/demo.env ]]; then
-  # shellcheck disable=SC1091
-  source config/demo.env
-fi
+# shellcheck source=lib/source-formal-env.sh
+. "$ROOT/scripts/lib/source-formal-env.sh"
+source_formal_env "$ROOT" || true
 
 STAGING_IP="${NUANBAN_STAGING_IP:-}"
 PUBLIC_API="${NUANBAN_PUBLIC_API:-}"
@@ -105,7 +104,7 @@ if [[ -n "$PUBLIC_API" ]]; then
     warn "无法访问 ${PUBLIC_API}/api/health"
   fi
 else
-  echo "  （跳过：在 config/demo.env 设置 NUANBAN_STAGING_IP 或 NUANBAN_PUBLIC_API）"
+  echo "  （跳过：在 config/formal.env 设置 NUANBAN_STAGING_IP 或 NUANBAN_PUBLIC_API）"
 fi
 
 echo ""

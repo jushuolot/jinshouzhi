@@ -4,7 +4,21 @@
       <text class="section-title">实名核验照</text>
     </view>
 
-    <view class="photo-frame" @tap="onCapture" @click="onCapture">
+    <label
+      v-if="useNativeFileInput && editable"
+      class="photo-frame"
+      for="verification-photo-input"
+    >
+      <image v-if="displayUrl" :src="displayUrl" class="photo" mode="aspectFill" />
+      <view v-else class="placeholder">
+        <text class="cam-icon">📷</text>
+        <text class="cam-text">{{ placeholderText }}</text>
+      </view>
+      <view v-if="displayUrl" class="retake">
+        <text>重选</text>
+      </view>
+    </label>
+    <view v-else class="photo-frame" @tap="onCapture" @click="onCapture">
       <image v-if="displayUrl" :src="displayUrl" class="photo" mode="aspectFill" />
       <view v-else class="placeholder">
         <text class="cam-icon">📷</text>
@@ -14,14 +28,24 @@
         <text>重拍</text>
       </view>
     </view>
+    <input
+      v-if="useNativeFileInput && editable"
+      id="verification-photo-input"
+      class="hidden-input"
+      type="file"
+      accept="image/*"
+      @change="onNativeFileChange"
+    />
   </view>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import type { CameraPickResult } from '../utils/camera-picker';
-import { captureAndUploadVerificationPhoto, captureVerificationPreview } from '../utils/verification-photo';
+import { captureAndUploadVerificationPhoto, captureVerificationPreview, uploadVerificationPick } from '../utils/verification-photo';
 import { pbErrorMessage } from '../utils/request';
+import { isInsecureMobileH5 } from '../utils/h5-dom';
+import { fileToPickResult } from '../utils/camera-picker';
 
 const props = withDefaults(
   defineProps<{
@@ -39,9 +63,16 @@ const emit = defineEmits<{ change: [url: string]; pick: [pick: CameraPickResult]
 const localUrl = ref('');
 const uploading = ref(false);
 
+const useNativeFileInput = computed(
+  () => typeof window !== 'undefined' && isInsecureMobileH5(),
+);
+
 const displayUrl = computed(() => localUrl.value || props.photoUrl || '');
 
 const placeholderText = computed(() => {
+  if (useNativeFileInput.value) {
+    return '点击从相册选择或拍摄核验照';
+  }
   if (typeof navigator !== 'undefined' && !/Android|iPhone|iPad|Mobile/i.test(navigator.userAgent)) {
     return '点击选择或拍摄核验照';
   }
@@ -56,8 +87,39 @@ watch(
   { immediate: true },
 );
 
-async function onCapture() {
+async function applyPick(pick: CameraPickResult) {
+  if (props.uploadOnCapture) {
+    const url = await uploadVerificationPick(pick);
+    localUrl.value = url;
+    emit('change', url);
+    uni.showToast({ title: '核验照已上传', icon: 'success' });
+  } else {
+    localUrl.value = pick.previewUrl;
+    emit('change', pick.previewUrl);
+    emit('pick', pick);
+    uni.showToast({ title: '已选择，提交注册后上传', icon: 'none' });
+  }
+}
+
+async function onNativeFileChange(e: Event) {
   if (!props.editable || uploading.value) return;
+  const input = e.target as HTMLInputElement;
+  const file = input.files?.[0];
+  input.value = '';
+  if (!file) return;
+  uploading.value = true;
+  try {
+    const pick = await fileToPickResult(file);
+    await applyPick(pick);
+  } catch (err) {
+    uni.showToast({ title: pbErrorMessage(err), icon: 'none' });
+  } finally {
+    uploading.value = false;
+  }
+}
+
+async function onCapture() {
+  if (!props.editable || uploading.value || useNativeFileInput.value) return;
   uploading.value = true;
   try {
     if (props.uploadOnCapture) {
@@ -146,5 +208,12 @@ async function onCapture() {
   color: #fff;
   font-size: 22rpx;
   border-radius: 999rpx;
+}
+.hidden-input {
+  position: fixed;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
 }
 </style>

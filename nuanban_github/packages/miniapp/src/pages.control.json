@@ -1,0 +1,119 @@
+{
+  "pages": [
+    {
+      "path": "pages/common/ops-gate",
+      "style": {
+        "navigationBarTitleText": "运营台"
+      }
+    },
+    {
+      "path": "pages/common/org-dispatch",
+      "style": {
+        "navigationBarTitleText": "派单"
+      }
+    },
+    {
+      "path": "pages/common/ops-home",
+      "style": {
+        "navigationBarTitleText": "运营台"
+      }
+    },
+    {
+      "path": "pages/common/ops-more",
+      "style": {
+        "navigationBarTitleText": "更多"
+      }
+    },
+    {
+      "path": "pages/common/ops-sos",
+      "style": {
+        "navigationBarTitleText": "SOS"
+      }
+    },
+    {
+      "path": "pages/common/ops-sms",
+      "style": {
+        "navigationBarTitleText": "短信发件箱"
+      }
+    },
+    {
+      "path": "pages/common/admin-hub",
+      "style": {
+        "navigationBarTitleText": "运营台"
+      }
+    },
+    {
+      "path": "pages/common/fund-admin",
+      "style": {
+        "navigationBarTitleText": "资金"
+      }
+    },
+    {
+      "path": "pages/common/student-profiles",
+      "style": {
+        "navigationBarTitleText": "学生"
+      }
+    },
+    {
+      "path": "pages/common/ops-org",
+      "style": {
+        "navigationBarTitleText": "机构"
+      }
+    },
+    {
+      "path": "pages/common/ops-elder-profiles",
+      "style": {
+        "navigationBarTitleText": "老人档案"
+      }
+    },
+    {
+      "path": "pages/common/ops-elder-edit",
+      "style": {
+        "navigationBarTitleText": "编辑老人档案"
+      }
+    },
+    {
+      "path": "pages/common/school-coop",
+      "style": {
+        "navigationBarTitleText": "学校合作"
+      }
+    },
+    {
+      "path": "pages/common/ops-service-catalog",
+      "style": {
+        "navigationBarTitleText": "服务类目"
+      }
+    },
+    {
+      "path": "pages/common/order-chat",
+      "style": {
+        "navigationBarTitleText": "订单密聊"
+      }
+    },
+    {
+      "path": "pages/common/order-voice-call",
+      "style": {
+        "navigationBarTitleText": "语音通话"
+      }
+    },
+    {
+      "path": "pages/common/module-map",
+      "style": {
+        "navigationBarTitleText": "模块地图"
+      }
+    },
+    {
+      "path": "pages/common/security",
+      "style": {
+        "navigationBarTitleText": "安全中心"
+      }
+    }
+  ],
+  "subPackages": [],
+  "globalStyle": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "暖伴勤工",
+    "navigationBarBackgroundColor": "#FFF8F0",
+    "backgroundColor": "#F5F5F5"
+  }
+}

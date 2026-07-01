@@ -30,9 +30,17 @@
 
     <!-- 列表模式 -->
     <template v-else-if="mode === 'list'">
-      <view v-if="errorMsg" class="error" @tap="reload">
-        <text>加载失败（点此重试）</text>
-        <text class="mono">{{ errorMsg }}</text>
+      <view v-if="errorMsg" class="error">
+        <view @tap="retryReload">
+          <text>加载失败（点此重试）</text>
+          <text class="mono">{{ errorMsg }}</text>
+        </view>
+        <text v-if="showDemoLocationFallback" class="demo-fallback" @tap="useDemoLocation">
+          暂用演示定位（上海）· 本地开发
+        </text>
+        <text v-if="locationDenied" class="perm-hint">
+          Mac Chrome：地址栏左侧 🔒 → 位置信息 → 允许；或 系统设置 → 隐私 → 定位服务 → 开启 Chrome
+        </text>
       </view>
       <view v-else-if="!displayList.length" class="empty">
         <text>{{ searchKeyword ? '无匹配老人' : '暂无附近老人' }}</text>
@@ -113,7 +121,7 @@ import { matchListKeyword } from '../../utils/list-search';
 import OsmMap from '../../components/OsmMap.vue';
 // #endif
 import { fetchStudentProfile, listNearbyElders, type ElderRow } from '../../api/student';
-import { getLocationWithFallback } from '../../utils/location';
+import { getDemoLocation, getLocationWithFallback, isLocalDevHost, isLocationPermissionError } from '../../utils/location';
 import { filterEldersBySchoolCoop, loadOrgSchoolPartners, orgPartnersSchool } from '../../utils/school-coop';
 import { guardPackageRoute } from '../../utils/nav-guard';
 import { isFormalAuthMode } from '../../config/formal-auth';
@@ -146,6 +154,9 @@ const displayList = computed(() =>
   ),
 );
 const errorMsg = ref('');
+const locationDenied = computed(() => isLocationPermissionError(errorMsg.value));
+const showDemoLocationFallback = computed(() => isLocalDevHost() && locationDenied.value);
+const skipLocationResolve = ref(false);
 const userLat = ref(DEMO.lat);
 const userLng = ref(DEMO.lng);
 const locationLabel = ref(DEMO.label);
@@ -227,7 +238,15 @@ function formatDistance(km: number) {
 }
 
 async function resolveLocation() {
-  const loc = await getLocationWithFallback(3000);
+  if (skipLocationResolve.value) {
+    const demo = getDemoLocation();
+    userLat.value = demo.lat;
+    userLng.value = demo.lng;
+    locationLabel.value = demo.label;
+    isDemoLocation.value = true;
+    return;
+  }
+  const loc = await getLocationWithFallback(8000);
   userLat.value = loc.lat;
   userLng.value = loc.lng;
   locationLabel.value = loc.label;
@@ -235,6 +254,17 @@ async function resolveLocation() {
   if (loc.isDemo) {
     uni.showToast({ title: '使用演示定位', icon: 'none' });
   }
+}
+
+function useDemoLocation() {
+  skipLocationResolve.value = true;
+  errorMsg.value = '';
+  reload();
+}
+
+function retryReload() {
+  skipLocationResolve.value = false;
+  reload();
 }
 
 async function reload() {
@@ -524,5 +554,20 @@ function onOsmMarkerTap(markerId: number | string) {
   margin-top: 8rpx;
   font-size: 22rpx;
   word-break: break-all;
+}
+.demo-fallback {
+  display: block;
+  margin-top: 20rpx;
+  padding: 16rpx 0;
+  font-size: 26rpx;
+  color: #c45c26;
+  text-decoration: underline;
+}
+.perm-hint {
+  display: block;
+  margin-top: 16rpx;
+  font-size: 22rpx;
+  line-height: 1.5;
+  color: #888;
 }
 </style>

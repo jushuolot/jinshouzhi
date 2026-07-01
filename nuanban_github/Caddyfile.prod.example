@@ -1,25 +1,19 @@
-# 公网演示站 Caddy 配置（由 deploy-public.sh 根据域名生成 Caddyfile.prod）
-# 将 __DOMAIN__ 替换为你的演示域名，DNS A 记录指向云服务器
+# 公网 V2 Caddy 配置（由 deploy-v2.sh / deploy-public.sh 生成 Caddyfile.prod）
+# 占位符：__DOMAIN__ __USER_HOST__ __CONTROL_HOST__
 
+# 根域 → 用户端
 __DOMAIN__, www.__DOMAIN__ {
+	redir https://__USER_HOST__{uri} permanent
+}
+
+# 用户端 H5 + API
+__USER_HOST__ {
 	handle /api/* {
 		reverse_proxy pocketbase:8090
 	}
 
 	handle /_/* {
 		reverse_proxy pocketbase:8090
-	}
-
-	# 古蜀秘档 · 三星堆消消（monorepo match3-game 静态站）
-	handle /game/* {
-		uri strip_prefix /game
-		root * /srv/match3-game
-		try_files {path} /index.html
-		file_server
-	}
-
-	handle /game {
-		redir /game/ permanent
 	}
 
 	handle /login {
@@ -30,7 +24,24 @@ __DOMAIN__, www.__DOMAIN__ {
 	}
 
 	handle {
-		root * /srv/h5
+		root * /srv/h5-user
+		try_files {path} /index.html
+		file_server
+	}
+}
+
+# 运营台 H5 + API
+__CONTROL_HOST__ {
+	handle /api/* {
+		reverse_proxy pocketbase:8090
+	}
+
+	handle /_/* {
+		reverse_proxy pocketbase:8090
+	}
+
+	handle {
+		root * /srv/h5-control
 		try_files {path} /index.html
 		file_server
 	}

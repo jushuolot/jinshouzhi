@@ -25,6 +25,7 @@ nuanban/
 .bin/
 
 # 公网演示配置
+config/formal.env
 config/demo.env
 config/github.env
 

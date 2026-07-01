@@ -12,7 +12,7 @@ routerAdd("POST", "/api/nuanban/seed-demo", (e) => {
 
   let stats;
   try {
-  stats = { users: 0, roles: 0, schools: 0, orgs: 0, elders: 0, orders: 0, serviceItems: 0, bindings: 0 };
+  stats = { users: 0, roles: 0, schools: 0, orgs: 0, elders: 0, orders: 0, serviceItems: 0, bindings: 0, settlements: 0, wallets: 0 };
 
   // school_dict（与 demo-rich-data DEMO_SCHOOLS 对齐）
   const demoSchoolNames = ["示范大学", "城东师范学院", "医科大学"];
@@ -300,11 +300,33 @@ routerAdd("POST", "/api/nuanban/seed-demo", (e) => {
 
   const uFamily = findOrCreateUserByEmail("family1@test.nuanban.dev", "家属1");
   const uMulti = findOrCreateUserByEmail("multi1@test.nuanban.dev", "多角色");
-  const uStudent135 = findUserByEmail("m13500000001@test.nuanban.dev");
+  const uStudent135 = findOrCreateUserByEmail("m13500000001@test.nuanban.dev", "林黛玉");
+  const uElder135 = findOrCreateUserByEmail("m13500000005@test.nuanban.dev", "洪七公");
+  const uStudentPending135 = findOrCreateUserByEmail("m13500000003@test.nuanban.dev", "待审同学");
 
   const org = findOrCreateOrg("暖伴示范养老院");
   const elderZhang = findOrCreateElder(org.id, "张奶奶", 31.2304, 121.4737, "女");
   const elderLi = findOrCreateElder(org.id, "李爷爷", 31.235, 121.48, "男");
+
+  findOrCreateRole(uStudent135.id, "student", {
+    display_name: "林黛玉",
+    school: school.id,
+    gender: "女",
+    status: "active",
+    major: "护理学",
+    grade: "大三",
+    contact_phone: "13500000001",
+  });
+  findOrCreateRole(uStudentPending135.id, "student", {
+    display_name: "待审同学",
+    school: schoolEast.id,
+    gender: "男",
+    status: "pending",
+  });
+  findOrCreateRole(uElder135.id, "elder", {
+    display_name: "洪七公",
+    elder_profile: elderZhang.id,
+  });
 
   findOrCreateRole(uFamily.id, "family", { display_name: "家属1" });
   findOrCreateRole(uMulti.id, "student", {
@@ -318,8 +340,52 @@ routerAdd("POST", "/api/nuanban/seed-demo", (e) => {
     elder_profile: elderLi.id,
   });
 
+  function seedWalletForUser(userId, balanceCents) {
+    try {
+      var col = $app.findCollectionByNameOrId("wallet_accounts");
+      var rows = $app.findRecordsByFilter(
+        "wallet_accounts",
+        "user = {:uid}",
+        "",
+        1,
+        0,
+        { uid: userId }
+      );
+      var rec = rows.length > 0 ? rows[0] : new Record(col);
+      if (rows.length === 0) rec.set("user", userId);
+      rec.set("balance_cents", balanceCents);
+      $app.save(rec);
+      stats.wallets += 1;
+    } catch (_) {}
+  }
+
+  function findOrCreateSettlement(studentUserId, orderId, amountCents) {
+    const rows = $app.findRecordsByFilter(
+      "settlements",
+      "student_user = {:u} && amount_cents = {:a}",
+      "",
+      1,
+      0,
+      { u: studentUserId, a: amountCents }
+    );
+    if (rows.length > 0) return rows[0];
+    const col = $app.findCollectionByNameOrId("settlements");
+    const rec = new Record(col);
+    rec.set("order", orderId);
+    rec.set("student_user", studentUserId);
+    rec.set("amount_cents", amountCents);
+    rec.set("status", "paid");
+    rec.set("period", "2026-06");
+    $app.save(rec);
+    stats.settlements += 1;
+    return rec;
+  }
+
   findOrCreateFamilyBinding(uFamily.id, elderZhang.id);
   findOrCreateFamilyBinding(uFamily.id, elderLi.id);
+
+  seedWalletForUser(uFamily.id, 128000);
+  seedWalletForUser(uElder135.id, 86000);
 
   const catCompanion = findOrCreateServiceCategory("陪伴聊天", 1);
   const catCare = findOrCreateServiceCategory("生活陪护", 2);
@@ -359,13 +425,14 @@ routerAdd("POST", "/api/nuanban/seed-demo", (e) => {
     scheduledAt: seedDate(2),
   });
   if (uStudent135) {
-    findOrCreateOrder(elderZhang.id, svcRehab.id, "completed", {
+    const orderDone = findOrCreateOrder(elderZhang.id, svcRehab.id, "completed", {
       amountCents: 8000,
       paymentStatus: "paid",
       familyUserId: uFamily.id,
       studentUserId: uStudent135.id,
       scheduledAt: seedDate(-3),
     });
+    findOrCreateSettlement(uStudent135.id, orderDone.id, 53300);
     findOrCreateOrder(elderLi.id, svcLife.id, "completed", {
       amountCents: 7000,
       paymentStatus: "paid",
@@ -377,10 +444,11 @@ routerAdd("POST", "/api/nuanban/seed-demo", (e) => {
 
   return e.json(200, {
     ok: true,
-    message: "演示数据已写入（138 学生/老人账号已停用，请用 135 号段）",
+    message: "演示数据已写入（学生/老人 135 号段 · 家属/多角色 138 号段）",
     stats: stats,
     accounts: {
       student: ["m13500000001@test.nuanban.dev"],
+      studentPending: ["m13500000003@test.nuanban.dev"],
       family: ["family1@test.nuanban.dev"],
       elder: ["m13500000005@test.nuanban.dev"],
       multi: ["multi1@test.nuanban.dev"],

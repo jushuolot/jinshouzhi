@@ -95,7 +95,7 @@ VITE_DEMO_MOCK=false            # 本地 parity；GitHub Actions 不设（仅游
 PB_ENCRYPTION_KEY=...   # 生产必须固定；变更需重建 pb_data
 ```
 
-### 部署（`config/demo.env`，勿提交）
+### 部署（`config/formal.env`，勿提交）
 
 ```env
 NUANBAN_DOMAIN=nuanban.cc
