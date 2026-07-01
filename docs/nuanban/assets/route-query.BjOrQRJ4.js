@@ -1,0 +1,1 @@
+import{n}from"./index-ByPmpi0Y.js";function o(o,r){var t;const i=null==o?void 0:o[r];if(i)return String(i);const l=n(),s=l[l.length-1],u=null==(t=null==s?void 0:s.options)?void 0:t[r];return u?String(u):""}export{o as r};
