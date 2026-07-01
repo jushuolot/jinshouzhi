@@ -36,6 +36,19 @@ export function measureMapStage(
   return fallback;
 }
 
+/** 直接量 DOM 容器（H5 瓦片地图最可靠） */
+export function measureMapStageDom(
+  selector: string,
+  fallback = defaultMapStageSize(),
+): { w: number; h: number } {
+  if (!isH5Dom()) return fallback;
+  const el = document.querySelector(selector);
+  if (el instanceof HTMLElement) {
+    return measureMapStage(el, fallback);
+  }
+  return fallback;
+}
+
 /** uni-app H5：用组件内 SelectorQuery 量地图容器（比 template ref 可靠） */
 export function queryMapStageSize(
   selector: string,

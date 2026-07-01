@@ -1,6 +1,8 @@
-/** 瓦片地图舞台：单指平移、双指缩放、轻触标点 */
+/** 瓦片地图舞台：描点 / 拖动分模式，避免轻触被当成平移 */
 
 import { eventToLocalPoint } from './h5-dom';
+
+export type MapGestureMode = 'mark' | 'pan';
 
 export type MapStageGestureHandlers = {
   onTap: (localX: number, localY: number) => void;
@@ -9,7 +11,7 @@ export type MapStageGestureHandlers = {
   onWheelZoom: (deltaY: number) => void;
 };
 
-const TAP_SLOP_PX = 14;
+const TAP_SLOP_PX = 22;
 
 function touchLocal(touch: Touch, el: HTMLElement): { x: number; y: number } {
   const rect = el.getBoundingClientRect();
@@ -23,6 +25,7 @@ function touchDistance(a: Touch, b: Touch): number {
 export function bindMapStageGestures(
   el: HTMLElement,
   handlers: MapStageGestureHandlers,
+  getMode: () => MapGestureMode = () => 'mark',
 ): () => void {
   let touchStart: { x: number; y: number } | null = null;
   let moved = false;
@@ -62,10 +65,20 @@ export function bindMapStageGestures(
       return;
     }
     if (!touchStart || e.touches.length !== 1 || pinching) return;
+
+    const mode = getMode();
     const pt = touchLocal(e.touches[0], el);
     const dx = pt.x - touchStart.x;
     const dy = pt.y - touchStart.y;
-    if (!moved && Math.hypot(dx, dy) > TAP_SLOP_PX) {
+    const dist = Math.hypot(dx, dy);
+
+    if (mode === 'mark') {
+      if (dist > TAP_SLOP_PX) moved = true;
+      e.preventDefault();
+      return;
+    }
+
+    if (!moved && dist > TAP_SLOP_PX) {
       moved = true;
     }
     if (moved) {
@@ -85,11 +98,24 @@ export function bindMapStageGestures(
       touchStart = null;
       return;
     }
+
+    const mode = getMode();
+    const t = e.changedTouches[0];
+
+    if (mode === 'mark' && touchStart && t) {
+      const pt = touchLocal(t, el);
+      if (Math.hypot(pt.x - touchStart.x, pt.y - touchStart.y) <= TAP_SLOP_PX) {
+        handlers.onTap(pt.x, pt.y);
+      }
+      touchStart = null;
+      moved = false;
+      return;
+    }
+
     if (!touchStart || moved) {
       touchStart = null;
       return;
     }
-    const t = e.changedTouches[0];
     if (t) {
       const pt = touchLocal(t, el);
       handlers.onTap(pt.x, pt.y);
@@ -104,7 +130,7 @@ export function bindMapStageGestures(
   };
 
   const onMouseMove = (e: MouseEvent) => {
-    if (!mouseDown) return;
+    if (!mouseDown || getMode() === 'mark') return;
     const dx = e.clientX - mouseDown.x;
     const dy = e.clientY - mouseDown.y;
     if (!mouseMoved && Math.hypot(dx, dy) > TAP_SLOP_PX) {
@@ -133,8 +159,8 @@ export function bindMapStageGestures(
 
   el.addEventListener('touchstart', onTouchStart, { passive: true });
   el.addEventListener('touchmove', onTouchMove, { passive: false });
-  el.addEventListener('touchend', onTouchEnd, { passive: true });
-  el.addEventListener('touchcancel', onTouchEnd, { passive: true });
+  el.addEventListener('touchend', onTouchEnd, { passive: false });
+  el.addEventListener('touchcancel', onTouchEnd, { passive: false });
   el.addEventListener('mousedown', onMouseDown);
   window.addEventListener('mousemove', onMouseMove);
   window.addEventListener('mouseup', onMouseUp);
@@ -150,4 +176,18 @@ export function bindMapStageGestures(
     window.removeEventListener('mouseup', onMouseUp);
     el.removeEventListener('wheel', onWheel);
   };
+}
+
+export function resolveMapStageElement(
+  refValue: unknown,
+  fallbackSelector: string,
+): HTMLElement | null {
+  if (refValue instanceof HTMLElement) return refValue;
+  const maybeEl = (refValue as { $el?: unknown } | null)?.$el;
+  if (maybeEl instanceof HTMLElement) return maybeEl;
+  if (typeof document !== 'undefined') {
+    const found = document.querySelector(fallbackSelector);
+    if (found instanceof HTMLElement) return found;
+  }
+  return null;
 }

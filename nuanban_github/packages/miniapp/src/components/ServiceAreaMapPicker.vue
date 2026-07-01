@@ -1,87 +1,123 @@
 <template>
   <view class="area-map">
-    <text class="hint">单指拖动平移 · 双指/按钮缩放 · 轻触地图描点（至少3点完成区域）</text>
-    <view v-if="!disabled" class="toolbar">
-      <button class="tool-btn" size="mini" :loading="locating" @tap="locateMe">定位到我</button>
-      <button class="tool-btn" size="mini" @tap="zoomIn">放大</button>
-      <button class="tool-btn" size="mini" @tap="zoomOut">缩小</button>
-      <button class="tool-btn" size="mini" @tap="undoPoint">撤销上一点</button>
-      <button class="tool-btn" size="mini" @tap="finishPolygon">完成当前区域</button>
-      <button class="tool-btn" size="mini" @tap="startNewPolygon">新增区域</button>
-    </view>
-    <view class="map-wrap">
-      <view v-if="!ready" class="loading">地图加载中…</view>
-      <div
-        v-if="useAmapMode"
-        ref="amapHostRef"
-        class="amap-stage"
-        :class="{ 'stage-hidden': !ready }"
-      />
+    <view v-if="!disabled" class="mode-tabs">
       <view
-        v-else
-        ref="stageRef"
-        class="stage"
-        :class="{ 'stage-hidden': !ready }"
-        :style="{ width: stageW + 'px', height: stageH + 'px' }"
+        class="mode-tab"
+        :class="{ active: mapMode === 'mark' }"
+        @tap="mapMode = 'mark'"
       >
-        <view class="tiles">
-          <!-- H5 用原生 img，避免 uni image 加载外链瓦片失败 -->
-          <img
-            v-for="tile in tiles"
-            :key="tile.key + '-' + tileProvider"
-            class="tile"
-            :src="tile.url"
-            :style="{ left: tile.x + 'px', top: tile.y + 'px' }"
-            referrerpolicy="no-referrer"
-            alt=""
-            @error="onTileError"
-          />
-        </view>
-        <svg
-          class="overlay"
-          :width="stageW"
-          :height="stageH"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <polygon
-            v-for="poly in finishedPolygons"
-            :key="poly.id"
-            :points="polyPoints(poly.ring)"
-            fill="rgba(196,92,38,0.25)"
-            stroke="#c45c26"
-            stroke-width="2"
-          />
-          <polyline
-            v-if="draftRing.length"
-            :points="polyPoints(draftRing)"
-            fill="none"
-            stroke="#2e7d32"
-            stroke-width="2"
-            stroke-dasharray="6 4"
-          />
-          <circle
-            v-if="userLocation"
-            :cx="pointPx(userLocation).x"
-            :cy="pointPx(userLocation).y"
-            r="8"
-            fill="#1e88e5"
-            stroke="#fff"
-            stroke-width="2"
-          />
-          <circle
-            v-for="(pt, idx) in allVisiblePoints"
-            :key="'pt-' + idx"
-            :cx="pointPx(pt).x"
-            :cy="pointPx(pt).y"
-            r="5"
-            fill="#c45c26"
-            stroke="#fff"
-            stroke-width="1.5"
-          />
-        </svg>
-        <text class="attr">{{ attribution }}</text>
+        <text class="mode-icon">📍</text>
+        <text>描点围区</text>
+      </view>
+      <view
+        class="mode-tab"
+        :class="{ active: mapMode === 'pan' }"
+        @tap="mapMode = 'pan'"
+      >
+        <text class="mode-icon">🖐</text>
+        <text>拖动地图</text>
       </view>
     </view>
+    <text class="hint">{{ modeHint }}</text>
+
+    <view class="map-shell">
+      <view class="map-wrap">
+        <view v-if="!ready" class="loading">地图加载中…</view>
+        <div
+          v-if="useAmapMode"
+          ref="amapHostRef"
+          class="amap-stage"
+          :class="{ 'stage-hidden': !ready }"
+        />
+        <div
+          v-else
+          ref="stageRef"
+          class="stage"
+          :class="{ 'stage-hidden': !ready, 'stage-mark': mapMode === 'mark' }"
+        >
+          <view class="tiles">
+            <img
+              v-for="tile in tiles"
+              :key="tile.key + '-' + tileProvider"
+              class="tile"
+              :src="tile.url"
+              :style="{ left: tile.x + 'px', top: tile.y + 'px' }"
+              referrerpolicy="no-referrer"
+              alt=""
+              @error="onTileError"
+            />
+          </view>
+          <svg
+            class="overlay"
+            :width="stageW"
+            :height="stageH"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <polygon
+              v-for="poly in finishedPolygons"
+              :key="poly.id"
+              :points="polyPoints(poly.ring)"
+              fill="rgba(196,92,38,0.25)"
+              stroke="#c45c26"
+              stroke-width="2"
+            />
+            <polyline
+              v-if="draftRing.length"
+              :points="polyPoints(draftRing)"
+              fill="none"
+              stroke="#2e7d32"
+              stroke-width="2"
+              stroke-dasharray="6 4"
+            />
+            <circle
+              v-if="userLocation"
+              :cx="pointPx(userLocation).x"
+              :cy="pointPx(userLocation).y"
+              r="8"
+              fill="#1e88e5"
+              stroke="#fff"
+              stroke-width="2"
+            />
+            <circle
+              v-for="(pt, idx) in allVisiblePoints"
+              :key="'pt-' + idx"
+              :cx="pointPx(pt).x"
+              :cy="pointPx(pt).y"
+              r="6"
+              fill="#c45c26"
+              stroke="#fff"
+              stroke-width="2"
+            />
+          </svg>
+          <text class="attr">{{ attribution }}</text>
+        </div>
+
+        <view v-if="!disabled && ready" class="map-floats">
+          <view class="zoom-stack">
+            <view class="float-btn" @tap.stop="zoomIn">＋</view>
+            <view class="float-btn" @tap.stop="zoomOut">－</view>
+          </view>
+          <view
+            class="float-btn locate"
+            :class="{ loading: locating }"
+            @tap.stop="locateMe"
+          >
+            <text class="locate-icon">◎</text>
+          </view>
+        </view>
+
+        <view v-if="mapMode === 'mark' && ready" class="mark-hint">
+          当前区域 {{ draftRing.length }} 个锚点 · 至少 3 点可完成
+        </view>
+      </view>
+
+      <view v-if="!disabled" class="action-row">
+        <view class="action-chip" @tap="undoPoint">撤销锚点</view>
+        <view class="action-chip primary" @tap="finishPolygon">完成区域</view>
+        <view class="action-chip" @tap="startNewPolygon">新区域</view>
+      </view>
+    </view>
+
     <text v-if="locationLabel" class="loc-label">{{ locationLabel }}</text>
     <view v-if="modelValue.polygons.length" class="summary">
       <text v-for="(p, i) in modelValue.polygons" :key="p.id" class="poly-tag">
@@ -107,7 +143,7 @@ import {
 import { createAmapMap } from '../utils/amap-h5';
 import { useOfficialAmap } from '../utils/map-config';
 import { getLocationWithFallback } from '../utils/location';
-import { bindMapStageGestures } from '../utils/map-stage-gesture';
+import { bindMapStageGestures, resolveMapStageElement, type MapGestureMode } from '../utils/map-stage-gesture';
 import {
   emptyServiceAreaGeo,
   type ServiceAreaGeo,
@@ -117,6 +153,7 @@ import {
 import {
   defaultMapStageSize,
   isH5Dom,
+  measureMapStageDom,
   queryMapStageSize,
 } from '../utils/h5-dom';
 
@@ -143,6 +180,7 @@ const viewCenterLat = ref(props.centerLat);
 const viewCenterLng = ref(props.centerLng);
 const viewZoom = ref(13);
 const draftRing = ref<GeoPoint[]>([]);
+const mapMode = ref<MapGestureMode>('mark');
 const tileProvider = ref<MapTileProvider>('auto');
 const amapFailed = ref(false);
 const amapHostRef = ref<HTMLElement | null>(null);
@@ -183,6 +221,45 @@ const tiles = computed(() =>
 
 const attribution = computed(() => mapAttribution(tileProvider.value));
 
+const modeHint = computed(() => (
+  mapMode.value === 'mark'
+    ? '描点模式：直接点击地图添加锚点，至少 3 点围成区域'
+    : '拖动模式：单指平移、双指缩放，完成后切回描点'
+));
+
+function resolveStageEl(): HTMLElement | null {
+  return resolveMapStageElement(stageRef.value, '.area-map .stage');
+}
+
+function bindTileStageGestures() {
+  unbindStageGestures?.();
+  const el = resolveStageEl();
+  if (!el || useAmapMode.value) return;
+  unbindStageGestures = bindMapStageGestures(
+    el,
+    {
+      onTap: (x, y) => {
+        if (props.disabled || !ready.value || mapMode.value !== 'mark') return;
+        addPoint(x, y);
+      },
+      onPan: (dx, dy) => {
+        if (props.disabled || mapMode.value !== 'pan') return;
+        panView(dx, dy);
+      },
+      onPinchZoom: (factor) => {
+        if (props.disabled) return;
+        const delta = factor > 1 ? 0.35 : -0.35;
+        applyZoomDelta(delta);
+      },
+      onWheelZoom: (deltaY) => {
+        if (props.disabled) return;
+        applyZoomDelta(deltaY > 0 ? -0.6 : 0.6);
+      },
+    },
+    () => mapMode.value,
+  );
+}
+
 function panView(dx: number, dy: number) {
   const next = panMapByPixels(
     dx,
@@ -208,31 +285,6 @@ function zoomIn() {
 
 function zoomOut() {
   applyZoomDelta(-1);
-}
-
-function bindTileStageGestures() {
-  unbindStageGestures?.();
-  const el = stageRef.value as unknown as HTMLElement | null;
-  if (!el || useAmapMode.value) return;
-  unbindStageGestures = bindMapStageGestures(el, {
-    onTap: (x, y) => {
-      if (props.disabled || !ready.value) return;
-      addPoint(x, y);
-    },
-    onPan: (dx, dy) => {
-      if (props.disabled) return;
-      panView(dx, dy);
-    },
-    onPinchZoom: (factor) => {
-      if (props.disabled) return;
-      const delta = factor > 1 ? 0.35 : -0.35;
-      applyZoomDelta(delta);
-    },
-    onWheelZoom: (deltaY) => {
-      if (props.disabled) return;
-      applyZoomDelta(deltaY > 0 ? -0.6 : 0.6);
-    },
-  });
 }
 
 function syncUserLocationMarker() {
@@ -263,8 +315,8 @@ async function locateMe() {
     viewCenterLng.value = loc.lng;
     viewZoom.value = clampMapZoom(15);
     locationLabel.value = loc.isDemo
-      ? `${loc.label}（演示）· 双指缩放地图，单指拖动平移，轻触标点`
-      : `已定位 ${loc.lat.toFixed(4)}, ${loc.lng.toFixed(4)} · 轻触地图标点`;
+      ? `${loc.label}（演示）`
+      : `已定位 ${loc.lat.toFixed(4)}, ${loc.lng.toFixed(4)}`;
     if (amapMap) {
       amapMap.setZoomAndCenter(viewZoom.value, [loc.lng, loc.lat]);
       syncUserLocationMarker();
@@ -346,9 +398,10 @@ async function initAmapStage() {
     amapNs = AMap;
     destroyAmap = destroy;
     map.on('click', (e: { lnglat: { getLng: () => number; getLat: () => number } }) => {
-      if (props.disabled) return;
+      if (props.disabled || mapMode.value !== 'mark') return;
       draftRing.value = [...draftRing.value, { lat: e.lnglat.getLat(), lng: e.lnglat.getLng() }];
       syncAmapOverlays();
+      notifyPointAdded();
     });
     ready.value = true;
     syncAmapOverlays();
@@ -393,7 +446,7 @@ function applyStageSize(w: number, h: number) {
 
 async function measure() {
   if (isH5Dom()) {
-    const { w, h } = await queryMapStageSize('.area-map .map-wrap');
+    const { w, h } = measureMapStageDom('.area-map .map-wrap');
     applyStageSize(w, h);
     await nextTick();
     bindTileStageGestures();
@@ -413,6 +466,14 @@ async function measure() {
     .exec();
 }
 
+function notifyPointAdded() {
+  uni.showToast({
+    title: `已添加第 ${draftRing.value.length} 个锚点`,
+    icon: 'none',
+    duration: 900,
+  });
+}
+
 function addPoint(localX: number, localY: number) {
   const { lat, lng } = pixelToLatLng(
     localX,
@@ -425,6 +486,7 @@ function addPoint(localX: number, localY: number) {
   );
   draftRing.value = [...draftRing.value, { lat, lng }];
   syncAmapOverlays();
+  notifyPointAdded();
 }
 
 function onResize() {
@@ -490,6 +552,15 @@ function startNewPolygon() {
 }
 
 watch(
+  () => mapMode.value,
+  (mode) => {
+    if (mode === 'mark') {
+      uni.showToast({ title: '描点模式：点击地图添加锚点', icon: 'none', duration: 1200 });
+    }
+  },
+);
+
+watch(
   () => props.modelValue,
   () => {
     draftRing.value = [];
@@ -512,37 +583,58 @@ watch(
 </script>
 
 <style scoped>
+.mode-tabs {
+  display: flex;
+  gap: 12rpx;
+  margin-bottom: 16rpx;
+  padding: 6rpx;
+  background: var(--nb-surface-muted, #f5f0eb);
+  border-radius: 999rpx;
+}
+.mode-tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8rpx;
+  padding: 16rpx 12rpx;
+  border-radius: 999rpx;
+  font-size: 26rpx;
+  color: var(--nb-text-muted, #888);
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+}
+.mode-tab.active {
+  background: #fff;
+  color: var(--nb-primary, #c45c26);
+  font-weight: 600;
+  box-shadow: 0 4rpx 12rpx rgba(196, 92, 38, 0.12);
+}
+.mode-icon {
+  font-size: 28rpx;
+}
 .hint {
   display: block;
-  margin-bottom: 12rpx;
+  margin-bottom: 16rpx;
   font-size: 22rpx;
   color: var(--nb-text-muted, #888);
   line-height: 1.45;
 }
-.toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8rpx;
-  margin-bottom: 12rpx;
-}
-.tool-btn {
-  margin: 0;
+.map-shell {
+  border-radius: 16rpx;
+  overflow: hidden;
   background: #fff;
-  color: var(--nb-primary, #c45c26);
-  border: 2rpx solid var(--nb-primary, #c45c26);
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.06);
 }
 .map-wrap {
   position: relative;
   width: 100%;
-  height: 280px;
+  height: 300px;
   background: #e8ecef;
-  border-radius: 12rpx;
-  overflow: hidden;
 }
 .amap-stage {
   width: 100%;
   height: 100%;
-  min-height: 280px;
+  min-height: 300px;
   touch-action: manipulation;
 }
 .loading {
@@ -554,7 +646,8 @@ watch(
   font-size: 26rpx;
 }
 .stage {
-  position: relative;
+  position: absolute;
+  inset: 0;
   overflow: hidden;
   touch-action: none;
   cursor: crosshair;
@@ -564,21 +657,11 @@ watch(
   background-size: 32px 32px;
   background-color: #d8e0e8;
 }
-.map-fallback-hint {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 1;
-  font-size: 22rpx;
-  color: #888;
-  text-align: center;
-  padding: 0 24rpx;
-  pointer-events: none;
+.stage-mark {
+  cursor: pointer;
 }
 .stage-hidden {
   visibility: hidden;
-  position: absolute;
   pointer-events: none;
 }
 .tiles {
@@ -607,6 +690,83 @@ watch(
   background: rgba(255, 255, 255, 0.75);
   padding: 2rpx 6rpx;
   border-radius: 4rpx;
+}
+.map-floats {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+}
+.zoom-stack {
+  position: absolute;
+  right: 12rpx;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+  pointer-events: auto;
+}
+.float-btn {
+  width: 72rpx;
+  height: 72rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.96);
+  border-radius: 16rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.12);
+  font-size: 36rpx;
+  font-weight: 600;
+  color: var(--nb-primary, #c45c26);
+  line-height: 1;
+}
+.float-btn.locate {
+  position: absolute;
+  right: 12rpx;
+  bottom: 48rpx;
+  pointer-events: auto;
+}
+.float-btn.loading {
+  opacity: 0.6;
+}
+.locate-icon {
+  font-size: 40rpx;
+}
+.mark-hint {
+  position: absolute;
+  left: 12rpx;
+  right: 12rpx;
+  bottom: 12rpx;
+  z-index: 4;
+  padding: 10rpx 16rpx;
+  text-align: center;
+  font-size: 22rpx;
+  color: #fff;
+  background: rgba(46, 125, 50, 0.88);
+  border-radius: 999rpx;
+  pointer-events: none;
+}
+.action-row {
+  display: flex;
+  gap: 12rpx;
+  padding: 16rpx;
+  background: #fafafa;
+  border-top: 1rpx solid #f0f0f0;
+}
+.action-chip {
+  flex: 1;
+  text-align: center;
+  padding: 18rpx 8rpx;
+  font-size: 24rpx;
+  color: var(--nb-primary, #c45c26);
+  background: var(--nb-primary-soft, #fff5ef);
+  border-radius: 12rpx;
+}
+.action-chip.primary {
+  color: #fff;
+  background: linear-gradient(135deg, #d4713f, #c45c26);
+  font-weight: 600;
 }
 .summary {
   display: flex;
