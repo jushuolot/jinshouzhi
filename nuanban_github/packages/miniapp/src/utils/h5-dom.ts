@@ -83,7 +83,7 @@ export function eventToLocalPoint(
   return { x: clientX - rect.left, y: clientY - rect.top };
 }
 
-/** uni @tap 事件在 H5 上常无 clientX，用 detail 坐标 */
+/** uni @tap 事件：detail 在 H5 上多为相对目标元素左上角的坐标 */
 export function uniTapToLocalPoint(
   e: { detail?: { x?: number; y?: number } },
   el: HTMLElement,
@@ -92,5 +92,8 @@ export function uniTapToLocalPoint(
   const y = e.detail?.y;
   if (x == null || y == null) return null;
   const rect = el.getBoundingClientRect();
+  if (x <= rect.width + 4 && y <= rect.height + 4 && x >= -4 && y >= -4) {
+    return { x, y };
+  }
   return { x: x - rect.left, y: y - rect.top };
 }

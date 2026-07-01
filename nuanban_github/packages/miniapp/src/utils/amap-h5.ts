@@ -26,7 +26,7 @@ export function hasAmapKey(): boolean {
   return !!getAmapKey();
 }
 
-export async function loadAmap(): Promise<AMapNS> {
+export async function loadAmap(plugins: string[] = []): Promise<AMapNS> {
   if (loadPromise) return loadPromise;
 
   const key = getAmapKey();
@@ -45,7 +45,7 @@ export async function loadAmap(): Promise<AMapNS> {
         reject(new Error('高德 Loader 未就绪'));
         return;
       }
-      window.AMapLoader.load({ key, version: '2.0' })
+      window.AMapLoader.load({ key, version: '2.0', plugins })
         .then(resolve)
         .catch(reject);
     };
@@ -72,12 +72,20 @@ export async function createAmapMap(
   centerLat: number,
   zoom: number,
 ): Promise<{ map: AMapNS; AMap: AMapNS; destroy: () => void }> {
-  const AMap = await loadAmap();
+  const AMap = await loadAmap(['AMap.ToolBar', 'AMap.Scale']);
   const map = new AMap.Map(container, {
     zoom,
     center: [centerLng, centerLat],
     viewMode: '2D',
+    dragEnable: true,
+    zoomEnable: true,
+    pinchEnable: true,
+    scrollWheel: true,
+    doubleClickZoom: true,
+    touchZoom: true,
   });
+  map.addControl(new AMap.ToolBar({ position: 'RT' }));
+  map.addControl(new AMap.Scale());
   return {
     map,
     AMap,

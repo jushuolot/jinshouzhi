@@ -142,6 +142,21 @@ export type MapPin = {
   kind?: 'self' | 'coop' | 'other';
 };
 
+export function panMapByPixels(
+  dx: number,
+  dy: number,
+  centerLat: number,
+  centerLng: number,
+  zoom: number,
+): { lat: number; lng: number } {
+  const center = latLngToWorld(centerLat, centerLng, zoom);
+  return worldToLatLng(center.x - dx, center.y - dy, zoom);
+}
+
+export function clampMapZoom(zoom: number, min = 3, max = 18): number {
+  return Math.min(max, Math.max(min, zoom));
+}
+
 export function pixelToLatLng(
   x: number,
   y: number,

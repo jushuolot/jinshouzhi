@@ -1,7 +1,10 @@
 <template>
   <view class="area-map">
-    <text class="hint">在地图上点击描点围成服务区域，可添加多个区域（至少3点完成一个区域）</text>
+    <text class="hint">单指拖动平移 · 双指/按钮缩放 · 轻触地图描点（至少3点完成区域）</text>
     <view v-if="!disabled" class="toolbar">
+      <button class="tool-btn" size="mini" :loading="locating" @tap="locateMe">定位到我</button>
+      <button class="tool-btn" size="mini" @tap="zoomIn">放大</button>
+      <button class="tool-btn" size="mini" @tap="zoomOut">缩小</button>
       <button class="tool-btn" size="mini" @tap="undoPoint">撤销上一点</button>
       <button class="tool-btn" size="mini" @tap="finishPolygon">完成当前区域</button>
       <button class="tool-btn" size="mini" @tap="startNewPolygon">新增区域</button>
@@ -16,12 +19,10 @@
       />
       <view
         v-else
+        ref="stageRef"
         class="stage"
         :class="{ 'stage-hidden': !ready }"
         :style="{ width: stageW + 'px', height: stageH + 'px' }"
-        @tap.stop="onStageTap"
-        @click.stop="onStagePointer"
-        @touchend.stop.prevent="onStagePointer"
       >
         <view class="tiles">
           <!-- H5 用原生 img，避免 uni image 加载外链瓦片失败 -->
@@ -59,6 +60,15 @@
             stroke-dasharray="6 4"
           />
           <circle
+            v-if="userLocation"
+            :cx="pointPx(userLocation).x"
+            :cy="pointPx(userLocation).y"
+            r="8"
+            fill="#1e88e5"
+            stroke="#fff"
+            stroke-width="2"
+          />
+          <circle
             v-for="(pt, idx) in allVisiblePoints"
             :key="'pt-' + idx"
             :cx="pointPx(pt).x"
@@ -72,6 +82,7 @@
         <text class="attr">{{ attribution }}</text>
       </view>
     </view>
+    <text v-if="locationLabel" class="loc-label">{{ locationLabel }}</text>
     <view v-if="modelValue.polygons.length" class="summary">
       <text v-for="(p, i) in modelValue.polygons" :key="p.id" class="poly-tag">
         {{ p.label || `区域${i + 1}` }}（{{ p.ring.length }}点）
@@ -84,8 +95,10 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import {
+  clampMapZoom,
   mapAttribution,
   nextMapTileProvider,
+  panMapByPixels,
   pixelToLatLng,
   markerPixel,
   visibleOsmTiles,
@@ -93,6 +106,8 @@ import {
 } from '../utils/geo-map';
 import { createAmapMap } from '../utils/amap-h5';
 import { useOfficialAmap } from '../utils/map-config';
+import { getLocationWithFallback } from '../utils/location';
+import { bindMapStageGestures } from '../utils/map-stage-gesture';
 import {
   emptyServiceAreaGeo,
   type ServiceAreaGeo,
@@ -101,10 +116,8 @@ import {
 } from '../utils/service-area-geo';
 import {
   defaultMapStageSize,
-  eventToLocalPoint,
   isH5Dom,
   queryMapStageSize,
-  uniTapToLocalPoint,
 } from '../utils/h5-dom';
 
 const props = withDefaults(
@@ -133,6 +146,12 @@ const draftRing = ref<GeoPoint[]>([]);
 const tileProvider = ref<MapTileProvider>('auto');
 const amapFailed = ref(false);
 const amapHostRef = ref<HTMLElement | null>(null);
+const stageRef = ref<HTMLElement | null>(null);
+const locating = ref(false);
+const locationLabel = ref('');
+const userLocation = ref<GeoPoint | null>(null);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let userLocationMarker: any = null;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let amapMap: any = null;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -140,6 +159,7 @@ let amapNs: any = null;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const amapOverlays: any[] = [];
 let destroyAmap: (() => void) | null = null;
+let unbindStageGestures: (() => void) | null = null;
 let tileErrorSwitches = 0;
 
 const useAmapMode = computed(() => isH5Dom() && useOfficialAmap() && !amapFailed.value);
@@ -162,6 +182,103 @@ const tiles = computed(() =>
 );
 
 const attribution = computed(() => mapAttribution(tileProvider.value));
+
+function panView(dx: number, dy: number) {
+  const next = panMapByPixels(
+    dx,
+    dy,
+    viewCenterLat.value,
+    viewCenterLng.value,
+    viewZoom.value,
+  );
+  viewCenterLat.value = next.lat;
+  viewCenterLng.value = next.lng;
+}
+
+function applyZoomDelta(delta: number) {
+  viewZoom.value = clampMapZoom(viewZoom.value + delta);
+  if (amapMap) {
+    amapMap.setZoom(viewZoom.value);
+  }
+}
+
+function zoomIn() {
+  applyZoomDelta(1);
+}
+
+function zoomOut() {
+  applyZoomDelta(-1);
+}
+
+function bindTileStageGestures() {
+  unbindStageGestures?.();
+  const el = stageRef.value as unknown as HTMLElement | null;
+  if (!el || useAmapMode.value) return;
+  unbindStageGestures = bindMapStageGestures(el, {
+    onTap: (x, y) => {
+      if (props.disabled || !ready.value) return;
+      addPoint(x, y);
+    },
+    onPan: (dx, dy) => {
+      if (props.disabled) return;
+      panView(dx, dy);
+    },
+    onPinchZoom: (factor) => {
+      if (props.disabled) return;
+      const delta = factor > 1 ? 0.35 : -0.35;
+      applyZoomDelta(delta);
+    },
+    onWheelZoom: (deltaY) => {
+      if (props.disabled) return;
+      applyZoomDelta(deltaY > 0 ? -0.6 : 0.6);
+    },
+  });
+}
+
+function syncUserLocationMarker() {
+  if (!amapMap || !amapNs) return;
+  if (userLocationMarker) {
+    amapMap.remove(userLocationMarker);
+    userLocationMarker = null;
+  }
+  if (!userLocation.value) return;
+  userLocationMarker = new amapNs.CircleMarker({
+    center: [userLocation.value.lng, userLocation.value.lat],
+    radius: 8,
+    fillColor: '#1e88e5',
+    strokeColor: '#fff',
+    strokeWeight: 2,
+    zIndex: 120,
+  });
+  amapMap.add(userLocationMarker);
+}
+
+async function locateMe() {
+  if (props.disabled || locating.value) return;
+  locating.value = true;
+  try {
+    const loc = await getLocationWithFallback(10000);
+    userLocation.value = { lat: loc.lat, lng: loc.lng };
+    viewCenterLat.value = loc.lat;
+    viewCenterLng.value = loc.lng;
+    viewZoom.value = clampMapZoom(15);
+    locationLabel.value = loc.isDemo
+      ? `${loc.label}（演示）· 双指缩放地图，单指拖动平移，轻触标点`
+      : `已定位 ${loc.lat.toFixed(4)}, ${loc.lng.toFixed(4)} · 轻触地图标点`;
+    if (amapMap) {
+      amapMap.setZoomAndCenter(viewZoom.value, [loc.lng, loc.lat]);
+      syncUserLocationMarker();
+    }
+    if (loc.isDemo) {
+      uni.showToast({ title: '使用演示定位（上海）', icon: 'none' });
+    }
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : '定位失败';
+    uni.showToast({ title: msg, icon: 'none' });
+  } finally {
+    locating.value = false;
+  }
+}
 
 function onTileError() {
   if (tileErrorSwitches > 4) return;
@@ -235,11 +352,16 @@ async function initAmapStage() {
     });
     ready.value = true;
     syncAmapOverlays();
+    if (!props.disabled) {
+      void locateMe();
+    }
   } catch {
     amapFailed.value = true;
     ready.value = false;
     void nextTick(() => {
-      void measure();
+      void measure().then(() => {
+        if (!props.disabled) void locateMe();
+      });
     });
   }
 }
@@ -271,8 +393,10 @@ function applyStageSize(w: number, h: number) {
 
 async function measure() {
   if (isH5Dom()) {
-    const { w, h } = await queryMapStageSize('.map-wrap');
+    const { w, h } = await queryMapStageSize('.area-map .map-wrap');
     applyStageSize(w, h);
+    await nextTick();
+    bindTileStageGestures();
     return;
   }
   uni
@@ -300,24 +424,7 @@ function addPoint(localX: number, localY: number) {
     stageH.value,
   );
   draftRing.value = [...draftRing.value, { lat, lng }];
-}
-
-function onStageTap(e: { detail?: { x?: number; y?: number } }) {
-  if (props.disabled || !ready.value) return;
-  const el = document.querySelector('.area-map .stage') as HTMLElement | null;
-  if (!el) return;
-  const pt = uniTapToLocalPoint(e, el);
-  if (!pt) return;
-  addPoint(pt.x, pt.y);
-}
-
-function onStagePointer(e: MouseEvent | TouchEvent) {
-  if (props.disabled || !ready.value) return;
-  const el = (e.currentTarget || document.querySelector('.area-map .stage')) as HTMLElement | null;
-  if (!el) return;
-  const pt = eventToLocalPoint(e, el);
-  if (!pt) return;
-  addPoint(pt.x, pt.y);
+  syncAmapOverlays();
 }
 
 function onResize() {
@@ -335,7 +442,9 @@ onMounted(() => {
   const fb = defaultMapStageSize();
   applyStageSize(fb.w, fb.h);
   void nextTick(() => {
-    void measure();
+    void measure().then(() => {
+      if (!props.disabled) void locateMe();
+    });
     if (isH5Dom()) {
       window.addEventListener('resize', onResize);
     }
@@ -346,6 +455,7 @@ onUnmounted(() => {
   if (isH5Dom()) {
     window.removeEventListener('resize', onResize);
   }
+  unbindStageGestures?.();
   destroyAmap?.();
   amapMap = null;
   amapNs = null;
@@ -446,7 +556,7 @@ watch(
 .stage {
   position: relative;
   overflow: hidden;
-  touch-action: manipulation;
+  touch-action: none;
   cursor: crosshair;
   background:
     linear-gradient(#dfe6eb 1px, transparent 1px),
@@ -516,5 +626,12 @@ watch(
   margin-top: 8rpx;
   font-size: 22rpx;
   color: #c45c26;
+}
+.loc-label {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 22rpx;
+  color: var(--nb-text-muted, #666);
+  line-height: 1.45;
 }
 </style>
