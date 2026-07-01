@@ -84,6 +84,13 @@ async function phoneLogin(phone) {
   });
   if (sms.status !== 200) throw new Error(`sms send failed: ${JSON.stringify(sms.data)}`);
   let code = sms.data.devCode;
+  if (!code && sms.data.deliveryId) {
+    const recv = await json(
+      'GET',
+      `/api/nuanban/sms/receive?phone=${encodeURIComponent(phone)}&deliveryId=${encodeURIComponent(sms.data.deliveryId)}`,
+    );
+    if (recv.data?.ready && recv.data?.code) code = recv.data.code;
+  }
   if (!code) {
     const outbox = await json('GET', '/api/nuanban/platform/sms-outbox?key=nuanban2026');
     code = outbox.data?.list?.find((r) => r.phone === phone)?.code;

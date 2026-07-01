@@ -7,6 +7,7 @@ var CAPTCHA_STORE = {};
 var CAPTCHA_TOKEN_STORE = {};
 var SMS_OTP_STORE = {};
 var SMS_OUTBOX = [];
+var SMS_DELIVERY_STORE = {};
 
 var DEMO_MASTER_CODE = "000000";
 
@@ -137,6 +138,40 @@ function smsPrune() {
   for (var i = 0; i < phones.length; i++) {
     if (SMS_OTP_STORE[phones[i]].expiresAt < t) delete SMS_OTP_STORE[phones[i]];
   }
+  var dkeys = Object.keys(SMS_DELIVERY_STORE);
+  for (var j = 0; j < dkeys.length; j++) {
+    if (SMS_DELIVERY_STORE[dkeys[j]].expiresAt < t) delete SMS_DELIVERY_STORE[dkeys[j]];
+  }
+}
+
+function smsCreateDelivery(phone, code) {
+  var deliveryId = "dlv_" + nowMs() + "_" + randInt(1000000);
+  SMS_DELIVERY_STORE[deliveryId] = {
+    phone: phone,
+    code: code,
+    expiresAt: nowMs() + 5 * 60 * 1000,
+    consumed: false,
+  };
+  return deliveryId;
+}
+
+function smsPollDelivery(phone, deliveryId) {
+  smsPrune();
+  phone = normalizePhone(phone);
+  deliveryId = String(deliveryId || "");
+  if (!deliveryId) return { ok: false, message: "缺少投递凭证" };
+  var row = SMS_DELIVERY_STORE[deliveryId];
+  if (!row || row.expiresAt < nowMs()) {
+    return { ok: false, ready: false, message: "验证码投递已过期，请重新获取" };
+  }
+  if (row.phone !== phone) {
+    return { ok: false, message: "手机号与投递记录不匹配" };
+  }
+  if (row.consumed) {
+    return { ok: true, ready: false };
+  }
+  row.consumed = true;
+  return { ok: true, ready: true, code: row.code };
 }
 
 function smsConsumeCaptchaToken(captchaToken) {
@@ -184,10 +219,12 @@ function smsSendCode(phone, captchaToken, e) {
     attempts: 0,
   };
   smsPushOutbox(phone, code);
+  var deliveryId = smsCreateDelivery(phone, code);
   var resp = {
     ok: true,
     message: "验证码已通过平台自建通道发出",
     expiresIn: 300,
+    deliveryId: deliveryId,
   };
   if (smsExposeCodeToClient(e)) {
     resp.devCode = code;
@@ -222,6 +259,7 @@ function wipeSmsCaptchaMemory() {
   clearSmsStore(CAPTCHA_STORE);
   clearSmsStore(CAPTCHA_TOKEN_STORE);
   clearSmsStore(SMS_OTP_STORE);
+  clearSmsStore(SMS_DELIVERY_STORE);
   SMS_OUTBOX.length = 0;
 }
 
@@ -235,6 +273,7 @@ module.exports = {
   captchaVerifyChallenge: captchaVerifyChallenge,
   smsSendCode: smsSendCode,
   smsVerifyCode: smsVerifyCode,
+  smsPollDelivery: smsPollDelivery,
   smsOutboxList: smsOutboxList,
   wipeSmsCaptchaMemory: wipeSmsCaptchaMemory,
   DEMO_MASTER_CODE: DEMO_MASTER_CODE,

@@ -163,6 +163,18 @@ routerAdd("POST", "/api/nuanban/sms/send", function (e) {
   return e.json(200, result);
 });
 
+/** 用户端领取自建通道验证码（一次性 deliveryId，无需运营口令） */
+routerAdd("GET", "/api/nuanban/sms/receive", function (e) {
+  var csms = require(__hooks + "/nuanban_captcha_sms.js");
+  var q = e.request.url.query();
+  var phone = String(q.get("phone") || "");
+  var deliveryId = String(q.get("deliveryId") || "");
+  var result = csms.smsPollDelivery(phone, deliveryId);
+  if (!result.ok) return e.json(400, result);
+  if (!result.ready) return e.json(200, { ready: false });
+  return e.json(200, { ready: true, code: result.code });
+});
+
 routerAdd("GET", "/api/nuanban/platform/sms-outbox", function (e) {
   var csms = require(__hooks + "/nuanban_captcha_sms.js");
   var q = e.request.url.query();

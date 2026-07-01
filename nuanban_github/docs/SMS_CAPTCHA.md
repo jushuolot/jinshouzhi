@@ -17,7 +17,9 @@ sequenceDiagram
   H5->>PB: POST /captcha/verify
   PB-->>H5: captchaToken
   H5->>PB: POST /sms/send { phone, captchaToken }
-  PB-->>H5: 已发出（开发环境可带 devCode）
+  PB-->>H5: deliveryId（运营发件箱同步记录）
+  H5->>PB: GET /sms/receive { phone, deliveryId }
+  PB-->>H5: 6 位码（自动填入）
   U->>H5: 输入 6 位验证码 → 登录
   H5->>PB: POST /phone-login
   PB-->>H5: token
@@ -29,7 +31,8 @@ sequenceDiagram
 |------|------|------|
 | GET | `/api/nuanban/captcha/challenge` | 获取 9 宫格图画题 |
 | POST | `/api/nuanban/captcha/verify` | `{ challengeId, selectedIds[] }` → `captchaToken` |
-| POST | `/api/nuanban/sms/send` | `{ phone, captchaToken }` → 生成 6 位码，有效期 5 分钟 |
+| POST | `/api/nuanban/sms/send` | `{ phone, captchaToken }` → 生成 6 位码 + `deliveryId` |
+| GET | `/api/nuanban/sms/receive?phone=&deliveryId=` | 用户端一次性领取验证码（自动填入） |
 | POST | `/api/nuanban/phone-login` | `{ phone, code }` — **必须 6 位** |
 | GET | `/api/nuanban/platform/sms-outbox?key=nuanban2026` | 运营发件箱（最近 30 条） |
 
@@ -37,9 +40,9 @@ sequenceDiagram
 
 | 环境 | 用户如何拿到验证码 |
 |------|-------------------|
-| **本地开发** | `sms/send` 响应含 `devCode`，登录页弹窗并自动填入 |
-| **演示号** `13800000001`–`06` | 可直接输入 **`000000`** 登录（无需发短信） |
-| **阿里云发布版** | 用户点「获取验证码」后，运营在 **运营台 → 短信发件箱** 人工核对下发（备案期） |
+| **本地开发** | `sms/send` 响应含 `devCode`，或 `deliveryId` 轮询自动填入 |
+| **演示号** `13800000001`–`06` | 可直接输入 **`000000`** 登录（仅 Mock；正式环境不可用） |
+| **GitHub 发布版 / 阿里云** | 用户端完成点选后 **自动轮询 `sms/receive` 填入**；运营发件箱同步可见 |
 | **未来** | 可替换 `sms/send` 内部实现为真实 SMS，接口不变 |
 
 ## 安全图画点选

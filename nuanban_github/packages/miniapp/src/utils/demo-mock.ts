@@ -1334,6 +1334,10 @@ const mockCaptchaChallenges: Record<
 > = {};
 const mockCaptchaTokens = new Set<string>();
 const mockSmsOutbox: Array<{ phone: string; code: string; sentAt: string; channel: string }> = [];
+const mockSmsDelivery: Record<
+  string,
+  { phone: string; code: string; consumed: boolean }
+> = {};
 
 const mockOrderMessages: Record<
   string,
@@ -1752,13 +1756,31 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
       sentAt: new Date().toISOString(),
       channel: 'self-hosted-mock',
     });
+    const deliveryId = `dlv_mock_${Date.now()}_${Math.floor(Math.random() * 1e6)}`;
+    mockSmsDelivery[deliveryId] = { phone, code, consumed: false };
     return delay({
       ok: true,
       message: '验证码已通过平台自建通道发出',
       expiresIn: 300,
+      deliveryId,
       devCode: code,
       devHint: 'Mock 环境已返回验证码',
     } as T);
+  }
+
+  if (method === 'GET' && path === '/nuanban/sms/receive') {
+    const q = (options as { query?: Record<string, string> })?.query || {};
+    const phone = normalizePhone(String(q.phone || ''));
+    const deliveryId = String(q.deliveryId || '');
+    const row = mockSmsDelivery[deliveryId];
+    if (!row || row.phone !== phone) {
+      return Promise.reject({ message: '验证码投递已过期，请重新获取', statusCode: 400 });
+    }
+    if (row.consumed) {
+      return delay({ ready: false } as T);
+    }
+    row.consumed = true;
+    return delay({ ready: true, code: row.code } as T);
   }
 
   if (method === 'GET' && path === '/nuanban/platform/sms-outbox') {

@@ -79,7 +79,10 @@
 
       <text v-if="loginHint" class="hint">{{ loginHint }}</text>
       <text v-if="!formalAuth" class="hint sms-hint">
-        获取验证码前需完成安全验证
+        获取验证码前需完成安全验证；通过后验证码将自动填入
+      </text>
+      <text v-else class="hint sms-hint">
+        完成安全验证后，验证码将自动填入（自建通道，无需查运营发件箱）
       </text>
       <text v-if="!formalAuth" class="hint account-hint">
         一个手机号对应一个账号。该号已注册过请直接登录；要体验全新注册请换手机号。
@@ -117,7 +120,7 @@ import { pbErrorMessage } from '../../utils/request';
 import AgreementRow from '../../components/AgreementRow.vue';
 import CaptchaPicker from '../../components/CaptchaPicker.vue';
 import OpsSessionBar from '../../components/OpsSessionBar.vue';
-import { sendSelfHostedSms } from '../../api/captcha-sms';
+import { sendSelfHostedSms, pollSmsDelivery, type SmsSendResult } from '../../api/captcha-sms';
 import { openOpsMode } from '../../utils/ops-mode';
 import { showOpsEntry } from '../../config/app-variant';
 import { toastFail, toastHint, toastOk } from '../../utils/toast';
@@ -218,22 +221,36 @@ function sendCode() {
   captchaVisible.value = true;
 }
 
+async function autoDeliverSmsCode(res: SmsSendResult) {
+  if (res.devCode && !formalAuth) {
+    smsCode.value = res.devCode;
+    uni.showModal({
+      title: '开发环境验证码',
+      content: `验证码：${res.devCode}\n（已自动填入）`,
+      showCancel: false,
+    });
+    return;
+  }
+  if (res.deliveryId) {
+    const code = await pollSmsDelivery(phone.value, res.deliveryId);
+    if (code) {
+      smsCode.value = code;
+      toastOk('验证码已自动填入');
+      return;
+    }
+  }
+  if (formalAuth) {
+    toastHint('验证码已发出，请稍候或联系运营核对');
+  } else {
+    toastHint(res.message || '验证码已发出');
+  }
+}
+
 async function onCaptchaVerified(token: string) {
   captchaVisible.value = false;
   try {
     const res = await sendSelfHostedSms(phone.value, token);
-    if (res.devCode && !formalAuth) {
-      smsCode.value = res.devCode;
-      uni.showModal({
-        title: '开发环境验证码',
-        content: `验证码：${res.devCode}\n（已自动填入，生产环境请查运营发件箱）`,
-        showCancel: false,
-      });
-    } else if (formalAuth) {
-      toastHint('验证码已发送，请查收短信');
-    } else {
-      toastHint(res.message || '验证码已发出');
-    }
+    await autoDeliverSmsCode(res);
     startCooldown();
   } catch (e) {
     toastFail(pbErrorMessage(e));
