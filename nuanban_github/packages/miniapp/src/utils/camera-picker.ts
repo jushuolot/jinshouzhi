@@ -1,7 +1,4 @@
-import { canUseFaceCapture, requestFaceCapture } from './face-capture';
-import { isInsecureMobileH5 } from './h5-dom';
-
-/** H5 核验照：优先人脸取景框；小程序回退系统相机 */
+import { isMobileH5Browser } from './h5-dom';
 
 export interface CameraPickResult {
   /** uni.uploadFile 或预览用路径 */
@@ -40,8 +37,7 @@ export async function fileToPickResult(file: File): Promise<CameraPickResult> {
 }
 
 function isMobileH5(): boolean {
-  if (!isH5()) return false;
-  return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+  return isMobileH5Browser();
 }
 
 /** H5 选图：桌面允许相册/文件；移动端可走 capture；局域网 HTTP 走系统相册/相机选择 */
@@ -98,25 +94,8 @@ export async function pickCameraImage(): Promise<CameraPickResult> {
     if (!isMobileH5()) {
       return pickCameraViaNativeInput();
     }
-    // 手机 HTTP 局域网无安全上下文：getUserMedia / capture 常失效，仅调起相册/相机文件选择
-    if (isInsecureMobileH5()) {
-      return pickCameraViaNativeInput(undefined, true);
-    }
-    if (isIOSDevice()) {
-      return pickCameraViaNativeInput('user');
-    }
-    if (canUseFaceCapture()) {
-      try {
-        return await requestFaceCapture();
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : '';
-        if (msg && !/cancel|取消/i.test(msg)) {
-          return pickCameraViaNativeInput('user', true);
-        }
-        throw err;
-      }
-    }
-    return pickCameraViaNativeInput('user', true);
+    // 手机内置浏览器（微信/鸿蒙等）getUserMedia 常不可用，统一走相册/相机文件选择
+    return pickCameraViaNativeInput(undefined, true);
   }
 
   const pick = await new Promise<UniApp.ChooseImageSuccessCallbackResult>((resolve, reject) => {

@@ -4,38 +4,24 @@
       <text class="section-title">实名核验照</text>
     </view>
 
-    <label
-      v-if="useNativeFileInput && editable"
-      class="photo-frame"
-      for="verification-photo-input"
-    >
-      <image v-if="displayUrl" :src="displayUrl" class="photo" mode="aspectFill" />
-      <view v-else class="placeholder">
-        <text class="cam-icon">📷</text>
-        <text class="cam-text">{{ placeholderText }}</text>
-      </view>
-      <view v-if="displayUrl" class="retake">
-        <text>重选</text>
-      </view>
-    </label>
-    <view v-else class="photo-frame" @tap="onCapture" @click="onCapture">
+    <view class="photo-frame" @tap="onCapture" @click="onCapture">
+      <input
+        v-if="useNativeFileInput && editable"
+        class="photo-input-overlay"
+        type="file"
+        accept="image/*"
+        @change.stop="onNativeFileChange"
+        @click.stop
+      />
       <image v-if="displayUrl" :src="displayUrl" class="photo" mode="aspectFill" />
       <view v-else class="placeholder">
         <text class="cam-icon">📷</text>
         <text class="cam-text">{{ placeholderText }}</text>
       </view>
       <view v-if="displayUrl && editable" class="retake">
-        <text>重拍</text>
+        <text>{{ useNativeFileInput ? '重选' : '重拍' }}</text>
       </view>
     </view>
-    <input
-      v-if="useNativeFileInput && editable"
-      id="verification-photo-input"
-      class="hidden-input"
-      type="file"
-      accept="image/*"
-      @change="onNativeFileChange"
-    />
   </view>
 </template>
 
@@ -44,7 +30,7 @@ import { computed, ref, watch } from 'vue';
 import type { CameraPickResult } from '../utils/camera-picker';
 import { captureAndUploadVerificationPhoto, captureVerificationPreview, uploadVerificationPick } from '../utils/verification-photo';
 import { pbErrorMessage } from '../utils/request';
-import { isInsecureMobileH5 } from '../utils/h5-dom';
+import { isMobileH5Browser } from '../utils/h5-dom';
 import { fileToPickResult } from '../utils/camera-picker';
 
 const props = withDefaults(
@@ -63,8 +49,9 @@ const emit = defineEmits<{ change: [url: string]; pick: [pick: CameraPickResult]
 const localUrl = ref('');
 const uploading = ref(false);
 
+/** 手机 H5（含微信/鸿蒙内置浏览器）：透明 file 叠层，比 getUserMedia 可靠 */
 const useNativeFileInput = computed(
-  () => typeof window !== 'undefined' && isInsecureMobileH5(),
+  () => typeof window !== 'undefined' && isMobileH5Browser(),
 );
 
 const displayUrl = computed(() => localUrl.value || props.photoUrl || '');
@@ -132,7 +119,7 @@ async function onCapture() {
       localUrl.value = pick.previewUrl;
       emit('change', pick.previewUrl);
       emit('pick', pick);
-      uni.showToast({ title: '已拍摄，提交注册后上传', icon: 'none' });
+      uni.showToast({ title: '已选择，提交注册后上传', icon: 'none' });
     }
   } catch (e) {
     const raw = e instanceof Error ? e.message : pbErrorMessage(e);
@@ -180,6 +167,17 @@ async function onCapture() {
 .compact .photo-frame {
   height: 280rpx;
 }
+.photo-input-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  font-size: 0;
+  border: none;
+  cursor: pointer;
+}
 .photo {
   width: 100%;
   height: 100%;
@@ -208,12 +206,7 @@ async function onCapture() {
   color: #fff;
   font-size: 22rpx;
   border-radius: 999rpx;
-}
-.hidden-input {
-  position: fixed;
-  left: -9999px;
-  width: 1px;
-  height: 1px;
-  opacity: 0;
+  z-index: 2;
+  pointer-events: none;
 }
 </style>

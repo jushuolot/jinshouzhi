@@ -1,20 +1,31 @@
 /** H5 浏览器 DOM 辅助（地图点选、尺寸测量等） */
 
+import { getCurrentInstance, type ComponentInternalInstance } from 'vue';
+
 export function isH5Dom(): boolean {
   return typeof window !== 'undefined' && typeof document !== 'undefined';
 }
 
-export function isInsecureMobileH5(): boolean {
+export function isMobileH5Browser(): boolean {
   if (!isH5Dom()) return false;
-  if (window.isSecureContext) return false;
-  return /Android|iPhone|iPad|iPod|Mobile|HarmonyOS/i.test(navigator.userAgent);
+  return /Android|iPhone|iPad|iPod|Mobile|HarmonyOS|OpenHarmony/i.test(navigator.userAgent);
+}
+
+export function isInsecureMobileH5(): boolean {
+  if (!isMobileH5Browser()) return false;
+  return !window.isSecureContext;
+}
+
+export function defaultMapStageSize(): { w: number; h: number } {
+  const vw = isH5Dom() ? window.innerWidth || 360 : 360;
+  return { w: Math.min(Math.round(vw - 32), 360), h: 280 };
 }
 
 export function measureMapStage(
   el: HTMLElement | null,
   fallback: { w: number; h: number },
 ): { w: number; h: number } {
-  if (el) {
+  if (el && typeof el.getBoundingClientRect === 'function') {
     const rect = el.getBoundingClientRect();
     const w = Math.round(rect.width);
     const h = Math.round(rect.height);
@@ -22,8 +33,33 @@ export function measureMapStage(
       return { w, h: Math.max(h, 260) };
     }
   }
-  const vw = isH5Dom() ? window.innerWidth || fallback.w : fallback.w;
-  return { w: Math.min(Math.round(vw - 32), fallback.w), h: fallback.h };
+  return fallback;
+}
+
+/** uni-app H5：用组件内 SelectorQuery 量地图容器（比 template ref 可靠） */
+export function queryMapStageSize(
+  selector: string,
+  fallback = defaultMapStageSize(),
+): Promise<{ w: number; h: number }> {
+  return new Promise((resolve) => {
+    const inst = getCurrentInstance() as ComponentInternalInstance | null;
+    const q = uni.createSelectorQuery();
+    if (inst?.proxy) {
+      q.in(inst.proxy);
+    }
+    q.select(selector)
+      .boundingClientRect((rect) => {
+        if (rect && !Array.isArray(rect) && rect.width > 0) {
+          resolve({
+            w: Math.round(rect.width),
+            h: Math.max(Math.round(rect.height), 260),
+          });
+        } else {
+          resolve(fallback);
+        }
+      })
+      .exec();
+  });
 }
 
 export function eventToLocalPoint(
@@ -45,4 +81,16 @@ export function eventToLocalPoint(
   }
   if (clientX == null || clientY == null) return null;
   return { x: clientX - rect.left, y: clientY - rect.top };
+}
+
+/** uni @tap 事件在 H5 上常无 clientX，用 detail 坐标 */
+export function uniTapToLocalPoint(
+  e: { detail?: { x?: number; y?: number } },
+  el: HTMLElement,
+): { x: number; y: number } | null {
+  const x = e.detail?.x;
+  const y = e.detail?.y;
+  if (x == null || y == null) return null;
+  const rect = el.getBoundingClientRect();
+  return { x: x - rect.left, y: y - rect.top };
 }

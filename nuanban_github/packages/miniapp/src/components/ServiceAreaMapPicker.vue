@@ -6,13 +6,13 @@
       <button class="tool-btn" size="mini" @tap="finishPolygon">完成当前区域</button>
       <button class="tool-btn" size="mini" @tap="startNewPolygon">新增区域</button>
     </view>
-    <view ref="mapWrapRef" class="map-wrap">
+    <view class="map-wrap">
       <view v-if="!ready" class="loading">地图加载中…</view>
       <view
-        v-else
-        ref="stageRef"
         class="stage"
+        :class="{ 'stage-hidden': !ready }"
         :style="{ width: stageW + 'px', height: stageH + 'px' }"
+        @tap.stop="onStageTap"
         @click.stop="onStagePointer"
         @touchend.stop.prevent="onStagePointer"
       >
@@ -85,7 +85,13 @@ import {
   type ServiceAreaPolygon,
   type GeoPoint,
 } from '../utils/service-area-geo';
-import { eventToLocalPoint, isH5Dom, measureMapStage } from '../utils/h5-dom';
+import {
+  defaultMapStageSize,
+  eventToLocalPoint,
+  isH5Dom,
+  queryMapStageSize,
+  uniTapToLocalPoint,
+} from '../utils/h5-dom';
 
 const props = withDefaults(
   defineProps<{
@@ -104,10 +110,8 @@ const props = withDefaults(
 const emit = defineEmits<{ 'update:modelValue': [value: ServiceAreaGeo] }>();
 
 const ready = ref(false);
-const stageW = ref(320);
-const stageH = ref(280);
-const mapWrapRef = ref<HTMLElement | null>(null);
-const stageRef = ref<HTMLElement | null>(null);
+const stageW = ref(defaultMapStageSize().w);
+const stageH = ref(defaultMapStageSize().h);
 const viewCenterLat = ref(props.centerLat);
 const viewCenterLng = ref(props.centerLng);
 const viewZoom = ref(13);
@@ -142,42 +146,36 @@ function polyPoints(ring: GeoPoint[]) {
   }).join(' ');
 }
 
-function measure() {
-  const apply = (w: number, h: number) => {
-    stageW.value = w;
-    stageH.value = h;
-    ready.value = true;
-  };
+function applyStageSize(w: number, h: number) {
+  stageW.value = w;
+  stageH.value = h;
+  ready.value = true;
+}
 
+async function measure() {
   if (isH5Dom()) {
-    const el = mapWrapRef.value as unknown as HTMLElement | null;
-    const { w, h } = measureMapStage(el, { w: 320, h: 280 });
-    apply(w, h);
+    const { w, h } = await queryMapStageSize('.map-wrap');
+    applyStageSize(w, h);
     return;
   }
-
   uni
     .createSelectorQuery()
     .select('.map-wrap')
     .boundingClientRect((rect) => {
       if (!rect || Array.isArray(rect) || !rect.width) {
-        apply(320, 280);
+        const fb = defaultMapStageSize();
+        applyStageSize(fb.w, fb.h);
         return;
       }
-      apply(Math.round(rect.width), Math.max(Math.round(rect.height), 260));
+      applyStageSize(Math.round(rect.width), Math.max(Math.round(rect.height), 260));
     })
     .exec();
 }
 
-function onStagePointer(e: MouseEvent | TouchEvent) {
-  if (props.disabled || !ready.value) return;
-  const stage = stageRef.value as unknown as HTMLElement | null;
-  if (!stage) return;
-  const pt = eventToLocalPoint(e, stage);
-  if (!pt) return;
+function addPoint(localX: number, localY: number) {
   const { lat, lng } = pixelToLatLng(
-    pt.x,
-    pt.y,
+    localX,
+    localY,
     viewCenterLat.value,
     viewCenterLng.value,
     viewZoom.value,
@@ -187,14 +185,34 @@ function onStagePointer(e: MouseEvent | TouchEvent) {
   draftRing.value = [...draftRing.value, { lat, lng }];
 }
 
+function onStageTap(e: { detail?: { x?: number; y?: number } }) {
+  if (props.disabled || !ready.value) return;
+  const el = document.querySelector('.area-map .stage') as HTMLElement | null;
+  if (!el) return;
+  const pt = uniTapToLocalPoint(e, el);
+  if (!pt) return;
+  addPoint(pt.x, pt.y);
+}
+
+function onStagePointer(e: MouseEvent | TouchEvent) {
+  if (props.disabled || !ready.value) return;
+  const el = (e.currentTarget || document.querySelector('.area-map .stage')) as HTMLElement | null;
+  if (!el) return;
+  const pt = eventToLocalPoint(e, el);
+  if (!pt) return;
+  addPoint(pt.x, pt.y);
+}
+
 function onResize() {
   if (!isH5Dom()) return;
   measure();
 }
 
 onMounted(() => {
+  const fb = defaultMapStageSize();
+  applyStageSize(fb.w, fb.h);
   void nextTick(() => {
-    measure();
+    void measure();
     if (isH5Dom()) {
       window.addEventListener('resize', onResize);
     }
@@ -295,6 +313,11 @@ watch(
     linear-gradient(90deg, #dfe6eb 1px, transparent 1px);
   background-size: 32px 32px;
   background-color: #e8ecef;
+}
+.stage-hidden {
+  visibility: hidden;
+  position: absolute;
+  pointer-events: none;
 }
 .tiles {
   position: absolute;
