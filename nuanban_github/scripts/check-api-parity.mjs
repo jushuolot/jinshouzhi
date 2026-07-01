@@ -25,7 +25,7 @@ function extractPaths(file) {
     const raw = m[1];
     if (!raw.includes('/nuanban/')) continue;
     const noQuery = raw.split('?')[0];
-    const norm = noQuery.replace(/\$\{[^}]+\}/g, '{id}');
+    const norm = noQuery.replace(/\$\{[^}]*(\{[^}]*\}[^}]*)*\}/g, '{id}').replace(/\$\{[^}]+\}/g, '{id}');
     out.push(norm);
   }
   return out;

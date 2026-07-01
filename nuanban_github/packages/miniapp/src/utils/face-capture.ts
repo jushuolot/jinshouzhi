@@ -23,7 +23,12 @@ function isH5(): boolean {
 }
 
 export function canUseFaceCapture(): boolean {
-  return isH5() && !!navigator.mediaDevices?.getUserMedia;
+  return (
+    isH5()
+    && typeof window !== 'undefined'
+    && window.isSecureContext === true
+    && !!navigator.mediaDevices?.getUserMedia
+  );
 }
 
 export function requestFaceCapture(): Promise<CameraPickResult> {

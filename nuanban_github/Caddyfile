@@ -11,7 +11,7 @@
 		reverse_proxy pocketbase:8090
 	}
 
-	# 废弃旧项目 /login 路径（如金手指），统一进暖伴 hash 登录
+	# 废弃历史 /login 物理路径，统一进暖伴 hash 登录
 	handle /login {
 		redir /#/pages/common/login permanent
 	}

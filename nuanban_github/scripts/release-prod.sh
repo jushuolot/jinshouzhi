@@ -5,10 +5,9 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-if [[ -f config/demo.env ]]; then
-  # shellcheck disable=SC1091
-  source config/demo.env
-fi
+# shellcheck source=lib/source-formal-env.sh
+. "$ROOT/scripts/lib/source-formal-env.sh"
+source_formal_env "$ROOT" || true
 
 on_aliyun_server() {
   if [[ "${NUANBAN_REMOTE_DIR:-}" == "$ROOT" ]]; then
@@ -66,5 +65,5 @@ fi
 
 echo "请在以下任一环境执行:"
 echo "  1) 阿里云 Workbench: cd /opt/jinshouzhi/nuanban_github && ./scripts/release-prod.sh"
-echo "  2) 本地配置 config/demo.env 中 NUANBAN_SSH + NUANBAN_REMOTE_DIR 后重试"
+echo "  2) 本地配置 config/formal.env 中 NUANBAN_SSH + NUANBAN_REMOTE_DIR 后重试"
 exit 1

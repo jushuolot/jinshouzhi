@@ -6,9 +6,16 @@
       <button class="tool-btn" size="mini" @tap="finishPolygon">完成当前区域</button>
       <button class="tool-btn" size="mini" @tap="startNewPolygon">新增区域</button>
     </view>
-    <view class="map-wrap" @tap="onMapTap">
+    <view ref="mapWrapRef" class="map-wrap">
       <view v-if="!ready" class="loading">地图加载中…</view>
-      <view v-else class="stage" :style="{ width: stageW + 'px', height: stageH + 'px' }">
+      <view
+        v-else
+        ref="stageRef"
+        class="stage"
+        :style="{ width: stageW + 'px', height: stageH + 'px' }"
+        @click.stop="onStagePointer"
+        @touchend.stop.prevent="onStagePointer"
+      >
         <view class="tiles">
           <image
             v-for="tile in tiles"
@@ -65,7 +72,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import {
   OSM_ATTRIBUTION,
   pixelToLatLng,
@@ -78,6 +85,7 @@ import {
   type ServiceAreaPolygon,
   type GeoPoint,
 } from '../utils/service-area-geo';
+import { eventToLocalPoint, isH5Dom, measureMapStage } from '../utils/h5-dom';
 
 const props = withDefaults(
   defineProps<{
@@ -98,6 +106,8 @@ const emit = defineEmits<{ 'update:modelValue': [value: ServiceAreaGeo] }>();
 const ready = ref(false);
 const stageW = ref(320);
 const stageH = ref(280);
+const mapWrapRef = ref<HTMLElement | null>(null);
+const stageRef = ref<HTMLElement | null>(null);
 const viewCenterLat = ref(props.centerLat);
 const viewCenterLng = ref(props.centerLng);
 const viewZoom = ref(13);
@@ -133,56 +143,69 @@ function polyPoints(ring: GeoPoint[]) {
 }
 
 function measure() {
+  const apply = (w: number, h: number) => {
+    stageW.value = w;
+    stageH.value = h;
+    ready.value = true;
+  };
+
+  if (isH5Dom()) {
+    const el = mapWrapRef.value as unknown as HTMLElement | null;
+    const { w, h } = measureMapStage(el, { w: 320, h: 280 });
+    apply(w, h);
+    return;
+  }
+
   uni
     .createSelectorQuery()
     .select('.map-wrap')
     .boundingClientRect((rect) => {
-      if (!rect || Array.isArray(rect) || !rect.width) return;
-      stageW.value = Math.round(rect.width);
-      stageH.value = Math.max(Math.round(rect.height), 260);
-      ready.value = true;
+      if (!rect || Array.isArray(rect) || !rect.width) {
+        apply(320, 280);
+        return;
+      }
+      apply(Math.round(rect.width), Math.max(Math.round(rect.height), 260));
     })
     .exec();
+}
+
+function onStagePointer(e: MouseEvent | TouchEvent) {
+  if (props.disabled || !ready.value) return;
+  const stage = stageRef.value as unknown as HTMLElement | null;
+  if (!stage) return;
+  const pt = eventToLocalPoint(e, stage);
+  if (!pt) return;
+  const { lat, lng } = pixelToLatLng(
+    pt.x,
+    pt.y,
+    viewCenterLat.value,
+    viewCenterLng.value,
+    viewZoom.value,
+    stageW.value,
+    stageH.value,
+  );
+  draftRing.value = [...draftRing.value, { lat, lng }];
+}
+
+function onResize() {
+  if (!isH5Dom()) return;
+  measure();
 }
 
 onMounted(() => {
-  measure();
+  void nextTick(() => {
+    measure();
+    if (isH5Dom()) {
+      window.addEventListener('resize', onResize);
+    }
+  });
 });
 
-watch(
-  () => props.modelValue,
-  () => {
-    draftRing.value = [];
-  },
-  { deep: true },
-);
-
-function onMapTap(e: { detail?: { x?: number; y?: number }; touches?: { x: number; y: number }[] }) {
-  if (props.disabled || !ready.value) return;
-  const touch = e.touches?.[0];
-  const x = touch?.x ?? e.detail?.x;
-  const y = touch?.y ?? e.detail?.y;
-  if (x == null || y == null) return;
-  uni
-    .createSelectorQuery()
-    .select('.stage')
-    .boundingClientRect((rect) => {
-      if (!rect || Array.isArray(rect)) return;
-      const localX = x - rect.left;
-      const localY = y - rect.top;
-      const { lat, lng } = pixelToLatLng(
-        localX,
-        localY,
-        viewCenterLat.value,
-        viewCenterLng.value,
-        viewZoom.value,
-        stageW.value,
-        stageH.value,
-      );
-      draftRing.value = [...draftRing.value, { lat, lng }];
-    })
-    .exec();
-}
+onUnmounted(() => {
+  if (isH5Dom()) {
+    window.removeEventListener('resize', onResize);
+  }
+});
 
 function undoPoint() {
   if (props.disabled || !draftRing.value.length) return;
@@ -208,6 +231,14 @@ function finishPolygon() {
 function startNewPolygon() {
   draftRing.value = [];
 }
+
+watch(
+  () => props.modelValue,
+  () => {
+    draftRing.value = [];
+  },
+  { deep: true },
+);
 
 watch(
   () => [props.centerLat, props.centerLng],
@@ -257,6 +288,13 @@ watch(
 .stage {
   position: relative;
   overflow: hidden;
+  touch-action: manipulation;
+  cursor: crosshair;
+  background:
+    linear-gradient(#dfe6eb 1px, transparent 1px),
+    linear-gradient(90deg, #dfe6eb 1px, transparent 1px);
+  background-size: 32px 32px;
+  background-color: #e8ecef;
 }
 .tiles {
   position: absolute;

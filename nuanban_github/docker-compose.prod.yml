@@ -20,7 +20,8 @@ services:
       - "443:443"
     volumes:
       - ./Caddyfile.prod:/etc/caddy/Caddyfile:ro
-      - ./packages/miniapp/dist/build/h5:/srv/h5:ro
+      - ./packages/miniapp/dist/build/h5-user:/srv/h5-user:ro
+      - ./packages/miniapp/dist/build/h5-control:/srv/h5-control:ro
       - ../match3-game:/srv/match3-game:ro
       - caddy_data:/data
       - caddy_config:/config

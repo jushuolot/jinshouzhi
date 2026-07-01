@@ -12,7 +12,6 @@
       "base": "/"
     },
     "devServer": {
-      "port": 5174,
       "https": false
     }
   },

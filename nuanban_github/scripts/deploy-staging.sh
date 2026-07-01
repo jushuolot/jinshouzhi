@@ -5,17 +5,16 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-if [[ -f config/demo.env ]]; then
-  # shellcheck disable=SC1091
-  source config/demo.env
-fi
+# shellcheck source=lib/source-formal-env.sh
+. "$ROOT/scripts/lib/source-formal-env.sh"
+source_formal_env "$ROOT" || true
 
 STAGING_IP="${NUANBAN_STAGING_IP:-}"
 if [[ -z "$STAGING_IP" ]]; then
   STAGING_IP="$(curl -fsS --max-time 5 ifconfig.me 2>/dev/null || curl -fsS --max-time 5 icanhazip.com 2>/dev/null || true)"
 fi
 if [[ -z "$STAGING_IP" ]]; then
-  echo "请在 config/demo.env 设置 NUANBAN_STAGING_IP=你的服务器公网IP"
+  echo "请在 config/formal.env 设置 NUANBAN_STAGING_IP=你的服务器公网IP"
   exit 1
 fi
 

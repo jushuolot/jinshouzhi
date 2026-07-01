@@ -8,6 +8,9 @@ var KNOWN_SCHOOLS = [
   "吉林大学", "厦门大学", "山东大学", "中南大学", "湖南大学", "重庆大学",
 ];
 
+/** 与 packages/miniapp/src/utils/feature-flags.ts 保持同步 */
+var CARTOON_AVATAR_ENABLED = false;
+
 function isKnownSchool(name) {
   var t = String(name || "").trim();
   if (!t) return false;
@@ -1191,18 +1194,27 @@ function walletOverviewForUser(userId) {
   if (!hasCollection("wallet_accounts")) {
     return walletOverviewDto(walletEnsureUserMemory(userId));
   }
-  var acc = walletAccountRecord(userId);
+  var acc;
+  try {
+    acc = walletAccountRecord(userId);
+  } catch (_) {
+    return walletOverviewDto(walletEnsureUserMemory(userId));
+  }
   var balance = safeRecordInt(acc, "balance_cents", 0);
-  var rows = $app.findRecordsByFilter(
-    "wallet_transactions",
-    "wallet_account = {:id}",
-    "-created",
-    10,
-    0,
-    { id: acc.id }
-  );
   var transactions = [];
-  for (var i = 0; i < rows.length; i++) transactions.push(walletTransactionClientDto(rows[i]));
+  if (hasCollection("wallet_transactions")) {
+    try {
+      var rows = $app.findRecordsByFilter(
+        "wallet_transactions",
+        "wallet_account = {:id}",
+        "-created",
+        10,
+        0,
+        { id: acc.id }
+      );
+      for (var i = 0; i < rows.length; i++) transactions.push(walletTransactionClientDto(rows[i]));
+    } catch (_) {}
+  }
   return {
     balanceCents: balance,
     balanceYuan: (balance / 100).toFixed(2),
@@ -1499,42 +1511,61 @@ function listWithdrawalsForStudent(userId) {
     for (var i = 0; i < list.length; i++) out.push(withdrawalMemoryDto(list[i]));
     return out;
   }
-  var rows = $app.findRecordsByFilter(
-    "withdrawals",
-    "student_user = {:uid}",
-    "-created",
-    50,
-    0,
-    { uid: userId }
-  );
+  var rows = [];
+  try {
+    rows = $app.findRecordsByFilter(
+      "withdrawals",
+      "student_user = {:uid}",
+      "-created",
+      50,
+      0,
+      { uid: userId }
+    );
+  } catch (_) {
+    rows = [];
+  }
   var dtos = [];
   for (var j = 0; j < rows.length; j++) dtos.push(withdrawalClientDto(rows[j]));
   return dtos;
 }
 
-var PRESET_DEMO_STUDENT_EMAILS = {};
+var PRESET_DEMO_STUDENT_EMAILS = {
+  "m13500000001@test.nuanban.dev": true,
+};
 
 function isPresetDemoStudentEmail(email) {
-  return false;
+  return !!PRESET_DEMO_STUDENT_EMAILS[String(email || "").toLowerCase()];
 }
 
-function demoStudentSettlements() {
+function demoStudentSettlements(email) {
+  if (isPresetDemoStudentEmail(email)) {
+    return [{ amountCents: 53300, status: "paid" }];
+  }
   return [];
 }
 
 function studentSettlementsForUser(userId) {
-  if (!hasCollection("settlements")) return [];
-  var rows = $app.findRecordsByFilter(
-    "settlements",
-    "student_user = {:uid}",
-    "-created",
-    100,
-    0,
-    { uid: userId }
-  );
   var out = [];
-  for (var i = 0; i < rows.length; i++) out.push(settlementDto(rows[i]));
-  return out;
+  if (hasCollection("settlements")) {
+    try {
+      var rows = $app.findRecordsByFilter(
+        "settlements",
+        "student_user = {:uid}",
+        "-created",
+        100,
+        0,
+        { uid: userId }
+      );
+      for (var i = 0; i < rows.length; i++) out.push(settlementDto(rows[i]));
+    } catch (_) {}
+  }
+  if (out.length > 0) return out;
+  try {
+    var u = $app.findRecordById("users", userId);
+    return demoStudentSettlements(u.getString("email"));
+  } catch (_) {
+    return [];
+  }
 }
 
 function studentWithdrawalBalances(settlements, withdrawals) {
@@ -1824,7 +1855,12 @@ function adminFundCollectWallet() {
     }
     return { topups: topups, payments: payments };
   }
-  var rows = $app.findRecordsByFilter("wallet_transactions", "id != ''", "-created", 500, 0);
+  var rows = [];
+  try {
+    rows = $app.findRecordsByFilter("wallet_transactions", "", "-created", 500, 0);
+  } catch (_) {
+    rows = [];
+  }
   var topupsDb = [];
   var paymentsDb = [];
   for (var ri = 0; ri < rows.length; ri++) {
@@ -1862,7 +1898,12 @@ function adminFundCollectWallet() {
 function adminFundOverview() {
   var totalBalanceCents = 0;
   if (hasCollection("wallet_accounts")) {
-    var accs = $app.findRecordsByFilter("wallet_accounts", "id != ''", "", 5000, 0);
+    var accs = [];
+    try {
+      accs = $app.findRecordsByFilter("wallet_accounts", "", "", 5000, 0);
+    } catch (_) {
+      accs = [];
+    }
     for (var ai = 0; ai < accs.length; ai++) {
       totalBalanceCents += safeRecordInt(accs[ai], "balance_cents", 0);
     }
@@ -1947,7 +1988,7 @@ function adminFundWithdrawalsList() {
     });
     return outMem;
   }
-  var rows = $app.findRecordsByFilter("withdrawals", "id != ''", "-created", 500, 0);
+  var rows = $app.findRecordsByFilter("withdrawals", 'created != ""', "-created", 500, 0);
   var outDb = [];
   for (var j = 0; j < rows.length; j++) outDb.push(withdrawalAdminDto(rows[j]));
   return outDb;
@@ -2032,6 +2073,12 @@ function isFormalAuthMode() {
 
 function phoneLoginEmail(phone) {
   var digits = String(phone || "").replace(/\D/g, "");
+  /** 演示号：手机号登录映射到 seed 邮箱（与 demo-rich-data DEMO_TEST_PHONES 一致） */
+  var alias = {
+    "13800000004": "family1@test.nuanban.dev",
+    "13800000006": "multi1@test.nuanban.dev",
+  };
+  if (alias[digits]) return alias[digits];
   return "m" + digits + "@test.nuanban.dev";
 }
 
@@ -2147,7 +2194,7 @@ function studentProfileDtoFromRole(roleRec, auth, e) {
       var cp = studentContactPhone(roleRec, auth);
       var areas = readServiceAreaGeo(roleRec).polygons || [];
       var hours = readJsonStringArray(roleRec, "available_hours");
-      var hasAvatar = !!(safeRecordString(roleRec, "cartoon_avatar_id", "") || roleFileUrlForClient(roleRec, "custom_cartoon_avatar", e));
+      var hasAvatar = CARTOON_AVATAR_ENABLED && !!(safeRecordString(roleRec, "cartoon_avatar_id", "") || roleFileUrlForClient(roleRec, "custom_cartoon_avatar", e));
       var hasAreas = false;
       for (var ai = 0; ai < areas.length; ai++) {
         if (areas[ai].ring && areas[ai].ring.length >= 3) { hasAreas = true; break; }
@@ -2157,7 +2204,7 @@ function studentProfileDtoFromRole(roleRec, auth, e) {
         && schoolName
         && cp
         && roleFileUrlForClient(roleRec, "verification_photo", e)
-        && hasAvatar
+        && (hasAvatar || !CARTOON_AVATAR_ENABLED)
         && hasAreas
         && hours.length > 0
       );

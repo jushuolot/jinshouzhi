@@ -9,12 +9,19 @@
 
     <view class="hero">
       <CartoonAvatarPicker
+        v-if="CARTOON_AVATAR_ENABLED"
         class="hero-avatar"
         :avatar-id="profile?.cartoonAvatarId"
         :custom-url="profile?.customCartoonAvatarUrl"
         :name="displayName"
         :editable="!auditLocked"
         @change="onCartoonChange"
+      />
+      <image
+        v-else
+        class="hero-avatar-img"
+        :src="heroAvatarUrl"
+        mode="aspectFill"
       />
       <view class="hero-info">
         <text class="name">{{ displayName }}</text>
@@ -122,6 +129,7 @@ import CartoonAvatarPicker from '../components/CartoonAvatarPicker.vue';
 import VerificationPhotoSection from '../components/VerificationPhotoSection.vue';
 import ProfileDetailCard, { type ProfileDetailSection } from '../components/ProfileDetailCard.vue';
 import { resolveCartoonAvatarUrl } from '../utils/cartoon-avatars';
+import { CARTOON_AVATAR_ENABLED } from '../utils/feature-flags';
 import { serviceAreaSummary } from '../utils/service-area-geo';
 import {
   fetchStudentProfile,
@@ -143,6 +151,10 @@ const stats = ref<StudentStats | null>(null);
 const withdrawAvailable = ref('');
 
 const auditLocked = computed(() => profile.value?.auditLocked === true);
+
+const heroAvatarUrl = computed(
+  () => profile.value?.verificationPhotoUrl || profile.value?.avatarUrl || '/static/logo.png',
+);
 
 function onVerificationChange(url: string) {
   if (auditLocked.value) return;
@@ -211,8 +223,12 @@ onShow(async () => {
   });
   if (p) {
     profile.value = p;
-    const cartoonUrl = resolveCartoonAvatarUrl(p.cartoonAvatarId, p.customCartoonAvatarUrl);
-    roleStore.setUserAvatar(cartoonUrl);
+    if (CARTOON_AVATAR_ENABLED) {
+      const cartoonUrl = resolveCartoonAvatarUrl(p.cartoonAvatarId, p.customCartoonAvatarUrl);
+      roleStore.setUserAvatar(cartoonUrl);
+    } else if (p.verificationPhotoUrl) {
+      roleStore.setUserAvatar(p.verificationPhotoUrl);
+    }
   }
   if (s) stats.value = s;
   if (wd) withdrawAvailable.value = wd.availableYuan;
@@ -326,6 +342,14 @@ function logout() {
 }
 .hero-avatar {
   margin-right: 24rpx;
+}
+.hero-avatar-img {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 50%;
+  margin-right: 24rpx;
+  flex-shrink: 0;
+  background: #f0f0f0;
 }
 .hero-info {
   flex: 1;

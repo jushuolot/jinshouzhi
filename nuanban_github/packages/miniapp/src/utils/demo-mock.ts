@@ -54,7 +54,9 @@ import {
   buildRichOrders,
   buildServiceLogs,
   DEMO_ORG_MAIN,
+  DEMO_ORG_EAST,
   DEMO_PHONE_EMAIL,
+  ORG_SCHOOL_PARTNERS,
   DEMO_USERS,
   PRESET_DEMO_STUDENT_EMAILS,
   getElderSelfProfile,
@@ -3158,6 +3160,30 @@ export async function demoMockRequest<T>(options: UniApp.RequestOptions): Promis
       return new Promise((resolve) => setTimeout(() => resolve({ ok: true, delayMs } as T), Math.min(delayMs, 3000)));
     }
     return delay({ ok: true, delayMs: 0 } as T);
+  }
+
+  if (method === 'GET' && path === '/nuanban/platform/school-cooperation') {
+    const groups = Object.entries(ORG_SCHOOL_PARTNERS).map(([orgId, schools]) => {
+      const orgName = orgId === DEMO_ORG_MAIN.id ? DEMO_ORG_MAIN.name : DEMO_ORG_EAST.name;
+      const items = schools.map((schoolName, idx) => ({
+        id: `coop-${orgId}-${idx}`,
+        schoolId: '',
+        schoolName,
+        orgId,
+        orgName,
+        enabled: true,
+      }));
+      return { orgId, orgName, schools: [...schools], items };
+    });
+    return delay({ groups, total: groups.length } as T);
+  }
+
+  if (method === 'POST' && path === '/nuanban/platform/school-cooperation') {
+    return delay({ ok: true, item: { id: 'coop-new', schoolName: '', orgId: '', orgName: '', enabled: true } } as T);
+  }
+
+  if (method === 'POST' && /^\/nuanban\/platform\/school-cooperation\/[^/]+\/disable$/.test(path)) {
+    return delay({ ok: true } as T);
   }
 
   if (method === 'GET' && path === '/nuanban/platform/overview') {

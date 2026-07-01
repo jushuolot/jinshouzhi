@@ -124,12 +124,12 @@ else
   echo "    .env 已存在，跳过"
 fi
 
-echo "==> 5/6 配置 config/demo.env"
-if [[ ! -f config/demo.env ]]; then
-  cp config/demo.env.example config/demo.env
-  echo "    已复制 config/demo.env.example → 请设置 IP/域名"
+echo "==> 5/6 配置 config/formal.env"
+if [[ ! -f config/formal.env ]]; then
+  cp config/formal.env.example config/formal.env
+  echo "    已复制 config/formal.env.example → 请设置 IP/域名"
 else
-  echo "    config/demo.env 已存在，跳过"
+  echo "    config/formal.env 已存在，跳过"
 fi
 
 echo "==> 6/6 完成"

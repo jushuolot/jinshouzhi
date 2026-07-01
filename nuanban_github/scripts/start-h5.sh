@@ -24,12 +24,16 @@ fi
 echo "==> 检查前端 .env（parity · PocketBase 测试数据）"
 ensure_parity_env "$ROOT"
 
+node "$ROOT/scripts/prepare-pages-json.mjs" unified
+export VITE_APP_VARIANT=unified
+
 echo "    模式: 正式版（formal · PocketBase 真实登录流，无演示捷径）"
 echo "    Mock 仅用于 GitHub Pages；本地请勿设 VITE_DEMO_MOCK=true"
 
 echo ""
 echo "==> 启动暖伴 H5 -> http://localhost:${PORT}/#/pages/common/login"
-echo "    勿用 /login（已废弃，访问会 301 跳转）"
+echo "    勿用 /login（已废弃，会自动跳转暖伴登录）"
+echo "    若仍见旧页面: ./scripts/purge-legacy-dev.sh"
 echo "    后端未启时请另开终端: ./scripts/dev-test.sh"
 echo ""
 

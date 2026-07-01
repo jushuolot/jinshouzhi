@@ -84,6 +84,8 @@ node scripts/test-student-audit-flow.mjs # 20/20 注册/审核
 ## 文档索引
 
 - [ENV_PARITY.md](./docs/ENV_PARITY.md) — 测试/正式一致性与硬约束
+- [V2.md](./docs/V2.md) — V2 架构与子域部署
+- [V2_WALKTHROUGH.md](./docs/V2_WALKTHROUGH.md) — 本地走通 → GitHub → 阿里云分步教程
 - [PROGRESS_GOD_VIEW.md](./docs/PROGRESS_GOD_VIEW.md) — 历史进度文档（看板已并入运营演示）
 - [AGENT_EVOLUTION.md](./docs/AGENT_EVOLUTION.md) — 自我进化与教训
 - [PERFECT.md](./docs/PERFECT.md) — 验收清单

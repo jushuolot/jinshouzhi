@@ -2,7 +2,14 @@
 # 公网演示冒烟：index HTTP 200；可选 --bundle 检查已部署 JS 含关键演示标记
 set -euo pipefail
 
-BASE="${NUANBAN_DEMO_URL:-https://jushuolot.github.io/jinshouzhi/nuanban/}"
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+# shellcheck source=lib/source-formal-env.sh
+. "$ROOT/scripts/lib/source-formal-env.sh"
+source_formal_env "$ROOT" || true
+
+BASE="$(resolve_formal_url "https://jushuolot.github.io/jinshouzhi/nuanban/")"
+# 去掉 hash 路径，冒烟测站点根
+BASE="${BASE%%#*}"
 
 smoke_index() {
   local code

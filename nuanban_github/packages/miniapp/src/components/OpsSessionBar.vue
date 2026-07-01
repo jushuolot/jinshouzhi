@@ -12,12 +12,13 @@
 <script setup lang="ts">
 import { onShow } from '@dcloudio/uni-app';
 import { ref } from 'vue';
+import { showOpsEntry } from '../config/app-variant';
 import { isOnOpsShellPage, isOpsSessionActive, openOpsMode, OPS_HOME_PATH } from '../utils/ops-mode';
 
 const visible = ref(false);
 
 function refresh() {
-  visible.value = isOpsSessionActive() && !isOnOpsShellPage();
+  visible.value = showOpsEntry() && isOpsSessionActive() && !isOnOpsShellPage();
 }
 
 function goHub() {

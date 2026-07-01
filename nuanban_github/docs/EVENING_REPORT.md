@@ -93,7 +93,7 @@ cd /opt/jinshouzhi/nuanban_github && ./scripts/release-prod.sh
 npm run verify:prod
 ```
 
-本地经 SSH 触发（需 `config/demo.env` 中 `NUANBAN_SSH` + `NUANBAN_REMOTE_DIR`）：
+本地经 SSH 触发（需 `config/formal.env` 中 `NUANBAN_SSH` + `NUANBAN_REMOTE_DIR`）：
 
 ```bash
 ./scripts/release-prod.sh

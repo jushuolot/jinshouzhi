@@ -119,7 +119,7 @@ async function main() {
   results.push(assert('正式模式禁用 dev-login', devLogin.status === 403));
 
   // 4. Active student (13800000001)
-  const activeLogin = await phoneLogin('13800000001');
+  const activeLogin = await phoneLogin('13500000001');
   results.push(assert(
     '已通过学生登录',
     !!activeLogin.token && activeLogin.roles?.some((r) => r.role === 'student' && r.status === 'active'),
@@ -128,7 +128,7 @@ async function main() {
   const activeToken = activeLogin.token;
   const profile = await json('GET', '/api/nuanban/student/profile', null, {
     Authorization: `Bearer ${activeToken}`,
-    'X-Nuanban-Role': 'student',
+    'X-Active-Role': 'student',
   });
   results.push(assert('GET 学生资料', profile.status === 200));
   results.push(assert(
@@ -146,18 +146,19 @@ async function main() {
 
   const activeWithdrawal = await json('GET', '/api/nuanban/student/withdrawal', null, {
     Authorization: `Bearer ${activeToken}`,
-    'X-Nuanban-Role': 'student',
+    'X-Active-Role': 'student',
   });
   results.push(assert(
     '演示号学生可提现 ¥533',
     activeWithdrawal.status === 200 && activeWithdrawal.data.availableCents === 53300,
+    `status=${activeWithdrawal.status} available=${activeWithdrawal.data?.availableCents}`,
   ));
 
   const patchLocked = await json(
     'PATCH',
     '/api/nuanban/student/profile',
     { displayName: '测试改名' },
-    { Authorization: `Bearer ${activeToken}`, 'X-Nuanban-Role': 'student' },
+    { Authorization: `Bearer ${activeToken}`, 'X-Active-Role': 'student' },
   );
   results.push(assert(
     'active 无 resubmitAudit → 403',
@@ -169,7 +170,7 @@ async function main() {
     'PATCH',
     '/api/nuanban/student/profile',
     { displayName: profile.data.displayName, resubmitAudit: true },
-    { Authorization: `Bearer ${activeToken}`, 'X-Nuanban-Role': 'student' },
+    { Authorization: `Bearer ${activeToken}`, 'X-Active-Role': 'student' },
   );
   results.push(assert(
     'resubmitAudit → pending',
@@ -178,7 +179,7 @@ async function main() {
 
   // Restore active for seed account (ops would normally approve)
   if (patchResubmit.status === 200) {
-    const opsLogin = await phoneLogin('13800000001');
+    const opsLogin = await phoneLogin('13500000001');
     // student now pending — use platform API if available
     const uid = opsLogin.user?.id || activeLogin.user?.id;
     if (uid) {
@@ -197,14 +198,14 @@ async function main() {
   }
 
   // 5. Pending student (13800000003)
-  const pendingLogin = await phoneLogin('13800000003');
+  const pendingLogin = await phoneLogin('13500000003');
   results.push(assert(
     '待审学生登录 roles=pending',
     pendingLogin.roles?.some((r) => r.role === 'student' && r.status === 'pending'),
   ));
   const pendingProfile = await json('GET', '/api/nuanban/student/profile', null, {
     Authorization: `Bearer ${pendingLogin.token}`,
-    'X-Nuanban-Role': 'student',
+    'X-Active-Role': 'student',
   });
   results.push(assert(
     '待审学生 auditLocked=false',
@@ -245,14 +246,14 @@ async function main() {
       ],
       serviceHours: ['周一至周五 14:00–18:00'],
     },
-    { Authorization: `Bearer ${newLogin.token}`, 'X-Nuanban-Role': 'student' },
+    { Authorization: `Bearer ${newLogin.token}`, 'X-Active-Role': 'student' },
   );
   results.push(assert('新号注册学生 → pending', reg.status === 200 && reg.data.roles?.some(
     (r) => r.role === 'student' && r.status === 'pending',
   )));
   const newProfile = await json('GET', '/api/nuanban/student/profile', null, {
     Authorization: `Bearer ${newLogin.token}`,
-    'X-Nuanban-Role': 'student',
+    'X-Active-Role': 'student',
   });
   results.push(assert(
     '新号资料含联系手机/区域/时段',
@@ -264,11 +265,12 @@ async function main() {
   ));
   const newWithdrawal = await json('GET', '/api/nuanban/student/withdrawal', null, {
     Authorization: `Bearer ${newLogin.token}`,
-    'X-Nuanban-Role': 'student',
+    'X-Active-Role': 'student',
   });
   results.push(assert(
     '新号可提现余额为 0',
     newWithdrawal.status === 200 && newWithdrawal.data.availableCents === 0,
+    `status=${newWithdrawal.status} available=${newWithdrawal.data?.availableCents}`,
   ));
 
   // Print

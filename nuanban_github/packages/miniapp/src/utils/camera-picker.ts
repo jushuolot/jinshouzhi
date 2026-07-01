@@ -1,4 +1,5 @@
 import { canUseFaceCapture, requestFaceCapture } from './face-capture';
+import { isInsecureMobileH5 } from './h5-dom';
 
 /** H5 核验照：优先人脸取景框；小程序回退系统相机 */
 
@@ -29,20 +30,30 @@ function fileToDataUrl(file: File): Promise<string> {
   });
 }
 
+export async function fileToPickResult(file: File): Promise<CameraPickResult> {
+  const dataUrl = await fileToDataUrl(file);
+  return {
+    filePath: dataUrl,
+    previewUrl: dataUrl,
+    file,
+  };
+}
+
 function isMobileH5(): boolean {
   if (!isH5()) return false;
   return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
 }
 
-/** H5 选图：桌面允许相册/文件；移动端可走 capture */
+/** H5 选图：桌面允许相册/文件；移动端可走 capture；局域网 HTTP 走系统相册/相机选择 */
 function pickCameraViaNativeInput(
   capture?: 'user' | 'environment',
+  allowAlbum = false,
 ): Promise<CameraPickResult> {
   return new Promise((resolve, reject) => {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'image/*';
-    if (capture && isMobileH5()) {
+    if (capture && isMobileH5() && !allowAlbum) {
       input.setAttribute('capture', capture);
     }
     input.style.cssText = 'position:fixed;left:-9999px;opacity:0';
@@ -87,6 +98,10 @@ export async function pickCameraImage(): Promise<CameraPickResult> {
     if (!isMobileH5()) {
       return pickCameraViaNativeInput();
     }
+    // 手机 HTTP 局域网无安全上下文：getUserMedia / capture 常失效，仅调起相册/相机文件选择
+    if (isInsecureMobileH5()) {
+      return pickCameraViaNativeInput(undefined, true);
+    }
     if (isIOSDevice()) {
       return pickCameraViaNativeInput('user');
     }
@@ -96,12 +111,12 @@ export async function pickCameraImage(): Promise<CameraPickResult> {
       } catch (err) {
         const msg = err instanceof Error ? err.message : '';
         if (msg && !/cancel|取消/i.test(msg)) {
-          return pickCameraViaNativeInput('user');
+          return pickCameraViaNativeInput('user', true);
         }
         throw err;
       }
     }
-    return pickCameraViaNativeInput('user');
+    return pickCameraViaNativeInput('user', true);
   }
 
   const pick = await new Promise<UniApp.ChooseImageSuccessCallbackResult>((resolve, reject) => {

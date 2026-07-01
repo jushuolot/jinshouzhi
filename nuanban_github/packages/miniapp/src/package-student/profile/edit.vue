@@ -11,19 +11,21 @@
     </view>
 
     <text class="section">形象资料</text>
-    <text class="field-hint">卡通头像与核验照用于接单展示与运营审核</text>
+    <text class="field-hint">{{ CARTOON_AVATAR_ENABLED ? '卡通头像与核验照用于接单展示与运营审核' : '实名核验照用于运营审核' }}</text>
 
-    <text class="field-label">卡通头像</text>
-    <view class="identity-block">
-      <CartoonAvatarPicker
-        :avatar-id="cartoonAvatarId"
-        :custom-url="customCartoonUrl"
-        :name="displayName"
-        :editable="editable"
-        @change="onCartoonChange"
-        @custom-change="onCustomCartoonPreview"
-      />
-    </view>
+    <template v-if="CARTOON_AVATAR_ENABLED">
+      <text class="field-label">卡通头像</text>
+      <view class="identity-block">
+        <CartoonAvatarPicker
+          :avatar-id="cartoonAvatarId"
+          :custom-url="customCartoonUrl"
+          :name="displayName"
+          :editable="editable"
+          @change="onCartoonChange"
+          @custom-change="onCustomCartoonPreview"
+        />
+      </view>
+    </template>
 
     <text class="field-label">实名核验照</text>
     <view class="identity-block">
@@ -118,6 +120,7 @@ import ServiceTimePicker from '../../components/ServiceTimePicker.vue';
 import { fetchStudentProfile, updateStudentProfile } from '../../api/student';
 import { useRoleStore } from '../../store/role';
 import { resolveCartoonAvatarUrl, defaultCartoonAvatarId } from '../../utils/cartoon-avatars';
+import { CARTOON_AVATAR_ENABLED } from '../../utils/feature-flags';
 import { isKnownSchool } from '../../utils/known-schools';
 import { pbErrorMessage } from '../../utils/request';
 import { isValidCnMobile } from '../../utils/login-phone';
@@ -292,7 +295,7 @@ async function save() {
   }
   loading.value = true;
   try {
-    if (customCartoonPick.value) {
+    if (CARTOON_AVATAR_ENABLED && customCartoonPick.value) {
       const url = await uploadCustomCartoonPick(customCartoonPick.value);
       customCartoonUrl.value = url;
     }
@@ -304,12 +307,16 @@ async function save() {
       grade: grades[gradeIdx.value],
       contactPhone: contactPhone.value.trim(),
       studentId: studentId.value.trim() || undefined,
-      cartoonAvatarId: cartoonAvatarId.value || undefined,
+      ...(CARTOON_AVATAR_ENABLED ? { cartoonAvatarId: cartoonAvatarId.value || undefined } : {}),
       serviceAreaPolygons: serviceAreaGeo.value.polygons,
       serviceHours: serviceHours.value,
       resubmitAudit: true,
     });
-    roleStore.setUserAvatar(resolveCartoonAvatarUrl(cartoonAvatarId.value, customCartoonUrl.value));
+    if (CARTOON_AVATAR_ENABLED) {
+      roleStore.setUserAvatar(resolveCartoonAvatarUrl(cartoonAvatarId.value, customCartoonUrl.value));
+    } else if (verificationPhotoUrl.value) {
+      roleStore.setUserAvatar(verificationPhotoUrl.value);
+    }
     roleStore.setUserNickname(name);
     roleStore.setStudentRoleStatus('pending');
     uni.showToast({ title: '已提交审核', icon: 'success' });
