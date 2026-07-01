@@ -1,13 +1,13 @@
 {
-  "version": "6.1.0",
-  "generation": 61,
-  "universeDay": 10,
+  "version": "6.2.0",
+  "generation": 62,
+  "universeDay": 11,
   "civilizationEpoch": "1929-07",
-  "civilizationDay": 61,
-  "civilizationYear": 2051,
+  "civilizationDay": 62,
+  "civilizationYear": 2053,
   "civilizationPhase": "超越期",
-  "dailyChronicle": "第 10 日·险情日。文明历 2051，广汉首发现后的第 61 代让此宇宙再比人间快进两年；凌晨坑壁湿度报警，胡探把罗盘压在青铜门缝前守了一夜，杨雪用超越期层位模型把一次险情改写成古蜀符号避险档案。",
-  "releasedAt": "2026-06-24",
+  "dailyChronicle": "第 11 日·馋嘴日。文明历 2053，广汉首发现后的第 62 代让此宇宙继续以 2 倍速度越过人间；雨停后营地灶火重开，王墩把竹筒饭和回锅肉分给守坑的人，杨雪则把饭点闲话、炭屑温度与古蜀炊烟痕一起写进超越期生活档案。",
+  "releasedAt": "2026-07-01",
   "autoTune": {
     "enabled": true,
     "windowSize": 8,
@@ -15,10 +15,10 @@
     "targetWinRate": 0.52
   },
   "patchNotes": [
-    "Gen.61 · 宇宙第10日 · 险情日 · 文明历 2051",
-    "险情叙事：青铜门缝、纵目坑与神树探点接入 2051 超越期避险模型",
-    "新增坑壁险情扫描寻金渠道，只入账不扣减",
-    "资源加载继续拆分早/晚延后队列，立绘预载不抢首屏"
+    "Gen.62 · 宇宙第11日 · 馋嘴日 · 文明历 2053",
+    "生活叙事：营地灶火、竹筒饭、炭屑温度与神树炊烟痕接入 2053 超越期生活档案",
+    "新增营地灶火食谱寻金渠道，只通过虚拟账户入账且不向玩家展示收入",
+    "启动屏显示 Gen.62 · 第11日 · 文明历 2053，首屏加载策略保持核心优先"
   ],
   "virtualAccount": {
     "module": "virtual-account.js",
